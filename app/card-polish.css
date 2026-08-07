@@ -1,0 +1,102 @@
+/* Catalog cards — presence + memory cues */
+
+.anime-card {
+  background: linear-gradient(
+    165deg,
+    rgba(34, 28, 24, 0.95),
+    rgba(12, 10, 9, 0.98)
+  );
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(232, 165, 152, 0.1);
+  transition:
+    transform 0.28s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    border-color 0.25s ease,
+    box-shadow 0.28s ease;
+  cursor: pointer;
+  position: relative;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  width: 100%;
+  padding: 0;
+  display: block;
+}
+
+.anime-card img,
+.anime-card span img {
+  transition: transform 0.4s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.anime-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(232, 165, 152, 0.45);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.42),
+    0 0 36px rgba(232, 165, 152, 0.14);
+  color: inherit;
+}
+
+.anime-card:hover img {
+  transform: scale(1.04);
+}
+
+.anime-card.is-sealed {
+  border-color: rgba(240, 160, 144, 0.32);
+}
+
+.anime-card.is-recent:not(.is-sealed) {
+  border-color: rgba(109, 206, 138, 0.22);
+}
+
+.card-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  padding: 3px 9px;
+  border-radius: 50px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.card-badge-sealed {
+  background: rgba(240, 160, 144, 0.9);
+  color: #2a1210;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.card-badge-recent {
+  background: rgba(109, 206, 138, 0.2);
+  color: #9eddb0;
+  border: 1px solid rgba(109, 206, 138, 0.35);
+}
+
+/* Legacy flame hide if still present */
+.card-flame {
+  display: none;
+}
+
+.anime-card .card-tag {
+  top: 10px;
+  right: 10px;
+  left: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anime-card,
+  .anime-card img {
+    transition: none;
+  }
+  .anime-card:hover {
+    transform: none;
+  }
+  .anime-card:hover img {
+    transform: none;
+  }
+}

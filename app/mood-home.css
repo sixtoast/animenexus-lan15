@@ -1,0 +1,48 @@
+.mood-home-block {
+  margin-top: 22px;
+}
+
+.mood-home-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.mood-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mood-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-tertiary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  padding: 8px 14px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.mood-chip:hover {
+  color: var(--color-text);
+  border-color: var(--color-accent);
+}
+
+.mood-chip.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #2a1210;
+}
+
+.mood-emoji {
+  font-size: 1rem;
+  line-height: 1;
+}

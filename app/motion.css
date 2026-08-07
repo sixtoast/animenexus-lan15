@@ -1,0 +1,357 @@
+/* AnimeNexus — motion language + view modes + toasts + room + kit */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 180ms;
+  --dur: 420ms;
+  --dur-slow: 720ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 1ms;
+    --dur: 1ms;
+    --dur-slow: 1ms;
+  }
+  .anime-card,
+  .poster-skel,
+  .grid-enter,
+  .fab-toggle.pulse,
+  .anime-toast,
+  .room-enter {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Room continuity — soft enter on route change */
+.room-enter {
+  animation: roomEnter var(--dur) var(--ease-out-expo) both;
+}
+
+@keyframes roomEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Cards as links */
+a.anime-card {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Staggered grid entrance */
+.anime-grid > .grid-enter {
+  animation: cardRise var(--dur) var(--ease-out-expo) both;
+  animation-delay: calc(var(--i, 0) * 28ms);
+}
+
+@keyframes cardRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Elevated card glow */
+.anime-card {
+  isolation: isolate;
+}
+
+.anime-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse 80% 55% at 50% 0%,
+    rgba(240, 160, 144, 0.22),
+    transparent 70%
+  );
+  transition: opacity var(--dur) var(--ease-out-expo);
+  z-index: 1;
+}
+
+.anime-card:hover::after,
+.anime-card:focus-visible::after {
+  opacity: 1;
+}
+
+.anime-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(232, 165, 152, 0.5);
+  box-shadow:
+    0 28px 50px rgba(0, 0, 0, 0.45),
+    0 0 40px rgba(232, 165, 152, 0.14),
+    0 0 1px rgba(240, 160, 144, 0.4);
+}
+
+.anime-card[data-on-list="true"] {
+  border-color: rgba(240, 160, 144, 0.35);
+}
+
+.anime-card[data-on-list="true"] .card-flame {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff0c8 0%, #f0a090 55%, transparent 70%);
+  box-shadow: 0 0 12px rgba(240, 160, 144, 0.7);
+  animation: flamePulse 2.4s var(--ease-soft) infinite;
+}
+
+@keyframes flamePulse {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.anime-card img {
+  view-transition-name: var(--vt-cover, none);
+}
+
+/* View modes */
+html[data-view-mode="poster"] .anime-grid {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+}
+html[data-view-mode="poster"] .anime-card .card-body {
+  padding: 8px;
+}
+html[data-view-mode="shelf"] .anime-grid {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+html[data-view-mode="shelf"] .anime-card {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  align-items: stretch;
+}
+html[data-view-mode="shelf"] .anime-card img {
+  aspect-ratio: 2/3;
+  height: 100%;
+  min-height: 96px;
+  object-fit: cover;
+}
+
+/* Poster skeletons */
+.poster-skel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+}
+
+.poster-skel {
+  border-radius: calc(var(--radius) + 2px);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: var(--color-secondary);
+  aspect-ratio: 2 / 3;
+  position: relative;
+}
+
+.poster-skel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 25%,
+    rgba(240, 160, 144, 0.08) 45%,
+    transparent 65%
+  );
+  background-size: 200% 100%;
+  animation: skelShimmer 1.4s var(--ease-soft) infinite;
+}
+
+@keyframes skelShimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.tuning-label {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+  letter-spacing: 0.04em;
+}
+
+.tuning-label::before {
+  content: "✦ ";
+  color: var(--color-accent);
+}
+
+/* FAB pulse */
+.fab-toggle.pulse {
+  animation: fabPulse 0.7s var(--ease-spring);
+  box-shadow: 0 0 0 0 rgba(240, 160, 144, 0.5);
+}
+
+@keyframes fabPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(240, 160, 144, 0.45);
+  }
+  40% {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 14px rgba(240, 160, 144, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(240, 160, 144, 0);
+  }
+}
+
+/* Toasts */
+.anime-toast {
+  animation: toastBounce 0.45s var(--ease-spring);
+}
+.anime-toast.seal {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 24px rgba(240, 160, 144, 0.25);
+}
+.anime-toast.milestone {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px rgba(240, 160, 144, 0.25), var(--shadow-soft);
+}
+@keyframes toastBounce {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.92);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Interaction kit — buttons */
+.btn {
+  transition:
+    transform var(--dur-fast) var(--ease-out-expo),
+    box-shadow var(--dur) var(--ease-soft),
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-muted);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  color: var(--color-text);
+  background: rgba(240, 160, 144, 0.08);
+}
+
+/* Overlay / sheet enter (cmdk, panels already use fixed; reinforce) */
+.overlay-enter,
+.cmdk-root,
+.ai-panel.open,
+.session-sheet {
+  animation: overlayIn var(--dur) var(--ease-out-expo) both;
+}
+
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Shortcuts + loading theater */
+.shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.shortcuts-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+.shortcuts-table td:first-child {
+  white-space: nowrap;
+  width: 34%;
+}
+.loading-theater {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  background: rgba(12, 10, 9, 0.82);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--color-text-muted);
+}
+
+/* Session environment */
+html[data-session="tonight"] body {
+  background:
+    radial-gradient(ellipse 90% 60% at 10% -10%, rgba(240, 160, 144, 0.2) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 45% at 95% 5%, rgba(239, 192, 122, 0.16) 0%, transparent 50%),
+    var(--color-primary);
+}
+
+html[data-session="break"] body {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(120, 140, 180, 0.12) 0%, transparent 55%),
+    var(--color-primary);
+}
+
+@supports (view-transition-name: none) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--dur);
+  }
+}

@@ -1,0 +1,36 @@
+/* watchlist page */
+.wl-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wl-row {
+  display: flex;
+  gap: 14px;
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+.wl-thumb img {
+  width: 56px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.wl-count {
+  margin-left: 6px;
+  opacity: 0.7;
+  font-size: 0.75rem;
+}
+
+.wl-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 20px;
+}

@@ -1,0 +1,27 @@
+.season-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.season-tab {
+  background: var(--color-tertiary);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.season-tab:hover {
+  color: var(--color-text);
+  border-color: var(--color-accent);
+}
+
+.season-tab.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #2a1210;
+}

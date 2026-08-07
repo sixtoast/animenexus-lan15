@@ -1,0 +1,65 @@
+.airing-schedule {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.airing-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  transition: var(--transition);
+}
+
+.airing-row:hover {
+  border-color: var(--color-accent);
+}
+
+.airing-row img {
+  width: 40px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.airing-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.airing-meta {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.radar-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.radar-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 36px;
+  gap: 10px;
+  align-items: center;
+}
+
+.radar-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.radar-count {
+  font-size: 0.8rem;
+  text-align: right;
+  font-weight: 600;
+}

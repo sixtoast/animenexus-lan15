@@ -1,0 +1,44 @@
+.shortcuts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.shortcuts-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+.shortcuts-table td:first-child {
+  white-space: nowrap;
+  width: 34%;
+}
+.loading-theater {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  background: rgba(12, 10, 9, 0.82);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--color-text-muted);
+}
+html[data-view-mode="poster"] .anime-grid {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+}
+html[data-view-mode="shelf"] .anime-grid {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+html[data-view-mode="shelf"] .anime-card {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  align-items: stretch;
+}
+html[data-view-mode="shelf"] .anime-card img {
+  aspect-ratio: 2/3;
+  height: 100%;
+  min-height: 96px;
+}

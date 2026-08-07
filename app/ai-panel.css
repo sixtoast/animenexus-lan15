@@ -1,0 +1,137 @@
+.ai-fab {
+  position: fixed;
+  bottom: 96px;
+  right: 28px;
+  z-index: 85;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-secondary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  transition: var(--transition);
+}
+
+.ai-fab:hover {
+  border-color: var(--color-accent);
+  transform: scale(1.05);
+}
+
+.ai-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #666;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.ai-status-dot.on {
+  background: #6dce8a;
+  box-shadow: 0 0 8px rgba(109, 206, 138, 0.6);
+}
+
+.ai-header-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.ai-status-label {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Inner stack when hosted in Modal drawer */
+.ai-panel-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: calc(100vh - 80px);
+}
+
+.ai-panel-modal.nx-modal-panel .nx-modal-body {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 20px;
+}
+
+.ai-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ai-messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0;
+  min-height: 120px;
+  max-height: 42vh;
+}
+
+.ai-msg {
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.ai-msg.user {
+  background: var(--color-tertiary);
+  align-self: flex-end;
+  max-width: 90%;
+}
+
+.ai-msg.assistant {
+  background: rgba(240, 160, 144, 0.12);
+  border: 1px solid var(--color-border);
+  align-self: flex-start;
+  max-width: 95%;
+}
+
+.ai-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.ai-compose {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-compose .notes-area {
+  width: 100%;
+  background: var(--color-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  color: var(--color-text);
+  padding: 10px 12px;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  resize: vertical;
+  min-height: 64px;
+}
+
+.ai-compose .notes-area:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-glow);
+}

@@ -1,0 +1,194 @@
+/* Homepage composition v2 */
+
+.home-main {
+  padding-bottom: clamp(40px, 8vw, 72px);
+}
+
+.home-hero {
+  position: relative;
+  padding-bottom: clamp(28px, 4vw, 40px);
+}
+
+.home-hero::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(240, 160, 144, 0.22),
+    transparent
+  );
+}
+
+.home-hero-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.home-hero .hero-greeting {
+  margin-bottom: 14px;
+}
+
+.home-hero .hero-badge {
+  margin-bottom: 12px;
+}
+
+.home-hero h1 {
+  margin: 0;
+  max-width: 14ch;
+}
+
+.home-lead {
+  margin-top: 12px;
+  margin-bottom: 0;
+  max-width: 34rem;
+  color: var(--color-text-muted);
+  font-size: clamp(0.95rem, 2.4vw, 1.05rem);
+  line-height: 1.55;
+}
+
+.home-hero .ritual-line {
+  margin-top: 18px;
+  margin-bottom: 0;
+  width: 100%;
+  max-width: 40rem;
+}
+
+.home-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.home-mood {
+  margin-top: 22px;
+  width: 100%;
+  padding-top: 18px;
+  border-top: 1px solid rgba(240, 160, 144, 0.1);
+}
+
+.home-body {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding-top: 28px;
+}
+
+.home-panel {
+  padding: 18px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(240, 160, 144, 0.14);
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 0% 0%,
+      rgba(240, 160, 144, 0.06),
+      transparent 50%
+    ),
+    linear-gradient(
+      165deg,
+      rgba(34, 28, 24, 0.55),
+      rgba(12, 10, 9, 0.72)
+    );
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.home-trending-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.home-trending-head .section-head {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.home-trending-head .section-head h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Don’t double trending rail when grid is below */
+.home-panel .home-rail-section:last-child {
+  /* trending removed from dashboard props */
+}
+
+/* Ghost button helper if missing */
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-muted);
+}
+
+.btn-ghost:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: transparent;
+}
+
+/* Hero greeting polish */
+.hero-greeting {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 50px;
+  border: 1px solid rgba(240, 160, 144, 0.14);
+  background: rgba(22, 18, 16, 0.55);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.greeting-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.greeting-text {
+  line-height: 1.35;
+}
+
+/* Global state boxes calmer */
+.state-box {
+  border-radius: 16px;
+  padding: clamp(28px, 5vw, 40px) 20px;
+  background: linear-gradient(
+    165deg,
+    rgba(34, 28, 24, 0.6),
+    rgba(12, 10, 9, 0.85)
+  );
+}
+
+.anime-grid {
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
+@media (min-width: 640px) {
+  .anime-grid {
+    grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (min-width: 900px) {
+  .home-panel {
+    padding: 22px 20px;
+  }
+
+  .home-body {
+    gap: 32px;
+  }
+}

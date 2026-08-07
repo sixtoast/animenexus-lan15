@@ -1,0 +1,96 @@
+.vibe-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.vibe-card {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-secondary);
+  color: inherit;
+  transition: var(--transition);
+}
+.vibe-card:hover {
+  border-color: var(--color-accent);
+}
+.vibe-card img,
+.vibe-card-ph {
+  width: 56px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--color-tertiary);
+}
+.vibe-card-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.vibe-card-why {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+.motion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+.motion-thumb {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--color-secondary);
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: 0.65rem;
+}
+.motion-thumb img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+}
+.motion-thumb span {
+  display: block;
+  padding: 4px 6px;
+}
+
+/* Band switch flash */
+.oracle.band-flash .oracle-bands {
+  box-shadow: 0 0 0 1px rgba(240, 160, 144, 0.35);
+  border-radius: 50px;
+}
+
+/* Card deal stagger */
+.vibe-card.vibe-deal {
+  animation: cardDeal 0.55s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+@keyframes cardDeal {
+  from {
+    opacity: 0;
+    transform: translateY(16px) rotate(-1.5deg) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0) scale(1);
+  }
+}
+
+.oracle-in {
+  animation: cardRise 0.45s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vibe-card.vibe-deal,
+  .oracle-in {
+    animation: none;
+  }
+}

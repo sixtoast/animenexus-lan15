@@ -1,0 +1,105 @@
+/* Page shell — cleaner layout, no FAB chrome */
+
+.fab-root,
+.fab-toggle,
+.fab-menu,
+.fab-item {
+  display: none !important;
+}
+
+.app-shell {
+  min-height: calc(100dvh - 100px);
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell > .room-enter,
+.app-shell > .nx-room-tune {
+  flex: 1;
+  width: 100%;
+}
+
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 4vw, 28px);
+  width: 100%;
+}
+
+.hero {
+  padding: clamp(24px, 4.5vw, 44px) 0 clamp(16px, 3vw, 24px);
+}
+
+.hero h1 {
+  font-size: clamp(1.85rem, 5.5vw, 3.05rem);
+  letter-spacing: -0.03em;
+}
+
+.hero p {
+  max-width: 36rem;
+  font-size: clamp(0.95rem, 2.5vw, 1.05rem);
+  line-height: 1.55;
+}
+
+main {
+  padding-bottom: clamp(28px, 5vw, 48px);
+}
+
+.site-footer {
+  margin-top: 0;
+  padding: 18px 0 24px;
+  border-top: 1px solid rgba(240, 160, 144, 0.1);
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.site-footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+  text-align: center;
+}
+
+.site-footer a {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.site-footer-sep {
+  opacity: 0.5;
+}
+
+.ai-fab {
+  bottom: max(16px, env(safe-area-inset-bottom));
+  right: max(16px, env(safe-area-inset-right));
+  width: 48px;
+  height: 48px;
+  font-size: 1.15rem;
+  opacity: 0.92;
+}
+
+.ai-fab:hover {
+  opacity: 1;
+}
+
+.home-dash-empty {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+/* Section heads site-wide */
+.section-head h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+@media (min-width: 900px) {
+  .navbar-inner {
+    gap: 16px;
+  }
+}

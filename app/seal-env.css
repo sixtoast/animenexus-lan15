@@ -1,0 +1,179 @@
+/* Seal moment + time-of-day environment */
+
+.seal-moment {
+  position: fixed;
+  inset: 0;
+  z-index: 1600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  pointer-events: none;
+  background: rgba(6, 4, 3, 0.35);
+  backdrop-filter: blur(4px);
+  animation: seal-scrim-in 0.25s ease both;
+}
+
+.seal-moment.is-complete {
+  background: rgba(6, 4, 3, 0.42);
+}
+
+.seal-card {
+  width: min(320px, 100%);
+  padding: 28px 22px 24px;
+  border-radius: 18px;
+  text-align: center;
+  border: 1px solid rgba(240, 160, 144, 0.35);
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(240, 160, 144, 0.18),
+      transparent 55%
+    ),
+    linear-gradient(165deg, rgba(40, 32, 28, 0.98), rgba(12, 10, 9, 0.99));
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.55),
+    0 0 48px rgba(240, 160, 144, 0.12);
+  animation: seal-card-in 0.45s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+.seal-moment.is-complete .seal-card {
+  border-color: rgba(232, 192, 122, 0.4);
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(232, 192, 122, 0.16),
+      transparent 55%
+    ),
+    linear-gradient(165deg, rgba(40, 32, 28, 0.98), rgba(12, 10, 9, 0.99));
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.55),
+    0 0 40px rgba(232, 192, 122, 0.12);
+}
+
+.seal-wax {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 35% 30%, #f0c4ba, #d4847a 55%, #8a4038);
+  box-shadow:
+    0 4px 16px rgba(212, 132, 122, 0.45),
+    inset 0 2px 4px rgba(255, 255, 255, 0.25);
+  animation: seal-wax-press 0.55s var(--ease-out, ease) both;
+}
+
+.seal-moment.is-complete .seal-wax {
+  background: radial-gradient(circle at 35% 30%, #f5e0b8, #e8c07a 55%, #8a6a30);
+  box-shadow:
+    0 4px 16px rgba(232, 192, 122, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.25);
+}
+
+.seal-wax-inner {
+  font-size: 1.35rem;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+
+.seal-kicker {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.seal-moment.is-complete .seal-kicker {
+  color: #e8c07a;
+}
+
+.seal-title {
+  margin: 8px 0 6px;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--color-text);
+}
+
+.seal-sub {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+@keyframes seal-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes seal-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes seal-wax-press {
+  0% {
+    transform: scale(1.25);
+    opacity: 0.5;
+  }
+  60% {
+    transform: scale(0.92);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Time-of-day ambient (restraint: tint only) */
+html[data-tod="morning"] body {
+  background:
+    radial-gradient(ellipse 90% 55% at 20% -5%, rgba(255, 210, 170, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(180, 200, 220, 0.08) 0%, transparent 45%),
+    var(--color-primary);
+}
+
+html[data-tod="afternoon"] body {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(232, 184, 109, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 100% 40%, rgba(240, 160, 144, 0.06) 0%, transparent 45%),
+    var(--color-primary);
+}
+
+html[data-tod="evening"] body {
+  background:
+    radial-gradient(ellipse 90% 60% at 10% -10%, rgba(232, 165, 152, 0.16) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 45% at 95% 5%, rgba(180, 90, 70, 0.12) 0%, transparent 50%),
+    var(--color-primary);
+}
+
+html[data-tod="late-night"] body {
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 0%, rgba(120, 90, 140, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 90% 20%, rgba(240, 160, 144, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse 50% 35% at 50% 100%, rgba(40, 30, 60, 0.2) 0%, transparent 50%),
+    var(--color-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seal-moment,
+  .seal-card,
+  .seal-wax {
+    animation: none;
+  }
+}

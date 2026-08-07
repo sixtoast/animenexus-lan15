@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="AnimeNexus Lantern">
+  <rect width="192" height="192" rx="36" fill="#0c0a09"/>
+  <circle cx="96" cy="96" r="72" fill="#221c18" stroke="#f0a090" stroke-width="4"/>
+  <rect x="72" y="70" width="48" height="70" rx="10" fill="#f0a090"/>
+  <circle cx="96" cy="92" r="12" fill="#fff0c8"/>
+  <path d="M78 70 Q96 42 114 70" fill="none" stroke="#f0a090" stroke-width="5" stroke-linecap="round"/>
+</svg>

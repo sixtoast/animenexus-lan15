@@ -1,0 +1,113 @@
+/* Shared Night Desk chrome for tools */
+.desk {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.desk-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--surface-glass);
+  backdrop-filter: blur(12px);
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.desk-band a {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.desk-band strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.desk-panel {
+  background: linear-gradient(
+    165deg,
+    rgba(34, 28, 24, 0.55),
+    rgba(12, 10, 9, 0.72)
+  );
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: clamp(16px, 3vw, 28px);
+  box-shadow: var(--shadow-soft);
+}
+
+.tools-hub {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.tools-hub-card {
+  display: block;
+  padding: 18px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: linear-gradient(165deg, rgba(34, 28, 24, 0.9), rgba(12, 10, 9, 0.95));
+  color: inherit;
+  transition: transform var(--dur, 0.4s) var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)),
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+  animation: cardRise var(--dur, 0.42s) var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) both;
+  animation-delay: calc(var(--i, 0) * 30ms);
+}
+
+.tools-hub-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(240, 160, 144, 0.4);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35), 0 0 24px rgba(240, 160, 144, 0.1);
+  color: inherit;
+}
+
+.tools-hub-emoji {
+  font-size: 1.4rem;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.tools-hub-card h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.tools-hub-card p {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+/* Challenge silhouette dissolve */
+.challenge-hero img {
+  transition: filter 0.65s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)),
+    transform 0.65s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)),
+    box-shadow 0.65s ease;
+  border-radius: 12px;
+}
+
+.challenge-hero img.silhouette {
+  filter: brightness(0) contrast(1.05);
+  transform: scale(1.02);
+}
+
+.challenge-hero img.revealed {
+  filter: none;
+  transform: scale(1);
+  box-shadow: 0 12px 40px rgba(240, 160, 144, 0.2);
+}
+
+.challenge-result .ok {
+  color: var(--color-accent);
+  font-weight: 600;
+  animation: cardRise 0.5s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}

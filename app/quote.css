@@ -1,0 +1,151 @@
+/* Quote banner — Phase 2 visual timer */
+
+.quote-banner {
+  position: relative;
+  margin: 0 0 28px;
+  padding: 18px 18px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(240, 160, 144, 0.2);
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 0% 0%,
+      rgba(240, 160, 144, 0.1),
+      transparent 55%
+    ),
+    linear-gradient(
+      165deg,
+      rgba(34, 28, 24, 0.92),
+      rgba(12, 10, 9, 0.96)
+    );
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 235, 225, 0.04);
+  overflow: hidden;
+}
+
+.quote-signal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.quote-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.quote-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 10px var(--color-accent-glow);
+  animation: quote-dot 1.6s ease-in-out infinite;
+}
+
+.quote-banner.is-paused .quote-live-dot {
+  animation-play-state: paused;
+  opacity: 0.45;
+}
+
+@keyframes quote-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+.quote-timer-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.quote-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.quote-text {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 2.6vw, 1.45rem);
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+  margin: 0;
+  transition: opacity var(--duration-fast, 0.18s) ease;
+}
+
+.quote-text.is-fading {
+  opacity: 0.35;
+}
+
+.quote-mark {
+  color: var(--color-accent);
+  opacity: 0.7;
+  font-size: 1.1em;
+}
+
+.quote-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.quote-source {
+  margin: 10px 0 0;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+.quote-progress {
+  margin-top: 16px;
+  height: 3px;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.quote-progress-fill {
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  background: linear-gradient(
+    90deg,
+    rgba(240, 160, 144, 0.35),
+    var(--color-accent)
+  );
+  box-shadow: 0 0 12px var(--color-accent-glow);
+  will-change: transform;
+}
+
+.quote-banner.is-paused .quote-progress-fill {
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quote-live-dot {
+    animation: none;
+  }
+  .quote-text {
+    transition: none;
+  }
+}

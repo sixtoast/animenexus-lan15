@@ -1,0 +1,175 @@
+/* Shared Modal — Phase 1b */
+
+.nx-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  background: rgba(6, 4, 3, 0.62);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  display: flex;
+  animation: nx-overlay-in var(--duration-med, 0.28s) var(--ease-out, ease) both;
+}
+
+.nx-modal-center {
+  align-items: flex-start;
+  justify-content: center;
+  padding: min(12vh, 80px) 16px 24px;
+}
+
+.nx-modal-drawer {
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0;
+}
+
+.nx-modal-sheet {
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+.nx-modal-panel {
+  position: relative;
+  background:
+    linear-gradient(
+      165deg,
+      rgba(34, 28, 24, 0.96),
+      rgba(14, 11, 10, 0.98)
+    );
+  border: 1px solid rgba(240, 160, 144, 0.22);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 235, 225, 0.04) inset,
+    0 0 48px rgba(240, 160, 144, 0.08);
+  color: var(--color-text);
+  display: flex;
+  flex-direction: column;
+  max-height: min(88vh, 900px);
+  outline: none;
+  animation: nx-panel-in var(--duration-med, 0.28s) var(--ease-out, ease) both;
+}
+
+.nx-modal-center .nx-modal-panel {
+  border-radius: 16px;
+  width: min(520px, 100%);
+}
+
+.nx-modal-center .nx-modal-size-sm {
+  width: min(400px, 100%);
+}
+
+.nx-modal-center .nx-modal-size-lg {
+  width: min(640px, 100%);
+}
+
+.nx-modal-drawer .nx-modal-panel {
+  width: min(420px, 100vw);
+  height: 100%;
+  max-height: none;
+  border-radius: 0;
+  border-left: 1px solid rgba(240, 160, 144, 0.25);
+  border-right: none;
+  border-top: none;
+  border-bottom: none;
+  animation-name: nx-drawer-in;
+  box-shadow: -24px 0 64px rgba(0, 0, 0, 0.55);
+}
+
+.nx-modal-sheet .nx-modal-panel {
+  width: 100%;
+  max-height: 85vh;
+  border-radius: 18px 18px 0 0;
+  animation-name: nx-sheet-in;
+}
+
+.nx-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid rgba(240, 160, 144, 0.12);
+  flex-shrink: 0;
+}
+
+.nx-modal-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.nx-modal-title-spacer {
+  flex: 1;
+}
+
+.nx-modal-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nx-modal-body {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  padding: 12px 16px 16px;
+}
+
+/* Command palette sits tighter */
+.nx-modal-cmdk .nx-modal-body {
+  padding: 0;
+}
+
+.nx-modal-cmdk .nx-modal-head {
+  display: none;
+}
+
+@keyframes nx-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nx-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes nx-drawer-in {
+  from {
+    opacity: 0.6;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes nx-sheet-in {
+  from {
+    transform: translateY(40%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-modal-overlay,
+  .nx-modal-panel {
+    animation: none;
+  }
+}

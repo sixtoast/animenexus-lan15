@@ -1,0 +1,66 @@
+.account-panel {
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+.account-note {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.account-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.account-row .filter-input {
+  flex: 1 1 180px;
+  max-width: none;
+}
+
+.account-profile {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.account-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--color-border);
+}
+
+.account-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-tertiary);
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--color-accent);
+}
+
+.account-name {
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+
+.account-meta {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

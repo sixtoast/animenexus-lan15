@@ -1,0 +1,5 @@
+/* Cards as links */
+a.anime-card {
+  text-decoration: none;
+  color: inherit;
+}
