@@ -173,12 +173,11 @@ export const useMascotStore = create<MascotState>((set, get) => ({
     if (!s.enabled) return;
     if (Date.now() < s.nextThinkAt) return;
 
-    // Decision layer ambient pass
     if (!s.loadingSince && Date.now() > s.busyUntil) {
       const ambient = decideAmbient(ctxFromStore());
       if (ambient && Math.random() < 0.45) {
         set({ lastThought: ambient.thought.text });
-        executeDecision(ambient);
+        executeDecision(ambient, get);
         set({ nextThinkAt: Date.now() + 8000 });
         return;
       }
@@ -218,14 +217,14 @@ export const useMascotStore = create<MascotState>((set, get) => ({
     get().applyGoal("wander");
   },
   dispatch: (e) => {
-    const { bumpEmotion, requestAnim, applyGoal } = get();
+    const { bumpEmotion, requestAnim } = get();
 
     const runDecision = (
       kind: "pet" | "drag" | "seal" | "complete" | "idle-long" | "route",
     ) => {
       const d = decide(kind, ctxFromStore());
       set({ lastThought: d.thought.text, lastInteractionAt: Date.now() });
-      executeDecision(d);
+      executeDecision(d, get);
       set({ nextThinkAt: Date.now() + 3500 });
     };
 
