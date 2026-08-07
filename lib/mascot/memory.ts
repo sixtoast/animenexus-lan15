@@ -152,3 +152,22 @@ export function bondGreeting(): string | null {
   if (stage === "acquaintance") return "\u2026oh. Hi.";
   return null;
 }
+
+/** Soft line shaped by bond stage — used by decision layer */
+export function relationshipThought(): string | null {
+  const m = getMemory();
+  const stage = bondStage(m);
+  const lines: Record<BondStage, string[]> = {
+    stranger: ["\u2026hello?", "Still figuring this desk out.", "Quiet signals."],
+    acquaintance: ["Hmm.", "I\u2019m getting used to you.", "Soft desk light."],
+    friend: ["Still here.", "Want a signal?", "I kept the corner warm."],
+    close: [
+      "Missed that.",
+      "We\u2019re good at this.",
+      "I\u2019ll find something for you.",
+    ],
+  };
+  const pool = lines[stage];
+  if (!pool?.length) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
