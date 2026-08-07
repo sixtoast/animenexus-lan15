@@ -19,6 +19,7 @@ import { LanternMemoryBoot } from "@/components/LanternMemoryBoot";
 import { SealMomentHost } from "@/components/SealMoment";
 import { EnvironmentController } from "@/components/EnvironmentController";
 import { MascotHost } from "@/components/mascot/MascotHost";
+import { MascotErrorBoundary } from "@/components/mascot/MascotErrorBoundary";
 import "./globals.css";
 import "./button.css";
 import "./modal.css";
@@ -100,7 +101,9 @@ export default function RootLayout({
                 <div className="app-shell">
                   <RoomEnter>{children}</RoomEnter>
                 </div>
-                <MascotHost />
+                <MascotErrorBoundary>
+                  <MascotHost />
+                </MascotErrorBoundary>
                 <AIPanel />
                 <CommandPalette />
                 <SessionTools />

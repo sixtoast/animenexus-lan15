@@ -9,6 +9,7 @@ import { ContextBridge } from "./ContextBridge";
 import { ThoughtBubble } from "./ThoughtBubble";
 import { UiTheatreBridge } from "./UiTheatreBridge";
 import { MemoryBoot } from "./MemoryBoot";
+import { MascotErrorBoundary } from "./MascotErrorBoundary";
 
 const LiveTerrain = dynamic(
   () => import("./LiveTerrain").then((m) => m.LiveTerrain),
@@ -105,7 +106,7 @@ export function MascotHost() {
         title="Show companion"
         aria-label="Show companion"
       >
-        🕯️
+        \uD83D\uDD6F\uFE0F
       </button>
     );
   }
@@ -113,7 +114,7 @@ export function MascotHost() {
   const pause = hiddenTab;
 
   return (
-    <>
+    <MascotErrorBoundary>
       <MemoryBoot />
       <UiAwareness />
       <ContextBridge />
@@ -123,9 +124,7 @@ export function MascotHost() {
       ) : null}
       <ThoughtBubble />
       <div
-        className={
-          "mascot-dock" + (modalOpen ? " mascot-dock--soft" : "")
-        }
+        className={"mascot-dock" + (modalOpen ? " mascot-dock--soft" : "")}
         role="complementary"
         aria-label="Companion home"
       >
@@ -146,6 +145,6 @@ export function MascotHost() {
           Hide
         </button>
       </div>
-    </>
+    </MascotErrorBoundary>
   );
 }
