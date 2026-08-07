@@ -1,20 +1,30 @@
 /**
  * Apply a Decision to the live store (side effects only).
- * Lazy-loads the store to avoid a circular import with store.ts.
+ * Takes a getStore callback so this module never imports store.ts
+ * (avoids circular dependency crashes on the client).
  */
 
 import type { Decision } from "./decision";
+import type { MascotEmotions } from "./types";
+import type { MascotGoal } from "./behaviour";
+import type { AnimRequest } from "./anim-machine";
 
-export function executeDecision(d: Decision) {
-  // Dynamic import path would be async; use require-style lazy getter instead.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { useMascotStore } = require("./store") as typeof import("./store");
-  const store = useMascotStore.getState();
+export type MascotStoreSlice = {
+  bumpEmotion: (key: keyof MascotEmotions, delta: number) => void;
+  applyGoal: (goal: MascotGoal) => void;
+  requestAnim: (req: AnimRequest) => boolean;
+};
+
+export function executeDecision(
+  d: Decision,
+  getStore: () => MascotStoreSlice,
+) {
+  const store = getStore();
   const { plan, goal, seekUi } = d;
 
   for (const [k, v] of Object.entries(plan.emotionDeltas)) {
     if (typeof v === "number") {
-      store.bumpEmotion(k as keyof typeof store.emotions, v);
+      store.bumpEmotion(k as keyof MascotEmotions, v);
     }
   }
 
@@ -30,11 +40,11 @@ export function executeDecision(d: Decision) {
     });
   }
   if (plan.follow) {
+    const follow = plan.follow;
     window.setTimeout(() => {
-      const { useMascotStore: s } = require("./store") as typeof import("./store");
-      s.getState().requestAnim({
-        anim: plan.follow!.anim,
-        holdMs: plan.follow!.holdMs || undefined,
+      getStore().requestAnim({
+        anim: follow.anim,
+        holdMs: follow.holdMs || undefined,
         force: true,
       });
     }, plan.holdMs || 300);
