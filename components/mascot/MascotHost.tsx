@@ -10,6 +10,7 @@ import { ThoughtBubble } from "./ThoughtBubble";
 import { UiTheatreBridge } from "./UiTheatreBridge";
 import { MemoryBoot } from "./MemoryBoot";
 import { MascotErrorBoundary } from "./MascotErrorBoundary";
+import { LanternSprite } from "./LanternSprite";
 
 const LiveTerrain = dynamic(
   () => import("./LiveTerrain").then((m) => m.LiveTerrain),
@@ -25,14 +26,16 @@ export function MascotHost() {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [lowPower, setLowPower] = useState(false);
+  const [webglOk, setWebglOk] = useState(true);
 
   useEffect(() => {
     setReady(true);
     try {
       const saved = localStorage.getItem("anime_nexus_mascot");
       if (saved === "off") setEnabled(false);
+      else setEnabled(true);
     } catch {
-      /* ignore */
+      setEnabled(true);
     }
     setReducedMotion(
       window.matchMedia("(prefers-reduced-motion: reduce)").matches,
@@ -42,6 +45,15 @@ export function MascotHost() {
         (navigator as Navigator & { connection?: { saveData?: boolean } })
           .connection?.saveData === true,
     );
+    // Probe WebGL — if missing, skip R3F canvas (2D sprite still works)
+    try {
+      const c = document.createElement("canvas");
+      const gl =
+        c.getContext("webgl") || c.getContext("experimental-webgl");
+      setWebglOk(!!gl);
+    } catch {
+      setWebglOk(false);
+    }
   }, [setEnabled]);
 
   useEffect(() => {
@@ -66,14 +78,22 @@ export function MascotHost() {
 
   useEffect(() => {
     if (!enabled) return;
-    mascotNotify({ type: "route", path: pathname });
+    try {
+      mascotNotify({ type: "route", path: pathname });
+    } catch {
+      /* */
+    }
   }, [pathname, enabled]);
 
   useEffect(() => {
     const onSeal = (e: Event) => {
       const d = (e as CustomEvent).detail as { mode?: string } | undefined;
-      if (d?.mode === "completed") mascotNotify({ type: "complete" });
-      else mascotNotify({ type: "seal" });
+      try {
+        if (d?.mode === "completed") mascotNotify({ type: "complete" });
+        else mascotNotify({ type: "seal" });
+      } catch {
+        /* */
+      }
     };
     window.addEventListener("animenexus:seal", onSeal);
     return () => window.removeEventListener("animenexus:seal", onSeal);
@@ -82,47 +102,67 @@ export function MascotHost() {
   useEffect(() => {
     if (!enabled || hiddenTab) return;
     const id = window.setInterval(() => {
-      const last = useMascotStore.getState().lastInteractionAt;
-      if (Date.now() - last > 45_000) {
-        mascotNotify({ type: "idle-long" });
+      try {
+        const last = useMascotStore.getState().lastInteractionAt;
+        if (Date.now() - last > 45_000) {
+          mascotNotify({ type: "idle-long" });
+        }
+      } catch {
+        /* */
       }
     }, 20_000);
     return () => window.clearInterval(id);
   }, [enabled, hiddenTab]);
 
-  if (!ready || !enabled) {
+  const showCompanion = () => {
+    setEnabled(true);
+    try {
+      localStorage.setItem("anime_nexus_mascot", "on");
+    } catch {
+      /* */
+    }
+  };
+
+  if (!ready) return null;
+
+  if (!enabled) {
     return (
       <button
         type="button"
         className="mascot-enable"
-        onClick={() => {
-          setEnabled(true);
-          try {
-            localStorage.setItem("anime_nexus_mascot", "on");
-          } catch {
-            /* */
-          }
-        }}
+        onClick={showCompanion}
         title="Show companion"
         aria-label="Show companion"
       >
-        \uD83D\uDD6F\uFE0F
+        🕯️
       </button>
     );
   }
 
   const pause = hiddenTab;
+  const use3d = webglOk && !reducedMotion && !lowPower && !pause;
 
   return (
-    <MascotErrorBoundary>
+    <>
       <MemoryBoot />
-      <UiAwareness />
-      <ContextBridge />
-      <UiTheatreBridge />
-      {!pause ? (
-        <LiveTerrain reducedMotion={reducedMotion} lowPower={lowPower} />
+      <MascotErrorBoundary fallback={null}>
+        <UiAwareness />
+        <ContextBridge />
+        <UiTheatreBridge />
+      </MascotErrorBoundary>
+
+      {/* Always-visible HTML lantern — primary UX */}
+      <LanternSprite />
+
+      {/* Optional 3D layer — isolated so failures don't hide the 2D sprite */}
+      {use3d ? (
+        <MascotErrorBoundary fallback={null}>
+          <LiveTerrain reducedMotion={false} lowPower={false} />
+        </MascotErrorBoundary>
       ) : null}
+
       <ThoughtBubble />
+
       <div
         className={"mascot-dock" + (modalOpen ? " mascot-dock--soft" : "")}
         role="complementary"
@@ -145,6 +185,6 @@ export function MascotHost() {
           Hide
         </button>
       </div>
-    </MascotErrorBoundary>
+    </>
   );
 }

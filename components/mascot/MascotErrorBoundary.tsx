@@ -2,16 +2,17 @@
 
 import { Component, type ReactNode } from "react";
 
-type Props = { children: ReactNode };
-type State = { hasError: boolean };
+type Props = { children: ReactNode; fallback?: ReactNode };
+type State = { hasError: boolean; key: number };
 
 /**
- * Isolates mascot crashes so the rest of the app keeps working (Sprint M10).
+ * Isolates companion crashes so the rest of the app keeps working.
+ * Retry remounts children with a new key.
  */
 export class MascotErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false };
+  state: State = { hasError: false, key: 0 };
 
-  static getDerivedStateFromError(): State {
+  static getDerivedStateFromError(): Partial<State> {
     return { hasError: true };
   }
 
@@ -21,20 +22,25 @@ export class MascotErrorBoundary extends Component<Props, State> {
     }
   }
 
+  retry = () => {
+    this.setState((s) => ({ hasError: false, key: s.key + 1 }));
+  };
+
   render() {
     if (this.state.hasError) {
+      if (this.props.fallback) return this.props.fallback;
       return (
         <button
           type="button"
           className="mascot-enable"
-          onClick={() => this.setState({ hasError: false })}
+          onClick={this.retry}
           title="Retry companion"
           aria-label="Retry companion"
         >
-          \uD83E\uDD94
+          🕯️
         </button>
       );
     }
-    return this.props.children;
+    return <div key={this.state.key}>{this.props.children}</div>;
   }
 }

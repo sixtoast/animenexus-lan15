@@ -1,9 +1,9 @@
-/* Companion: corner home + occasional climbs + thoughts */
+/* Companion: always-visible 2D lantern + optional 3D terrain */
 
 .live-terrain {
   position: fixed;
   inset: 0;
-  z-index: 35;
+  z-index: 34;
   pointer-events: none;
 }
 
@@ -35,11 +35,133 @@
   box-shadow: 0 0 0 2px rgba(240, 160, 144, 0.35);
 }
 
+/* —— Always-visible HTML lantern —— */
+.lantern-sprite {
+  position: fixed;
+  z-index: 55;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(118px, calc(env(safe-area-inset-bottom) + 108px));
+  width: 64px;
+  height: 72px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.45));
+}
+
+.lantern-sprite-body {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.lantern-sprite-head {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  width: 36px;
+  height: 36px;
+  margin-left: -18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffe8e0, #e8a598 70%);
+  box-shadow: inset 0 -4px 8px rgba(180, 80, 60, 0.2);
+}
+
+.lantern-sprite-tip {
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: #f0a090;
+  box-shadow: 0 0 12px 4px rgba(240, 160, 144, 0.7);
+  animation: lantern-pulse 2.4s ease-in-out infinite;
+}
+
+.lantern-sprite-eye {
+  position: absolute;
+  top: 22px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #2a1810;
+}
+
+.lantern-sprite-eye--l {
+  left: 50%;
+  margin-left: -10px;
+}
+
+.lantern-sprite-eye--r {
+  left: 50%;
+  margin-left: 5px;
+}
+
+.lantern-sprite-glow {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  width: 48px;
+  height: 48px;
+  margin-left: -24px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(240, 160, 144, 0.35),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* body under head */
+.lantern-sprite-body::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 40px;
+  width: 28px;
+  height: 26px;
+  margin-left: -14px;
+  border-radius: 12px 12px 16px 16px;
+  background: linear-gradient(180deg, #e8a598, #d89080);
+}
+
+.lantern-sprite:active .lantern-sprite-head {
+  transform: scale(1.08);
+}
+
+.lantern-sprite--happy .lantern-sprite-tip,
+.lantern-sprite--wave .lantern-sprite-tip {
+  box-shadow: 0 0 18px 6px rgba(240, 200, 144, 0.9);
+}
+
+.lantern-sprite--sleep .lantern-sprite-eye {
+  height: 2px;
+  top: 24px;
+}
+
+@keyframes lantern-pulse {
+  0%,
+  100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
 .mascot-thought {
   position: fixed;
-  z-index: 41;
+  z-index: 56;
   right: max(12px, env(safe-area-inset-right));
-  bottom: max(112px, calc(env(safe-area-inset-bottom) + 100px));
+  bottom: max(200px, calc(env(safe-area-inset-bottom) + 188px));
   max-width: min(220px, 70vw);
   padding: 8px 12px;
   border-radius: 14px 14px 4px 14px;
@@ -68,7 +190,7 @@
 
 .mascot-dock {
   position: fixed;
-  z-index: 40;
+  z-index: 55;
   right: max(10px, env(safe-area-inset-right));
   bottom: max(64px, calc(env(safe-area-inset-bottom) + 56px));
   display: flex;
@@ -77,10 +199,10 @@
   padding: 6px 10px;
   border-radius: 999px;
   border: 1px solid rgba(240, 160, 144, 0.28);
-  background: rgba(18, 14, 12, 0.82);
+  background: rgba(18, 14, 12, 0.9);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   pointer-events: auto;
   transition: opacity 0.25s ease;
 }
@@ -114,33 +236,37 @@
 
 .mascot-enable {
   position: fixed;
-  z-index: 40;
+  z-index: 55;
   right: max(12px, env(safe-area-inset-right));
   bottom: max(72px, calc(env(safe-area-inset-bottom) + 64px));
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  border: 1px solid rgba(240, 160, 144, 0.3);
-  background: rgba(18, 14, 12, 0.85);
+  border: 1px solid rgba(240, 160, 144, 0.35);
+  background: rgba(18, 14, 12, 0.92);
   backdrop-filter: blur(10px);
   cursor: pointer;
-  font-size: 1.1rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  font-size: 1.2rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   pointer-events: auto;
+}
+
+.mascot-enable:hover {
+  border-color: rgba(240, 160, 144, 0.6);
+  transform: scale(1.05);
 }
 
 @media (max-width: 480px) {
   .mascot-dock {
     bottom: max(60px, calc(env(safe-area-inset-bottom) + 52px));
   }
-  .mascot-drag-handle {
+  .lantern-sprite {
+    bottom: max(108px, calc(env(safe-area-inset-bottom) + 96px));
     width: 56px;
-    height: 56px;
-    margin-left: -28px;
-    margin-top: -28px;
+    height: 64px;
   }
   .mascot-thought {
-    bottom: max(104px, calc(env(safe-area-inset-bottom) + 92px));
+    bottom: max(180px, calc(env(safe-area-inset-bottom) + 168px));
   }
 }
 
@@ -148,6 +274,9 @@
   .live-terrain,
   .mascot-drag-handle {
     display: none;
+  }
+  .lantern-sprite-tip {
+    animation: none;
   }
   .mascot-thought {
     animation: none;
