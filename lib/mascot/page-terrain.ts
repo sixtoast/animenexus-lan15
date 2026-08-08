@@ -37,10 +37,7 @@ export function screenToWorld(
   return { x, y };
 }
 
-/**
- * Closest platform to a world point.
- * Exported here so terrain-physics and scene code can import from one place.
- */
+/** Closest platform to a world point. */
 export function nearestPlatform(
   platforms: TerrainPlatform[],
   x: number,
@@ -62,11 +59,6 @@ export function nearestPlatform(
   return best;
 }
 
-/**
- * Accurate platform from a DOMRect.
- * Uses full width/height in world units (not heavily shrunk).
- * Small padding only to avoid edge-bleed into neighboring widgets.
- */
 export function rectToPlatformFromDom(
   id: string,
   type: string,
@@ -76,7 +68,8 @@ export function rectToPlatformFromDom(
   const vw = window.innerWidth || 1;
   const vh = window.innerHeight || 1;
   if (r.width < 10 || r.height < 10) return null;
-  if (r.bottom < 4 || r.top > vh - 4 || r.right < 4 || r.left > vw - 4) return null;
+  if (r.bottom < 4 || r.top > vh - 4 || r.right < 4 || r.left > vw - 4)
+    return null;
 
   const aspect = vw / vh;
   const left = Math.max(0, r.left);
@@ -141,11 +134,16 @@ const SURFACE_SELECTOR = [
 function inferType(el: Element): LandmarkType {
   if (el.getAttribute("role") === "dialog" || el.classList.contains("modal"))
     return "modal";
-  if (el.classList.contains("anime-card") || el.classList.contains("home-rail-card"))
+  if (
+    el.classList.contains("anime-card") ||
+    el.classList.contains("home-rail-card")
+  )
     return "card";
-  if (el.tagName === "NAV" || el.getAttribute("role") === "navigation") return "nav";
+  if (el.tagName === "NAV" || el.getAttribute("role") === "navigation")
+    return "nav";
   if (el.classList.contains("btn") || el.tagName === "BUTTON") return "button";
-  if (el.classList.contains("hero") || el.classList.contains("home-hero")) return "hero";
+  if (el.classList.contains("hero") || el.classList.contains("home-hero"))
+    return "hero";
   if (el.classList.contains("ai-panel") || el.classList.contains("cmdk-root"))
     return "modal";
   return "generic";
@@ -173,7 +171,8 @@ export function buildTerrain(): TerrainPlatform[] {
 
   document.querySelectorAll(SURFACE_SELECTOR).forEach((el, i) => {
     const type =
-      (el.getAttribute("data-mascot-landmark") as LandmarkType) || inferType(el);
+      (el.getAttribute("data-mascot-landmark") as LandmarkType) ||
+      inferType(el);
     const id =
       el.getAttribute("data-mascot-id") || el.id || `surface-${type}-${i}`;
     const priority = Number(
@@ -213,16 +212,19 @@ export function buildTerrain(): TerrainPlatform[] {
     });
 
   const aspect = window.innerWidth / (window.innerHeight || 1);
+  const homeX = Math.min(aspect * 0.78, 1.35);
+
+  // Home pad — bottom-right, always in frustum
   out.push({
     id: "home-corner",
     type: "home",
-    x: aspect * 0.72,
-    y: -0.72,
-    hw: 0.22,
-    hh: 0.1,
+    x: homeX,
+    y: -0.68,
+    hw: 0.28,
+    hh: 0.12,
     priority: 1,
-    clientX: window.innerWidth - 80,
-    clientY: window.innerHeight - 100,
+    clientX: window.innerWidth - 72,
+    clientY: window.innerHeight - 120,
   });
 
   out.push({

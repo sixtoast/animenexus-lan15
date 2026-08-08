@@ -1,9 +1,9 @@
-/* Companion: always-visible 2D lantern + optional 3D terrain */
+/* Companion: 3D LiveTerrain primary + 2D fallback + dock */
 
 .live-terrain {
   position: fixed;
   inset: 0;
-  z-index: 34;
+  z-index: 45;
   pointer-events: none;
 }
 
@@ -11,15 +11,16 @@
   width: 100% !important;
   height: 100% !important;
   pointer-events: none !important;
+  display: block;
 }
 
 .mascot-drag-handle {
   position: fixed;
-  z-index: 36;
-  width: 52px;
-  height: 52px;
-  margin-left: -26px;
-  margin-top: -26px;
+  z-index: 48;
+  width: 64px;
+  height: 64px;
+  margin-left: -32px;
+  margin-top: -32px;
   border: none;
   border-radius: 50%;
   background: transparent;
@@ -31,14 +32,14 @@
 
 .mascot-drag-handle--active {
   cursor: grabbing;
-  background: rgba(240, 160, 144, 0.12);
-  box-shadow: 0 0 0 2px rgba(240, 160, 144, 0.35);
+  background: rgba(240, 160, 144, 0.15);
+  box-shadow: 0 0 0 2px rgba(240, 160, 144, 0.4);
 }
 
-/* —— Always-visible HTML lantern —— */
+/* 2D fallback — only shown when 3D not yet projecting */
 .lantern-sprite {
   position: fixed;
-  z-index: 55;
+  z-index: 46;
   right: max(14px, env(safe-area-inset-right));
   bottom: max(118px, calc(env(safe-area-inset-bottom) + 108px));
   width: 64px;
@@ -118,7 +119,6 @@
   pointer-events: none;
 }
 
-/* body under head */
 .lantern-sprite-body::after {
   content: "";
   position: absolute;
@@ -264,6 +264,12 @@
     bottom: max(108px, calc(env(safe-area-inset-bottom) + 96px));
     width: 56px;
     height: 64px;
+  }
+  .mascot-drag-handle {
+    width: 72px;
+    height: 72px;
+    margin-left: -36px;
+    margin-top: -36px;
   }
   .mascot-thought {
     bottom: max(180px, calc(env(safe-area-inset-bottom) + 168px));

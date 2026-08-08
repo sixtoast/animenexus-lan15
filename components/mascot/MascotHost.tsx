@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useMascotStore, mascotNotify } from "@/lib/mascot/store";
 import { UiAwareness } from "./UiAwareness";
@@ -27,6 +27,8 @@ export function MascotHost() {
   const [modalOpen, setModalOpen] = useState(false);
   const [lowPower, setLowPower] = useState(false);
   const [webglOk, setWebglOk] = useState(true);
+  const [terrainVisible, setTerrainVisible] = useState(false);
+  const [terrainFailed, setTerrainFailed] = useState(false);
 
   useEffect(() => {
     setReady(true);
@@ -40,16 +42,18 @@ export function MascotHost() {
     setReducedMotion(
       window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     );
+    // lowPower only tunes dpr / intervals — never disables 3D
     setLowPower(
       window.matchMedia("(max-width: 480px)").matches ||
         (navigator as Navigator & { connection?: { saveData?: boolean } })
           .connection?.saveData === true,
     );
-    // Probe WebGL — if missing, skip R3F canvas (2D sprite still works)
     try {
       const c = document.createElement("canvas");
       const gl =
-        c.getContext("webgl") || c.getContext("experimental-webgl");
+        c.getContext("webgl2") ||
+        c.getContext("webgl") ||
+        c.getContext("experimental-webgl");
       setWebglOk(!!gl);
     } catch {
       setWebglOk(false);
@@ -114,8 +118,13 @@ export function MascotHost() {
     return () => window.clearInterval(id);
   }, [enabled, hiddenTab]);
 
+  const onTerrainVisible = useCallback((v: boolean) => {
+    setTerrainVisible(v);
+  }, []);
+
   const showCompanion = () => {
     setEnabled(true);
+    setTerrainFailed(false);
     try {
       localStorage.setItem("anime_nexus_mascot", "on");
     } catch {
@@ -139,8 +148,10 @@ export function MascotHost() {
     );
   }
 
-  const pause = hiddenTab;
-  const use3d = webglOk && !reducedMotion && !lowPower && !pause;
+  // 3D is primary whenever WebGL works and motion is allowed
+  const use3d = webglOk && !reducedMotion && !hiddenTab && !terrainFailed;
+  // 2D sprite only as fallback when 3D isn't showing yet / failed
+  const show2dFallback = !use3d || !terrainVisible;
 
   return (
     <>
@@ -151,15 +162,21 @@ export function MascotHost() {
         <UiTheatreBridge />
       </MascotErrorBoundary>
 
-      {/* Always-visible HTML lantern — primary UX */}
-      <LanternSprite />
-
-      {/* Optional 3D layer — isolated so failures don't hide the 2D sprite */}
       {use3d ? (
-        <MascotErrorBoundary fallback={null}>
-          <LiveTerrain reducedMotion={false} lowPower={false} />
+        <MascotErrorBoundary
+          fallback={
+            <LanternSprite />
+          }
+        >
+          <LiveTerrain
+            reducedMotion={false}
+            lowPower={lowPower}
+            onVisibleChange={onTerrainVisible}
+          />
         </MascotErrorBoundary>
       ) : null}
+
+      {show2dFallback ? <LanternSprite /> : null}
 
       <ThoughtBubble />
 

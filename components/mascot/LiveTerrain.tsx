@@ -1,7 +1,8 @@
 "use client";
 
 /**
- * Corner home + UI theatre climbs (Sprint 4).
+ * Full-viewport 3D companion (R3F).
+ * Home pad bottom-right · climbs DOM platforms · drag via HTML handle.
  */
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -37,6 +38,15 @@ type Phase = "home" | "outing" | "returning" | "perform";
 
 export type MascotScreenPos = { x: number; y: number; visible: boolean };
 
+/** Stable bottom-right home in world units for current viewport aspect. */
+function homeWorld(): { x: number; y: number } {
+  if (typeof window === "undefined") return { x: 0.95, y: -0.7 };
+  const aspect = window.innerWidth / (window.innerHeight || 1);
+  // Keep inside frustum (camera z=3, fov~50 → half-width ≈ aspect * 1.4)
+  const maxX = Math.min(aspect * 0.78, 1.35);
+  return { x: maxX, y: -0.68 };
+}
+
 function CameraFit() {
   const { camera, size } = useThree();
   useEffect(() => {
@@ -44,10 +54,68 @@ function CameraFit() {
     cam.position.set(0, 0, 3.0);
     cam.lookAt(0, 0, 0);
     cam.fov = 50;
-    cam.aspect = size.width / size.height;
+    cam.near = 0.1;
+    cam.far = 20;
+    cam.aspect = size.width / Math.max(size.height, 1);
     cam.updateProjectionMatrix();
   }, [camera, size]);
   return null;
+}
+
+function ChibiMesh({
+  tipRef,
+  eyeL,
+  eyeR,
+  headRef,
+}: {
+  tipRef: React.RefObject<THREE.Mesh | null>;
+  eyeL: React.RefObject<THREE.Mesh | null>;
+  eyeR: React.RefObject<THREE.Mesh | null>;
+  headRef: React.RefObject<THREE.Group | null>;
+}) {
+  return (
+    <group>
+      {/* body */}
+      <mesh position={[0, -0.12, 0]} castShadow={false}>
+        <capsuleGeometry args={[0.11, 0.14, 6, 12]} />
+        <meshStandardMaterial color="#e8a598" roughness={0.4} metalness={0.05} />
+      </mesh>
+      {/* head */}
+      <group ref={headRef} position={[0, 0.16, 0]}>
+        <mesh>
+          <sphereGeometry args={[0.17, 24, 24]} />
+          <meshStandardMaterial color="#f5d0c8" roughness={0.35} />
+        </mesh>
+        {/* eyes — face +Z toward camera */}
+        <mesh ref={eyeL} position={[-0.05, 0.02, 0.14]}>
+          <sphereGeometry args={[0.028, 12, 12]} />
+          <meshStandardMaterial color="#2a1810" />
+        </mesh>
+        <mesh ref={eyeR} position={[0.05, 0.02, 0.14]}>
+          <sphereGeometry args={[0.028, 12, 12]} />
+          <meshStandardMaterial color="#2a1810" />
+        </mesh>
+        {/* blush */}
+        <mesh position={[-0.085, -0.02, 0.12]}>
+          <sphereGeometry args={[0.03, 8, 8]} />
+          <meshStandardMaterial color="#f0a090" transparent opacity={0.55} />
+        </mesh>
+        <mesh position={[0.085, -0.02, 0.12]}>
+          <sphereGeometry args={[0.03, 8, 8]} />
+          <meshStandardMaterial color="#f0a090" transparent opacity={0.55} />
+        </mesh>
+        {/* lantern tip */}
+        <mesh ref={tipRef} position={[0, 0.14, 0]}>
+          <sphereGeometry args={[0.045, 12, 12]} />
+          <meshStandardMaterial
+            color="#f0a090"
+            emissive="#f0a090"
+            emissiveIntensity={0.85}
+          />
+        </mesh>
+      </group>
+    </group>
+  );
 }
 
 function Actor({
@@ -74,11 +142,14 @@ function Actor({
   const queue = useRef<TerrainPlatform[]>([]);
   const phase = useRef<Phase>("home");
   const mood = useRef(worldMood());
-  const nextOuting = useRef(Date.now() + outingIntervalMs(mood.current, lowPower));
+  const nextOuting = useRef(
+    Date.now() + outingIntervalMs(mood.current, lowPower),
+  );
   const homeUntil = useRef(0);
   const performUntil = useRef(0);
   const beat = useRef<TheatreBeat | null>(null);
   const facing = useRef(0);
+  const seeded = useRef(false);
   const emotions = useMascotStore((s) => s.emotions);
   const setAnim = useMascotStore((s) => s.setAnim);
   const requestAnim = useMascotStore((s) => s.requestAnim);
@@ -86,14 +157,34 @@ function Actor({
   const lookBias = useMascotStore((s) => s.lookBias);
   const { camera, size } = useThree();
 
+  // Seed body immediately — never wait for DOM platforms
   useEffect(() => {
+    if (seeded.current && bodyRef.current) return;
     const home = getHomePlatform(platforms);
     if (home) {
       bodyRef.current = snapToPlatform(createTerrainBody(), home);
-    } else if (!bodyRef.current) {
-      bodyRef.current = createTerrainBody(0.9, -0.7);
+    } else {
+      const h = homeWorld();
+      bodyRef.current = createTerrainBody(h.x, h.y);
+      bodyRef.current.onGround = true;
+      bodyRef.current.platformId = "home-corner";
     }
-  }, [platforms.length, bodyRef]);
+    seeded.current = true;
+  }, [platforms, bodyRef]);
+
+  // Re-snap to home platform once it appears
+  useEffect(() => {
+    const home = getHomePlatform(platforms);
+    if (!home || !bodyRef.current) return;
+    if (
+      bodyRef.current.platformId === "home-corner" ||
+      bodyRef.current.platformId === null
+    ) {
+      if (phase.current === "home" && queue.current.length === 0) {
+        bodyRef.current = snapToPlatform(bodyRef.current, home);
+      }
+    }
+  }, [platforms, bodyRef]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -103,12 +194,10 @@ function Actor({
     return () => window.clearInterval(id);
   }, []);
 
-  // Modal / forced theatre beats
   useEffect(() => {
     const onTheatre = (e: Event) => {
       const b = (e as CustomEvent).detail as TheatreBeat;
       beat.current = b;
-      // Prefer modal platform if any
       const modal = platforms.find((p) => p.type === "modal");
       const dest =
         modal ||
@@ -128,7 +217,8 @@ function Actor({
       }
     };
     window.addEventListener("animenexus:mascot-theatre", onTheatre);
-    return () => window.removeEventListener("animenexus:mascot-theatre", onTheatre);
+    return () =>
+      window.removeEventListener("animenexus:mascot-theatre", onTheatre);
   }, [platforms, setAnim, bodyRef]);
 
   useFrame((state, delta) => {
@@ -137,12 +227,22 @@ function Actor({
     const motion = motionFromEmotions(emotions);
     const g = root.current;
     const p = pose.current;
-    if (!g || !p || !bodyRef.current || platforms.length < 1) return;
+
+    // Always ensure a body exists
+    if (!bodyRef.current) {
+      const h = homeWorld();
+      bodyRef.current = createTerrainBody(h.x, h.y);
+      bodyRef.current.onGround = true;
+      bodyRef.current.platformId = "home-corner";
+    }
+
+    if (!g || !p) return;
 
     const body = bodyRef.current;
-    const home = getHomePlatform(platforms);
+    const home = getHomePlatform(platforms) ?? null;
     const now = Date.now();
     const m = mood.current;
+    const hasTerrain = platforms.length > 0;
 
     if (dragging && dragWorld) {
       body.x = dragWorld.x;
@@ -155,8 +255,9 @@ function Actor({
       phase.current = "outing";
       setAnim("surprised");
     } else if (phase.current === "perform" && now < performUntil.current) {
-      // Hold performance pose — light idle physics
-      bodyRef.current = stepTerrain(bodyRef.current, platforms, dt);
+      if (hasTerrain) {
+        bodyRef.current = stepTerrain(bodyRef.current, platforms, dt);
+      }
     } else {
       if (phase.current === "perform" && now >= performUntil.current) {
         phase.current = "outing";
@@ -167,6 +268,7 @@ function Actor({
       const modalOpen = platforms.some((x) => x.type === "modal");
 
       if (
+        hasTerrain &&
         phase.current === "home" &&
         now > nextOuting.current &&
         now > homeUntil.current &&
@@ -213,13 +315,13 @@ function Actor({
       }
 
       if (
+        hasTerrain &&
         (phase.current === "outing" || phase.current === "perform") &&
         queue.current.length === 0 &&
         body.onGround &&
         home
       ) {
         if (body.platformId !== "home-corner") {
-          // Arrive → perform theatre beat
           if (beat.current && phase.current === "outing") {
             const tb = beat.current;
             const at = platforms.find((x) => x.id === body.platformId);
@@ -294,7 +396,7 @@ function Actor({
             bodyRef.current = jumpToward(bodyRef.current, nxt);
             setAnim("jump");
           } else if (beat.current && phase.current === "outing") {
-            // will enter perform next frame
+            // perform next frame
           } else {
             setAnim("idle");
             if (phase.current === "outing") {
@@ -304,7 +406,7 @@ function Actor({
         }
       }
 
-      if (phase.current !== "perform") {
+      if (phase.current !== "perform" && hasTerrain) {
         bodyRef.current = stepTerrain(bodyRef.current, platforms, dt);
       }
     }
@@ -327,15 +429,15 @@ function Actor({
                 : "home",
     });
 
+    // Face camera by default (yaw 0); slight turn when moving
     let targetYaw = 0;
-    if (Math.abs(b.vx) > 0.04) targetYaw = b.vx > 0 ? -0.35 : 0.35;
-    if (dragging) targetYaw = 0;
-    // Sit/lean poses face camera more
-    if (phase.current === "perform") targetYaw = 0;
-    facing.current = THREE.MathUtils.lerp(facing.current, targetYaw, 0.12);
+    if (Math.abs(b.vx) > 0.04) targetYaw = b.vx > 0 ? -0.28 : 0.28;
+    if (dragging || phase.current === "perform" || phase.current === "home") {
+      targetYaw = 0;
+    }
+    facing.current = THREE.MathUtils.lerp(facing.current, targetYaw, 0.14);
     g.rotation.y = facing.current;
 
-    // Sit-edge: slight lean
     let leanZ = 0;
     if (phase.current === "perform" && beat.current?.move === "sit-edge") {
       leanZ = 0.08;
@@ -344,19 +446,21 @@ function Actor({
       leanZ = 0.12;
     }
 
-    g.position.set(b.x, b.y + 0.08 + proc.bob, 0.3 + leanZ);
-    p.scale.set(proc.scaleX * 0.5, proc.scaleY * 0.5, 0.5);
+    g.position.set(b.x, b.y + 0.1 + proc.bob, 0.35 + leanZ);
+    // Larger figure so it's obvious on mobile + desktop
+    const s = 0.95;
+    p.scale.set(proc.scaleX * s, proc.scaleY * s, s);
 
     if (head.current) {
       head.current.rotation.x = THREE.MathUtils.lerp(
         head.current.rotation.x,
         proc.headPitch,
-        0.1,
+        0.12,
       );
       head.current.rotation.y = THREE.MathUtils.lerp(
         head.current.rotation.y,
         proc.headYaw,
-        0.1,
+        0.12,
       );
     }
 
@@ -371,52 +475,25 @@ function Actor({
       mat.emissiveIntensity = proc.tipPulse * m.emissive;
     }
 
-    const world = new THREE.Vector3(b.x, b.y + 0.12, 0.3);
+    // Project to screen for drag handle
+    const world = new THREE.Vector3(b.x, b.y + 0.15, 0.35);
     world.project(camera);
-    onScreenPos({
-      x: (world.x * 0.5 + 0.5) * size.width,
-      y: (-world.y * 0.5 + 0.5) * size.height,
-      visible: world.z < 1 && world.z > -1,
-    });
+    const sx = (world.x * 0.5 + 0.5) * size.width;
+    const sy = (-world.y * 0.5 + 0.5) * size.height;
+    const inView =
+      world.z < 1 &&
+      world.z > -1 &&
+      sx > -40 &&
+      sx < size.width + 40 &&
+      sy > -40 &&
+      sy < size.height + 40;
+    onScreenPos({ x: sx, y: sy, visible: inView });
   });
 
   return (
     <group ref={root}>
       <group ref={pose}>
-        <mesh position={[0, -0.1, 0]}>
-          <capsuleGeometry args={[0.09, 0.11, 4, 8]} />
-          <meshStandardMaterial color="#e8a598" roughness={0.45} />
-        </mesh>
-        <group ref={head} position={[0, 0.13, 0]}>
-          <mesh>
-            <sphereGeometry args={[0.14, 16, 16]} />
-            <meshStandardMaterial color="#f5d0c8" roughness={0.4} />
-          </mesh>
-          <mesh ref={eyeL} position={[-0.045, 0.01, 0.12]}>
-            <sphereGeometry args={[0.022, 10, 10]} />
-            <meshStandardMaterial color="#2a1810" />
-          </mesh>
-          <mesh ref={eyeR} position={[0.045, 0.01, 0.12]}>
-            <sphereGeometry args={[0.022, 10, 10]} />
-            <meshStandardMaterial color="#2a1810" />
-          </mesh>
-          <mesh position={[-0.07, -0.02, 0.1]}>
-            <sphereGeometry args={[0.025, 8, 8]} />
-            <meshStandardMaterial color="#f0a090" transparent opacity={0.5} />
-          </mesh>
-          <mesh position={[0.07, -0.02, 0.1]}>
-            <sphereGeometry args={[0.025, 8, 8]} />
-            <meshStandardMaterial color="#f0a090" transparent opacity={0.5} />
-          </mesh>
-          <mesh ref={tip} position={[0, 0.11, 0]}>
-            <sphereGeometry args={[0.035, 8, 8]} />
-            <meshStandardMaterial
-              color="#f0a090"
-              emissive="#f0a090"
-              emissiveIntensity={0.55}
-            />
-          </mesh>
-        </group>
+        <ChibiMesh tipRef={tip} eyeL={eyeL} eyeR={eyeR} headRef={head} />
       </group>
     </group>
   );
@@ -425,9 +502,14 @@ function Actor({
 type Props = {
   reducedMotion?: boolean;
   lowPower?: boolean;
+  onVisibleChange?: (visible: boolean) => void;
 };
 
-export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
+export function LiveTerrain({
+  reducedMotion,
+  lowPower = false,
+  onVisibleChange,
+}: Props) {
   const [platforms, setPlatforms] = useState<TerrainPlatform[]>([]);
   const [screenPos, setScreenPos] = useState<MascotScreenPos>({
     x: 0,
@@ -442,15 +524,27 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
   const dragMoved = useRef(false);
 
   useEffect(() => {
-    const rebuild = () => setPlatforms(buildTerrain());
-    const t0 = window.setTimeout(rebuild, 80);
-    const t1 = window.setTimeout(rebuild, 400);
-    const id = window.setInterval(rebuild, lowPower ? 1800 : 1100);
+    onVisibleChange?.(screenPos.visible);
+  }, [screenPos.visible, onVisibleChange]);
+
+  useEffect(() => {
+    const rebuild = () => {
+      try {
+        setPlatforms(buildTerrain());
+      } catch (err) {
+        console.warn("[Lantern-ko] terrain rebuild failed", err);
+      }
+    };
+    const t0 = window.setTimeout(rebuild, 50);
+    const t1 = window.setTimeout(rebuild, 300);
+    const t2 = window.setTimeout(rebuild, 1000);
+    const id = window.setInterval(rebuild, lowPower ? 1600 : 900);
     window.addEventListener("resize", rebuild);
     window.addEventListener("scroll", rebuild, { passive: true });
     return () => {
       window.clearTimeout(t0);
       window.clearTimeout(t1);
+      window.clearTimeout(t2);
       window.clearInterval(id);
       window.removeEventListener("resize", rebuild);
       window.removeEventListener("scroll", rebuild);
@@ -488,7 +582,7 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
         return;
       }
       let best: TerrainPlatform | null = null;
-      let bestD = 0.35;
+      let bestD = 0.4;
       for (const p of platforms) {
         if (p.type === "floor") continue;
         const d = Math.hypot(w.x - p.x, w.y - (p.y + p.hh));
@@ -517,20 +611,31 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
       <div className="live-terrain" aria-hidden>
         <Canvas
           className="live-terrain-canvas"
-          dpr={lowPower ? [1, 1] : [1, 1.4]}
+          dpr={lowPower ? [1, 1.25] : [1, 1.75]}
           gl={{
             alpha: true,
-            antialias: !lowPower,
-            powerPreference: "low-power",
+            antialias: true,
+            powerPreference: lowPower ? "low-power" : "default",
             failIfMajorPerformanceCaveat: false,
+            premultipliedAlpha: true,
           }}
           frameloop="always"
-          camera={{ position: [0, 0, 3.0], fov: 50 }}
+          camera={{ position: [0, 0, 3.0], fov: 50, near: 0.1, far: 20 }}
           style={{ pointerEvents: "none" }}
+          onCreated={({ gl }) => {
+            gl.setClearColor(0x000000, 0);
+          }}
         >
           <CameraFit />
-          <ambientLight intensity={0.85} />
-          <directionalLight position={[2, 3, 4]} intensity={0.65} />
+          <ambientLight intensity={1.05} />
+          <directionalLight position={[2.5, 3.5, 4]} intensity={0.9} />
+          <directionalLight position={[-2, 1, 2]} intensity={0.35} />
+          <pointLight
+            position={[0.9, -0.4, 1.2]}
+            intensity={0.55}
+            distance={4}
+            color="#f0a090"
+          />
           <Actor
             platforms={platforms}
             lowPower={lowPower}
