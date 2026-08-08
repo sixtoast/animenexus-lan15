@@ -1,9 +1,7 @@
 "use client";
 
 /**
- * 3D companion — idle locked to home pad (visible boundary).
- * No auto-climb. Scroll cannot snap them onto UI.
- * Leave pad only via drag or explicit theatre events.
+ * 3D companion — calm in home pad; freer, hoppier locomotion when out.
  */
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -29,6 +27,7 @@ import {
   snapToPlatform,
   stepTerrain,
   steerTerrain,
+  freeHop,
   type TerrainBody,
 } from "@/lib/mascot/terrain-physics";
 import { useMascotStore } from "@/lib/mascot/store";
@@ -69,7 +68,6 @@ function OrthoCamera() {
   return null;
 }
 
-/** Visible home pad boundary in the 3D scene */
 function HomePadBox({ home }: { home: TerrainPlatform | null }) {
   if (!home) return null;
   const w = home.hw * 2;
@@ -118,6 +116,8 @@ function Actor({
   const mood = useRef(worldMood());
   const homeUntil = useRef(0);
   const performUntil = useRef(0);
+  const nextFreeHop = useRef(0);
+  const nextRoam = useRef(0);
   const beat = useRef<TheatreBeat | null>(null);
   const facing = useRef(0);
   const seeded = useRef(false);
@@ -137,7 +137,6 @@ function Actor({
     }
     const home = getHomePlatform(platforms);
     if (home) {
-      // Always re-anchor to home pad when idle — never to scrolled UI
       if (phaseRef.current === "home" || !seeded.current) {
         bodyRef.current = snapToPlatform(bodyRef.current, home);
         bodyRef.current.platformId = "home-corner";
@@ -154,7 +153,6 @@ function Actor({
     return () => window.clearInterval(id);
   }, []);
 
-  // Explicit theatre only — not scroll, not idle timers
   useEffect(() => {
     const onTheatre = (e: Event) => {
       const b = (e as CustomEvent).detail as TheatreBeat;
@@ -172,7 +170,7 @@ function Actor({
         );
         const first = queue.current[0];
         if (first) {
-          bodyRef.current = jumpToward(bodyRef.current, first);
+          bodyRef.current = jumpToward(bodyRef.current, first, true);
           setAnim("jump");
         }
       }
@@ -202,8 +200,9 @@ function Actor({
     const now = Date.now();
     const m = mood.current;
     const phase = phaseRef.current;
+    const freed =
+      phase === "outing" || phase === "returning" || phase === "perform";
 
-    // —— DRAG ——
     if (dragging && dragWorld) {
       body.x = dragWorld.x;
       body.y = dragWorld.y;
@@ -214,11 +213,10 @@ function Actor({
       queue.current = [];
       phaseRef.current = "outing";
       setAnim("surprised");
-    }
-    // —— IDLE HOME: locked to pad, no climbing, no stepTerrain on page UI ——
-    else if (phase === "home") {
+      nextFreeHop.current = now + 400;
+      nextRoam.current = now + 900;
+    } else if (phase === "home") {
       if (home) {
-        // Micro-idle inside pad only
         padWander.current += dt;
         if (padWander.current > 3 + Math.random() * 2.5) {
           padWander.current = 0;
@@ -241,31 +239,73 @@ function Actor({
         body.platformId = "home-corner";
         queue.current = [];
       }
-      // No auto-outing. Stay put.
       if (m.preferNap && anim !== "sleep" && Math.random() < 0.001) {
         setAnim("sleep");
       } else if (anim !== "sleep" && anim !== "idle") {
         setAnim("idle");
       }
-    }
-    // —— OUTING / PERFORM / RETURNING (only after drag or theatre) ——
-    else {
+    } else {
+      // —— FREED ——
       if (phase === "perform" && now >= performUntil.current) {
         phaseRef.current = "outing";
         beat.current = null;
-        homeUntil.current = now + 400;
+        homeUntil.current = now + 600;
+        nextRoam.current = now + 500;
       }
 
-      if (phase === "perform" && now < performUntil.current) {
-        // hold pose
-      } else if (
-        (phase === "outing" || phase === "perform") &&
+      // Spontaneous hops while free and grounded
+      if (
+        body.onGround &&
+        queue.current.length === 0 &&
+        now > nextFreeHop.current &&
+        phaseRef.current === "outing"
+      ) {
+        if (Math.random() < 0.55) {
+          bodyRef.current = freeHop(bodyRef.current);
+          setAnim("jump");
+          nextFreeHop.current = now + 700 + Math.random() * 1400;
+        } else {
+          nextFreeHop.current = now + 400 + Math.random() * 800;
+        }
+      }
+
+      // Roam: pick another surface without going home yet
+      if (
+        body.onGround &&
+        queue.current.length === 0 &&
+        phaseRef.current === "outing" &&
+        now > nextRoam.current &&
+        now > homeUntil.current
+      ) {
+        const dest = pickWanderPlatform(
+          platforms,
+          body.platformId ?? undefined,
+          false,
+        );
+        if (dest && dest.id !== "home-corner") {
+          beat.current = theatreForPlatform(dest);
+          const current =
+            platforms.find((x) => x.id === body.platformId) ?? null;
+          queue.current = planHops(current, dest, platforms);
+          const first = queue.current[0];
+          if (first) {
+            bodyRef.current = jumpToward(bodyRef.current, first, true);
+            setAnim("jump");
+          }
+          nextRoam.current = now + 2800 + Math.random() * 3200;
+        } else {
+          nextRoam.current = now + 1200;
+        }
+      }
+
+      if (
+        (phaseRef.current === "outing" || phaseRef.current === "perform") &&
         queue.current.length === 0 &&
         body.onGround &&
         home
       ) {
         if (body.platformId !== "home-corner") {
-          if (beat.current && phase === "outing") {
+          if (beat.current && phaseRef.current === "outing") {
             const tb = beat.current;
             const at = platforms.find((x) => x.id === body.platformId);
             if (at) {
@@ -287,7 +327,8 @@ function Actor({
             phaseRef.current = "perform";
             performUntil.current = now + tb.holdMs;
           } else if (homeUntil.current === 0) {
-            homeUntil.current = now + lingerMs(m);
+            // Stay free longer before auto-return
+            homeUntil.current = now + lingerMs(m) * 1.8 + 2500;
           } else if (now > homeUntil.current) {
             phaseRef.current = "returning";
             beat.current = null;
@@ -296,13 +337,12 @@ function Actor({
             queue.current = planHops(current, home, platforms);
             const first = queue.current[0];
             if (first && bodyRef.current) {
-              bodyRef.current = jumpToward(bodyRef.current, first);
+              bodyRef.current = jumpToward(bodyRef.current, first, true);
               setAnim("jump");
             }
             homeUntil.current = 0;
           }
         } else {
-          // already on home while "outing" → settle
           phaseRef.current = "home";
           setAnim("idle");
           homeUntil.current = now + homeRestMs(m);
@@ -329,33 +369,34 @@ function Actor({
             bodyRef.current,
             goal.x,
             goalY,
-            Math.max(0.5, motion.walkSpeed * 1.4),
+            Math.max(0.85, motion.walkSpeed * 2.1),
+            true,
           );
           if (anim !== "walk" && anim !== "jump") setAnim("walk");
         }
         if (
           Math.abs(bodyRef.current.x - goal.x) <
-            Math.max(0.08, goal.hw * 0.75) &&
-          Math.abs(bodyRef.current.y - goalY) < 0.2
+            Math.max(0.1, goal.hw * 0.8) &&
+          Math.abs(bodyRef.current.y - goalY) < 0.25
         ) {
           bodyRef.current = snapToPlatform(bodyRef.current, goal);
           queue.current.shift();
           if (queue.current.length > 0) {
             const nxt = queue.current[0];
-            bodyRef.current = jumpToward(bodyRef.current, nxt);
+            bodyRef.current = jumpToward(bodyRef.current, nxt, true);
             setAnim("jump");
           } else if (!(beat.current && phaseRef.current === "outing")) {
-            setAnim("idle");
+            setAnim("happy");
             if (phaseRef.current === "outing") {
-              homeUntil.current = Date.now() + lingerMs(m);
+              homeUntil.current = Date.now() + lingerMs(m) * 1.6;
+              nextFreeHop.current = Date.now() + 500;
             }
           }
         }
       }
 
-      // Physics only while actively out — not while home
       if (phaseRef.current !== "home" && phaseRef.current !== "perform") {
-        bodyRef.current = stepTerrain(bodyRef.current, platforms, dt);
+        bodyRef.current = stepTerrain(bodyRef.current, platforms, dt, true);
       }
     }
 
@@ -365,29 +406,29 @@ function Actor({
       vy: b.vy,
       lookX: lookBias.x,
       lookY: lookBias.y,
-      phase:
-        dragging
-          ? "drag"
-          : phaseRef.current === "perform" || phaseRef.current === "outing"
-            ? "outing"
-            : phaseRef.current === "returning"
-              ? "returning"
-              : "home",
+      phase: dragging
+        ? "drag"
+        : phaseRef.current === "perform" || phaseRef.current === "outing"
+          ? "outing"
+          : phaseRef.current === "returning"
+            ? "returning"
+            : "home",
     });
 
     let targetYaw = 0;
-    if (Math.abs(b.vx) > 0.04) targetYaw = b.vx > 0 ? -0.28 : 0.28;
-    if (
-      dragging ||
-      phaseRef.current === "perform" ||
-      phaseRef.current === "home"
-    ) {
-      targetYaw = 0;
-    }
-    facing.current = THREE.MathUtils.lerp(facing.current, targetYaw, 0.14);
+    if (Math.abs(b.vx) > 0.04) targetYaw = b.vx > 0 ? -0.38 : 0.38;
+    if (dragging || phaseRef.current === "home") targetYaw = 0;
+    facing.current = THREE.MathUtils.lerp(
+      facing.current,
+      targetYaw,
+      freed ? 0.2 : 0.14,
+    );
     g.rotation.y = facing.current;
 
-    g.position.set(b.x, b.y + 0.06 + proc.bob * 0.6, 0.35);
+    // Slight lean into motion when free
+    g.rotation.z = freed ? THREE.MathUtils.clamp(-b.vx * 0.04, -0.12, 0.12) : 0;
+
+    g.position.set(b.x, b.y + 0.06 + proc.bob * (freed ? 1.1 : 0.6), 0.35);
     const s = 0.58;
     p.scale.set(proc.scaleX * s, proc.scaleY * s, s);
 
@@ -395,12 +436,12 @@ function Actor({
       head.current.rotation.x = THREE.MathUtils.lerp(
         head.current.rotation.x,
         proc.headPitch,
-        0.12,
+        0.14,
       );
       head.current.rotation.y = THREE.MathUtils.lerp(
         head.current.rotation.y,
         proc.headYaw,
-        0.12,
+        0.14,
       );
     }
 
@@ -512,10 +553,8 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
     const t0 = window.setTimeout(rebuild, 40);
     const t1 = window.setTimeout(rebuild, 250);
     const t2 = window.setTimeout(rebuild, 800);
-    // Rebuild less often — scroll must not feel like an outing trigger
     const id = window.setInterval(rebuild, lowPower ? 2500 : 1800);
     window.addEventListener("resize", rebuild);
-    // Scroll only updates card positions for future drag landings — idle ignores them
     window.addEventListener("scroll", rebuild, { passive: true });
     return () => {
       window.clearTimeout(t0);
@@ -556,7 +595,6 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
 
       if (!dragMoved.current) {
         useMascotStore.getState().dispatch({ type: "click" });
-        // Click while idle keeps them home
         const h = getHomePlatform(platforms);
         if (h && phaseRef.current === "home") {
           bodyRef.current = snapToPlatform(bodyRef.current, h);
@@ -564,9 +602,8 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
         return;
       }
 
-      // Drag-drop: land on nearest platform, else return home
       let best: TerrainPlatform | null = null;
-      let bestD = 0.35;
+      let bestD = 0.4;
       for (const p of platforms) {
         if (p.type === "floor" || p.type === "home") continue;
         const d = Math.hypot(w.x - p.x, w.y - (p.y + p.hh));
@@ -575,18 +612,32 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
           best = p;
         }
       }
+
+      // Freed: drop with momentum rather than hard snap home
+      phaseRef.current = "outing";
       if (best) {
-        bodyRef.current = snapToPlatform(bodyRef.current, best);
-        phaseRef.current = "outing";
-        useMascotStore.getState().dispatch({ type: "pet" });
+        bodyRef.current = {
+          ...bodyRef.current,
+          x: w.x,
+          y: w.y,
+          vx: (best.x - w.x) * 0.8,
+          vy: 1.2,
+          onGround: false,
+          platformId: null,
+        };
+        bodyRef.current = jumpToward(bodyRef.current, best, true);
       } else {
-        const h = getHomePlatform(platforms);
-        if (h) {
-          bodyRef.current = snapToPlatform(bodyRef.current, h);
-          phaseRef.current = "home";
-        }
-        useMascotStore.getState().dispatch({ type: "pet" });
+        bodyRef.current = {
+          ...bodyRef.current,
+          x: w.x,
+          y: w.y,
+          vx: (Math.random() - 0.5) * 1.4,
+          vy: 2.0 + Math.random() * 0.8,
+          onGround: false,
+          platformId: null,
+        };
       }
+      useMascotStore.getState().dispatch({ type: "pet" });
     },
     [platforms],
   );
@@ -614,7 +665,6 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
 
   return (
     <>
-      {/* HTML pad outline — always visible while companion is on */}
       <div className="mascot-home-pad" aria-hidden />
 
       <div className="live-terrain" aria-hidden>

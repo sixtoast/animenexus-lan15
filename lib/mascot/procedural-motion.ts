@@ -1,28 +1,22 @@
 /**
- * Sprint 3 — Procedural motion helpers (squash, breath, look, blink).
- * Pure functions; renderer samples each frame.
+ * Procedural motion — calm at home, springy when freed.
  */
 
 import type { MotionProfile } from "./emotions";
 import type { MascotAnim } from "./types";
 
 export type ProceduralPose = {
-  /** Vertical scale (squash/stretch) */
   scaleY: number;
   scaleX: number;
-  /** Body bob */
   bob: number;
-  /** Head pitch / yaw extras */
   headPitch: number;
   headYaw: number;
-  /** Blink 0 = open, 1 = closed */
   blink: number;
-  /** Tip pulse */
   tipPulse: number;
 };
 
 let blinkTimer = 0;
-let blinkPhase = 0; // 0 open, 1 closing, 2 closed, 3 opening
+let blinkPhase = 0;
 
 export function sampleProcedural(
   t: number,
@@ -31,49 +25,60 @@ export function sampleProcedural(
   opts: {
     onGround: boolean;
     vy: number;
-    lookX: number; // -1..1
+    lookX: number;
     lookY: number;
     phase: "home" | "outing" | "returning" | "drag";
   },
 ): ProceduralPose {
-  // Breathing
-  const breathSpeed = anim === "sleep" ? 1.1 : 2.2;
-  const breath = Math.sin(t * breathSpeed) * 0.012 * (anim === "sleep" ? 0.6 : 1);
+  const freed =
+    opts.phase === "outing" ||
+    opts.phase === "returning" ||
+    opts.phase === "drag";
 
-  // Idle sway
+  const breathSpeed = anim === "sleep" ? 1.1 : freed ? 3.1 : 2.2;
+  const breath =
+    Math.sin(t * breathSpeed) *
+    (freed ? 0.02 : 0.012) *
+    (anim === "sleep" ? 0.6 : 1);
+
   const sway =
     anim === "idle" || anim === "sleep"
-      ? Math.sin(t * 1.3) * 0.01 * motion.bobAmp
-      : 0;
+      ? Math.sin(t * (freed ? 2.4 : 1.3)) *
+        (freed ? 0.022 : 0.01) *
+        motion.bobAmp
+      : freed
+        ? Math.sin(t * 3.2) * 0.014
+        : 0;
 
-  // Walk bob
   const walkBob =
     anim === "walk" && opts.onGround
-      ? Math.abs(Math.sin(t * 10)) * 0.028 * motion.bobAmp
+      ? Math.abs(Math.sin(t * (freed ? 14 : 10))) *
+        (freed ? 0.042 : 0.028) *
+        motion.bobAmp
       : 0;
 
-  // Jump squash/stretch
   let scaleY = 1;
   let scaleX = 1;
   if (anim === "jump" || !opts.onGround) {
     if (opts.vy > 0.5) {
-      // stretch up
-      scaleY = 1.12;
-      scaleX = 0.92;
+      scaleY = freed ? 1.22 : 1.12;
+      scaleX = freed ? 0.86 : 0.92;
     } else if (opts.vy < -0.3) {
-      // squash toward land
-      scaleY = 0.9;
-      scaleX = 1.08;
+      scaleY = freed ? 0.84 : 0.9;
+      scaleX = freed ? 1.14 : 1.08;
     }
   }
   if (anim === "happy" || anim === "wave") {
-    scaleY = 1 + Math.sin(t * 8) * 0.04;
-    scaleX = 1 - Math.sin(t * 8) * 0.02;
+    scaleY = 1 + Math.sin(t * 10) * (freed ? 0.06 : 0.04);
+    scaleX = 1 - Math.sin(t * 10) * (freed ? 0.03 : 0.02);
+  }
+  if (freed && anim === "surprised") {
+    scaleY = 1.08 + Math.sin(t * 16) * 0.03;
+    scaleX = 0.94;
   }
 
-  // Blink cycle ~ every 3–5s
   blinkTimer += 1 / 60;
-  if (blinkPhase === 0 && blinkTimer > 3 + Math.random() * 2) {
+  if (blinkPhase === 0 && blinkTimer > (freed ? 2 : 3) + Math.random() * 2) {
     blinkPhase = 1;
     blinkTimer = 0;
   }
@@ -100,17 +105,18 @@ export function sampleProcedural(
   }
   if (anim === "sleep") blink = 1;
 
-  // Look-at bias (head)
-  const headYaw = opts.lookX * 0.35;
+  const headYaw = opts.lookX * (freed ? 0.48 : 0.35);
   const headPitch =
-    opts.lookY * 0.2 +
+    opts.lookY * (freed ? 0.28 : 0.2) +
     motion.headDroop +
     (anim === "think" ? 0.12 : 0) -
     (anim === "point" ? 0.08 : 0);
 
   const tipPulse =
-    0.45 + motion.glow * 0.4 + Math.sin(t * 3) * 0.08 +
-    (opts.phase === "home" ? 0.05 : 0);
+    0.45 +
+    motion.glow * 0.4 +
+    Math.sin(t * (freed ? 5 : 3)) * (freed ? 0.14 : 0.08) +
+    (opts.phase === "home" ? 0.05 : 0.12);
 
   return {
     scaleY,
