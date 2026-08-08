@@ -6,7 +6,13 @@
  */
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  type MutableRefObject,
+} from "react";
 import * as THREE from "three";
 import {
   buildTerrain,
@@ -42,7 +48,6 @@ export type MascotScreenPos = { x: number; y: number; visible: boolean };
 function homeWorld(): { x: number; y: number } {
   if (typeof window === "undefined") return { x: 0.95, y: -0.7 };
   const aspect = window.innerWidth / (window.innerHeight || 1);
-  // Keep inside frustum (camera z=3, fov~50 → half-width ≈ aspect * 1.4)
   const maxX = Math.min(aspect * 0.78, 1.35);
   return { x: maxX, y: -0.68 };
 }
@@ -62,62 +67,6 @@ function CameraFit() {
   return null;
 }
 
-function ChibiMesh({
-  tipRef,
-  eyeL,
-  eyeR,
-  headRef,
-}: {
-  tipRef: React.RefObject<THREE.Mesh | null>;
-  eyeL: React.RefObject<THREE.Mesh | null>;
-  eyeR: React.RefObject<THREE.Mesh | null>;
-  headRef: React.RefObject<THREE.Group | null>;
-}) {
-  return (
-    <group>
-      {/* body */}
-      <mesh position={[0, -0.12, 0]} castShadow={false}>
-        <capsuleGeometry args={[0.11, 0.14, 6, 12]} />
-        <meshStandardMaterial color="#e8a598" roughness={0.4} metalness={0.05} />
-      </mesh>
-      {/* head */}
-      <group ref={headRef} position={[0, 0.16, 0]}>
-        <mesh>
-          <sphereGeometry args={[0.17, 24, 24]} />
-          <meshStandardMaterial color="#f5d0c8" roughness={0.35} />
-        </mesh>
-        {/* eyes — face +Z toward camera */}
-        <mesh ref={eyeL} position={[-0.05, 0.02, 0.14]}>
-          <sphereGeometry args={[0.028, 12, 12]} />
-          <meshStandardMaterial color="#2a1810" />
-        </mesh>
-        <mesh ref={eyeR} position={[0.05, 0.02, 0.14]}>
-          <sphereGeometry args={[0.028, 12, 12]} />
-          <meshStandardMaterial color="#2a1810" />
-        </mesh>
-        {/* blush */}
-        <mesh position={[-0.085, -0.02, 0.12]}>
-          <sphereGeometry args={[0.03, 8, 8]} />
-          <meshStandardMaterial color="#f0a090" transparent opacity={0.55} />
-        </mesh>
-        <mesh position={[0.085, -0.02, 0.12]}>
-          <sphereGeometry args={[0.03, 8, 8]} />
-          <meshStandardMaterial color="#f0a090" transparent opacity={0.55} />
-        </mesh>
-        {/* lantern tip */}
-        <mesh ref={tipRef} position={[0, 0.14, 0]}>
-          <sphereGeometry args={[0.045, 12, 12]} />
-          <meshStandardMaterial
-            color="#f0a090"
-            emissive="#f0a090"
-            emissiveIntensity={0.85}
-          />
-        </mesh>
-      </group>
-    </group>
-  );
-}
-
 function Actor({
   platforms,
   lowPower,
@@ -131,7 +80,7 @@ function Actor({
   dragging: boolean;
   dragWorld: { x: number; y: number } | null;
   onScreenPos: (p: MascotScreenPos) => void;
-  bodyRef: React.MutableRefObject<TerrainBody | null>;
+  bodyRef: MutableRefObject<TerrainBody | null>;
 }) {
   const root = useRef<THREE.Group>(null);
   const pose = useRef<THREE.Group>(null);
@@ -152,12 +101,10 @@ function Actor({
   const seeded = useRef(false);
   const emotions = useMascotStore((s) => s.emotions);
   const setAnim = useMascotStore((s) => s.setAnim);
-  const requestAnim = useMascotStore((s) => s.requestAnim);
   const anim = useMascotStore((s) => s.anim);
   const lookBias = useMascotStore((s) => s.lookBias);
   const { camera, size } = useThree();
 
-  // Seed body immediately — never wait for DOM platforms
   useEffect(() => {
     if (seeded.current && bodyRef.current) return;
     const home = getHomePlatform(platforms);
@@ -172,7 +119,6 @@ function Actor({
     seeded.current = true;
   }, [platforms, bodyRef]);
 
-  // Re-snap to home platform once it appears
   useEffect(() => {
     const home = getHomePlatform(platforms);
     if (!home || !bodyRef.current) return;
@@ -228,7 +174,6 @@ function Actor({
     const g = root.current;
     const p = pose.current;
 
-    // Always ensure a body exists
     if (!bodyRef.current) {
       const h = homeWorld();
       bodyRef.current = createTerrainBody(h.x, h.y);
@@ -429,7 +374,6 @@ function Actor({
                 : "home",
     });
 
-    // Face camera by default (yaw 0); slight turn when moving
     let targetYaw = 0;
     if (Math.abs(b.vx) > 0.04) targetYaw = b.vx > 0 ? -0.28 : 0.28;
     if (dragging || phase.current === "perform" || phase.current === "home") {
@@ -447,7 +391,6 @@ function Actor({
     }
 
     g.position.set(b.x, b.y + 0.1 + proc.bob, 0.35 + leanZ);
-    // Larger figure so it's obvious on mobile + desktop
     const s = 0.95;
     p.scale.set(proc.scaleX * s, proc.scaleY * s, s);
 
@@ -475,7 +418,6 @@ function Actor({
       mat.emissiveIntensity = proc.tipPulse * m.emissive;
     }
 
-    // Project to screen for drag handle
     const world = new THREE.Vector3(b.x, b.y + 0.15, 0.35);
     world.project(camera);
     const sx = (world.x * 0.5 + 0.5) * size.width;
@@ -490,10 +432,48 @@ function Actor({
     onScreenPos({ x: sx, y: sy, visible: inView });
   });
 
+  // Meshes inlined so refs type-check against R3F without RefObject null friction
   return (
     <group ref={root}>
       <group ref={pose}>
-        <ChibiMesh tipRef={tip} eyeL={eyeL} eyeR={eyeR} headRef={head} />
+        <mesh position={[0, -0.12, 0]}>
+          <capsuleGeometry args={[0.11, 0.14, 6, 12]} />
+          <meshStandardMaterial
+            color="#e8a598"
+            roughness={0.4}
+            metalness={0.05}
+          />
+        </mesh>
+        <group ref={head} position={[0, 0.16, 0]}>
+          <mesh>
+            <sphereGeometry args={[0.17, 24, 24]} />
+            <meshStandardMaterial color="#f5d0c8" roughness={0.35} />
+          </mesh>
+          <mesh ref={eyeL} position={[-0.05, 0.02, 0.14]}>
+            <sphereGeometry args={[0.028, 12, 12]} />
+            <meshStandardMaterial color="#2a1810" />
+          </mesh>
+          <mesh ref={eyeR} position={[0.05, 0.02, 0.14]}>
+            <sphereGeometry args={[0.028, 12, 12]} />
+            <meshStandardMaterial color="#2a1810" />
+          </mesh>
+          <mesh position={[-0.085, -0.02, 0.12]}>
+            <sphereGeometry args={[0.03, 8, 8]} />
+            <meshStandardMaterial color="#f0a090" transparent opacity={0.55} />
+          </mesh>
+          <mesh position={[0.085, -0.02, 0.12]}>
+            <sphereGeometry args={[0.03, 8, 8]} />
+            <meshStandardMaterial color="#f0a090" transparent opacity={0.55} />
+          </mesh>
+          <mesh ref={tip} position={[0, 0.14, 0]}>
+            <sphereGeometry args={[0.045, 12, 12]} />
+            <meshStandardMaterial
+              color="#f0a090"
+              emissive="#f0a090"
+              emissiveIntensity={0.85}
+            />
+          </mesh>
+        </group>
       </group>
     </group>
   );
