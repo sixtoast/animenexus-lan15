@@ -1,6 +1,6 @@
 /**
  * Map the live page into walkable platforms.
- * Hitboxes track real DOM rects (viewport space) as closely as possible.
+ * Cards / posters, modals, nav, buttons — + a confined home pad.
  */
 
 import {
@@ -24,7 +24,6 @@ export type TerrainPlatform = {
   clientY: number;
 };
 
-/** Pixel rect → world (viewport only; rebuild on scroll). */
 export function screenToWorld(
   clientX: number,
   clientY: number,
@@ -37,7 +36,6 @@ export function screenToWorld(
   return { x, y };
 }
 
-/** Closest platform to a world point. */
 export function nearestPlatform(
   platforms: TerrainPlatform[],
   x: number,
@@ -119,6 +117,7 @@ const SURFACE_SELECTOR = [
   ".ai-panel",
   ".cmdk-root",
   ".anime-card",
+  ".anime-card img",
   ".home-rail-card",
   ".home-panel",
   ".hero",
@@ -139,6 +138,12 @@ function inferType(el: Element): LandmarkType {
     el.classList.contains("home-rail-card")
   )
     return "card";
+  // Poster image inside a recommendation card
+  if (
+    el.tagName === "IMG" &&
+    (el.closest(".anime-card") || el.closest(".home-rail-card"))
+  )
+    return "card";
   if (el.tagName === "NAV" || el.getAttribute("role") === "navigation")
     return "nav";
   if (el.classList.contains("btn") || el.tagName === "BUTTON") return "button";
@@ -152,9 +157,9 @@ function inferType(el: Element): LandmarkType {
 function inferPriority(type: LandmarkType): number {
   switch (type) {
     case "modal":
-      return 8;
+      return 9;
     case "card":
-      return 5;
+      return 7;
     case "nav":
       return 4;
     case "button":
@@ -204,7 +209,7 @@ export function buildTerrain(): TerrainPlatform[] {
       const id = el.id || `live-modal-${i}`;
       if (seen.has(id)) return;
       const r = el.getBoundingClientRect();
-      const p = rectToPlatformFromDom(id, "modal", r, 9);
+      const p = rectToPlatformFromDom(id, "modal", r, 10);
       if (p) {
         seen.add(id);
         out.push(p);
@@ -212,36 +217,40 @@ export function buildTerrain(): TerrainPlatform[] {
     });
 
   const aspect = window.innerWidth / (window.innerHeight || 1);
-  const homeX = Math.min(aspect * 0.78, 1.35);
+  // Confined home pad — bottom-right pocket
+  const homeX = Math.min(aspect * 0.78, 1.32);
 
-  // Home pad — bottom-right, always in frustum
   out.push({
     id: "home-corner",
     type: "home",
     x: homeX,
-    y: -0.68,
-    hw: 0.28,
-    hh: 0.12,
+    y: -0.72,
+    hw: 0.18,
+    hh: 0.09,
     priority: 1,
-    clientX: window.innerWidth - 72,
-    clientY: window.innerHeight - 120,
+    clientX: window.innerWidth - 56,
+    clientY: window.innerHeight - 100,
   });
 
   out.push({
     id: "viewport-floor",
     type: "floor",
     x: 0,
-    y: -0.92,
+    y: -0.94,
     hw: aspect * 0.95,
-    hh: 0.05,
+    hh: 0.04,
     priority: 0,
     clientX: window.innerWidth / 2,
-    clientY: window.innerHeight - 12,
+    clientY: window.innerHeight - 10,
   });
 
   return out;
 }
 
+/**
+ * Prefer modals when open, else recommendation posters/cards,
+ * then other UI. Rare generic surfaces.
+ */
 export function pickWanderPlatform(
   platforms: TerrainPlatform[],
   fromId?: string,
@@ -254,17 +263,40 @@ export function pickWanderPlatform(
       p.type !== "home" &&
       p.priority >= 2,
   );
+
   if (preferModal) {
     const modals = candidates.filter((p) => p.type === "modal");
-    if (modals.length) candidates = modals;
+    if (modals.length) return modals[Math.floor(Math.random() * modals.length)];
   }
+
+  // Bias strongly toward recommendation posters / cards
+  const cards = candidates.filter((p) => p.type === "card");
+  if (cards.length && Math.random() < 0.62) {
+    return cards[Math.floor(Math.random() * Math.min(6, cards.length))];
+  }
+
+  const climbable = candidates.filter(
+    (p) =>
+      p.type === "nav" ||
+      p.type === "button" ||
+      p.type === "hero" ||
+      p.type === "modal" ||
+      p.priority >= 4,
+  );
+  if (climbable.length && Math.random() < 0.7) {
+    climbable.sort(
+      (a, b) => b.priority - a.priority + (Math.random() - 0.5),
+    );
+    return climbable[Math.floor(Math.random() * Math.min(3, climbable.length))];
+  }
+
   if (!candidates.length) {
     return platforms.find((p) => p.id === "home-corner") ?? null;
   }
   candidates.sort(
     (a, b) => b.priority - a.priority + (Math.random() - 0.5) * 1.5,
   );
-  return candidates[Math.floor(Math.random() * Math.min(4, candidates.length))];
+  return candidates[Math.floor(Math.random() * Math.min(3, candidates.length))];
 }
 
 export function getHomePlatform(

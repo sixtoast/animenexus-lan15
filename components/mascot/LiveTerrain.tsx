@@ -2,7 +2,7 @@
 
 /**
  * Full-viewport 3D companion (R3F) — orthographic overlay.
- * No 2D fallback. Home pad bottom-right; drag via HTML handle.
+ * Small figure · mostly confined to home pad · breakouts onto UI / posters / modals.
  */
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -32,7 +32,12 @@ import {
 } from "@/lib/mascot/terrain-physics";
 import { useMascotStore } from "@/lib/mascot/store";
 import { motionFromEmotions } from "@/lib/mascot/emotions";
-import { worldMood, outingIntervalMs, lingerMs } from "@/lib/mascot/living-world";
+import {
+  worldMood,
+  outingIntervalMs,
+  lingerMs,
+  homeRestMs,
+} from "@/lib/mascot/living-world";
 import { sampleProcedural } from "@/lib/mascot/procedural-motion";
 import {
   poseOnPlatform,
@@ -45,10 +50,9 @@ type Phase = "home" | "outing" | "returning" | "perform";
 export type MascotScreenPos = { x: number; y: number; visible: boolean };
 
 function homeWorld(): { x: number; y: number } {
-  if (typeof window === "undefined") return { x: 1.05, y: -0.65 };
+  if (typeof window === "undefined") return { x: 1.05, y: -0.72 };
   const aspect = window.innerWidth / (window.innerHeight || 1);
-  // Orthographic half-width = aspect → keep well inside right edge
-  return { x: Math.min(aspect * 0.72, 1.4), y: -0.62 };
+  return { x: Math.min(aspect * 0.78, 1.32), y: -0.72 };
 }
 
 function OrthoCamera() {
@@ -101,13 +105,13 @@ function Actor({
   const beat = useRef<TheatreBeat | null>(null);
   const facing = useRef(0);
   const seeded = useRef(false);
+  const padWander = useRef(0); // tiny motion inside home pad
   const emotions = useMascotStore((s) => s.emotions);
   const setAnim = useMascotStore((s) => s.setAnim);
   const anim = useMascotStore((s) => s.anim);
   const lookBias = useMascotStore((s) => s.lookBias);
   const { camera, size } = useThree();
 
-  // Seed immediately so first frames always have a body
   useEffect(() => {
     const h = homeWorld();
     if (!bodyRef.current) {
@@ -199,6 +203,22 @@ function Actor({
 
       const modalOpen = platforms.some((x) => x.type === "modal");
 
+      // HOME: soft idle wander inside the confined pad only
+      if (phase.current === "home" && home && body.platformId === "home-corner") {
+        padWander.current += dt;
+        if (padWander.current > 2.5 + Math.random() * 2) {
+          padWander.current = 0;
+          const ox = (Math.random() - 0.5) * home.hw * 1.2;
+          const oy = (Math.random() - 0.5) * home.hh * 0.8;
+          body.x = home.x + ox;
+          body.y = home.y + home.hh + oy;
+          body.vx = 0;
+          body.vy = 0;
+          body.onGround = true;
+        }
+      }
+
+      // Occasional breakout from the corner
       if (
         hasTerrain &&
         phase.current === "home" &&
@@ -227,13 +247,14 @@ function Actor({
                 bodyRef.current = jumpToward(bodyRef.current, first);
                 setAnim("jump");
               }
-            }, 120);
+            }, 160);
           }
         }
+        // Long chill before next attempt
         nextOuting.current =
           now +
           (modalOpen
-            ? 3500 + Math.random() * 2500
+            ? 5000 + Math.random() * 4000
             : outingIntervalMs(m, lowPower));
       }
 
@@ -241,7 +262,7 @@ function Actor({
         phase.current === "home" &&
         m.preferNap &&
         anim !== "sleep" &&
-        Math.random() < 0.002
+        Math.random() < 0.0015
       ) {
         setAnim("sleep");
       }
@@ -300,7 +321,12 @@ function Actor({
       ) {
         phase.current = "home";
         setAnim(m.preferNap ? "sleep" : "idle");
-        homeUntil.current = 0;
+        // Long rest in the corner after a breakout
+        homeUntil.current = now + homeRestMs(m);
+        nextOuting.current = Math.max(
+          nextOuting.current,
+          homeUntil.current + outingIntervalMs(m, lowPower) * 0.4,
+        );
         beat.current = null;
       }
 
@@ -339,6 +365,23 @@ function Actor({
       if (phase.current !== "perform" && hasTerrain) {
         bodyRef.current = stepTerrain(bodyRef.current, platforms, dt);
       }
+
+      // Soft clamp while home so they stay in the pad
+      if (
+        phase.current === "home" &&
+        home &&
+        body.platformId === "home-corner" &&
+        !dragging
+      ) {
+        const maxDx = home.hw * 0.95;
+        const maxDy = home.hh * 0.9;
+        body.x = THREE.MathUtils.clamp(body.x, home.x - maxDx, home.x + maxDx);
+        body.y = THREE.MathUtils.clamp(
+          body.y,
+          home.y + home.hh - maxDy,
+          home.y + home.hh + maxDy,
+        );
+      }
     }
 
     const b = bodyRef.current;
@@ -367,9 +410,9 @@ function Actor({
     facing.current = THREE.MathUtils.lerp(facing.current, targetYaw, 0.14);
     g.rotation.y = facing.current;
 
-    g.position.set(b.x, b.y + 0.12 + proc.bob, 0.4);
-    // Large, readable figure
-    const s = 1.15;
+    g.position.set(b.x, b.y + 0.06 + proc.bob * 0.6, 0.35);
+    // Smaller figure
+    const s = 0.58;
     p.scale.set(proc.scaleX * s, proc.scaleY * s, s);
 
     if (head.current) {
@@ -393,11 +436,10 @@ function Actor({
       const mat = tip.current.material as THREE.MeshStandardMaterial;
       mat.color.set(m.tipColor);
       mat.emissive.set(m.tipColor);
-      mat.emissiveIntensity = Math.max(0.6, proc.tipPulse * m.emissive);
+      mat.emissiveIntensity = Math.max(0.55, proc.tipPulse * m.emissive);
     }
 
-    // Screen projection for drag handle
-    const world = new THREE.Vector3(b.x, b.y + 0.18, 0.4);
+    const world = new THREE.Vector3(b.x, b.y + 0.1, 0.35);
     world.project(camera);
     const sx = (world.x * 0.5 + 0.5) * size.width;
     const sy = (-world.y * 0.5 + 0.5) * size.height;
@@ -417,41 +459,41 @@ function Actor({
   return (
     <group ref={root}>
       <group ref={pose}>
-        <mesh position={[0, -0.14, 0]}>
-          <capsuleGeometry args={[0.13, 0.16, 6, 12]} />
+        <mesh position={[0, -0.12, 0]}>
+          <capsuleGeometry args={[0.1, 0.12, 6, 12]} />
           <meshStandardMaterial
             color="#e8a598"
             roughness={0.35}
             metalness={0.08}
           />
         </mesh>
-        <group ref={head} position={[0, 0.18, 0]}>
+        <group ref={head} position={[0, 0.14, 0]}>
           <mesh>
-            <sphereGeometry args={[0.2, 28, 28]} />
+            <sphereGeometry args={[0.15, 24, 24]} />
             <meshStandardMaterial color="#f5d0c8" roughness={0.3} />
           </mesh>
-          <mesh ref={eyeL} position={[-0.055, 0.025, 0.16]}>
-            <sphereGeometry args={[0.032, 12, 12]} />
+          <mesh ref={eyeL} position={[-0.045, 0.02, 0.12]}>
+            <sphereGeometry args={[0.024, 12, 12]} />
             <meshStandardMaterial color="#2a1810" />
           </mesh>
-          <mesh ref={eyeR} position={[0.055, 0.025, 0.16]}>
-            <sphereGeometry args={[0.032, 12, 12]} />
+          <mesh ref={eyeR} position={[0.045, 0.02, 0.12]}>
+            <sphereGeometry args={[0.024, 12, 12]} />
             <meshStandardMaterial color="#2a1810" />
           </mesh>
-          <mesh position={[-0.1, -0.025, 0.14]}>
-            <sphereGeometry args={[0.035, 8, 8]} />
+          <mesh position={[-0.08, -0.02, 0.1]}>
+            <sphereGeometry args={[0.028, 8, 8]} />
             <meshStandardMaterial color="#f0a090" transparent opacity={0.55} />
           </mesh>
-          <mesh position={[0.1, -0.025, 0.14]}>
-            <sphereGeometry args={[0.035, 8, 8]} />
+          <mesh position={[0.08, -0.02, 0.1]}>
+            <sphereGeometry args={[0.028, 8, 8]} />
             <meshStandardMaterial color="#f0a090" transparent opacity={0.55} />
           </mesh>
-          <mesh ref={tip} position={[0, 0.16, 0]}>
-            <sphereGeometry args={[0.055, 14, 14]} />
+          <mesh ref={tip} position={[0, 0.12, 0]}>
+            <sphereGeometry args={[0.04, 12, 12]} />
             <meshStandardMaterial
               color="#f0a090"
               emissive="#f0a090"
-              emissiveIntensity={1.0}
+              emissiveIntensity={0.9}
             />
           </mesh>
         </group>

@@ -1,6 +1,6 @@
 /**
- * Sprint 3 — Living world
- * Time-of-day atmosphere, seasonal accents, ambient world state.
+ * Living world — time-of-day atmosphere + outing cadence.
+ * Default is chill in the corner; occasional breakouts.
  */
 
 import { dayPart, routineBias, type DayPart } from "./personality";
@@ -8,9 +8,7 @@ import { dayPart, routineBias, type DayPart } from "./personality";
 export type WorldMood = {
   part: DayPart;
   label: string;
-  /** 0–1 how “settled” the desk should feel */
   stillness: number;
-  /** lantern tip tint */
   tipColor: string;
   emissive: number;
   preferNap: boolean;
@@ -21,56 +19,58 @@ export type WorldMood = {
 export function worldMood(date = new Date()): WorldMood {
   const part = dayPart(date);
   const r = routineBias(part);
-  const month = date.getMonth(); // 0–11
+  const month = date.getMonth();
   const day = date.getDate();
 
-  // Light seasonal hooks
   let seasonal: string | undefined;
-  if (month === 9 && day >= 25) seasonal = "halloween"; // late Oct
+  if (month === 9 && day >= 25) seasonal = "halloween";
   if (month === 11 && day >= 20) seasonal = "winter";
   if (month === 0 && day <= 5) seasonal = "newyear";
 
   const base: Record<
     DayPart,
-    Pick<WorldMood, "label" | "stillness" | "tipColor" | "emissive" | "ambientLine">
+    Pick<
+      WorldMood,
+      "label" | "stillness" | "tipColor" | "emissive" | "ambientLine"
+    >
   > = {
     dawn: {
       label: "Dawn desk",
-      stillness: 0.7,
+      stillness: 0.75,
       tipColor: "#f0c4a8",
       emissive: 0.35,
       ambientLine: "Soft light…",
     },
     morning: {
       label: "Morning",
-      stillness: 0.35,
+      stillness: 0.4,
       tipColor: "#f0b090",
       emissive: 0.55,
       ambientLine: "Stretch first.",
     },
     afternoon: {
       label: "Afternoon",
-      stillness: 0.3,
+      stillness: 0.35,
       tipColor: "#f0a090",
       emissive: 0.6,
     },
     evening: {
       label: "Evening",
-      stillness: 0.4,
+      stillness: 0.45,
       tipColor: "#f09888",
       emissive: 0.7,
       ambientLine: "Good hour for signals.",
     },
     night: {
       label: "Night watch",
-      stillness: 0.55,
+      stillness: 0.6,
       tipColor: "#e88878",
       emissive: 0.85,
       ambientLine: "Late console glow.",
     },
     late: {
       label: "Deep night",
-      stillness: 0.85,
+      stillness: 0.88,
       tipColor: "#d07068",
       emissive: 0.4,
       ambientLine: "Dim the lantern…",
@@ -94,13 +94,20 @@ export function worldMood(date = new Date()): WorldMood {
   };
 }
 
-/** Outing interval ms shaped by world stillness */
+/** Long gaps at home — chill is the default. */
 export function outingIntervalMs(mood: WorldMood, lowPower: boolean): number {
-  const base = lowPower ? 20000 : 14000;
-  const stretch = mood.stillness * 12000;
-  return base + stretch + Math.random() * 8000;
+  const base = lowPower ? 45000 : 32000;
+  const stretch = mood.stillness * 28000;
+  const exploreBoost = mood.preferExplore ? -8000 : 6000;
+  return Math.max(18000, base + stretch + exploreBoost + Math.random() * 16000);
 }
 
+/** How long to stay on a destination before heading home. */
 export function lingerMs(mood: WorldMood): number {
-  return 1800 + mood.stillness * 2000 + Math.random() * 1500;
+  return 2200 + mood.stillness * 1800 + Math.random() * 2000;
+}
+
+/** Extra home rest after returning from a breakout. */
+export function homeRestMs(mood: WorldMood): number {
+  return 12000 + mood.stillness * 20000 + Math.random() * 10000;
 }

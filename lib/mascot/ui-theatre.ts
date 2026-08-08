@@ -1,6 +1,5 @@
 /**
- * Sprint 4 — UI as stage directions
- * Maps landmark types → performance (sit, inspect, hide, lean…).
+ * UI as stage — sit on edges, climb into posters, perch on modals.
  */
 
 import type { TerrainPlatform } from "./page-terrain";
@@ -15,29 +14,41 @@ export type TheatreMove =
   | "surf"
   | "climb-modal"
   | "wave-from"
-  | "perch";
+  | "perch"
+  | "inside-poster";
 
 export type TheatreBeat = {
   move: TheatreMove;
   anim: MascotAnim;
   holdMs: number;
-  /** Offset on platform: top edge, center, behind */
-  pose: "top" | "center" | "behind" | "side";
+  pose: "top" | "center" | "behind" | "side" | "inside";
   intent?: ReactionIntent;
   thought?: string;
 };
 
+const POSTER_THOUGHTS = [
+  "Climbing into the art…",
+  "Nice poster.",
+  "This cover glows.",
+  "Peeking inside…",
+  "Shelf check.",
+];
+
 export function theatreForPlatform(p: TerrainPlatform): TheatreBeat {
   switch (p.type) {
-    case "card":
+    case "card": {
+      // Often go *into* the poster frame, sometimes sit on the top edge
+      const inside = Math.random() < 0.65;
       return {
-        move: Math.random() < 0.55 ? "sit-edge" : "perch",
-        anim: Math.random() < 0.4 ? "point" : "idle",
-        holdMs: 2200 + Math.random() * 1800,
-        pose: "top",
+        move: inside ? "inside-poster" : "sit-edge",
+        anim: inside ? "idle" : Math.random() < 0.4 ? "point" : "idle",
+        holdMs: 2800 + Math.random() * 2200,
+        pose: inside ? "inside" : "top",
         intent: "curious",
-        thought: "This one looks promising.",
+        thought:
+          POSTER_THOUGHTS[Math.floor(Math.random() * POSTER_THOUGHTS.length)],
       };
+    }
     case "button":
       return {
         move: "lean",
@@ -50,7 +61,7 @@ export function theatreForPlatform(p: TerrainPlatform): TheatreBeat {
       return {
         move: "surf",
         anim: "walk",
-        holdMs: 1600,
+        holdMs: 1800,
         pose: "top",
         thought: "Along the rail.",
       };
@@ -58,10 +69,10 @@ export function theatreForPlatform(p: TerrainPlatform): TheatreBeat {
       return {
         move: "climb-modal",
         anim: "surprised",
-        holdMs: 900,
+        holdMs: 2400 + Math.random() * 1600,
         pose: "top",
         intent: "curious",
-        thought: "Big window…",
+        thought: "Big window — up we go.",
       };
     case "hero":
       return {
@@ -105,13 +116,19 @@ export function poseOnPlatform(
 ): { x: number; y: number } {
   switch (pose) {
     case "top":
-      return { x: p.x + (Math.random() - 0.5) * p.hw * 0.4, y: p.y + p.hh };
+      return { x: p.x + (Math.random() - 0.5) * p.hw * 0.5, y: p.y + p.hh };
     case "center":
       return { x: p.x, y: p.y + p.hh * 0.3 };
     case "behind":
       return { x: p.x - p.hw * 0.35, y: p.y + p.hh * 0.2 };
     case "side":
       return { x: p.x + p.hw * 0.7, y: p.y + p.hh * 0.5 };
+    case "inside":
+      // Sink into the poster / card art frame
+      return {
+        x: p.x + (Math.random() - 0.5) * p.hw * 0.35,
+        y: p.y + p.hh * 0.15,
+      };
     default:
       return { x: p.x, y: p.y + p.hh };
   }
@@ -121,7 +138,7 @@ export function modalOpenedBeat(): TheatreBeat {
   return {
     move: "climb-modal",
     anim: "jump",
-    holdMs: 600,
+    holdMs: 900,
     pose: "top",
     intent: "curious",
     thought: "Something opened…",
