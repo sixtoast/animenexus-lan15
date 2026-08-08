@@ -11,23 +11,29 @@ import { ThoughtBubble } from "./ThoughtBubble";
 import { UiTheatreBridge } from "./UiTheatreBridge";
 import { MemoryBoot } from "./MemoryBoot";
 import { MascotErrorBoundary } from "./MascotErrorBoundary";
-import { LanternSprite } from "./LanternSprite";
 
 const LiveTerrain = dynamic(
   () => import("./LiveTerrain").then((m) => m.LiveTerrain),
-  { ssr: false },
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mascot-loading" aria-live="polite">
+        Loading 3D companion…
+      </div>
+    ),
+  },
 );
 
 export function MascotHost() {
   const enabled = useMascotStore((s) => s.enabled);
   const setEnabled = useMascotStore((s) => s.setEnabled);
-  const { reducedMotion, toggleMotion } = useMotion();
+  const { reducedMotion, toggleMotion, setPref } = useMotion();
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
   const [hiddenTab, setHiddenTab] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [lowPower, setLowPower] = useState(false);
-  const [webglOk, setWebglOk] = useState(true);
+  const [webglError, setWebglError] = useState<string | null>(null);
 
   useEffect(() => {
     setReady(true);
@@ -43,15 +49,23 @@ export function MascotHost() {
         (navigator as Navigator & { connection?: { saveData?: boolean } })
           .connection?.saveData === true,
     );
+
+    // Probe WebGL — report real failure, never swap to 2D
     try {
       const c = document.createElement("canvas");
       const gl =
-        c.getContext("webgl2") ||
-        c.getContext("webgl") ||
-        c.getContext("experimental-webgl");
-      setWebglOk(!!gl);
-    } catch {
-      setWebglOk(false);
+        (c.getContext("webgl2") as WebGLRenderingContext | null) ||
+        (c.getContext("webgl") as WebGLRenderingContext | null) ||
+        (c.getContext("experimental-webgl") as WebGLRenderingContext | null);
+      if (!gl) {
+        setWebglError("WebGL is not available in this browser.");
+      } else {
+        setWebglError(null);
+      }
+    } catch (e) {
+      setWebglError(
+        e instanceof Error ? e.message : "WebGL context could not be created.",
+      );
     }
   }, [setEnabled]);
 
@@ -115,6 +129,8 @@ export function MascotHost() {
 
   const showCompanion = () => {
     setEnabled(true);
+    // Ensure motion is on so 3D is allowed
+    setPref("full");
     try {
       localStorage.setItem("anime_nexus_mascot", "on");
     } catch {
@@ -130,33 +146,79 @@ export function MascotHost() {
         type="button"
         className="mascot-enable"
         onClick={showCompanion}
-        title="Show companion"
-        aria-label="Show companion"
+        title="Show 3D companion"
+        aria-label="Show 3D companion"
       >
         🕯️
       </button>
     );
   }
 
-  // 3D when WebGL works and user has not reduced motion
-  const can3d = webglOk && !reducedMotion && !hiddenTab;
+  // Reduced motion: user explicitly chose no animation — show message, not 2D fake
+  if (reducedMotion) {
+    return (
+      <div className="mascot-error" role="status">
+        <strong>3D paused</strong>
+        <p>Reduced motion is on. Turn on full motion to show Lantern-ko.</p>
+        <button
+          type="button"
+          className="mascot-error-retry"
+          onClick={() => setPref("full")}
+        >
+          Enable full motion
+        </button>
+        <button
+          type="button"
+          className="mascot-hide"
+          style={{ marginTop: 8 }}
+          onClick={() => {
+            setEnabled(false);
+            try {
+              localStorage.setItem("anime_nexus_mascot", "off");
+            } catch {
+              /* */
+            }
+          }}
+        >
+          Hide
+        </button>
+      </div>
+    );
+  }
+
+  if (webglError) {
+    return (
+      <div className="mascot-error" role="alert">
+        <strong>3D companion unavailable</strong>
+        <p>{webglError}</p>
+        <button
+          type="button"
+          className="mascot-error-retry"
+          onClick={() => window.location.reload()}
+        >
+          Reload page
+        </button>
+      </div>
+    );
+  }
+
+  if (hiddenTab) {
+    return null;
+  }
 
   return (
     <>
       <MemoryBoot />
-      <MascotErrorBoundary fallback={null}>
+      <MascotErrorBoundary>
         <UiAwareness />
         <ContextBridge />
         <UiTheatreBridge />
       </MascotErrorBoundary>
 
-      {can3d ? (
-        <MascotErrorBoundary fallback={<LanternSprite />}>
-          <LiveTerrain reducedMotion={false} lowPower={lowPower} />
-        </MascotErrorBoundary>
-      ) : (
-        <LanternSprite />
-      )}
+      {/* 3D only — no 2D sprite path */}
+      <MascotErrorBoundary>
+        <LiveTerrain reducedMotion={false} lowPower={lowPower} />
+      </MascotErrorBoundary>
 
       <ThoughtBubble />
 
@@ -165,17 +227,15 @@ export function MascotHost() {
         role="complementary"
         aria-label="Companion home"
       >
-        <span className="mascot-dock-label">
-          {can3d ? "Lantern-ko · 3D" : "Lantern-ko"}
-        </span>
+        <span className="mascot-dock-label">Lantern-ko · 3D</span>
         <button
           type="button"
           className="mascot-hide"
           onClick={toggleMotion}
-          title={reducedMotion ? "Enable full motion / 3D" : "Reduce motion"}
-          aria-label={reducedMotion ? "Enable full motion" : "Reduce motion"}
+          title="Reduce motion (pauses 3D)"
+          aria-label="Reduce motion"
         >
-          {reducedMotion ? "✨ Motion" : "⏸️"}
+          ⏸️
         </button>
         <button
           type="button"

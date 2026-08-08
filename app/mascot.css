@@ -1,26 +1,30 @@
-/* Companion: 3D LiveTerrain primary + 2D fallback + dock */
+/* Companion — 3D LiveTerrain only */
 
 .live-terrain {
   position: fixed;
   inset: 0;
   z-index: 45;
   pointer-events: none;
+  width: 100vw;
+  height: 100vh;
+  width: 100dvw;
+  height: 100dvh;
 }
 
 .live-terrain-canvas {
   width: 100% !important;
   height: 100% !important;
+  display: block !important;
   pointer-events: none !important;
-  display: block;
 }
 
 .mascot-drag-handle {
   position: fixed;
   z-index: 48;
-  width: 64px;
-  height: 64px;
-  margin-left: -32px;
-  margin-top: -32px;
+  width: 72px;
+  height: 72px;
+  margin-left: -36px;
+  margin-top: -36px;
   border: none;
   border-radius: 50%;
   background: transparent;
@@ -32,129 +36,8 @@
 
 .mascot-drag-handle--active {
   cursor: grabbing;
-  background: rgba(240, 160, 144, 0.15);
-  box-shadow: 0 0 0 2px rgba(240, 160, 144, 0.4);
-}
-
-/* 2D fallback — only shown when 3D not yet projecting */
-.lantern-sprite {
-  position: fixed;
-  z-index: 46;
-  right: max(14px, env(safe-area-inset-right));
-  bottom: max(118px, calc(env(safe-area-inset-bottom) + 108px));
-  width: 64px;
-  height: 72px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  pointer-events: auto;
-  -webkit-tap-highlight-color: transparent;
-  padding: 0;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.45));
-}
-
-.lantern-sprite-body {
-  position: absolute;
-  inset: 0;
-  display: block;
-}
-
-.lantern-sprite-head {
-  position: absolute;
-  left: 50%;
-  top: 8px;
-  width: 36px;
-  height: 36px;
-  margin-left: -18px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ffe8e0, #e8a598 70%);
-  box-shadow: inset 0 -4px 8px rgba(180, 80, 60, 0.2);
-}
-
-.lantern-sprite-tip {
-  position: absolute;
-  left: 50%;
-  top: 2px;
-  width: 12px;
-  height: 12px;
-  margin-left: -6px;
-  border-radius: 50%;
-  background: #f0a090;
-  box-shadow: 0 0 12px 4px rgba(240, 160, 144, 0.7);
-  animation: lantern-pulse 2.4s ease-in-out infinite;
-}
-
-.lantern-sprite-eye {
-  position: absolute;
-  top: 22px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #2a1810;
-}
-
-.lantern-sprite-eye--l {
-  left: 50%;
-  margin-left: -10px;
-}
-
-.lantern-sprite-eye--r {
-  left: 50%;
-  margin-left: 5px;
-}
-
-.lantern-sprite-glow {
-  position: absolute;
-  left: 50%;
-  top: 18px;
-  width: 48px;
-  height: 48px;
-  margin-left: -24px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(240, 160, 144, 0.35),
-    transparent 70%
-  );
-  pointer-events: none;
-}
-
-.lantern-sprite-body::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 40px;
-  width: 28px;
-  height: 26px;
-  margin-left: -14px;
-  border-radius: 12px 12px 16px 16px;
-  background: linear-gradient(180deg, #e8a598, #d89080);
-}
-
-.lantern-sprite:active .lantern-sprite-head {
-  transform: scale(1.08);
-}
-
-.lantern-sprite--happy .lantern-sprite-tip,
-.lantern-sprite--wave .lantern-sprite-tip {
-  box-shadow: 0 0 18px 6px rgba(240, 200, 144, 0.9);
-}
-
-.lantern-sprite--sleep .lantern-sprite-eye {
-  height: 2px;
-  top: 24px;
-}
-
-@keyframes lantern-pulse {
-  0%,
-  100% {
-    opacity: 0.85;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.15);
-  }
+  background: rgba(240, 160, 144, 0.18);
+  box-shadow: 0 0 0 2px rgba(240, 160, 144, 0.45);
 }
 
 .mascot-thought {
@@ -256,20 +139,79 @@
   transform: scale(1.05);
 }
 
+/* Explicit error / status panels — never a silent 2D stand-in */
+.mascot-error {
+  position: fixed;
+  z-index: 55;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(72px, calc(env(safe-area-inset-bottom) + 64px));
+  max-width: min(280px, calc(100vw - 24px));
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(240, 120, 100, 0.45);
+  background: rgba(28, 14, 12, 0.94);
+  backdrop-filter: blur(12px);
+  color: #f5ebe6;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.mascot-error strong {
+  display: block;
+  color: #f0a090;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.mascot-error p {
+  margin: 0 0 10px;
+  color: #c4b4ac;
+  word-break: break-word;
+}
+
+.mascot-error-retry {
+  border: 1px solid rgba(240, 160, 144, 0.4);
+  background: rgba(240, 160, 144, 0.12);
+  color: #f5ebe6;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.mascot-error-retry:hover {
+  background: rgba(240, 160, 144, 0.22);
+}
+
+.mascot-loading {
+  position: fixed;
+  z-index: 55;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(72px, calc(env(safe-area-inset-bottom) + 64px));
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(240, 160, 144, 0.25);
+  background: rgba(18, 14, 12, 0.88);
+  color: #a89a92;
+  font-size: 0.7rem;
+  pointer-events: none;
+}
+
 @media (max-width: 480px) {
   .mascot-dock {
     bottom: max(60px, calc(env(safe-area-inset-bottom) + 52px));
   }
-  .lantern-sprite {
-    bottom: max(108px, calc(env(safe-area-inset-bottom) + 96px));
-    width: 56px;
-    height: 64px;
-  }
   .mascot-drag-handle {
-    width: 72px;
-    height: 72px;
-    margin-left: -36px;
-    margin-top: -36px;
+    width: 80px;
+    height: 80px;
+    margin-left: -40px;
+    margin-top: -40px;
   }
   .mascot-thought {
     bottom: max(180px, calc(env(safe-area-inset-bottom) + 168px));
@@ -277,13 +219,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .live-terrain,
-  .mascot-drag-handle {
-    display: none;
-  }
-  .lantern-sprite-tip {
-    animation: none;
-  }
   .mascot-thought {
     animation: none;
   }

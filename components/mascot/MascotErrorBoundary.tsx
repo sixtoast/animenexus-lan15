@@ -2,43 +2,56 @@
 
 import { Component, type ReactNode } from "react";
 
-type Props = { children: ReactNode; fallback?: ReactNode };
-type State = { hasError: boolean; key: number };
+type Props = {
+  children: ReactNode;
+  /** Optional label for the error panel */
+  label?: string;
+};
+
+type State = {
+  hasError: boolean;
+  message: string;
+  key: number;
+};
 
 /**
- * Isolates companion crashes so the rest of the app keeps working.
- * Retry remounts children with a new key.
+ * Isolates companion crashes. No silent 2D fallback — shows the real error.
  */
 export class MascotErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false, key: 0 };
+  state: State = { hasError: false, message: "", key: 0 };
 
-  static getDerivedStateFromError(): Partial<State> {
-    return { hasError: true };
+  static getDerivedStateFromError(err: unknown): Partial<State> {
+    const message =
+      err instanceof Error
+        ? err.message
+        : typeof err === "string"
+          ? err
+          : "Unknown render error";
+    return { hasError: true, message };
   }
 
   componentDidCatch(err: unknown) {
-    if (typeof console !== "undefined") {
-      console.warn("[Lantern-ko] companion suspended:", err);
-    }
+    console.error("[Lantern-ko] 3D companion crashed:", err);
   }
 
   retry = () => {
-    this.setState((s) => ({ hasError: false, key: s.key + 1 }));
+    this.setState((s) => ({
+      hasError: false,
+      message: "",
+      key: s.key + 1,
+    }));
   };
 
   render() {
     if (this.state.hasError) {
-      if (this.props.fallback) return this.props.fallback;
       return (
-        <button
-          type="button"
-          className="mascot-enable"
-          onClick={this.retry}
-          title="Retry companion"
-          aria-label="Retry companion"
-        >
-          🕯️
-        </button>
+        <div className="mascot-error" role="alert">
+          <strong>3D companion failed</strong>
+          <p>{this.state.message || "WebGL / R3F error"}</p>
+          <button type="button" className="mascot-error-retry" onClick={this.retry}>
+            Retry 3D
+          </button>
+        </div>
       );
     }
     return <div key={this.state.key}>{this.props.children}</div>;
