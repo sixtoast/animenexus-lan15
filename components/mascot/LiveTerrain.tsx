@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 3D companion — calm in home pad; freer, hoppier locomotion when out.
+ * 3D companion — calm in home pad; freer when out but always on-screen & reachable.
  */
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -28,6 +28,7 @@ import {
   stepTerrain,
   steerTerrain,
   freeHop,
+  clampToViewport,
   type TerrainBody,
 } from "@/lib/mascot/terrain-physics";
 import { useMascotStore } from "@/lib/mascot/store";
@@ -195,7 +196,7 @@ function Actor({
     }
     if (!g || !p) return;
 
-    const body = bodyRef.current;
+    let body = bodyRef.current;
     const home = getHomePlatform(platforms) ?? null;
     const now = Date.now();
     const m = mood.current;
@@ -210,11 +211,13 @@ function Actor({
       body.vy = 0;
       body.onGround = false;
       body.platformId = null;
+      body = clampToViewport(body);
+      bodyRef.current = body;
       queue.current = [];
       phaseRef.current = "outing";
       setAnim("surprised");
-      nextFreeHop.current = now + 400;
-      nextRoam.current = now + 900;
+      nextFreeHop.current = now + 500;
+      nextRoam.current = now + 1000;
     } else if (phase === "home") {
       if (home) {
         padWander.current += dt;
@@ -245,7 +248,6 @@ function Actor({
         setAnim("idle");
       }
     } else {
-      // —— FREED ——
       if (phase === "perform" && now >= performUntil.current) {
         phaseRef.current = "outing";
         beat.current = null;
@@ -253,23 +255,21 @@ function Actor({
         nextRoam.current = now + 500;
       }
 
-      // Spontaneous hops while free and grounded
       if (
         body.onGround &&
         queue.current.length === 0 &&
         now > nextFreeHop.current &&
         phaseRef.current === "outing"
       ) {
-        if (Math.random() < 0.55) {
+        if (Math.random() < 0.4) {
           bodyRef.current = freeHop(bodyRef.current);
           setAnim("jump");
-          nextFreeHop.current = now + 700 + Math.random() * 1400;
+          nextFreeHop.current = now + 900 + Math.random() * 1600;
         } else {
-          nextFreeHop.current = now + 400 + Math.random() * 800;
+          nextFreeHop.current = now + 500 + Math.random() * 900;
         }
       }
 
-      // Roam: pick another surface without going home yet
       if (
         body.onGround &&
         queue.current.length === 0 &&
@@ -315,6 +315,7 @@ function Actor({
               body.vx = 0;
               body.vy = 0;
               body.onGround = true;
+              bodyRef.current = clampToViewport(body);
             }
             setAnim(tb.anim);
             if (tb.thought) {
@@ -327,8 +328,7 @@ function Actor({
             phaseRef.current = "perform";
             performUntil.current = now + tb.holdMs;
           } else if (homeUntil.current === 0) {
-            // Stay free longer before auto-return
-            homeUntil.current = now + lingerMs(m) * 1.8 + 2500;
+            homeUntil.current = now + lingerMs(m) * 1.4 + 1800;
           } else if (now > homeUntil.current) {
             phaseRef.current = "returning";
             beat.current = null;
@@ -369,7 +369,7 @@ function Actor({
             bodyRef.current,
             goal.x,
             goalY,
-            Math.max(0.85, motion.walkSpeed * 2.1),
+            Math.max(0.7, motion.walkSpeed * 1.8),
             true,
           );
           if (anim !== "walk" && anim !== "jump") setAnim("walk");
@@ -388,8 +388,8 @@ function Actor({
           } else if (!(beat.current && phaseRef.current === "outing")) {
             setAnim("happy");
             if (phaseRef.current === "outing") {
-              homeUntil.current = Date.now() + lingerMs(m) * 1.6;
-              nextFreeHop.current = Date.now() + 500;
+              homeUntil.current = Date.now() + lingerMs(m) * 1.4;
+              nextFreeHop.current = Date.now() + 600;
             }
           }
         }
@@ -398,6 +398,8 @@ function Actor({
       if (phaseRef.current !== "home" && phaseRef.current !== "perform") {
         bodyRef.current = stepTerrain(bodyRef.current, platforms, dt, true);
       }
+
+      bodyRef.current = clampToViewport(bodyRef.current);
     }
 
     const b = bodyRef.current;
@@ -424,8 +426,6 @@ function Actor({
       freed ? 0.2 : 0.14,
     );
     g.rotation.y = facing.current;
-
-    // Slight lean into motion when free
     g.rotation.z = freed ? THREE.MathUtils.clamp(-b.vx * 0.04, -0.12, 0.12) : 0;
 
     g.position.set(b.x, b.y + 0.06 + proc.bob * (freed ? 1.1 : 0.6), 0.35);
@@ -458,19 +458,12 @@ function Actor({
 
     const world = new THREE.Vector3(b.x, b.y + 0.1, 0.35);
     world.project(camera);
-    const sx = (world.x * 0.5 + 0.5) * size.width;
-    const sy = (-world.y * 0.5 + 0.5) * size.height;
-    onScreenPos({
-      x: sx,
-      y: sy,
-      visible:
-        Number.isFinite(sx) &&
-        Number.isFinite(sy) &&
-        sx > -80 &&
-        sx < size.width + 80 &&
-        sy > -80 &&
-        sy < size.height + 80,
-    });
+    let sx = (world.x * 0.5 + 0.5) * size.width;
+    let sy = (-world.y * 0.5 + 0.5) * size.height;
+    const pad = 36;
+    sx = Math.max(pad, Math.min(size.width - pad, sx));
+    sy = Math.max(pad, Math.min(size.height - pad, sy));
+    onScreenPos({ x: sx, y: sy, visible: true });
   });
 
   return (
@@ -603,9 +596,16 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
       }
 
       let best: TerrainPlatform | null = null;
-      let bestD = 0.4;
+      let bestD = 0.35;
       for (const p of platforms) {
         if (p.type === "floor" || p.type === "home") continue;
+        if (
+          p.clientX < 48 ||
+          p.clientX > window.innerWidth - 48 ||
+          p.clientY < 48 ||
+          p.clientY > window.innerHeight - 48
+        )
+          continue;
         const d = Math.hypot(w.x - p.x, w.y - (p.y + p.hh));
         if (d < bestD) {
           bestD = d;
@@ -613,29 +613,28 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
         }
       }
 
-      // Freed: drop with momentum rather than hard snap home
       phaseRef.current = "outing";
       if (best) {
-        bodyRef.current = {
+        bodyRef.current = clampToViewport({
           ...bodyRef.current,
           x: w.x,
           y: w.y,
-          vx: (best.x - w.x) * 0.8,
+          vx: (best.x - w.x) * 0.5,
+          vy: 0.9,
+          onGround: false,
+          platformId: null,
+        });
+        bodyRef.current = jumpToward(bodyRef.current, best, true);
+      } else {
+        bodyRef.current = clampToViewport({
+          ...bodyRef.current,
+          x: w.x,
+          y: w.y,
+          vx: (Math.random() - 0.5) * 0.6,
           vy: 1.2,
           onGround: false,
           platformId: null,
-        };
-        bodyRef.current = jumpToward(bodyRef.current, best, true);
-      } else {
-        bodyRef.current = {
-          ...bodyRef.current,
-          x: w.x,
-          y: w.y,
-          vx: (Math.random() - 0.5) * 1.4,
-          vy: 2.0 + Math.random() * 0.8,
-          onGround: false,
-          platformId: null,
-        };
+        });
       }
       useMascotStore.getState().dispatch({ type: "pet" });
     },
