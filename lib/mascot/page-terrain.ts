@@ -38,6 +38,31 @@ export function screenToWorld(
 }
 
 /**
+ * Closest platform to a world point.
+ * Exported here so terrain-physics and scene code can import from one place.
+ */
+export function nearestPlatform(
+  platforms: TerrainPlatform[],
+  x: number,
+  y: number,
+): TerrainPlatform | null {
+  if (!platforms.length) return null;
+  let best: TerrainPlatform | null = null;
+  let bestDist = Infinity;
+  for (const p of platforms) {
+    const top = p.y + p.hh;
+    const dx = Math.max(Math.abs(x - p.x) - p.hw, 0);
+    const dy = y - top;
+    const d = Math.hypot(dx, dy * 0.6);
+    if (d < bestDist) {
+      bestDist = d;
+      best = p;
+    }
+  }
+  return best;
+}
+
+/**
  * Accurate platform from a DOMRect.
  * Uses full width/height in world units (not heavily shrunk).
  * Small padding only to avoid edge-bleed into neighboring widgets.
@@ -51,11 +76,9 @@ export function rectToPlatformFromDom(
   const vw = window.innerWidth || 1;
   const vh = window.innerHeight || 1;
   if (r.width < 10 || r.height < 10) return null;
-  // Must intersect viewport
   if (r.bottom < 4 || r.top > vh - 4 || r.right < 4 || r.left > vw - 4) return null;
 
   const aspect = vw / vh;
-  // Clip rect to viewport for accurate on-screen hitbox
   const left = Math.max(0, r.left);
   const right = Math.min(vw, r.right);
   const top = Math.max(0, r.top);
@@ -68,9 +91,8 @@ export function rectToPlatformFromDom(
   const cy = (top + bottom) / 2;
   const center = screenToWorld(cx, cy);
 
-  // 96% of clipped size — tight to the real control
   const hw = Math.max(0.04, (w / vw) * aspect * 0.96);
-  const hh = Math.max(0.025, (h / vh) * 0.96 * 0.5); // half-height for top surface feel
+  const hh = Math.max(0.025, (h / vh) * 0.96 * 0.5);
 
   return {
     id,
@@ -150,11 +172,10 @@ export function buildTerrain(): TerrainPlatform[] {
   if (typeof window === "undefined") return [];
 
   document.querySelectorAll(SURFACE_SELECTOR).forEach((el, i) => {
-    const type = (el.getAttribute("data-mascot-landmark") as LandmarkType) || inferType(el);
+    const type =
+      (el.getAttribute("data-mascot-landmark") as LandmarkType) || inferType(el);
     const id =
-      el.getAttribute("data-mascot-id") ||
-      el.id ||
-      `surface-${type}-${i}`;
+      el.getAttribute("data-mascot-id") || el.id || `surface-${type}-${i}`;
     const priority = Number(
       el.getAttribute("data-mascot-priority") || inferPriority(type),
     );
@@ -176,7 +197,6 @@ export function buildTerrain(): TerrainPlatform[] {
     }
   }
 
-  // Also direct-measure open modals (often portaled)
   document
     .querySelectorAll(
       '[role="dialog"]:not([hidden]), .modal-root.open, .ai-panel.open, .cmdk-root[data-open="true"]',
@@ -193,7 +213,6 @@ export function buildTerrain(): TerrainPlatform[] {
     });
 
   const aspect = window.innerWidth / (window.innerHeight || 1);
-  // Home pad — maps to bottom-right corner (habitat)
   out.push({
     id: "home-corner",
     type: "home",
