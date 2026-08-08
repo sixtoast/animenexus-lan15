@@ -1,6 +1,6 @@
 /**
  * Map the live page into walkable platforms.
- * Cards / posters, modals, nav, buttons — + a confined home pad.
+ * Closed overlays are never treated as climbable modals.
  */
 
 import {
@@ -106,18 +106,26 @@ export function rectToPlatform(
   return rectToPlatformFromDom(lm.id, lm.type, lm.rect, lm.priority);
 }
 
+function isOpenOverlay(el: Element): boolean {
+  if (el.hasAttribute("hidden")) return false;
+  if (el.getAttribute("aria-hidden") === "true") return false;
+  if (el.classList.contains("open")) return true;
+  if (el.getAttribute("data-open") === "true") return true;
+  if (el.getAttribute("role") === "dialog") {
+    const style = window.getComputedStyle(el);
+    if (style.display === "none" || style.visibility === "hidden") return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 40 && r.height > 40;
+  }
+  return false;
+}
+
 const SURFACE_SELECTOR = [
   "[data-mascot-landmark]",
   "nav",
   "header",
   "[role='navigation']",
-  "[role='dialog']",
-  ".modal-root",
-  ".modal",
-  ".ai-panel",
-  ".cmdk-root",
   ".anime-card",
-  ".anime-card img",
   ".home-rail-card",
   ".home-panel",
   ".hero",
@@ -131,17 +139,9 @@ const SURFACE_SELECTOR = [
 ].join(",");
 
 function inferType(el: Element): LandmarkType {
-  if (el.getAttribute("role") === "dialog" || el.classList.contains("modal"))
-    return "modal";
   if (
     el.classList.contains("anime-card") ||
     el.classList.contains("home-rail-card")
-  )
-    return "card";
-  // Poster image inside a recommendation card
-  if (
-    el.tagName === "IMG" &&
-    (el.closest(".anime-card") || el.closest(".home-rail-card"))
   )
     return "card";
   if (el.tagName === "NAV" || el.getAttribute("role") === "navigation")
@@ -149,8 +149,6 @@ function inferType(el: Element): LandmarkType {
   if (el.classList.contains("btn") || el.tagName === "BUTTON") return "button";
   if (el.classList.contains("hero") || el.classList.contains("home-hero"))
     return "hero";
-  if (el.classList.contains("ai-panel") || el.classList.contains("cmdk-root"))
-    return "modal";
   return "generic";
 }
 
@@ -194,6 +192,8 @@ export function buildTerrain(): TerrainPlatform[] {
 
   for (const lm of listLandmarks()) {
     if (seen.has(lm.id)) continue;
+    // Never treat closed overlays from the registry as modals
+    if (lm.type === "modal") continue;
     const p = rectToPlatform(lm, window.scrollY || 0);
     if (p) {
       seen.add(lm.id);
@@ -201,11 +201,13 @@ export function buildTerrain(): TerrainPlatform[] {
     }
   }
 
+  // Only truly open overlays
   document
     .querySelectorAll(
-      '[role="dialog"]:not([hidden]), .modal-root.open, .ai-panel.open, .cmdk-root[data-open="true"]',
+      '[role="dialog"], .modal-root, .modal, .ai-panel, .cmdk-root',
     )
     .forEach((el, i) => {
+      if (!isOpenOverlay(el)) return;
       const id = el.id || `live-modal-${i}`;
       if (seen.has(id)) return;
       const r = el.getBoundingClientRect();
@@ -217,7 +219,6 @@ export function buildTerrain(): TerrainPlatform[] {
     });
 
   const aspect = window.innerWidth / (window.innerHeight || 1);
-  // Confined home pad — bottom-right pocket
   const homeX = Math.min(aspect * 0.78, 1.32);
 
   out.push({
@@ -225,8 +226,8 @@ export function buildTerrain(): TerrainPlatform[] {
     type: "home",
     x: homeX,
     y: -0.72,
-    hw: 0.18,
-    hh: 0.09,
+    hw: 0.2,
+    hh: 0.11,
     priority: 1,
     clientX: window.innerWidth - 56,
     clientY: window.innerHeight - 100,
@@ -247,10 +248,6 @@ export function buildTerrain(): TerrainPlatform[] {
   return out;
 }
 
-/**
- * Prefer modals when open, else recommendation posters/cards,
- * then other UI. Rare generic surfaces.
- */
 export function pickWanderPlatform(
   platforms: TerrainPlatform[],
   fromId?: string,
@@ -269,7 +266,6 @@ export function pickWanderPlatform(
     if (modals.length) return modals[Math.floor(Math.random() * modals.length)];
   }
 
-  // Bias strongly toward recommendation posters / cards
   const cards = candidates.filter((p) => p.type === "card");
   if (cards.length && Math.random() < 0.62) {
     return cards[Math.floor(Math.random() * Math.min(6, cards.length))];

@@ -1,8 +1,9 @@
 "use client";
 
 /**
- * Full-viewport 3D companion (R3F) — orthographic overlay.
- * Small figure · mostly confined to home pad · breakouts onto UI / posters / modals.
+ * 3D companion — idle locked to home pad (visible boundary).
+ * No auto-climb. Scroll cannot snap them onto UI.
+ * Leave pad only via drag or explicit theatre events.
  */
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
@@ -32,12 +33,7 @@ import {
 } from "@/lib/mascot/terrain-physics";
 import { useMascotStore } from "@/lib/mascot/store";
 import { motionFromEmotions } from "@/lib/mascot/emotions";
-import {
-  worldMood,
-  outingIntervalMs,
-  lingerMs,
-  homeRestMs,
-} from "@/lib/mascot/living-world";
+import { worldMood, lingerMs, homeRestMs } from "@/lib/mascot/living-world";
 import { sampleProcedural } from "@/lib/mascot/procedural-motion";
 import {
   poseOnPlatform,
@@ -73,20 +69,44 @@ function OrthoCamera() {
   return null;
 }
 
+/** Visible home pad boundary in the 3D scene */
+function HomePadBox({ home }: { home: TerrainPlatform | null }) {
+  if (!home) return null;
+  const w = home.hw * 2;
+  const h = home.hh * 2.2;
+  return (
+    <group position={[home.x, home.y + home.hh, 0.05]}>
+      <mesh>
+        <planeGeometry args={[w, h]} />
+        <meshBasicMaterial
+          color="#f0a090"
+          transparent
+          opacity={0.08}
+          depthWrite={false}
+        />
+      </mesh>
+      <lineSegments>
+        <edgesGeometry args={[new THREE.PlaneGeometry(w, h)]} />
+        <lineBasicMaterial color="#f0a090" transparent opacity={0.55} />
+      </lineSegments>
+    </group>
+  );
+}
+
 function Actor({
   platforms,
-  lowPower,
   dragging,
   dragWorld,
   onScreenPos,
   bodyRef,
+  phaseRef,
 }: {
   platforms: TerrainPlatform[];
-  lowPower: boolean;
   dragging: boolean;
   dragWorld: { x: number; y: number } | null;
   onScreenPos: (p: MascotScreenPos) => void;
   bodyRef: MutableRefObject<TerrainBody | null>;
+  phaseRef: MutableRefObject<Phase>;
 }) {
   const root = useRef<THREE.Group>(null);
   const pose = useRef<THREE.Group>(null);
@@ -95,17 +115,13 @@ function Actor({
   const eyeL = useRef<THREE.Mesh>(null);
   const eyeR = useRef<THREE.Mesh>(null);
   const queue = useRef<TerrainPlatform[]>([]);
-  const phase = useRef<Phase>("home");
   const mood = useRef(worldMood());
-  const nextOuting = useRef(
-    Date.now() + outingIntervalMs(mood.current, lowPower),
-  );
   const homeUntil = useRef(0);
   const performUntil = useRef(0);
   const beat = useRef<TheatreBeat | null>(null);
   const facing = useRef(0);
   const seeded = useRef(false);
-  const padWander = useRef(0); // tiny motion inside home pad
+  const padWander = useRef(0);
   const emotions = useMascotStore((s) => s.emotions);
   const setAnim = useMascotStore((s) => s.setAnim);
   const anim = useMascotStore((s) => s.anim);
@@ -120,11 +136,15 @@ function Actor({
       bodyRef.current.platformId = "home-corner";
     }
     const home = getHomePlatform(platforms);
-    if (home && !seeded.current) {
-      bodyRef.current = snapToPlatform(bodyRef.current, home);
-      seeded.current = true;
+    if (home) {
+      // Always re-anchor to home pad when idle — never to scrolled UI
+      if (phaseRef.current === "home" || !seeded.current) {
+        bodyRef.current = snapToPlatform(bodyRef.current, home);
+        bodyRef.current.platformId = "home-corner";
+        seeded.current = true;
+      }
     }
-  }, [platforms, bodyRef]);
+  }, [platforms, bodyRef, phaseRef]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -134,16 +154,17 @@ function Actor({
     return () => window.clearInterval(id);
   }, []);
 
+  // Explicit theatre only — not scroll, not idle timers
   useEffect(() => {
     const onTheatre = (e: Event) => {
       const b = (e as CustomEvent).detail as TheatreBeat;
       beat.current = b;
-      const modal = platforms.find((p) => p.type === "modal");
+      const openModal = platforms.find((p) => p.type === "modal");
       const dest =
-        modal ||
+        openModal ||
         pickWanderPlatform(platforms, bodyRef.current?.platformId ?? undefined);
       if (dest && bodyRef.current) {
-        phase.current = "outing";
+        phaseRef.current = "outing";
         queue.current = planHops(
           platforms.find((x) => x.id === bodyRef.current!.platformId) ?? null,
           dest,
@@ -159,7 +180,7 @@ function Actor({
     window.addEventListener("animenexus:mascot-theatre", onTheatre);
     return () =>
       window.removeEventListener("animenexus:mascot-theatre", onTheatre);
-  }, [platforms, setAnim, bodyRef]);
+  }, [platforms, setAnim, bodyRef, phaseRef]);
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
@@ -180,8 +201,9 @@ function Actor({
     const home = getHomePlatform(platforms) ?? null;
     const now = Date.now();
     const m = mood.current;
-    const hasTerrain = platforms.length > 0;
+    const phase = phaseRef.current;
 
+    // —— DRAG ——
     if (dragging && dragWorld) {
       body.x = dragWorld.x;
       body.y = dragWorld.y;
@@ -190,92 +212,60 @@ function Actor({
       body.onGround = false;
       body.platformId = null;
       queue.current = [];
-      phase.current = "outing";
+      phaseRef.current = "outing";
       setAnim("surprised");
-    } else if (phase.current === "perform" && now < performUntil.current) {
-      if (hasTerrain) bodyRef.current = stepTerrain(bodyRef.current, platforms, dt);
-    } else {
-      if (phase.current === "perform" && now >= performUntil.current) {
-        phase.current = "outing";
+    }
+    // —— IDLE HOME: locked to pad, no climbing, no stepTerrain on page UI ——
+    else if (phase === "home") {
+      if (home) {
+        // Micro-idle inside pad only
+        padWander.current += dt;
+        if (padWander.current > 3 + Math.random() * 2.5) {
+          padWander.current = 0;
+          const ox = (Math.random() - 0.5) * home.hw * 1.1;
+          const oy = (Math.random() - 0.5) * home.hh * 0.7;
+          body.x = home.x + ox;
+          body.y = home.y + home.hh + oy;
+        }
+        const maxDx = home.hw * 0.95;
+        const maxDy = home.hh * 0.9;
+        body.x = THREE.MathUtils.clamp(body.x, home.x - maxDx, home.x + maxDx);
+        body.y = THREE.MathUtils.clamp(
+          body.y,
+          home.y + home.hh - maxDy,
+          home.y + home.hh + maxDy,
+        );
+        body.vx = 0;
+        body.vy = 0;
+        body.onGround = true;
+        body.platformId = "home-corner";
+        queue.current = [];
+      }
+      // No auto-outing. Stay put.
+      if (m.preferNap && anim !== "sleep" && Math.random() < 0.001) {
+        setAnim("sleep");
+      } else if (anim !== "sleep" && anim !== "idle") {
+        setAnim("idle");
+      }
+    }
+    // —— OUTING / PERFORM / RETURNING (only after drag or theatre) ——
+    else {
+      if (phase === "perform" && now >= performUntil.current) {
+        phaseRef.current = "outing";
         beat.current = null;
         homeUntil.current = now + 400;
       }
 
-      const modalOpen = platforms.some((x) => x.type === "modal");
-
-      // HOME: soft idle wander inside the confined pad only
-      if (phase.current === "home" && home && body.platformId === "home-corner") {
-        padWander.current += dt;
-        if (padWander.current > 2.5 + Math.random() * 2) {
-          padWander.current = 0;
-          const ox = (Math.random() - 0.5) * home.hw * 1.2;
-          const oy = (Math.random() - 0.5) * home.hh * 0.8;
-          body.x = home.x + ox;
-          body.y = home.y + home.hh + oy;
-          body.vx = 0;
-          body.vy = 0;
-          body.onGround = true;
-        }
-      }
-
-      // Occasional breakout from the corner
-      if (
-        hasTerrain &&
-        phase.current === "home" &&
-        now > nextOuting.current &&
-        now > homeUntil.current &&
-        body.onGround &&
-        queue.current.length === 0 &&
-        !m.preferNap
-      ) {
-        const dest = pickWanderPlatform(
-          platforms,
-          body.platformId ?? undefined,
-          modalOpen,
-        );
-        if (dest && dest.id !== "home-corner") {
-          phase.current = "outing";
-          beat.current = theatreForPlatform(dest);
-          const current =
-            platforms.find((x) => x.id === body.platformId) ?? home;
-          queue.current = planHops(current, dest, platforms);
-          const first = queue.current[0];
-          if (first) {
-            setAnim("think");
-            window.setTimeout(() => {
-              if (bodyRef.current) {
-                bodyRef.current = jumpToward(bodyRef.current, first);
-                setAnim("jump");
-              }
-            }, 160);
-          }
-        }
-        // Long chill before next attempt
-        nextOuting.current =
-          now +
-          (modalOpen
-            ? 5000 + Math.random() * 4000
-            : outingIntervalMs(m, lowPower));
-      }
-
-      if (
-        phase.current === "home" &&
-        m.preferNap &&
-        anim !== "sleep" &&
-        Math.random() < 0.0015
-      ) {
-        setAnim("sleep");
-      }
-
-      if (
-        hasTerrain &&
-        (phase.current === "outing" || phase.current === "perform") &&
+      if (phase === "perform" && now < performUntil.current) {
+        // hold pose
+      } else if (
+        (phase === "outing" || phase === "perform") &&
         queue.current.length === 0 &&
         body.onGround &&
         home
       ) {
         if (body.platformId !== "home-corner") {
-          if (beat.current && phase.current === "outing") {
+          if (beat.current && phase === "outing") {
             const tb = beat.current;
             const at = platforms.find((x) => x.id === body.platformId);
             if (at) {
@@ -294,12 +284,12 @@ function Actor({
                 }),
               );
             }
-            phase.current = "perform";
+            phaseRef.current = "perform";
             performUntil.current = now + tb.holdMs;
           } else if (homeUntil.current === 0) {
             homeUntil.current = now + lingerMs(m);
           } else if (now > homeUntil.current) {
-            phase.current = "returning";
+            phaseRef.current = "returning";
             beat.current = null;
             const current =
               platforms.find((x) => x.id === body.platformId) ?? null;
@@ -311,22 +301,23 @@ function Actor({
             }
             homeUntil.current = 0;
           }
+        } else {
+          // already on home while "outing" → settle
+          phaseRef.current = "home";
+          setAnim("idle");
+          homeUntil.current = now + homeRestMs(m);
         }
       }
 
       if (
-        phase.current === "returning" &&
+        phaseRef.current === "returning" &&
         queue.current.length === 0 &&
-        body.platformId === "home-corner"
+        (body.platformId === "home-corner" || !body.platformId)
       ) {
-        phase.current = "home";
+        phaseRef.current = "home";
+        if (home) bodyRef.current = snapToPlatform(bodyRef.current, home);
         setAnim(m.preferNap ? "sleep" : "idle");
-        // Long rest in the corner after a breakout
         homeUntil.current = now + homeRestMs(m);
-        nextOuting.current = Math.max(
-          nextOuting.current,
-          homeUntil.current + outingIntervalMs(m, lowPower) * 0.4,
-        );
         beat.current = null;
       }
 
@@ -353,34 +344,18 @@ function Actor({
             const nxt = queue.current[0];
             bodyRef.current = jumpToward(bodyRef.current, nxt);
             setAnim("jump");
-          } else if (!(beat.current && phase.current === "outing")) {
+          } else if (!(beat.current && phaseRef.current === "outing")) {
             setAnim("idle");
-            if (phase.current === "outing") {
+            if (phaseRef.current === "outing") {
               homeUntil.current = Date.now() + lingerMs(m);
             }
           }
         }
       }
 
-      if (phase.current !== "perform" && hasTerrain) {
+      // Physics only while actively out — not while home
+      if (phaseRef.current !== "home" && phaseRef.current !== "perform") {
         bodyRef.current = stepTerrain(bodyRef.current, platforms, dt);
-      }
-
-      // Soft clamp while home so they stay in the pad
-      if (
-        phase.current === "home" &&
-        home &&
-        body.platformId === "home-corner" &&
-        !dragging
-      ) {
-        const maxDx = home.hw * 0.95;
-        const maxDy = home.hh * 0.9;
-        body.x = THREE.MathUtils.clamp(body.x, home.x - maxDx, home.x + maxDx);
-        body.y = THREE.MathUtils.clamp(
-          body.y,
-          home.y + home.hh - maxDy,
-          home.y + home.hh + maxDy,
-        );
       }
     }
 
@@ -393,25 +368,26 @@ function Actor({
       phase:
         dragging
           ? "drag"
-          : phase.current === "perform"
+          : phaseRef.current === "perform" || phaseRef.current === "outing"
             ? "outing"
-            : phase.current === "returning"
+            : phaseRef.current === "returning"
               ? "returning"
-              : phase.current === "outing"
-                ? "outing"
-                : "home",
+              : "home",
     });
 
     let targetYaw = 0;
     if (Math.abs(b.vx) > 0.04) targetYaw = b.vx > 0 ? -0.28 : 0.28;
-    if (dragging || phase.current === "perform" || phase.current === "home") {
+    if (
+      dragging ||
+      phaseRef.current === "perform" ||
+      phaseRef.current === "home"
+    ) {
       targetYaw = 0;
     }
     facing.current = THREE.MathUtils.lerp(facing.current, targetYaw, 0.14);
     g.rotation.y = facing.current;
 
     g.position.set(b.x, b.y + 0.06 + proc.bob * 0.6, 0.35);
-    // Smaller figure
     const s = 0.58;
     p.scale.set(proc.scaleX * s, proc.scaleY * s, s);
 
@@ -520,7 +496,10 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
   );
   const [glError, setGlError] = useState<string | null>(null);
   const bodyRef = useRef<TerrainBody | null>(null);
+  const phaseRef = useRef<Phase>("home");
   const dragMoved = useRef(false);
+
+  const home = platforms.find((p) => p.id === "home-corner") ?? null;
 
   useEffect(() => {
     const rebuild = () => {
@@ -533,8 +512,10 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
     const t0 = window.setTimeout(rebuild, 40);
     const t1 = window.setTimeout(rebuild, 250);
     const t2 = window.setTimeout(rebuild, 800);
-    const id = window.setInterval(rebuild, lowPower ? 1600 : 900);
+    // Rebuild less often — scroll must not feel like an outing trigger
+    const id = window.setInterval(rebuild, lowPower ? 2500 : 1800);
     window.addEventListener("resize", rebuild);
+    // Scroll only updates card positions for future drag landings — idle ignores them
     window.addEventListener("scroll", rebuild, { passive: true });
     return () => {
       window.clearTimeout(t0);
@@ -572,29 +553,40 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
       const w = screenToWorld(e.clientX, e.clientY);
       setDragWorld(null);
       if (!bodyRef.current) return;
+
       if (!dragMoved.current) {
         useMascotStore.getState().dispatch({ type: "click" });
+        // Click while idle keeps them home
+        const h = getHomePlatform(platforms);
+        if (h && phaseRef.current === "home") {
+          bodyRef.current = snapToPlatform(bodyRef.current, h);
+        }
         return;
       }
+
+      // Drag-drop: land on nearest platform, else return home
       let best: TerrainPlatform | null = null;
-      let bestD = 0.4;
+      let bestD = 0.35;
       for (const p of platforms) {
-        if (p.type === "floor") continue;
+        if (p.type === "floor" || p.type === "home") continue;
         const d = Math.hypot(w.x - p.x, w.y - (p.y + p.hh));
         if (d < bestD) {
           bestD = d;
           best = p;
         }
       }
-      if (best) bodyRef.current = snapToPlatform(bodyRef.current, best);
-      else {
-        bodyRef.current.x = w.x;
-        bodyRef.current.y = w.y;
-        bodyRef.current.vy = 0;
-        bodyRef.current.onGround = false;
-        bodyRef.current.platformId = null;
+      if (best) {
+        bodyRef.current = snapToPlatform(bodyRef.current, best);
+        phaseRef.current = "outing";
+        useMascotStore.getState().dispatch({ type: "pet" });
+      } else {
+        const h = getHomePlatform(platforms);
+        if (h) {
+          bodyRef.current = snapToPlatform(bodyRef.current, h);
+          phaseRef.current = "home";
+        }
+        useMascotStore.getState().dispatch({ type: "pet" });
       }
-      useMascotStore.getState().dispatch({ type: "pet" });
     },
     [platforms],
   );
@@ -622,6 +614,9 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
 
   return (
     <>
+      {/* HTML pad outline — always visible while companion is on */}
+      <div className="mascot-home-pad" aria-hidden />
+
       <div className="live-terrain" aria-hidden>
         <Canvas
           className="live-terrain-canvas"
@@ -644,8 +639,7 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
           style={{ pointerEvents: "none", width: "100%", height: "100%" }}
           onCreated={({ gl }) => {
             gl.setClearColor(0x000000, 0);
-            const ctx = gl.getContext();
-            if (!ctx) {
+            if (!gl.getContext()) {
               setGlError("WebGL context lost after Canvas create.");
             }
           }}
@@ -666,13 +660,14 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
             distance={5}
             color="#f0a090"
           />
+          <HomePadBox home={home} />
           <Actor
             platforms={platforms}
-            lowPower={lowPower}
             dragging={dragging}
             dragWorld={dragWorld}
             onScreenPos={setScreenPos}
             bodyRef={bodyRef}
+            phaseRef={phaseRef}
           />
         </Canvas>
       </div>

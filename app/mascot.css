@@ -18,13 +18,28 @@
   pointer-events: none !important;
 }
 
+/* Visible home boundary box — bottom-right corner */
+.mascot-home-pad {
+  position: fixed;
+  z-index: 44;
+  right: max(8px, env(safe-area-inset-right));
+  bottom: max(56px, calc(env(safe-area-inset-bottom) + 48px));
+  width: 96px;
+  height: 96px;
+  border: 1.5px dashed rgba(240, 160, 144, 0.55);
+  border-radius: 14px;
+  background: rgba(240, 160, 144, 0.06);
+  box-shadow: inset 0 0 20px rgba(240, 160, 144, 0.08);
+  pointer-events: none;
+}
+
 .mascot-drag-handle {
   position: fixed;
   z-index: 48;
-  width: 72px;
-  height: 72px;
-  margin-left: -36px;
-  margin-top: -36px;
+  width: 64px;
+  height: 64px;
+  margin-left: -32px;
+  margin-top: -32px;
   border: none;
   border-radius: 50%;
   background: transparent;
@@ -75,7 +90,7 @@
   position: fixed;
   z-index: 55;
   right: max(10px, env(safe-area-inset-right));
-  bottom: max(64px, calc(env(safe-area-inset-bottom) + 56px));
+  bottom: max(12px, env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
   gap: 8px;
@@ -139,7 +154,6 @@
   transform: scale(1.05);
 }
 
-/* Explicit error / status panels — never a silent 2D stand-in */
 .mascot-error {
   position: fixed;
   z-index: 55;
@@ -204,14 +218,16 @@
 }
 
 @media (max-width: 480px) {
-  .mascot-dock {
-    bottom: max(60px, calc(env(safe-area-inset-bottom) + 52px));
+  .mascot-home-pad {
+    width: 84px;
+    height: 84px;
+    bottom: max(52px, calc(env(safe-area-inset-bottom) + 44px));
   }
   .mascot-drag-handle {
-    width: 80px;
-    height: 80px;
-    margin-left: -40px;
-    margin-top: -40px;
+    width: 72px;
+    height: 72px;
+    margin-left: -36px;
+    margin-top: -36px;
   }
   .mascot-thought {
     bottom: max(180px, calc(env(safe-area-inset-bottom) + 168px));
