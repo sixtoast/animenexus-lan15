@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useToast } from "@/components/ToastProvider";
+import { useMotion } from "@/components/MotionProvider";
 
 export function FabMenu() {
   const [open, setOpen] = useState(false);
   const [pulse, setPulse] = useState(false);
   const { toggleTheme, theme } = useTheme();
   const { showToast } = useToast();
+  const { reducedMotion, toggleMotion } = useMotion();
 
   useEffect(() => {
     const onPulse = () => {
@@ -113,6 +115,22 @@ export function FabMenu() {
             }}
           >
             {theme === "dark" ? "☀️ Light theme" : "🌙 Dark theme"}
+          </button>
+          <button
+            type="button"
+            className="fab-item"
+            role="menuitem"
+            onClick={() => {
+              toggleMotion();
+              // reducedMotion is pre-toggle; after toggle it's the opposite
+              showToast(
+                reducedMotion ? "Motion on · 3D mascot" : "Motion reduced",
+                reducedMotion ? "✨" : "⏸️",
+              );
+              setOpen(false);
+            }}
+          >
+            {reducedMotion ? "✨ Full motion" : "⏸️ Reduce motion"}
           </button>
           <Link
             href="/browse"

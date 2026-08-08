@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useMascotStore, mascotNotify } from "@/lib/mascot/store";
+import { useMotion } from "@/components/MotionProvider";
 import { UiAwareness } from "./UiAwareness";
 import { ContextBridge } from "./ContextBridge";
 import { ThoughtBubble } from "./ThoughtBubble";
@@ -20,10 +21,10 @@ const LiveTerrain = dynamic(
 export function MascotHost() {
   const enabled = useMascotStore((s) => s.enabled);
   const setEnabled = useMascotStore((s) => s.setEnabled);
+  const { reducedMotion, toggleMotion } = useMotion();
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
   const [hiddenTab, setHiddenTab] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [lowPower, setLowPower] = useState(false);
   const [webglOk, setWebglOk] = useState(true);
@@ -37,9 +38,6 @@ export function MascotHost() {
     } catch {
       setEnabled(true);
     }
-    setReducedMotion(
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    );
     setLowPower(
       window.matchMedia("(max-width: 480px)").matches ||
         (navigator as Navigator & { connection?: { saveData?: boolean } })
@@ -140,7 +138,7 @@ export function MascotHost() {
     );
   }
 
-  // 3D is the product. 2D only when WebGL is missing or reduced-motion.
+  // 3D when WebGL works and user has not reduced motion
   const can3d = webglOk && !reducedMotion && !hiddenTab;
 
   return (
@@ -167,7 +165,18 @@ export function MascotHost() {
         role="complementary"
         aria-label="Companion home"
       >
-        <span className="mascot-dock-label">Lantern-ko · 3D</span>
+        <span className="mascot-dock-label">
+          {can3d ? "Lantern-ko · 3D" : "Lantern-ko"}
+        </span>
+        <button
+          type="button"
+          className="mascot-hide"
+          onClick={toggleMotion}
+          title={reducedMotion ? "Enable full motion / 3D" : "Reduce motion"}
+          aria-label={reducedMotion ? "Enable full motion" : "Reduce motion"}
+        >
+          {reducedMotion ? "✨ Motion" : "⏸️"}
+        </button>
         <button
           type="button"
           className="mascot-hide"

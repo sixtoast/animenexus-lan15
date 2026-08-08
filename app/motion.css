@@ -8,21 +8,54 @@
   --dur-slow: 720ms;
 }
 
+/* System preference (when no manual override) */
 @media (prefers-reduced-motion: reduce) {
-  :root {
+  :root:not([data-motion="full"]) {
     --dur-fast: 1ms;
     --dur: 1ms;
     --dur-slow: 1ms;
   }
-  .anime-card,
-  .poster-skel,
-  .grid-enter,
-  .fab-toggle.pulse,
-  .anime-toast,
-  .room-enter {
+  :root:not([data-motion="full"]) .anime-card,
+  :root:not([data-motion="full"]) .poster-skel,
+  :root:not([data-motion="full"]) .grid-enter,
+  :root:not([data-motion="full"]) .fab-toggle.pulse,
+  :root:not([data-motion="full"]) .anime-toast,
+  :root:not([data-motion="full"]) .room-enter {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* Manual override — site-wide reduce motion (button / localStorage) */
+html[data-reduce-motion="true"] {
+  --dur-fast: 1ms;
+  --dur: 1ms;
+  --dur-slow: 1ms;
+}
+
+html[data-reduce-motion="true"] .anime-card,
+html[data-reduce-motion="true"] .poster-skel,
+html[data-reduce-motion="true"] .grid-enter,
+html[data-reduce-motion="true"] .fab-toggle.pulse,
+html[data-reduce-motion="true"] .anime-toast,
+html[data-reduce-motion="true"] .room-enter,
+html[data-reduce-motion="true"] .live-terrain,
+html[data-reduce-motion="true"] .mascot-drag-handle,
+html[data-reduce-motion="true"] .lantern-sprite-tip {
+  animation: none !important;
+  transition: none !important;
+}
+
+html[data-reduce-motion="true"] .live-terrain,
+html[data-reduce-motion="true"] .mascot-drag-handle {
+  display: none !important;
+}
+
+/* Manual full motion — re-enable even if OS says reduce */
+html[data-motion="full"] {
+  --dur-fast: 180ms;
+  --dur: 420ms;
+  --dur-slow: 720ms;
 }
 
 /* Room continuity — soft enter on route change */
@@ -41,13 +74,11 @@
   }
 }
 
-/* Cards as links */
 a.anime-card {
   text-decoration: none;
   color: inherit;
 }
 
-/* Staggered grid entrance */
 .anime-grid > .grid-enter {
   animation: cardRise var(--dur) var(--ease-out-expo) both;
   animation-delay: calc(var(--i, 0) * 28ms);
@@ -64,7 +95,6 @@ a.anime-card {
   }
 }
 
-/* Elevated card glow */
 .anime-card {
   isolation: isolate;
 }
@@ -132,7 +162,6 @@ a.anime-card {
   view-transition-name: var(--vt-cover, none);
 }
 
-/* View modes */
 html[data-view-mode="poster"] .anime-grid {
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 16px;
@@ -156,7 +185,6 @@ html[data-view-mode="shelf"] .anime-card img {
   object-fit: cover;
 }
 
-/* Poster skeletons */
 .poster-skel-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -208,7 +236,6 @@ html[data-view-mode="shelf"] .anime-card img {
   color: var(--color-accent);
 }
 
-/* FAB pulse */
 .fab-toggle.pulse {
   animation: fabPulse 0.7s var(--ease-spring);
   box-shadow: 0 0 0 0 rgba(240, 160, 144, 0.5);
@@ -229,7 +256,6 @@ html[data-view-mode="shelf"] .anime-card img {
   }
 }
 
-/* Toasts */
 .anime-toast {
   animation: toastBounce 0.45s var(--ease-spring);
 }
@@ -256,7 +282,6 @@ html[data-view-mode="shelf"] .anime-card img {
   }
 }
 
-/* Interaction kit — buttons */
 .btn {
   transition:
     transform var(--dur-fast) var(--ease-out-expo),
@@ -288,7 +313,6 @@ html[data-view-mode="shelf"] .anime-card img {
   background: rgba(240, 160, 144, 0.08);
 }
 
-/* Overlay / sheet enter (cmdk, panels already use fixed; reinforce) */
 .overlay-enter,
 .cmdk-root,
 .ai-panel.open,
@@ -307,7 +331,6 @@ html[data-view-mode="shelf"] .anime-card img {
   }
 }
 
-/* Shortcuts + loading theater */
 .shortcuts-table {
   width: 100%;
   border-collapse: collapse;
@@ -335,7 +358,6 @@ html[data-view-mode="shelf"] .anime-card img {
   color: var(--color-text-muted);
 }
 
-/* Session environment */
 html[data-session="tonight"] body {
   background:
     radial-gradient(ellipse 90% 60% at 10% -10%, rgba(240, 160, 144, 0.2) 0%, transparent 55%),
