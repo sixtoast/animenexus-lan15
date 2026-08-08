@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useMascotStore, mascotNotify } from "@/lib/mascot/store";
 import { UiAwareness } from "./UiAwareness";
@@ -27,8 +27,6 @@ export function MascotHost() {
   const [modalOpen, setModalOpen] = useState(false);
   const [lowPower, setLowPower] = useState(false);
   const [webglOk, setWebglOk] = useState(true);
-  const [terrainVisible, setTerrainVisible] = useState(false);
-  const [terrainFailed, setTerrainFailed] = useState(false);
 
   useEffect(() => {
     setReady(true);
@@ -42,7 +40,6 @@ export function MascotHost() {
     setReducedMotion(
       window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     );
-    // lowPower only tunes dpr / intervals — never disables 3D
     setLowPower(
       window.matchMedia("(max-width: 480px)").matches ||
         (navigator as Navigator & { connection?: { saveData?: boolean } })
@@ -118,13 +115,8 @@ export function MascotHost() {
     return () => window.clearInterval(id);
   }, [enabled, hiddenTab]);
 
-  const onTerrainVisible = useCallback((v: boolean) => {
-    setTerrainVisible(v);
-  }, []);
-
   const showCompanion = () => {
     setEnabled(true);
-    setTerrainFailed(false);
     try {
       localStorage.setItem("anime_nexus_mascot", "on");
     } catch {
@@ -148,10 +140,8 @@ export function MascotHost() {
     );
   }
 
-  // 3D is primary whenever WebGL works and motion is allowed
-  const use3d = webglOk && !reducedMotion && !hiddenTab && !terrainFailed;
-  // 2D sprite only as fallback when 3D isn't showing yet / failed
-  const show2dFallback = !use3d || !terrainVisible;
+  // 3D is the product. 2D only when WebGL is missing or reduced-motion.
+  const can3d = webglOk && !reducedMotion && !hiddenTab;
 
   return (
     <>
@@ -162,21 +152,13 @@ export function MascotHost() {
         <UiTheatreBridge />
       </MascotErrorBoundary>
 
-      {use3d ? (
-        <MascotErrorBoundary
-          fallback={
-            <LanternSprite />
-          }
-        >
-          <LiveTerrain
-            reducedMotion={false}
-            lowPower={lowPower}
-            onVisibleChange={onTerrainVisible}
-          />
+      {can3d ? (
+        <MascotErrorBoundary fallback={<LanternSprite />}>
+          <LiveTerrain reducedMotion={false} lowPower={lowPower} />
         </MascotErrorBoundary>
-      ) : null}
-
-      {show2dFallback ? <LanternSprite /> : null}
+      ) : (
+        <LanternSprite />
+      )}
 
       <ThoughtBubble />
 
@@ -185,7 +167,7 @@ export function MascotHost() {
         role="complementary"
         aria-label="Companion home"
       >
-        <span className="mascot-dock-label">Lantern-ko</span>
+        <span className="mascot-dock-label">Lantern-ko · 3D</span>
         <button
           type="button"
           className="mascot-hide"
