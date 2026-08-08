@@ -66,7 +66,8 @@ export function rectToPlatformFromDom(
   const vw = window.innerWidth || 1;
   const vh = window.innerHeight || 1;
   if (r.width < 10 || r.height < 10) return null;
-  if (r.bottom < 4 || r.top > vh - 4 || r.right < 4 || r.left > vw - 4)
+  // Must be substantially in the viewport to be a land target
+  if (r.bottom < 40 || r.top > vh - 40 || r.right < 40 || r.left > vw - 40)
     return null;
 
   const aspect = vw / vh;
@@ -192,7 +193,6 @@ export function buildTerrain(): TerrainPlatform[] {
 
   for (const lm of listLandmarks()) {
     if (seen.has(lm.id)) continue;
-    // Never treat closed overlays from the registry as modals
     if (lm.type === "modal") continue;
     const p = rectToPlatform(lm, window.scrollY || 0);
     if (p) {
@@ -201,7 +201,6 @@ export function buildTerrain(): TerrainPlatform[] {
     }
   }
 
-  // Only truly open overlays
   document
     .querySelectorAll(
       '[role="dialog"], .modal-root, .modal, .ai-panel, .cmdk-root',
@@ -248,18 +247,28 @@ export function buildTerrain(): TerrainPlatform[] {
   return out;
 }
 
+/** Prefer on-screen, reachable surfaces only. */
 export function pickWanderPlatform(
   platforms: TerrainPlatform[],
   fromId?: string,
   preferModal?: boolean,
 ): TerrainPlatform | null {
-  let candidates = platforms.filter(
-    (p) =>
-      p.id !== fromId &&
-      p.type !== "floor" &&
-      p.type !== "home" &&
-      p.priority >= 2,
-  );
+  const vw = typeof window !== "undefined" ? window.innerWidth : 1;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 1;
+
+  let candidates = platforms.filter((p) => {
+    if (p.id === fromId || p.type === "floor" || p.type === "home") return false;
+    if (p.priority < 2) return false;
+    // Reachable: rect center must be well inside the viewport
+    if (
+      p.clientX < 48 ||
+      p.clientX > vw - 48 ||
+      p.clientY < 48 ||
+      p.clientY > vh - 48
+    )
+      return false;
+    return true;
+  });
 
   if (preferModal) {
     const modals = candidates.filter((p) => p.type === "modal");
@@ -314,6 +323,15 @@ export function planHops(
   let best = Infinity;
   for (const p of platforms) {
     if (p.id === from.id || p.id === to.id || p.type === "floor") continue;
+    // Prefer mid hops that stay on-screen
+    if (
+      typeof window !== "undefined" &&
+      (p.clientX < 40 ||
+        p.clientX > window.innerWidth - 40 ||
+        p.clientY < 40 ||
+        p.clientY > window.innerHeight - 40)
+    )
+      continue;
     const d1 = Math.hypot(p.x - from.x, p.y - from.y);
     const d2 = Math.hypot(p.x - to.x, p.y - to.y);
     const score = d1 + d2;
