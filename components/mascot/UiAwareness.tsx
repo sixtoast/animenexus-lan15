@@ -3,16 +3,16 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import {
-  landmarkToHabitat,
   pickInterestingLandmark,
   scanDomLandmarks,
   screenToHabitatTarget,
 } from "@/lib/mascot/ui-registry";
 import { mascotNotify } from "@/lib/mascot/store";
-import { clampToHabitat } from "@/lib/mascot/navigation";
 
 /**
- * Keeps the landmark registry warm and nudges the companion toward UI.
+ * Keeps the landmark registry warm and soft-notices interesting UI.
+ * Does NOT force climb/go-to — LiveTerrain owns locomotion and home lock.
+ * Auto go-to was causing idle home breakouts on scroll/timer.
  */
 export function UiAwareness() {
   const pathname = usePathname();
@@ -27,24 +27,18 @@ export function UiAwareness() {
     };
   }, [pathname]);
 
-  // Periodic notice of interesting landmarks
+  // Soft notice only — store may bump curiosity; never teleports the 3D body
   useEffect(() => {
     const id = window.setInterval(() => {
       scanDomLandmarks();
       const lm = pickInterestingLandmark();
       if (!lm) return;
-      // Soft notice — store decides if curious enough
       mascotNotify({ type: "notice-ui", landmarkId: lm.id });
-      const hz = landmarkToHabitat(lm);
-      if (hz && Math.random() < 0.35) {
-        const t = clampToHabitat(hz.x, hz.z);
-        mascotNotify({ type: "go-to", x: t.x, z: t.z });
-      }
-    }, 9000);
+    }, 12_000);
     return () => window.clearInterval(id);
   }, []);
 
-  // Hover anime cards / landmark hosts → look that way
+  // Hover anime cards → look that way (lookBias only)
   useEffect(() => {
     let last = 0;
     const onOver = (e: Event) => {
