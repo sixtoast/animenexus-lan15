@@ -1,5 +1,13 @@
 import type { MascotAnim, MascotEmotions } from "./types";
+import {
+  layersFromAnim,
+  resolveAnim,
+  type AnimLayers,
+  type LocomotionAnim,
+  type SocialAnim,
+} from "./anim-layers";
 
+/** Legacy priority table (kept for canInterrupt compatibility). */
 export const ANIM_PRIORITY: Record<MascotAnim, number> = {
   sleep: 1,
   idle: 2,
@@ -17,6 +25,8 @@ export type AnimRequest = {
   anim: MascotAnim;
   holdMs?: number;
   force?: boolean;
+  /** Prefer writing only the social channel (keeps walk body). */
+  socialOnly?: boolean;
 };
 
 export function canInterrupt(
@@ -45,4 +55,18 @@ export function shouldWake(
 ): boolean {
   if (interacted) return true;
   return emotions.sleepiness < 0.45 || emotions.attention > 0.6;
+}
+
+/** Classify a legacy anim as loco vs social for layer-aware callers. */
+export function classifyAnim(anim: MascotAnim): {
+  loco?: LocomotionAnim;
+  social?: SocialAnim;
+} {
+  const l = layersFromAnim(anim);
+  if (l.social !== "none") return { social: l.social, loco: l.locomotion };
+  return { loco: l.locomotion };
+}
+
+export function resolvedFromLayers(layers: AnimLayers): MascotAnim {
+  return resolveAnim(layers);
 }
