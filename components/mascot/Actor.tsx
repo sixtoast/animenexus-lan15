@@ -54,7 +54,6 @@ function homeWorld(): { x: number; y: number } {
   return { x: Math.min(aspect * 0.78, 1.32), y: -0.72 };
 }
 
-/** Only these theatre events may pull the mascot out of a resting home pad. */
 function isBreakoutTheatre(b: TheatreBeat | undefined): boolean {
   if (!b) return false;
   if (b.move === "climb-modal" || b.move === "inside-poster" || b.move === "inspect")
@@ -103,7 +102,9 @@ export function Actor({
 }) {
   const root = useRef<THREE.Group>(null);
   const pose = useRef<THREE.Group>(null);
+  const bodyGroup = useRef<THREE.Group>(null);
   const head = useRef<THREE.Group>(null);
+  const tipGroup = useRef<THREE.Group>(null);
   const tip = useRef<THREE.Mesh>(null);
   const tipStem = useRef<THREE.Mesh>(null);
   const eyeL = useRef<THREE.Group>(null);
@@ -117,6 +118,8 @@ export function Actor({
   const cheekR = useRef<THREE.Mesh>(null);
   const armL = useRef<THREE.Group>(null);
   const armR = useRef<THREE.Group>(null);
+  const footL = useRef<THREE.Mesh>(null);
+  const footR = useRef<THREE.Mesh>(null);
   const queue = useRef<TerrainPlatform[]>([]);
   const mood = useRef(worldMood());
   const homeUntil = useRef(0);
@@ -477,8 +480,10 @@ export function Actor({
     const proc = sampleProcedural(t, anim, motion, {
       onGround: b.onGround,
       vy: b.vy,
+      vx: b.vx,
       lookX: lookBias.x,
       lookY: lookBias.y,
+      dt,
       phase: dragging
         ? "drag"
         : phaseRef.current === "perform" || phaseRef.current === "outing"
@@ -488,7 +493,7 @@ export function Actor({
             : "home",
     });
 
-    // ── Sprint 2: layered expression (independent of locomotion) ──
+    // Expression layer (Sprint 2)
     const emoExpr = expressionFromEmotions(emotions);
     const expr = expressionFromAnim(anim, emoExpr);
     const faceTarget = sampleFace(
@@ -502,6 +507,7 @@ export function Actor({
     else faceSmooth.current = lerpFace(faceSmooth.current, faceTarget, 0.18);
     const face = faceSmooth.current;
 
+    // Root orientation + lean (weight shift)
     let targetYaw = 0;
     if (Math.abs(b.vx) > 0.04) targetYaw = b.vx > 0 ? -0.38 : 0.38;
     if (dragging || phaseRef.current === "home") targetYaw = 0;
@@ -511,11 +517,26 @@ export function Actor({
       freed ? 0.2 : 0.14,
     );
     g.rotation.y = facing.current;
-    g.rotation.z = freed ? THREE.MathUtils.clamp(-b.vx * 0.04, -0.12, 0.12) : 0;
+    g.rotation.z = THREE.MathUtils.lerp(
+      g.rotation.z,
+      (freed ? THREE.MathUtils.clamp(-b.vx * 0.04, -0.12, 0.12) : 0) +
+        proc.leanZ * 0.5,
+      0.12,
+    );
+    g.rotation.x = THREE.MathUtils.lerp(g.rotation.x, proc.leanX, 0.1);
 
     g.position.set(b.x, b.y + 0.06 + proc.bob * (freed ? 1.1 : 0.6), 0.35);
     const s = 0.58;
     p.scale.set(proc.scaleX * s, proc.scaleY * s, s);
+
+    // Torso breathe
+    if (bodyGroup.current) {
+      bodyGroup.current.scale.set(
+        proc.torsoBreath,
+        1 / Math.sqrt(proc.torsoBreath),
+        proc.torsoBreath,
+      );
+    }
 
     if (head.current) {
       head.current.rotation.x = THREE.MathUtils.lerp(
@@ -530,20 +551,27 @@ export function Actor({
       );
       head.current.rotation.z = THREE.MathUtils.lerp(
         head.current.rotation.z,
-        face.headTilt,
+        face.headTilt + proc.headRoll,
         0.12,
       );
     }
 
-    // Eyes scale Y from expression open amount (blink already folded in)
+    // Eyes / face
     if (eyeL.current) eyeL.current.scale.y = Math.max(0.08, face.eyeOpen);
     if (eyeR.current) eyeR.current.scale.y = Math.max(0.08, face.eyeOpen);
     if (pupilL.current)
-      pupilL.current.position.set(-0.012 + face.pupilX * 0.012, 0.005 + face.pupilY * 0.01, 0.012);
+      pupilL.current.position.set(
+        -0.012 + face.pupilX * 0.012,
+        0.005 + face.pupilY * 0.01,
+        0.012,
+      );
     if (pupilR.current)
-      pupilR.current.position.set(0.012 + face.pupilX * 0.012, 0.005 + face.pupilY * 0.01, 0.012);
+      pupilR.current.position.set(
+        0.012 + face.pupilX * 0.012,
+        0.005 + face.pupilY * 0.01,
+        0.012,
+      );
 
-    // Brows
     if (browL.current) {
       browL.current.position.y = 0.055 + face.browL * 0.022;
       browL.current.rotation.z = 0.15 - face.browL * 0.25;
@@ -553,7 +581,6 @@ export function Actor({
       browR.current.rotation.z = -0.15 + face.browR * 0.25;
     }
 
-    // Mouth — scale + slight curve via rotation
     if (mouth.current) {
       mouth.current.scale.set(
         0.55 + face.mouthWide * 0.55,
@@ -564,7 +591,6 @@ export function Actor({
       mouth.current.position.y = -0.035 - face.mouthOpen * 0.01;
     }
 
-    // Cheeks blush opacity
     if (cheekL.current) {
       const mat = cheekL.current.material as THREE.MeshStandardMaterial;
       mat.opacity = 0.15 + face.cheek * 0.55;
@@ -574,31 +600,56 @@ export function Actor({
       mat.opacity = 0.15 + face.cheek * 0.55;
     }
 
-    // Soft arm sway (Sprint 2 partial secondary)
-    const armSwing =
-      anim === "walk" && b.onGround
-        ? Math.sin(t * (freed ? 14 : 10)) * 0.35
-        : anim === "wave"
-          ? Math.sin(t * 12) * 0.8
-          : Math.sin(t * 1.4) * 0.08;
+    // Arms from secondary channels
     if (armL.current) {
-      armL.current.rotation.z = 0.35 + armSwing;
-      armL.current.rotation.x = anim === "wave" ? -0.6 : 0.1;
+      armL.current.rotation.z = THREE.MathUtils.lerp(
+        armL.current.rotation.z,
+        proc.armLZ,
+        0.18,
+      );
+      armL.current.rotation.x = THREE.MathUtils.lerp(
+        armL.current.rotation.x,
+        proc.armLX,
+        0.18,
+      );
     }
     if (armR.current) {
-      armR.current.rotation.z = -0.35 - armSwing * (anim === "wave" ? 0.2 : 1);
-      armR.current.rotation.x = anim === "point" ? -0.5 : 0.1;
+      armR.current.rotation.z = THREE.MathUtils.lerp(
+        armR.current.rotation.z,
+        proc.armRZ,
+        0.18,
+      );
+      armR.current.rotation.x = THREE.MathUtils.lerp(
+        armR.current.rotation.x,
+        proc.armRX,
+        0.18,
+      );
     }
 
-    // Tip emissive + stem sway
+    // Foot plant squash
+    if (footL.current) {
+      const plant = 1 - proc.footPlant * 0.35;
+      footL.current.scale.set(1 + proc.footPlant * 0.2, plant, 1);
+      footL.current.position.y = -0.26 + proc.footPlant * 0.012;
+    }
+    if (footR.current) {
+      // Opposite phase approximation
+      const plantR = 1 - (1 - proc.footPlant) * 0.25 * (anim === "walk" ? 1 : 0);
+      const fp = anim === "walk" ? 1 - proc.footPlant : 0;
+      footR.current.scale.set(1 + fp * 0.2, 1 - fp * 0.35, 1);
+      footR.current.position.y = -0.26 + fp * 0.012;
+    }
+
+    // Tip lag group + emissive
+    if (tipGroup.current) {
+      tipGroup.current.rotation.x = proc.tipSwayX;
+      tipGroup.current.rotation.z = proc.tipSwayZ;
+    }
     if (tip.current) {
       const mat = tip.current.material as THREE.MeshStandardMaterial;
       mat.color.set(m.tipColor);
       mat.emissive.set(m.tipColor);
       mat.emissiveIntensity = Math.max(0.55, proc.tipPulse * m.emissive);
-    }
-    if (tipStem.current) {
-      tipStem.current.rotation.z = Math.sin(t * 2.2) * 0.08;
     }
 
     const world = new THREE.Vector3(b.x, b.y + 0.1, 0.35);
@@ -616,31 +667,31 @@ export function Actor({
   const blush = "#f0a090";
   const eyeDark = "#2a1810";
   const lip = "#c4786a";
-  const brow = "#3a2418";
+  const browCol = "#3a2418";
 
   return (
     <group ref={root}>
       <group ref={pose}>
-        {/* Body */}
-        <mesh position={[0, -0.12, 0]}>
-          <capsuleGeometry args={[0.1, 0.12, 6, 12]} />
-          <meshStandardMaterial
-            color={skinDeep}
-            roughness={0.4}
-            metalness={0.06}
-          />
-        </mesh>
-        {/* Soft foot pads */}
-        <mesh position={[-0.05, -0.26, 0.02]} rotation={[0.3, 0, 0]}>
+        <group ref={bodyGroup}>
+          <mesh position={[0, -0.12, 0]}>
+            <capsuleGeometry args={[0.1, 0.12, 6, 12]} />
+            <meshStandardMaterial
+              color={skinDeep}
+              roughness={0.4}
+              metalness={0.06}
+            />
+          </mesh>
+        </group>
+
+        <mesh ref={footL} position={[-0.05, -0.26, 0.02]} rotation={[0.3, 0, 0]}>
           <sphereGeometry args={[0.04, 10, 10]} />
           <meshStandardMaterial color={skinDeep} roughness={0.5} />
         </mesh>
-        <mesh position={[0.05, -0.26, 0.02]} rotation={[0.3, 0, 0]}>
+        <mesh ref={footR} position={[0.05, -0.26, 0.02]} rotation={[0.3, 0, 0]}>
           <sphereGeometry args={[0.04, 10, 10]} />
           <meshStandardMaterial color={skinDeep} roughness={0.5} />
         </mesh>
 
-        {/* Arms */}
         <group ref={armL} position={[-0.12, -0.06, 0]}>
           <mesh position={[0, -0.06, 0]}>
             <capsuleGeometry args={[0.032, 0.07, 4, 8]} />
@@ -662,14 +713,12 @@ export function Actor({
           </mesh>
         </group>
 
-        {/* Head */}
         <group ref={head} position={[0, 0.14, 0]}>
           <mesh>
             <sphereGeometry args={[0.15, 24, 24]} />
             <meshStandardMaterial color={skin} roughness={0.32} metalness={0.04} />
           </mesh>
 
-          {/* Eyes (sclera group scales for open/close) */}
           <group ref={eyeL} position={[-0.048, 0.022, 0.125]}>
             <mesh>
               <sphereGeometry args={[0.028, 12, 12]} />
@@ -681,7 +730,11 @@ export function Actor({
             </mesh>
             <mesh position={[-0.006, 0.01, 0.022]}>
               <sphereGeometry args={[0.005, 6, 6]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+              <meshStandardMaterial
+                color="#ffffff"
+                emissive="#ffffff"
+                emissiveIntensity={0.4}
+              />
             </mesh>
           </group>
           <group ref={eyeR} position={[0.048, 0.022, 0.125]}>
@@ -695,50 +748,71 @@ export function Actor({
             </mesh>
             <mesh position={[0.006, 0.01, 0.022]}>
               <sphereGeometry args={[0.005, 6, 6]} />
-              <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.4} />
+              <meshStandardMaterial
+                color="#ffffff"
+                emissive="#ffffff"
+                emissiveIntensity={0.4}
+              />
             </mesh>
           </group>
 
-          {/* Brows */}
-          <mesh ref={browL} position={[-0.05, 0.055, 0.13]} rotation={[0, 0, 0.15]}>
+          <mesh
+            ref={browL}
+            position={[-0.05, 0.055, 0.13]}
+            rotation={[0, 0, 0.15]}
+          >
             <boxGeometry args={[0.045, 0.008, 0.008]} />
-            <meshStandardMaterial color={brow} roughness={0.6} />
+            <meshStandardMaterial color={browCol} roughness={0.6} />
           </mesh>
-          <mesh ref={browR} position={[0.05, 0.055, 0.13]} rotation={[0, 0, -0.15]}>
+          <mesh
+            ref={browR}
+            position={[0.05, 0.055, 0.13]}
+            rotation={[0, 0, -0.15]}
+          >
             <boxGeometry args={[0.045, 0.008, 0.008]} />
-            <meshStandardMaterial color={brow} roughness={0.6} />
+            <meshStandardMaterial color={browCol} roughness={0.6} />
           </mesh>
 
-          {/* Mouth */}
           <mesh ref={mouth} position={[0, -0.035, 0.13]}>
             <sphereGeometry args={[0.022, 10, 8]} />
             <meshStandardMaterial color={lip} roughness={0.45} />
           </mesh>
 
-          {/* Cheeks */}
           <mesh ref={cheekL} position={[-0.085, -0.015, 0.1]}>
             <sphereGeometry args={[0.03, 8, 8]} />
-            <meshStandardMaterial color={blush} transparent opacity={0.35} depthWrite={false} />
+            <meshStandardMaterial
+              color={blush}
+              transparent
+              opacity={0.35}
+              depthWrite={false}
+            />
           </mesh>
           <mesh ref={cheekR} position={[0.085, -0.015, 0.1]}>
             <sphereGeometry args={[0.03, 8, 8]} />
-            <meshStandardMaterial color={blush} transparent opacity={0.35} depthWrite={false} />
-          </mesh>
-
-          {/* Lantern tip stem + flame */}
-          <mesh ref={tipStem} position={[0, 0.145, 0]}>
-            <cylinderGeometry args={[0.008, 0.012, 0.04, 6]} />
-            <meshStandardMaterial color="#d4a090" roughness={0.5} />
-          </mesh>
-          <mesh ref={tip} position={[0, 0.18, 0]}>
-            <sphereGeometry args={[0.038, 12, 12]} />
             <meshStandardMaterial
-              color="#f0a090"
-              emissive="#f0a090"
-              emissiveIntensity={0.9}
-              roughness={0.35}
+              color={blush}
+              transparent
+              opacity={0.35}
+              depthWrite={false}
             />
           </mesh>
+
+          {/* Tip with lag group (Sprint 3 follow-through) */}
+          <group ref={tipGroup} position={[0, 0.145, 0]}>
+            <mesh ref={tipStem}>
+              <cylinderGeometry args={[0.008, 0.012, 0.04, 6]} />
+              <meshStandardMaterial color="#d4a090" roughness={0.5} />
+            </mesh>
+            <mesh ref={tip} position={[0, 0.035, 0]}>
+              <sphereGeometry args={[0.038, 12, 12]} />
+              <meshStandardMaterial
+                color="#f0a090"
+                emissive="#f0a090"
+                emissiveIntensity={0.9}
+                roughness={0.35}
+              />
+            </mesh>
+          </group>
         </group>
       </group>
     </group>
