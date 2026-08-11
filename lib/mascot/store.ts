@@ -16,6 +16,12 @@ import {
   shouldWake,
   type AnimRequest,
 } from "./anim-machine";
+import {
+  applyLayerRequest,
+  DEFAULT_LAYERS,
+  resolveAnim,
+  type AnimLayers,
+} from "./anim-layers";
 import { chooseBehaviour, type MascotGoal } from "./behaviour";
 import {
   decayEmotions as decayFn,
@@ -29,7 +35,10 @@ import { executeDecision } from "./execute";
 
 type MascotState = {
   enabled: boolean;
+  /** Resolved single anim for legacy / procedural consumers */
   anim: MascotAnim;
+  /** Sprint 4 source of truth — loco + social channels */
+  layers: AnimLayers;
   goal: MascotGoal;
   context: MascotContext;
   busyUntil: number;
@@ -67,9 +76,17 @@ function ctxFromStore() {
   };
 }
 
+function commitLayers(layers: AnimLayers) {
+  return {
+    layers,
+    anim: resolveAnim(layers),
+  };
+}
+
 export const useMascotStore = create<MascotState>((set, get) => ({
   enabled: true,
   anim: "idle",
+  layers: { ...DEFAULT_LAYERS },
   goal: "idle",
   context: "idle",
   busyUntil: 0,
@@ -83,21 +100,55 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   jumpQueued: false,
   loadingSince: null,
   setEnabled: (v) => set({ enabled: v }),
-  setAnim: (a) => set({ anim: a }),
+  setAnim: (a) => {
+    const layers = applyLayerRequest(get().layers, {
+      channel: "legacy",
+      anim: a,
+      force: true,
+    });
+    set(commitLayers(layers));
+  },
   requestAnim: (req) => {
-    const { anim, busyUntil } = get();
+    const { anim, busyUntil, layers } = get();
     if (Date.now() < busyUntil && !req.force) return false;
     if (!canInterrupt(anim, req.anim, req.force)) return false;
-    set({
+
+    // Social gestures can overlay walk (Sprint 4 combine)
+    const socialGestures: MascotAnim[] = [
+      "wave",
+      "point",
+      "happy",
+      "think",
+      "surprised",
+    ];
+    const isSocial = socialGestures.includes(req.anim);
+    const next = applyLayerRequest(layers, {
+      channel: "legacy",
       anim: req.anim,
+      holdMs: req.holdMs,
+      force: req.force,
+    });
+    // If walking and social gesture requested, keep walk loco explicitly
+    if (isSocial && (layers.locomotion === "walk" || layers.locomotion === "run")) {
+      next.locomotion = layers.locomotion;
+    }
+
+    set({
+      ...commitLayers(next),
       busyUntil: req.holdMs ? Date.now() + req.holdMs : get().busyUntil,
     });
+
     if (req.holdMs) {
       const token = req.anim;
       window.setTimeout(() => {
-        if (get().anim === token) {
+        if (get().anim === token || get().layers.social !== "none") {
           const ambient = preferredAmbient(get().emotions, !!get().target);
-          set({ anim: ambient });
+          const cleared = applyLayerRequest(get().layers, {
+            channel: "legacy",
+            anim: ambient,
+            force: true,
+          });
+          set(commitLayers(cleared));
         }
       }, req.holdMs);
     }
@@ -149,6 +200,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         requestAnim({ anim: "walk", force: true });
         window.setTimeout(() => {
           if (get().goal === "seek-attention") {
+            // Wave while still walking — layered
             requestAnim({ anim: "wave", holdMs: 1200, force: true });
           }
         }, 900);
@@ -230,8 +282,21 @@ export const useMascotStore = create<MascotState>((set, get) => ({
 
     switch (e.type) {
       case "tick": {
-        const { busyUntil, anim, emotions } = get();
+        const { busyUntil, anim, emotions, layers } = get();
         if (Date.now() < busyUntil) break;
+        // Expire social overlay without killing walk
+        if (
+          layers.social !== "none" &&
+          layers.socialUntil > 0 &&
+          Date.now() >= layers.socialUntil
+        ) {
+          const cleared = applyLayerRequest(layers, {
+            channel: "social",
+            anim: "none",
+            force: true,
+          });
+          set(commitLayers(cleared));
+        }
         if (
           anim === "happy" ||
           anim === "wave" ||
