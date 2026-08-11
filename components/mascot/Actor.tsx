@@ -48,6 +48,20 @@ function homeWorld(): { x: number; y: number } {
   return { x: Math.min(aspect * 0.78, 1.32), y: -0.72 };
 }
 
+/** Only these theatre events may pull the mascot out of a resting home pad. */
+function isBreakoutTheatre(b: TheatreBeat | undefined): boolean {
+  if (!b) return false;
+  if (b.move === "climb-modal" || b.move === "inside-poster" || b.move === "inspect")
+    return true;
+  const intent = b.intent;
+  return (
+    intent === "curious" ||
+    intent === "celebrate" ||
+    intent === "point" ||
+    intent === "shy_wave"
+  );
+}
+
 export function Actor({
   platforms,
   dragging,
@@ -117,15 +131,11 @@ export function Actor({
     const onTheatre = (e: Event) => {
       const b = (e as CustomEvent).detail as TheatreBeat;
       const now = Date.now();
+      // Still resting at home — ignore noise
       if (phaseRef.current === "home" && now < homeUntil.current) return;
-      if (
-        phaseRef.current === "home" &&
-        b?.intent !== "investigate" &&
-        b?.intent !== "peek" &&
-        b?.intent !== "celebrate"
-      ) {
-        return;
-      }
+      // From home, only real breakout theatre (modal / curious inspect)
+      if (phaseRef.current === "home" && !isBreakoutTheatre(b)) return;
+
       beat.current = b;
       const openModal = platforms.find((p) => p.type === "modal");
       const dest =
