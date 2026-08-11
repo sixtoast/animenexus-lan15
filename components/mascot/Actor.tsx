@@ -1,0 +1,543 @@
+"use client";
+
+import { useFrame, useThree } from "@react-three/fiber";
+import {
+  useEffect,
+  useRef,
+  type MutableRefObject,
+} from "react";
+import * as THREE from "three";
+import {
+  getHomePlatform,
+  pickWanderPlatform,
+  planHops,
+  type TerrainPlatform,
+} from "@/lib/mascot/page-terrain";
+import {
+  createTerrainBody,
+  jumpToward,
+  snapToPlatform,
+  stepTerrain,
+  steerTerrain,
+  freeHop,
+  clampToViewport,
+  viewportBounds,
+  type TerrainBody,
+} from "@/lib/mascot/terrain-physics";
+import { useMascotStore } from "@/lib/mascot/store";
+import { motionFromEmotions } from "@/lib/mascot/emotions";
+import {
+  worldMood,
+  lingerMs,
+  homeRestMs,
+  outingIntervalMs,
+} from "@/lib/mascot/living-world";
+import { sampleProcedural } from "@/lib/mascot/procedural-motion";
+import {
+  poseOnPlatform,
+  theatreForPlatform,
+  type TheatreBeat,
+} from "@/lib/mascot/ui-theatre";
+
+export type Phase = "home" | "outing" | "returning" | "perform";
+export type MascotScreenPos = { x: number; y: number; visible: boolean };
+
+function homeWorld(): { x: number; y: number } {
+  if (typeof window === "undefined") return { x: 1.05, y: -0.72 };
+  const aspect = window.innerWidth / (window.innerHeight || 1);
+  return { x: Math.min(aspect * 0.78, 1.32), y: -0.72 };
+}
+
+export function Actor({
+  platforms,
+  dragging,
+  dragWorld,
+  onScreenPos,
+  bodyRef,
+  phaseRef,
+  lowPower,
+}: {
+  platforms: TerrainPlatform[];
+  dragging: boolean;
+  dragWorld: { x: number; y: number } | null;
+  onScreenPos: (p: MascotScreenPos) => void;
+  bodyRef: MutableRefObject<TerrainBody | null>;
+  phaseRef: MutableRefObject<Phase>;
+  lowPower: boolean;
+}) {
+  const root = useRef<THREE.Group>(null);
+  const pose = useRef<THREE.Group>(null);
+  const head = useRef<THREE.Group>(null);
+  const tip = useRef<THREE.Mesh>(null);
+  const eyeL = useRef<THREE.Mesh>(null);
+  const eyeR = useRef<THREE.Mesh>(null);
+  const queue = useRef<TerrainPlatform[]>([]);
+  const mood = useRef(worldMood());
+  const homeUntil = useRef(0);
+  const performUntil = useRef(0);
+  const nextFreeHop = useRef(0);
+  const nextRoam = useRef(0);
+  const nextOuting = useRef(Date.now() + 20_000 + Math.random() * 12_000);
+  const beat = useRef<TheatreBeat | null>(null);
+  const facing = useRef(0);
+  const seeded = useRef(false);
+  const padWander = useRef(0);
+  const emotions = useMascotStore((s) => s.emotions);
+  const setAnim = useMascotStore((s) => s.setAnim);
+  const anim = useMascotStore((s) => s.anim);
+  const lookBias = useMascotStore((s) => s.lookBias);
+  const { camera, size } = useThree();
+
+  useEffect(() => {
+    const h = homeWorld();
+    if (!bodyRef.current) {
+      bodyRef.current = createTerrainBody(h.x, h.y);
+      bodyRef.current.onGround = true;
+      bodyRef.current.platformId = "home-corner";
+    }
+    const home = getHomePlatform(platforms);
+    if (home) {
+      if (phaseRef.current === "home" || !seeded.current) {
+        bodyRef.current = snapToPlatform(bodyRef.current, home);
+        bodyRef.current.platformId = "home-corner";
+        seeded.current = true;
+      }
+    }
+  }, [platforms, bodyRef, phaseRef]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      mood.current = worldMood();
+    }, 60_000);
+    mood.current = worldMood();
+    return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const onTheatre = (e: Event) => {
+      const b = (e as CustomEvent).detail as TheatreBeat;
+      const now = Date.now();
+      if (phaseRef.current === "home" && now < homeUntil.current) return;
+      if (
+        phaseRef.current === "home" &&
+        b?.intent !== "investigate" &&
+        b?.intent !== "peek" &&
+        b?.intent !== "celebrate"
+      ) {
+        return;
+      }
+      beat.current = b;
+      const openModal = platforms.find((p) => p.type === "modal");
+      const dest =
+        openModal ||
+        pickWanderPlatform(platforms, bodyRef.current?.platformId ?? undefined);
+      if (dest && bodyRef.current) {
+        phaseRef.current = "outing";
+        queue.current = planHops(
+          platforms.find((x) => x.id === bodyRef.current!.platformId) ?? null,
+          dest,
+          platforms,
+        );
+        const first = queue.current[0];
+        if (first) {
+          bodyRef.current = jumpToward(bodyRef.current, first, true);
+          setAnim("jump");
+        }
+      }
+    };
+    window.addEventListener("animenexus:mascot-theatre", onTheatre);
+    return () =>
+      window.removeEventListener("animenexus:mascot-theatre", onTheatre);
+  }, [platforms, setAnim, bodyRef, phaseRef]);
+
+  useFrame((state, delta) => {
+    const dt = Math.min(delta, 0.05);
+    const t = state.clock.elapsedTime;
+    const motion = motionFromEmotions(emotions);
+    const g = root.current;
+    const p = pose.current;
+
+    if (!bodyRef.current) {
+      const h = homeWorld();
+      bodyRef.current = createTerrainBody(h.x, h.y);
+      bodyRef.current.onGround = true;
+      bodyRef.current.platformId = "home-corner";
+    }
+    if (!g || !p) return;
+
+    let body = bodyRef.current;
+    const home = getHomePlatform(platforms) ?? null;
+    const now = Date.now();
+    const m = mood.current;
+    const phase = phaseRef.current;
+    const freed =
+      phase === "outing" || phase === "returning" || phase === "perform";
+
+    if (dragging && dragWorld) {
+      body.x = dragWorld.x;
+      body.y = dragWorld.y;
+      body.vx = 0;
+      body.vy = 0;
+      body.onGround = false;
+      body.platformId = null;
+      body = clampToViewport(body);
+      bodyRef.current = body;
+      queue.current = [];
+      phaseRef.current = "outing";
+      setAnim("surprised");
+      nextFreeHop.current = now + 500;
+      nextRoam.current = now + 1000;
+    } else if (phase === "home") {
+      if (home) {
+        padWander.current += dt;
+        if (padWander.current > 3 + Math.random() * 2.5) {
+          padWander.current = 0;
+          const ox = (Math.random() - 0.5) * home.hw * 1.1;
+          const oy = (Math.random() - 0.5) * home.hh * 0.7;
+          body.x = home.x + ox;
+          body.y = home.y + home.hh + oy;
+        }
+        const maxDx = home.hw * 0.95;
+        const maxDy = home.hh * 0.9;
+        body.x = THREE.MathUtils.clamp(body.x, home.x - maxDx, home.x + maxDx);
+        body.y = THREE.MathUtils.clamp(
+          body.y,
+          home.y + home.hh - maxDy,
+          home.y + home.hh + maxDy,
+        );
+        body.vx = 0;
+        body.vy = 0;
+        body.onGround = true;
+        body.platformId = "home-corner";
+        queue.current = [];
+        bodyRef.current = body;
+      }
+
+      if (m.preferNap && anim !== "sleep" && Math.random() < 0.001) {
+        setAnim("sleep");
+      } else if (anim !== "sleep" && anim !== "idle") {
+        setAnim("idle");
+      }
+
+      if (
+        now > nextOuting.current &&
+        now > homeUntil.current &&
+        body.onGround &&
+        !m.preferNap
+      ) {
+        const dest = pickWanderPlatform(platforms, "home-corner", false);
+        if (dest && dest.id !== "home-corner") {
+          phaseRef.current = "outing";
+          beat.current = theatreForPlatform(dest);
+          queue.current = planHops(home, dest, platforms);
+          const first = queue.current[0];
+          if (first && bodyRef.current) {
+            bodyRef.current = jumpToward(bodyRef.current, first, true);
+            setAnim("jump");
+          }
+          nextRoam.current = now + 2800 + Math.random() * 2000;
+          nextFreeHop.current = now + 800;
+        }
+        nextOuting.current = now + outingIntervalMs(m, lowPower);
+      }
+    } else {
+      if (phase === "perform" && now >= performUntil.current) {
+        phaseRef.current = "outing";
+        beat.current = null;
+        homeUntil.current = now + 600;
+        nextRoam.current = now + 500;
+      }
+
+      if (
+        body.onGround &&
+        queue.current.length === 0 &&
+        now > nextFreeHop.current &&
+        phaseRef.current === "outing"
+      ) {
+        if (Math.random() < 0.4) {
+          bodyRef.current = freeHop(bodyRef.current);
+          setAnim("jump");
+          nextFreeHop.current = now + 900 + Math.random() * 1600;
+        } else {
+          nextFreeHop.current = now + 500 + Math.random() * 900;
+        }
+      }
+
+      if (
+        body.onGround &&
+        queue.current.length === 0 &&
+        phaseRef.current === "outing" &&
+        now > nextRoam.current &&
+        now > homeUntil.current
+      ) {
+        const dest = pickWanderPlatform(
+          platforms,
+          body.platformId ?? undefined,
+          false,
+        );
+        if (dest && dest.id !== "home-corner") {
+          beat.current = theatreForPlatform(dest);
+          const current =
+            platforms.find((x) => x.id === body.platformId) ?? null;
+          queue.current = planHops(current, dest, platforms);
+          const first = queue.current[0];
+          if (first) {
+            bodyRef.current = jumpToward(bodyRef.current, first, true);
+            setAnim("jump");
+          }
+          nextRoam.current = now + 2800 + Math.random() * 3200;
+        } else {
+          if (home) {
+            phaseRef.current = "returning";
+            queue.current = planHops(
+              platforms.find((x) => x.id === body.platformId) ?? null,
+              home,
+              platforms,
+            );
+            const first = queue.current[0];
+            if (first && bodyRef.current) {
+              bodyRef.current = jumpToward(bodyRef.current, first, true);
+              setAnim("jump");
+            }
+          }
+          nextRoam.current = now + 1200;
+        }
+      }
+
+      if (
+        (phaseRef.current === "outing" || phaseRef.current === "perform") &&
+        queue.current.length === 0 &&
+        body.onGround &&
+        home
+      ) {
+        if (body.platformId !== "home-corner") {
+          if (beat.current && phaseRef.current === "outing") {
+            const tb = beat.current;
+            const at = platforms.find((x) => x.id === body.platformId);
+            if (at) {
+              const pos = poseOnPlatform(at, tb.pose);
+              body.x = pos.x;
+              body.y = pos.y;
+              body.vx = 0;
+              body.vy = 0;
+              body.onGround = true;
+              bodyRef.current = clampToViewport(body);
+            }
+            setAnim(tb.anim);
+            if (tb.thought) {
+              window.dispatchEvent(
+                new CustomEvent("animenexus:mascot-thought", {
+                  detail: { text: tb.thought, intent: tb.intent },
+                }),
+              );
+            }
+            phaseRef.current = "perform";
+            performUntil.current = now + tb.holdMs;
+          } else if (homeUntil.current === 0) {
+            homeUntil.current = now + lingerMs(m) * 1.4 + 1800;
+          } else if (now > homeUntil.current) {
+            phaseRef.current = "returning";
+            beat.current = null;
+            const current =
+              platforms.find((x) => x.id === body.platformId) ?? null;
+            queue.current = planHops(current, home, platforms);
+            const first = queue.current[0];
+            if (first && bodyRef.current) {
+              bodyRef.current = jumpToward(bodyRef.current, first, true);
+              setAnim("jump");
+            }
+            homeUntil.current = 0;
+          }
+        } else {
+          phaseRef.current = "home";
+          setAnim("idle");
+          homeUntil.current = now + homeRestMs(m);
+          nextOuting.current = now + outingIntervalMs(m, lowPower);
+        }
+      }
+
+      if (
+        phaseRef.current === "returning" &&
+        queue.current.length === 0 &&
+        (body.platformId === "home-corner" || !body.platformId)
+      ) {
+        phaseRef.current = "home";
+        if (home) bodyRef.current = snapToPlatform(bodyRef.current, home);
+        setAnim(m.preferNap ? "sleep" : "idle");
+        homeUntil.current = now + homeRestMs(m);
+        nextOuting.current = now + outingIntervalMs(m, lowPower);
+        beat.current = null;
+      }
+
+      const goal = queue.current[0];
+      if (goal) {
+        const goalY = goal.y + goal.hh;
+        if (body.onGround) {
+          bodyRef.current = steerTerrain(
+            bodyRef.current,
+            goal.x,
+            goalY,
+            Math.max(0.7, motion.walkSpeed * 1.8),
+            true,
+          );
+          if (anim !== "walk" && anim !== "jump") setAnim("walk");
+        }
+        if (
+          Math.abs(bodyRef.current.x - goal.x) <
+            Math.max(0.1, goal.hw * 0.8) &&
+          Math.abs(bodyRef.current.y - goalY) < 0.25
+        ) {
+          bodyRef.current = snapToPlatform(bodyRef.current, goal);
+          queue.current.shift();
+          if (queue.current.length > 0) {
+            const nxt = queue.current[0];
+            bodyRef.current = jumpToward(bodyRef.current, nxt, true);
+            setAnim("jump");
+          } else if (!(beat.current && phaseRef.current === "outing")) {
+            setAnim("happy");
+            if (phaseRef.current === "outing") {
+              homeUntil.current = Date.now() + lingerMs(m) * 1.4;
+              nextFreeHop.current = Date.now() + 600;
+            }
+          }
+        }
+      }
+
+      if (phaseRef.current !== "home" && phaseRef.current !== "perform") {
+        bodyRef.current = stepTerrain(bodyRef.current, platforms, dt, true);
+      }
+
+      bodyRef.current = clampToViewport(bodyRef.current);
+    }
+
+    bodyRef.current = clampToViewport(bodyRef.current);
+    const bSafe = bodyRef.current;
+    const vb = viewportBounds(0.1);
+    if (
+      !dragging &&
+      (bSafe.x < vb.minX - 0.05 ||
+        bSafe.x > vb.maxX + 0.05 ||
+        bSafe.y < vb.minY - 0.05 ||
+        bSafe.y > vb.maxY + 0.05)
+    ) {
+      if (home) {
+        bodyRef.current = snapToPlatform(bSafe, home);
+        phaseRef.current = "home";
+        queue.current = [];
+        homeUntil.current = now + homeRestMs(m);
+        nextOuting.current = now + outingIntervalMs(m, lowPower);
+        setAnim("idle");
+      } else {
+        bodyRef.current = clampToViewport(bSafe, 0.15);
+      }
+    }
+
+    const b = bodyRef.current;
+    const proc = sampleProcedural(t, anim, motion, {
+      onGround: b.onGround,
+      vy: b.vy,
+      lookX: lookBias.x,
+      lookY: lookBias.y,
+      phase: dragging
+        ? "drag"
+        : phaseRef.current === "perform" || phaseRef.current === "outing"
+          ? "outing"
+          : phaseRef.current === "returning"
+            ? "returning"
+            : "home",
+    });
+
+    let targetYaw = 0;
+    if (Math.abs(b.vx) > 0.04) targetYaw = b.vx > 0 ? -0.38 : 0.38;
+    if (dragging || phaseRef.current === "home") targetYaw = 0;
+    facing.current = THREE.MathUtils.lerp(
+      facing.current,
+      targetYaw,
+      freed ? 0.2 : 0.14,
+    );
+    g.rotation.y = facing.current;
+    g.rotation.z = freed ? THREE.MathUtils.clamp(-b.vx * 0.04, -0.12, 0.12) : 0;
+
+    g.position.set(b.x, b.y + 0.06 + proc.bob * (freed ? 1.1 : 0.6), 0.35);
+    const s = 0.58;
+    p.scale.set(proc.scaleX * s, proc.scaleY * s, s);
+
+    if (head.current) {
+      head.current.rotation.x = THREE.MathUtils.lerp(
+        head.current.rotation.x,
+        proc.headPitch,
+        0.14,
+      );
+      head.current.rotation.y = THREE.MathUtils.lerp(
+        head.current.rotation.y,
+        proc.headYaw,
+        0.14,
+      );
+    }
+
+    const eyeScaleY = 1 - proc.blink * 0.92;
+    if (eyeL.current) eyeL.current.scale.y = eyeScaleY;
+    if (eyeR.current) eyeR.current.scale.y = eyeScaleY;
+
+    if (tip.current) {
+      const mat = tip.current.material as THREE.MeshStandardMaterial;
+      mat.color.set(m.tipColor);
+      mat.emissive.set(m.tipColor);
+      mat.emissiveIntensity = Math.max(0.55, proc.tipPulse * m.emissive);
+    }
+
+    const world = new THREE.Vector3(b.x, b.y + 0.1, 0.35);
+    world.project(camera);
+    let sx = (world.x * 0.5 + 0.5) * size.width;
+    let sy = (-world.y * 0.5 + 0.5) * size.height;
+    const pad = 40;
+    sx = Math.max(pad, Math.min(size.width - pad, sx));
+    sy = Math.max(pad, Math.min(size.height - pad, sy));
+    onScreenPos({ x: sx, y: sy, visible: true });
+  });
+
+  return (
+    <group ref={root}>
+      <group ref={pose}>
+        <mesh position={[0, -0.12, 0]}>
+          <capsuleGeometry args={[0.1, 0.12, 6, 12]} />
+          <meshStandardMaterial
+            color="#e8a598"
+            roughness={0.35}
+            metalness={0.08}
+          />
+        </mesh>
+        <group ref={head} position={[0, 0.14, 0]}>
+          <mesh>
+            <sphereGeometry args={[0.15, 24, 24]} />
+            <meshStandardMaterial color="#f5d0c8" roughness={0.3} />
+          </mesh>
+          <mesh ref={eyeL} position={[-0.045, 0.02, 0.12]}>
+            <sphereGeometry args={[0.024, 12, 12]} />
+            <meshStandardMaterial color="#2a1810" />
+          </mesh>
+          <mesh ref={eyeR} position={[0.045, 0.02, 0.12]}>
+            <sphereGeometry args={[0.024, 12, 12]} />
+            <meshStandardMaterial color="#2a1810" />
+          </mesh>
+          <mesh position={[-0.08, -0.02, 0.1]}>
+            <sphereGeometry args={[0.028, 8, 8]} />
+            <meshStandardMaterial color="#f0a090" transparent opacity={0.55} />
+          </mesh>
+          <mesh position={[0.08, -0.02, 0.1]}>
+            <sphereGeometry args={[0.028, 8, 8]} />
+            <meshStandardMaterial color="#f0a090" transparent opacity={0.55} />
+          </mesh>
+          <mesh ref={tip} position={[0, 0.12, 0]}>
+            <sphereGeometry args={[0.04, 12, 12]} />
+            <meshStandardMaterial
+              color="#f0a090"
+              emissive="#f0a090"
+              emissiveIntensity={0.9}
+            />
+          </mesh>
+        </group>
+      </group>
+    </group>
+  );
+}
