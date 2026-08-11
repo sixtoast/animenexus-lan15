@@ -217,9 +217,9 @@ export function sampleProcedural(
     (anim === "think" ? 0.14 : 0) -
     (anim === "point" ? 0.08 : 0) +
     breath * 0.4;
+  // "curious" is an expression, not MascotAnim — use think for head roll bias
   const headRoll =
-    Math.sin(t * 1.3) * 0.02 +
-    (anim === "curious" || anim === "think" ? 0.06 : 0);
+    Math.sin(t * 1.3) * 0.02 + (anim === "think" ? 0.06 : 0);
 
   // ── Tip lag (spring follow-through on head motion) ──────────────
   const tipTargetX = headPitch * 0.35 + Math.sin(t * 2.4) * 0.06;
