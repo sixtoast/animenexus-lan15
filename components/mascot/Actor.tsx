@@ -56,7 +56,11 @@ function homeWorld(): { x: number; y: number } {
 
 function isBreakoutTheatre(b: TheatreBeat | undefined): boolean {
   if (!b) return false;
-  if (b.move === "climb-modal" || b.move === "inside-poster" || b.move === "inspect")
+  if (
+    b.move === "climb-modal" ||
+    b.move === "inside-poster" ||
+    b.move === "inspect"
+  )
     return true;
   const intent = b.intent;
   return (
@@ -135,6 +139,7 @@ export function Actor({
   const emotions = useMascotStore((s) => s.emotions);
   const setAnim = useMascotStore((s) => s.setAnim);
   const anim = useMascotStore((s) => s.anim);
+  const layers = useMascotStore((s) => s.layers);
   const lookBias = useMascotStore((s) => s.lookBias);
   const { camera, size } = useThree();
 
@@ -259,7 +264,7 @@ export function Actor({
 
       if (m.preferNap && anim !== "sleep" && Math.random() < 0.001) {
         setAnim("sleep");
-      } else if (anim !== "sleep" && anim !== "idle") {
+      } else if (anim !== "sleep" && anim !== "idle" && layers.social === "none") {
         setAnim("idle");
       }
 
@@ -484,6 +489,7 @@ export function Actor({
       lookX: lookBias.x,
       lookY: lookBias.y,
       dt,
+      social: layers.social,
       phase: dragging
         ? "drag"
         : phaseRef.current === "perform" || phaseRef.current === "outing"
@@ -493,7 +499,6 @@ export function Actor({
             : "home",
     });
 
-    // Expression layer (Sprint 2)
     const emoExpr = expressionFromEmotions(emotions);
     const expr = expressionFromAnim(anim, emoExpr);
     const faceTarget = sampleFace(
@@ -507,7 +512,6 @@ export function Actor({
     else faceSmooth.current = lerpFace(faceSmooth.current, faceTarget, 0.18);
     const face = faceSmooth.current;
 
-    // Root orientation + lean (weight shift)
     let targetYaw = 0;
     if (Math.abs(b.vx) > 0.04) targetYaw = b.vx > 0 ? -0.38 : 0.38;
     if (dragging || phaseRef.current === "home") targetYaw = 0;
@@ -529,7 +533,6 @@ export function Actor({
     const s = 0.58;
     p.scale.set(proc.scaleX * s, proc.scaleY * s, s);
 
-    // Torso breathe
     if (bodyGroup.current) {
       bodyGroup.current.scale.set(
         proc.torsoBreath,
@@ -556,7 +559,6 @@ export function Actor({
       );
     }
 
-    // Eyes / face
     if (eyeL.current) eyeL.current.scale.y = Math.max(0.08, face.eyeOpen);
     if (eyeR.current) eyeR.current.scale.y = Math.max(0.08, face.eyeOpen);
     if (pupilL.current)
@@ -600,7 +602,6 @@ export function Actor({
       mat.opacity = 0.15 + face.cheek * 0.55;
     }
 
-    // Arms from secondary channels
     if (armL.current) {
       armL.current.rotation.z = THREE.MathUtils.lerp(
         armL.current.rotation.z,
@@ -626,21 +627,17 @@ export function Actor({
       );
     }
 
-    // Foot plant squash
     if (footL.current) {
       const plant = 1 - proc.footPlant * 0.35;
       footL.current.scale.set(1 + proc.footPlant * 0.2, plant, 1);
       footL.current.position.y = -0.26 + proc.footPlant * 0.012;
     }
     if (footR.current) {
-      // Opposite phase approximation
-      const plantR = 1 - (1 - proc.footPlant) * 0.25 * (anim === "walk" ? 1 : 0);
       const fp = anim === "walk" ? 1 - proc.footPlant : 0;
       footR.current.scale.set(1 + fp * 0.2, 1 - fp * 0.35, 1);
       footR.current.position.y = -0.26 + fp * 0.012;
     }
 
-    // Tip lag group + emissive
     if (tipGroup.current) {
       tipGroup.current.rotation.x = proc.tipSwayX;
       tipGroup.current.rotation.z = proc.tipSwayZ;
@@ -716,7 +713,11 @@ export function Actor({
         <group ref={head} position={[0, 0.14, 0]}>
           <mesh>
             <sphereGeometry args={[0.15, 24, 24]} />
-            <meshStandardMaterial color={skin} roughness={0.32} metalness={0.04} />
+            <meshStandardMaterial
+              color={skin}
+              roughness={0.32}
+              metalness={0.04}
+            />
           </mesh>
 
           <group ref={eyeL} position={[-0.048, 0.022, 0.125]}>
@@ -797,7 +798,6 @@ export function Actor({
             />
           </mesh>
 
-          {/* Tip with lag group (Sprint 3 follow-through) */}
           <group ref={tipGroup} position={[0, 0.145, 0]}>
             <mesh ref={tipStem}>
               <cylinderGeometry args={[0.008, 0.012, 0.04, 6]} />
