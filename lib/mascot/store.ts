@@ -39,6 +39,10 @@ import {
 } from "./director";
 import { traitCursorEngageChance } from "./personality";
 import { notePage, noteSessionStart } from "./memory";
+import {
+  markMicroFired,
+  pickMicroBehaviour,
+} from "./micro-behaviours";
 
 type MascotState = {
   enabled: boolean;
@@ -46,6 +50,7 @@ type MascotState = {
   layers: AnimLayers;
   intention: MascotIntention;
   lastDirectorReason: string | null;
+  lastMicroId: string | null;
   goal: MascotGoal;
   context: MascotContext;
   busyUntil: number;
@@ -97,12 +102,44 @@ function commitLayers(layers: AnimLayers) {
   };
 }
 
+function tryMicroFidget() {
+  const s = useMascotStore.getState();
+  const micro = pickMicroBehaviour({
+    emotions: s.emotions,
+    context: s.context,
+    intention: s.intention,
+    busy: Date.now() < s.busyUntil,
+    hasTarget: !!s.target,
+    anim: s.anim,
+    cursorNear: Math.min(1, Math.hypot(s.lookBias.x, s.lookBias.y)),
+  });
+  if (!micro) return false;
+
+  markMicroFired(micro.id);
+  s.requestAnim({
+    anim: micro.anim,
+    holdMs: micro.durationMs,
+    force: micro.anim === "jump",
+  });
+  if (micro.lookBias) {
+    useMascotStore.setState({ lookBias: micro.lookBias });
+  }
+  useMascotStore.setState({
+    lastMicroId: micro.id,
+    lastDirectorReason: `micro:${micro.id}`,
+    lastThought: micro.thought ?? s.lastThought,
+    nextThinkAt: Date.now() + Math.max(micro.durationMs + 500, 4_000),
+  });
+  return true;
+}
+
 export const useMascotStore = create<MascotState>((set, get) => ({
   enabled: true,
   anim: "idle",
   layers: { ...DEFAULT_LAYERS },
   intention: "idle",
   lastDirectorReason: null,
+  lastMicroId: null,
   goal: "idle",
   context: "idle",
   busyUntil: 0,
@@ -241,7 +278,10 @@ export const useMascotStore = create<MascotState>((set, get) => ({
 
     const directive = directorAmbient(worldFromStore());
     if (!directive) {
-      set({ nextThinkAt: Date.now() + 2000 });
+      // No director push — still allow a quiet micro fidget
+      if (!tryMicroFidget()) {
+        set({ nextThinkAt: Date.now() + 2000 });
+      }
       return;
     }
 
@@ -257,11 +297,25 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       return;
     }
 
-    if (directive.goal && directive.goal !== s.goal) {
+    const goalChanging =
+      !!directive.goal &&
+      (directive.goal !== s.goal || directive.goal === "wander");
+
+    if (goalChanging && directive.goal) {
       s.applyGoal(directive.goal);
-    } else if (directive.goal === s.goal && directive.goal === "wander") {
-      s.applyGoal("wander");
+      set({ nextThinkAt: Date.now() + directive.cooldownMs });
+      return;
     }
+
+    // Holding idle / observe / rest — Sprint 8 micro-behaviours
+    const idleish =
+      !directive.goal ||
+      directive.goal === "idle" ||
+      directive.intention === "observe" ||
+      directive.intention === "idle" ||
+      directive.intention === "rest";
+
+    if (idleish && tryMicroFidget()) return;
 
     set({ nextThinkAt: Date.now() + directive.cooldownMs });
   },
@@ -271,7 +325,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   dispatch: (e) => {
     const { bumpEmotion, requestAnim } = get();
 
-    // Sprint 7 — session bookkeeping once per page load
     if (!get().sessionNoted && typeof window !== "undefined") {
       noteSessionStart();
       set({ sessionNoted: true });
@@ -491,7 +544,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         runDirected("idle-long");
         break;
       case "route":
-        // Sprint 7 — remember path (no query/PII)
         if (e.path) notePage(e.path);
         runDirected("route");
         break;
