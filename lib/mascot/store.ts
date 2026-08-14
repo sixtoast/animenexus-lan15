@@ -37,14 +37,12 @@ import {
   type MascotIntention,
   type DirectorWorld,
 } from "./director";
+import { traitCursorEngageChance } from "./personality";
 
 type MascotState = {
   enabled: boolean;
-  /** Resolved single anim for legacy / procedural consumers */
   anim: MascotAnim;
-  /** Sprint 4 source of truth — loco + social channels */
   layers: AnimLayers;
-  /** Sprint 5 — high-level intention */
   intention: MascotIntention;
   lastDirectorReason: string | null;
   goal: MascotGoal;
@@ -238,7 +236,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
     if (!s.enabled) return;
     if (Date.now() < s.nextThinkAt) return;
 
-    // Sprint 5 — Director owns ambient intention selection
     const directive = directorAmbient(worldFromStore());
     if (!directive) {
       set({ nextThinkAt: Date.now() + 2000 });
@@ -419,7 +416,11 @@ export const useMascotStore = create<MascotState>((set, get) => ({
           intention: "interact-ui",
           lastDirectorReason: "ui hover",
         });
-        if (Date.now() > get().busyUntil && Math.random() < 0.4) {
+        // Sprint 6: engage chance from playfulness / curiosity / shyness
+        if (
+          Date.now() > get().busyUntil &&
+          Math.random() < traitCursorEngageChance()
+        ) {
           set({ target: t, goal: "wander" });
           requestAnim({ anim: "walk" });
         } else {
