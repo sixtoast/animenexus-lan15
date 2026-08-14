@@ -54,6 +54,11 @@ import {
   sampleCursor,
   type CursorRelation,
 } from "./cursor-relationship";
+import {
+  canStartUiInteraction,
+  executeUiInteraction,
+  planUiInteraction,
+} from "./ui-interactions";
 
 type MascotState = {
   enabled: boolean;
@@ -63,7 +68,6 @@ type MascotState = {
   lastDirectorReason: string | null;
   lastMicroId: string | null;
   cursorRelation: CursorRelation;
-  /** Sprint 10 — last semantic surface noticed */
   lastLandmarkType: string | null;
   goal: MascotGoal;
   context: MascotContext;
@@ -143,6 +147,42 @@ function tryMicroFidget() {
     lastDirectorReason: `micro:${micro.id}`,
     lastThought: micro.thought ?? s.lastThought,
     nextThinkAt: Date.now() + Math.max(micro.durationMs + 500, 4_000),
+  });
+  return true;
+}
+
+/** Sprint 11 — physical UI sequence when already in an outing intention */
+function tryUiPhysicalInteract(): boolean {
+  const s = useMascotStore.getState();
+  const busy = Date.now() < s.busyUntil;
+  if (!canStartUiInteraction(s.intention, busy)) return false;
+  // Low chance so it feels special
+  if (Math.random() > 0.28) return false;
+
+  const plan = planUiInteraction(s.intention, {
+    preferType:
+      s.intention === "inspect-recommendation"
+        ? "card"
+        : s.lastLandmarkType === "modal"
+          ? "modal"
+          : undefined,
+  });
+  if (!plan) return false;
+
+  const ms = executeUiInteraction(plan, {
+    setTarget: (t) => useMascotStore.setState({ target: t, goal: "wander" }),
+    requestAnim: (req) => useMascotStore.getState().requestAnim(req),
+    setLookBias: (b) => useMascotStore.setState({ lookBias: b }),
+    setJump: () => useMascotStore.setState({ jumpQueued: true }),
+    setThought: (t) => useMascotStore.setState({ lastThought: t }),
+    clampHabitat: (x, z) => clampToHabitat(x, z),
+  });
+
+  useMascotStore.setState({
+    lastLandmarkType: plan.type,
+    lastDirectorReason: `ui-interact:${plan.type}`,
+    nextThinkAt: Date.now() + Math.max(ms + 500, 8_000),
+    busyUntil: Date.now() + Math.min(ms, 6_000),
   });
   return true;
 }
@@ -312,6 +352,14 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       return;
     }
 
+    // Sprint 11 — physical UI when investigating / guiding
+    if (
+      canStartUiInteraction(directive.intention, Date.now() < s.busyUntil) &&
+      tryUiPhysicalInteract()
+    ) {
+      return;
+    }
+
     const goalChanging =
       !!directive.goal &&
       (directive.goal !== s.goal || directive.goal === "wander");
@@ -470,7 +518,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         bumpEmotion("energy", 0.05);
         break;
       case "notice-ui": {
-        // Sprint 10 — semantic landmark awareness (look / point; no auto-climb)
         const d = directorOnEvent("notice-ui", worldFromStore());
         const lm = pickInterestingLandmark();
         set({
@@ -501,11 +548,20 @@ export const useMascotStore = create<MascotState>((set, get) => ({
               },
             });
           }
-          // Soft look-toward only while home-locked; rare walk if already outing
           if (
             get().emotions.curiosity > 0.55 &&
             Date.now() > get().busyUntil
           ) {
+            // If already in outing intention, prefer full physical script
+            if (
+              canStartUiInteraction(
+                get().intention,
+                Date.now() < get().busyUntil,
+              ) &&
+              Math.random() < 0.4
+            ) {
+              if (tryUiPhysicalInteract()) break;
+            }
             requestAnim({ anim: "point", holdMs: 1400 });
             if (
               get().intention === "investigate" ||
@@ -513,7 +569,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
               get().intention === "inspect-recommendation"
             ) {
               const hab = landmarkToHabitat(lm, pointKind);
-              if (hab && Math.random() < 0.25) {
+              if (hab && Math.random() < 0.3) {
                 set({
                   target: clampToHabitat(hab.x * 0.75, hab.z * 0.75),
                   goal: "wander",
