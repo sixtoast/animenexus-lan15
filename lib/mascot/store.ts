@@ -22,7 +22,7 @@ import {
   resolveAnim,
   type AnimLayers,
 } from "./anim-layers";
-import { chooseBehaviour, type MascotGoal } from "./behaviour";
+import { type MascotGoal } from "./behaviour";
 import {
   decayEmotions as decayFn,
   defaultEmotions,
@@ -30,8 +30,14 @@ import {
   type MotionProfile,
 } from "./emotions";
 import { screenToHabitatTarget } from "./ui-registry";
-import { decide, decideAmbient } from "./decision";
+import { decide } from "./decision";
 import { executeDecision } from "./execute";
+import {
+  directorAmbient,
+  directorOnEvent,
+  type MascotIntention,
+  type DirectorWorld,
+} from "./director";
 
 type MascotState = {
   enabled: boolean;
@@ -39,6 +45,9 @@ type MascotState = {
   anim: MascotAnim;
   /** Sprint 4 source of truth — loco + social channels */
   layers: AnimLayers;
+  /** Sprint 5 — high-level intention */
+  intention: MascotIntention;
+  lastDirectorReason: string | null;
   goal: MascotGoal;
   context: MascotContext;
   busyUntil: number;
@@ -76,6 +85,20 @@ function ctxFromStore() {
   };
 }
 
+function worldFromStore(): DirectorWorld {
+  const s = useMascotStore.getState();
+  return {
+    emotions: s.emotions,
+    context: s.context,
+    msSinceInteract: Date.now() - s.lastInteractionAt,
+    currentGoal: s.goal,
+    currentIntention: s.intention,
+    busy: Date.now() < s.busyUntil,
+    hasTarget: !!s.target,
+    loading: !!s.loadingSince,
+  };
+}
+
 function commitLayers(layers: AnimLayers) {
   return {
     layers,
@@ -87,6 +110,8 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   enabled: true,
   anim: "idle",
   layers: { ...DEFAULT_LAYERS },
+  intention: "idle",
+  lastDirectorReason: null,
   goal: "idle",
   context: "idle",
   busyUntil: 0,
@@ -113,7 +138,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
     if (Date.now() < busyUntil && !req.force) return false;
     if (!canInterrupt(anim, req.anim, req.force)) return false;
 
-    // Social gestures can overlay walk (Sprint 4 combine)
     const socialGestures: MascotAnim[] = [
       "wave",
       "point",
@@ -128,7 +152,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       holdMs: req.holdMs,
       force: req.force,
     });
-    // If walking and social gesture requested, keep walk loco explicitly
     if (isSocial && (layers.locomotion === "walk" || layers.locomotion === "run")) {
       next.locomotion = layers.locomotion;
     }
@@ -200,7 +223,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         requestAnim({ anim: "walk", force: true });
         window.setTimeout(() => {
           if (get().goal === "seek-attention") {
-            // Wave while still walking — layered
             requestAnim({ anim: "wave", holdMs: 1200, force: true });
           }
         }, 900);
@@ -225,45 +247,33 @@ export const useMascotStore = create<MascotState>((set, get) => ({
     if (!s.enabled) return;
     if (Date.now() < s.nextThinkAt) return;
 
-    if (!s.loadingSince && Date.now() > s.busyUntil) {
-      const ambient = decideAmbient(ctxFromStore());
-      if (ambient && Math.random() < 0.45) {
-        set({ lastThought: ambient.thought.text });
-        executeDecision(ambient, get);
-        set({ nextThinkAt: Date.now() + 8000 });
-        return;
-      }
-    }
-
-    if (s.loadingSince) {
-      const waited = Date.now() - s.loadingSince;
-      if (waited > 12_000 && s.anim !== "sleep") {
-        s.requestAnim({ anim: "sleep" });
-        set({ nextThinkAt: Date.now() + 8000 });
-        return;
-      }
-      if (waited > 4_000) {
-        s.requestAnim({ anim: "think", holdMs: 3000 });
-        set({ nextThinkAt: Date.now() + 4000 });
-        return;
-      }
-    }
-    const busy = Date.now() < s.busyUntil;
-    const decision = chooseBehaviour(s.emotions, {
-      msSinceInteract: Date.now() - s.lastInteractionAt,
-      currentGoal: s.goal,
-      busy,
-    });
-    if (!decision) {
+    // Sprint 5 — Director owns ambient intention selection
+    const directive = directorAmbient(worldFromStore());
+    if (!directive) {
       set({ nextThinkAt: Date.now() + 2000 });
       return;
     }
-    if (decision.goal === s.goal && decision.goal !== "wander") {
-      set({ nextThinkAt: Date.now() + decision.cooldownMs });
+
+    set({
+      intention: directive.intention,
+      lastDirectorReason: directive.reason,
+    });
+
+    if (directive.decision) {
+      set({ lastThought: directive.decision.thought.text });
+      executeDecision(directive.decision, get);
+      set({ nextThinkAt: Date.now() + directive.cooldownMs });
       return;
     }
-    s.applyGoal(decision.goal);
-    set({ nextThinkAt: Date.now() + decision.cooldownMs });
+
+    if (directive.goal && directive.goal !== s.goal) {
+      s.applyGoal(directive.goal);
+    } else if (directive.goal === s.goal && directive.goal === "wander") {
+      // Allow re-wander
+      s.applyGoal("wander");
+    }
+
+    set({ nextThinkAt: Date.now() + directive.cooldownMs });
   },
   requestWander: () => {
     get().applyGoal("wander");
@@ -271,20 +281,34 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   dispatch: (e) => {
     const { bumpEmotion, requestAnim } = get();
 
-    const runDecision = (
-      kind: "pet" | "drag" | "seal" | "complete" | "idle-long" | "route",
+    const runDirected = (
+      kind:
+        | "pet"
+        | "drag"
+        | "seal"
+        | "complete"
+        | "idle-long"
+        | "route",
     ) => {
-      const d = decide(kind, ctxFromStore());
-      set({ lastThought: d.thought.text, lastInteractionAt: Date.now() });
-      executeDecision(d, get);
-      set({ nextThinkAt: Date.now() + 3500 });
+      const directive = directorOnEvent(kind, worldFromStore());
+      set({
+        intention: directive.intention,
+        lastDirectorReason: directive.reason,
+        lastInteractionAt: Date.now(),
+      });
+      if (directive.decision) {
+        set({ lastThought: directive.decision.thought.text });
+        executeDecision(directive.decision, get);
+      } else if (directive.goal) {
+        get().applyGoal(directive.goal);
+      }
+      set({ nextThinkAt: Date.now() + directive.cooldownMs });
     };
 
     switch (e.type) {
       case "tick": {
         const { busyUntil, anim, emotions, layers } = get();
         if (Date.now() < busyUntil) break;
-        // Expire social overlay without killing walk
         if (
           layers.social !== "none" &&
           layers.socialUntil > 0 &&
@@ -308,7 +332,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         if (anim === "sleep" && !get().loadingSince) {
           if (shouldWake(emotions, false)) {
             requestAnim({ anim: "idle" });
-            set({ goal: "idle" });
+            set({ goal: "idle", intention: "idle" });
           }
           break;
         }
@@ -320,6 +344,8 @@ export const useMascotStore = create<MascotState>((set, get) => ({
           set({
             loadingSince: get().loadingSince ?? Date.now(),
             context: "loading",
+            intention: "observe",
+            lastDirectorReason: "loading — observe",
           });
           bumpEmotion("curiosity", 0.05);
           bumpEmotion("attention", 0.08);
@@ -330,47 +356,66 @@ export const useMascotStore = create<MascotState>((set, get) => ({
           if (was) {
             bumpEmotion("happiness", 0.06);
             requestAnim({ anim: "wave", holdMs: 700 });
+            set({ intention: "greet", lastDirectorReason: "load done — greet" });
           }
         }
         break;
-      case "error":
-        set({ context: "error" });
+      case "error": {
+        const d = directorOnEvent("error", worldFromStore());
+        set({
+          context: "error",
+          intention: d.intention,
+          lastDirectorReason: d.reason,
+        });
         bumpEmotion("stress", 0.2);
         bumpEmotion("confidence", -0.08);
         requestAnim({ anim: "surprised", holdMs: 900, force: true });
-        set({ nextThinkAt: Date.now() + 2500 });
+        set({ nextThinkAt: Date.now() + d.cooldownMs });
         break;
-      case "empty-list":
-        set({ context: "empty-list" });
+      }
+      case "empty-list": {
+        const d = directorOnEvent("empty-list", worldFromStore());
+        set({
+          context: "empty-list",
+          intention: d.intention,
+          lastDirectorReason: d.reason,
+        });
         bumpEmotion("curiosity", 0.08);
         bumpEmotion("boredom", 0.05);
         requestAnim({ anim: "think", holdMs: 2500 });
+        set({ nextThinkAt: Date.now() + d.cooldownMs });
         break;
+      }
       case "context":
         set({ context: e.context });
         break;
       case "theme":
         bumpEmotion("curiosity", 0.05);
         requestAnim({ anim: "wave", holdMs: 600 });
+        set({ intention: "greet", lastDirectorReason: "theme change" });
         break;
       case "scroll-fast":
         bumpEmotion("stress", 0.1);
         if (Date.now() > get().busyUntil) {
           requestAnim({ anim: "surprised", holdMs: 500, force: true });
+          set({ intention: "hide", lastDirectorReason: "fast scroll" });
         }
         break;
       case "jump":
-        set({ jumpQueued: true });
+        set({ jumpQueued: true, intention: "play" });
         requestAnim({ anim: "jump", holdMs: 450, force: true });
         bumpEmotion("energy", 0.05);
         break;
-      case "notice-ui":
+      case "notice-ui": {
+        const d = directorOnEvent("notice-ui", worldFromStore());
+        set({ intention: d.intention, lastDirectorReason: d.reason });
         bumpEmotion("curiosity", 0.06);
         bumpEmotion("attention", 0.04);
         if (get().emotions.curiosity > 0.5 && Date.now() > get().busyUntil) {
           requestAnim({ anim: "point", holdMs: 1400 });
         }
         break;
+      }
       case "ui-hover": {
         bumpEmotion("curiosity", 0.04);
         bumpEmotion("attention", 0.06);
@@ -381,6 +426,8 @@ export const useMascotStore = create<MascotState>((set, get) => ({
             x: (e.clientX / window.innerWidth - 0.5) * 2,
             y: (e.clientY / window.innerHeight - 0.5) * 2,
           },
+          intention: "interact-ui",
+          lastDirectorReason: "ui hover",
         });
         if (Date.now() > get().busyUntil && Math.random() < 0.4) {
           set({ target: t, goal: "wander" });
@@ -392,18 +439,18 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       }
       case "click":
       case "pet":
-        runDecision("pet");
+        runDirected("pet");
         if (get().anim === "sleep") {
           requestAnim({ anim: "surprised", holdMs: 500, force: true });
         }
         set({ jumpQueued: true });
         break;
       case "seal":
-        runDecision("seal");
+        runDirected("seal");
         set({ jumpQueued: true });
         break;
       case "complete":
-        runDecision("complete");
+        runDirected("complete");
         set({ jumpQueued: true });
         break;
       case "go-to": {
@@ -411,14 +458,25 @@ export const useMascotStore = create<MascotState>((set, get) => ({
           requestAnim({ anim: "surprised", holdMs: 500, force: true });
         }
         const t = clampToHabitat(e.x, e.z);
-        set({ target: t, goal: "wander" });
+        set({
+          target: t,
+          goal: "wander",
+          intention: "explore",
+          lastDirectorReason: "go-to",
+        });
         requestAnim({ anim: "walk", force: true });
         bumpEmotion("curiosity", 0.05);
         break;
       }
       case "climb": {
         const t = clampToHabitat(e.x, e.z);
-        set({ target: t, goal: "wander", jumpQueued: true });
+        set({
+          target: t,
+          goal: "wander",
+          jumpQueued: true,
+          intention: "investigate",
+          lastDirectorReason: "climb",
+        });
         requestAnim({ anim: "jump", holdMs: 500, force: true });
         bumpEmotion("energy", 0.08);
         bumpEmotion("curiosity", 0.06);
@@ -427,14 +485,14 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       case "drag": {
         const t = clampToHabitat(e.x, e.z);
         set({ position: t, target: null });
-        runDecision("drag");
+        runDirected("drag");
         break;
       }
       case "idle-long":
-        runDecision("idle-long");
+        runDirected("idle-long");
         break;
       case "route":
-        runDecision("route");
+        runDirected("route");
         break;
       default:
         break;
