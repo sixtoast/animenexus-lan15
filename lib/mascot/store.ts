@@ -29,7 +29,13 @@ import {
   motionFromEmotions,
   type MotionProfile,
 } from "./emotions";
-import { screenToHabitatTarget } from "./ui-registry";
+import {
+  describeLandmark,
+  landmarkToHabitat,
+  pickInterestingLandmark,
+  preferredPoint,
+  screenToHabitatTarget,
+} from "./ui-registry";
 import { executeDecision } from "./execute";
 import {
   directorAmbient,
@@ -57,6 +63,8 @@ type MascotState = {
   lastDirectorReason: string | null;
   lastMicroId: string | null;
   cursorRelation: CursorRelation;
+  /** Sprint 10 — last semantic surface noticed */
+  lastLandmarkType: string | null;
   goal: MascotGoal;
   context: MascotContext;
   busyUntil: number;
@@ -147,6 +155,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   lastDirectorReason: null,
   lastMicroId: null,
   cursorRelation: "ignore",
+  lastLandmarkType: null,
   goal: "idle",
   context: "idle",
   busyUntil: 0,
@@ -461,11 +470,62 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         bumpEmotion("energy", 0.05);
         break;
       case "notice-ui": {
+        // Sprint 10 — semantic landmark awareness (look / point; no auto-climb)
         const d = directorOnEvent("notice-ui", worldFromStore());
-        set({ intention: d.intention, lastDirectorReason: d.reason });
+        const lm = pickInterestingLandmark();
+        set({
+          intention: d.intention,
+          lastDirectorReason: lm
+            ? `notice ${describeLandmark(lm)}`
+            : d.reason,
+          lastLandmarkType: lm?.type ?? null,
+        });
         bumpEmotion("curiosity", 0.06);
         bumpEmotion("attention", 0.04);
-        if (get().emotions.curiosity > 0.5 && Date.now() > get().busyUntil) {
+
+        if (lm) {
+          const pointKind =
+            lm.type === "modal"
+              ? "header"
+              : lm.type === "card" || lm.type === "hero"
+                ? "thumb"
+                : lm.type === "search"
+                  ? "label"
+                  : "center";
+          const pt = preferredPoint(lm, pointKind);
+          if (pt) {
+            set({
+              lookBias: {
+                x: (pt.clientX / window.innerWidth - 0.5) * 2,
+                y: (pt.clientY / window.innerHeight - 0.5) * 2,
+              },
+            });
+          }
+          // Soft look-toward only while home-locked; rare walk if already outing
+          if (
+            get().emotions.curiosity > 0.55 &&
+            Date.now() > get().busyUntil
+          ) {
+            requestAnim({ anim: "point", holdMs: 1400 });
+            if (
+              get().intention === "investigate" ||
+              get().intention === "guide" ||
+              get().intention === "inspect-recommendation"
+            ) {
+              const hab = landmarkToHabitat(lm, pointKind);
+              if (hab && Math.random() < 0.25) {
+                set({
+                  target: clampToHabitat(hab.x * 0.75, hab.z * 0.75),
+                  goal: "wander",
+                });
+                requestAnim({ anim: "walk" });
+              }
+            }
+          }
+        } else if (
+          get().emotions.curiosity > 0.5 &&
+          Date.now() > get().busyUntil
+        ) {
           requestAnim({ anim: "point", holdMs: 1400 });
         }
         break;
@@ -495,7 +555,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         break;
       }
       case "cursor-move": {
-        // Sprint 9 — soft look always; discrete reactions only on relation change
         const s = get();
         const dock = {
           x: window.innerWidth - 72,
@@ -538,7 +597,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
           if (reaction.anim === "walk") requestAnim({ anim: "walk" });
         }
         if (reaction.flee) {
-          // Step slightly toward home corner
           set({
             target: clampToHabitat(0.35, 0.12),
             goal: "wander",
