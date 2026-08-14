@@ -32,6 +32,7 @@ import {
 import {
   describeLandmark,
   landmarkToHabitat,
+  listByType,
   pickInterestingLandmark,
   preferredPoint,
   screenToHabitatTarget,
@@ -44,7 +45,7 @@ import {
   type DirectorWorld,
 } from "./director";
 import { traitCursorEngageChance } from "./personality";
-import { notePage, noteSessionStart } from "./memory";
+import { notePage, noteSessionStart, noteRecEngaged, noteRecPassed } from "./memory";
 import {
   markMicroFired,
   pickMicroBehaviour,
@@ -59,6 +60,7 @@ import {
   executeUiInteraction,
   planUiInteraction,
 } from "./ui-interactions";
+import { reactionForAppEvent } from "./ui-events";
 
 type MascotState = {
   enabled: boolean;
@@ -151,12 +153,10 @@ function tryMicroFidget() {
   return true;
 }
 
-/** Sprint 11 — physical UI sequence when already in an outing intention */
 function tryUiPhysicalInteract(): boolean {
   const s = useMascotStore.getState();
   const busy = Date.now() < s.busyUntil;
   if (!canStartUiInteraction(s.intention, busy)) return false;
-  // Low chance so it feels special
   if (Math.random() > 0.28) return false;
 
   const plan = planUiInteraction(s.intention, {
@@ -352,7 +352,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       return;
     }
 
-    // Sprint 11 — physical UI when investigating / guiding
     if (
       canStartUiInteraction(directive.intention, Date.now() < s.busyUntil) &&
       tryUiPhysicalInteract()
@@ -517,6 +516,70 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         requestAnim({ anim: "jump", holdMs: 450, force: true });
         bumpEmotion("energy", 0.05);
         break;
+      case "app-event": {
+        // Sprint 12 — semantic app reactions
+        const reaction = reactionForAppEvent(e.name);
+        if (!reaction) break;
+
+        if (e.name === "recommendation-engaged") noteRecEngaged();
+        if (e.name === "recommendation-rejected") noteRecPassed();
+
+        for (const [k, v] of Object.entries(reaction.emotionDeltas)) {
+          if (typeof v === "number") {
+            bumpEmotion(k as keyof MascotEmotions, v);
+          }
+        }
+
+        set({
+          intention: reaction.intention,
+          lastDirectorReason: `app:${e.name}`,
+          lastThought: reaction.thought ?? get().lastThought,
+          lastInteractionAt: Date.now(),
+        });
+
+        if (reaction.goal) {
+          get().applyGoal(reaction.goal);
+        }
+
+        if (reaction.anim) {
+          requestAnim({
+            anim: reaction.anim,
+            holdMs: reaction.holdMs,
+            force:
+              reaction.anim === "surprised" ||
+              reaction.anim === "jump" ||
+              reaction.goal === "celebrate",
+          });
+          if (reaction.anim === "jump") set({ jumpQueued: true });
+        }
+
+        if (reaction.approachUi && reaction.preferLandmark) {
+          const pool = listByType(reaction.preferLandmark).filter(
+            (l) => l.visible && l.open,
+          );
+          const lm = pool[0] ?? pickInterestingLandmark();
+          if (lm) {
+            const kind =
+              lm.type === "modal"
+                ? "header"
+                : lm.type === "card"
+                  ? "thumb"
+                  : "center";
+            const hab = landmarkToHabitat(lm, kind);
+            if (hab) {
+              set({
+                target: clampToHabitat(hab.x * 0.8, hab.z * 0.8),
+                goal: "wander",
+                lastLandmarkType: lm.type,
+              });
+              requestAnim({ anim: "walk" });
+            }
+          }
+        }
+
+        set({ nextThinkAt: Date.now() + reaction.cooldownMs });
+        break;
+      }
       case "notice-ui": {
         const d = directorOnEvent("notice-ui", worldFromStore());
         const lm = pickInterestingLandmark();
@@ -552,7 +615,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
             get().emotions.curiosity > 0.55 &&
             Date.now() > get().busyUntil
           ) {
-            // If already in outing intention, prefer full physical script
             if (
               canStartUiInteraction(
                 get().intention,
