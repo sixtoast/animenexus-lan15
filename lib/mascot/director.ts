@@ -1,7 +1,5 @@
 /**
- * Sprint 5 — MascotDirector (+ Sprint 6 personality hooks)
- *
- * High-level intention layer. Does not drive meshes directly.
+ * Sprint 5 — MascotDirector (+ Sprint 6 personality + Sprint 7 relationship)
  */
 
 import type { MascotEmotions, MascotContext } from "./types";
@@ -14,7 +12,7 @@ import {
   routineBias,
   traitLonelyScale,
 } from "./personality";
-import { bondStage, getMemory } from "./memory";
+import { bondStage, getMemory, relationshipHints } from "./memory";
 import type { MascotExpression } from "./expression";
 import { expressionFromEmotions } from "./expression";
 
@@ -124,6 +122,7 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
   const mem = getMemory();
   const stage = bondStage(mem);
   const traits = COMPANION.traits;
+  const rel = relationshipHints();
 
   if (world.loading && e.sleepiness > 0.55) {
     return {
@@ -145,24 +144,23 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
     };
   }
 
+  // Soft presence after long quiet — never guilt; just a gentle wave
   const baseLonely =
-    stage === "close" ? 38_000 : stage === "stranger" ? 72_000 : 52_000;
+    stage === "close" ? 40_000 : stage === "stranger" ? 80_000 : 55_000;
   const lonelyMs = baseLonely * traitLonelyScale();
   if (
     world.msSinceInteract > lonelyMs &&
     e.attention < 0.45 &&
     !world.loading
   ) {
-    const intention: MascotIntention =
-      stage === "close" && traits.helpfulness > 0.55
-        ? "guide"
-        : traits.shyness > 0.55
-          ? "greet"
-          : "seek-attention";
+    let intention: MascotIntention = "seek-attention";
+    if (rel.prefersGuide && traits.helpfulness > 0.55) intention = "guide";
+    else if (rel.prefersQuiet || traits.shyness > 0.55) intention = "greet";
+
     return {
       intention,
       goal: "seek-attention",
-      reason: `desk quiet (${stage}) → ${intention}`,
+      reason: `desk quiet (${rel.label}) → ${intention}`,
       expressionHint: stage === "close" ? "curious" : "embarrassed",
       cooldownMs: 10_000,
     };
@@ -202,8 +200,12 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
   let intention = intentionFromGoal(behaviour.goal);
 
   if (behaviour.goal === "wander") {
-    if (world.context === "browsing" && e.curiosity > 0.55) {
-      intention = "inspect-recommendation";
+    // High engagement history → lean into guiding recs
+    if (
+      (world.context === "browsing" && e.curiosity > 0.55) ||
+      (rel.engagementRate > 0.55 && e.curiosity > 0.4)
+    ) {
+      intention = rel.prefersGuide ? "guide" : "inspect-recommendation";
     } else if (
       (traits.mischievousness > 0.35 || traits.playfulness > 0.55) &&
       Math.random() < 0.22
@@ -273,6 +275,7 @@ export function directorOnEvent(
     : null;
 
   const t = COMPANION.traits;
+  const rel = relationshipHints();
 
   switch (event) {
     case "pet":
@@ -303,6 +306,7 @@ export function directorOnEvent(
         cooldownMs: 5_000,
       };
     case "idle-long":
+      // Soft rest — no guilt message
       return {
         intention:
           world.emotions.sleepiness > 0.55 || t.laziness > 0.55
@@ -314,16 +318,16 @@ export function directorOnEvent(
             ? "nap"
             : "ponder"),
         decision: decision ?? undefined,
-        reason: "long idle",
+        reason: "long idle — quiet rest",
         expressionHint: "sleepy",
         cooldownMs: 8_000,
       };
     case "route":
       return {
-        intention: "greet",
+        intention: rel.stage === "stranger" ? "observe" : "greet",
         goal: decision?.goal,
         decision: decision ?? undefined,
-        reason: "route change → soft greet",
+        reason: `route change (${rel.label})`,
         expressionHint: "happy",
         cooldownMs: 4_000,
       };
@@ -363,8 +367,7 @@ export function directorOnEvent(
       };
     case "notice-ui":
       return {
-        intention:
-          t.helpfulness > 0.6 ? "guide" : "inspect-recommendation",
+        intention: rel.prefersGuide ? "guide" : "inspect-recommendation",
         goal: "wander",
         reason: "noticed UI landmark",
         expressionHint: "curious",
