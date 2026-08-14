@@ -52,7 +52,22 @@ export type MascotEvent =
   | { type: "empty-list" }
   | { type: "theme"; theme: "dark" | "light" }
   | { type: "scroll-fast" }
-  | { type: "skit" };
+  | { type: "skit" }
+  /** Sprint 12 — semantic app chrome events */
+  | {
+      type: "app-event";
+      name:
+        | "recommendation-generated"
+        | "recommendation-engaged"
+        | "recommendation-rejected"
+        | "watchlist-add"
+        | "watchlist-remove"
+        | "search-empty"
+        | "search-results"
+        | "loading-long"
+        | "modal-open"
+        | "modal-close";
+    };
 
 export const HABITAT_BOUNDS = {
   minX: -0.55,
