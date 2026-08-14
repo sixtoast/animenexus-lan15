@@ -38,6 +38,7 @@ import {
   type DirectorWorld,
 } from "./director";
 import { traitCursorEngageChance } from "./personality";
+import { notePage, noteSessionStart } from "./memory";
 
 type MascotState = {
   enabled: boolean;
@@ -57,6 +58,7 @@ type MascotState = {
   lookBias: { x: number; y: number };
   jumpQueued: boolean;
   loadingSince: number | null;
+  sessionNoted: boolean;
   setEnabled: (v: boolean) => void;
   setAnim: (a: MascotAnim) => void;
   requestAnim: (req: AnimRequest) => boolean;
@@ -113,6 +115,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   lookBias: { x: 0, y: 0 },
   jumpQueued: false,
   loadingSince: null,
+  sessionNoted: false,
   setEnabled: (v) => set({ enabled: v }),
   setAnim: (a) => {
     const layers = applyLayerRequest(get().layers, {
@@ -268,6 +271,12 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   dispatch: (e) => {
     const { bumpEmotion, requestAnim } = get();
 
+    // Sprint 7 — session bookkeeping once per page load
+    if (!get().sessionNoted && typeof window !== "undefined") {
+      noteSessionStart();
+      set({ sessionNoted: true });
+    }
+
     const runDirected = (
       kind:
         | "pet"
@@ -416,7 +425,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
           intention: "interact-ui",
           lastDirectorReason: "ui hover",
         });
-        // Sprint 6: engage chance from playfulness / curiosity / shyness
         if (
           Date.now() > get().busyUntil &&
           Math.random() < traitCursorEngageChance()
@@ -483,6 +491,8 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         runDirected("idle-long");
         break;
       case "route":
+        // Sprint 7 — remember path (no query/PII)
+        if (e.path) notePage(e.path);
         runDirected("route");
         break;
       default:
