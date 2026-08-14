@@ -43,6 +43,11 @@ import {
   markMicroFired,
   pickMicroBehaviour,
 } from "./micro-behaviours";
+import {
+  reactionForRelation,
+  sampleCursor,
+  type CursorRelation,
+} from "./cursor-relationship";
 
 type MascotState = {
   enabled: boolean;
@@ -51,6 +56,7 @@ type MascotState = {
   intention: MascotIntention;
   lastDirectorReason: string | null;
   lastMicroId: string | null;
+  cursorRelation: CursorRelation;
   goal: MascotGoal;
   context: MascotContext;
   busyUntil: number;
@@ -140,6 +146,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   intention: "idle",
   lastDirectorReason: null,
   lastMicroId: null,
+  cursorRelation: "ignore",
   goal: "idle",
   context: "idle",
   busyUntil: 0,
@@ -278,7 +285,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
 
     const directive = directorAmbient(worldFromStore());
     if (!directive) {
-      // No director push — still allow a quiet micro fidget
       if (!tryMicroFidget()) {
         set({ nextThinkAt: Date.now() + 2000 });
       }
@@ -307,7 +313,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       return;
     }
 
-    // Holding idle / observe / rest — Sprint 8 micro-behaviours
     const idleish =
       !directive.goal ||
       directive.goal === "idle" ||
@@ -486,6 +491,62 @@ export const useMascotStore = create<MascotState>((set, get) => ({
           requestAnim({ anim: "walk" });
         } else {
           requestAnim({ anim: "point", holdMs: 900 });
+        }
+        break;
+      }
+      case "cursor-move": {
+        // Sprint 9 — soft look always; discrete reactions only on relation change
+        const s = get();
+        const dock = {
+          x: window.innerWidth - 72,
+          y: window.innerHeight - 72,
+        };
+        const { world, changed } = sampleCursor(e.clientX, e.clientY, {
+          emotions: s.emotions,
+          intention: s.intention,
+          busy: Date.now() < s.busyUntil,
+          mascotScreen: dock,
+          viewport: { w: window.innerWidth, h: window.innerHeight },
+        });
+        set({
+          lookBias: { x: world.lookX, y: world.lookY },
+          cursorRelation: world.relation,
+        });
+        if (!changed) break;
+        if (Date.now() < s.busyUntil && world.relation !== "avoid") break;
+
+        const reaction = reactionForRelation(world.relation);
+        if (reaction.intention) {
+          set({
+            intention: reaction.intention,
+            lastDirectorReason: `cursor:${world.relation}`,
+          });
+        }
+        if (reaction.anim && reaction.anim !== "idle") {
+          requestAnim({
+            anim: reaction.anim,
+            holdMs: reaction.holdMs,
+            force: world.relation === "avoid",
+          });
+        }
+        if (reaction.seekTarget) {
+          const hz = screenToHabitatTarget(e.clientX, e.clientY);
+          set({
+            target: clampToHabitat(hz.x * 0.7, hz.z * 0.7),
+            goal: "wander",
+          });
+          if (reaction.anim === "walk") requestAnim({ anim: "walk" });
+        }
+        if (reaction.flee) {
+          // Step slightly toward home corner
+          set({
+            target: clampToHabitat(0.35, 0.12),
+            goal: "wander",
+          });
+        }
+        if (world.relation === "notice" || world.relation === "look") {
+          bumpEmotion("attention", 0.02);
+          bumpEmotion("curiosity", 0.015);
         }
         break;
       }
