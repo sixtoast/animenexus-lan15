@@ -1,31 +1,23 @@
 /**
- * Sprint 5 — MascotDirector
+ * Sprint 5 — MascotDirector (+ Sprint 6 personality hooks)
  *
  * High-level intention layer. Does not drive meshes directly.
- *
- *   USER / UI EVENTS
- *        ↓
- *   WORLD STATE + EMOTIONS
- *        ↓
- *   MASCOT DIRECTOR  ← this module (what am I trying to do?)
- *        ↓
- *   UTILITY AI / DECISION
- *        ↓
- *   BEHAVIOUR → GOAL → ANIM LAYERS + EXPRESSION
- *
- * The Director reasons in intentions, not raw anim names.
  */
 
 import type { MascotEmotions, MascotContext } from "./types";
 import type { MascotGoal } from "./behaviour";
 import { chooseBehaviour } from "./behaviour";
 import { decide, decideAmbient, type Decision } from "./decision";
-import { COMPANION, dayPart, routineBias } from "./personality";
+import {
+  COMPANION,
+  dayPart,
+  routineBias,
+  traitLonelyScale,
+} from "./personality";
 import { bondStage, getMemory } from "./memory";
 import type { MascotExpression } from "./expression";
 import { expressionFromEmotions } from "./expression";
 
-/** What Lantern-ko is *trying* to do right now. */
 export type MascotIntention =
   | "observe"
   | "rest"
@@ -56,15 +48,10 @@ export type DirectorWorld = {
 
 export type DirectorDirective = {
   intention: MascotIntention;
-  /** Optional goal to push into applyGoal */
   goal?: MascotGoal;
-  /** Optional full decision (event reactions) */
   decision?: Decision;
-  /** Soft expression hint (face layer) */
   expressionHint?: MascotExpression;
-  /** Human-readable why (debug / thoughts) */
   reason: string;
-  /** Suggested cooldown before next director think */
   cooldownMs: number;
 };
 
@@ -129,9 +116,6 @@ function goalFromIntention(intention: MascotIntention): MascotGoal {
   }
 }
 
-/**
- * Ambient director tick — pick an intention when nothing urgent is happening.
- */
 export function directorAmbient(world: DirectorWorld): DirectorDirective | null {
   if (world.busy) return null;
 
@@ -161,15 +145,16 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
     };
   }
 
-  const lonelyMs =
+  const baseLonely =
     stage === "close" ? 38_000 : stage === "stranger" ? 72_000 : 52_000;
+  const lonelyMs = baseLonely * traitLonelyScale();
   if (
     world.msSinceInteract > lonelyMs &&
     e.attention < 0.45 &&
     !world.loading
   ) {
     const intention: MascotIntention =
-      stage === "close"
+      stage === "close" && traits.helpfulness > 0.55
         ? "guide"
         : traits.shyness > 0.55
           ? "greet"
@@ -219,16 +204,21 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
   if (behaviour.goal === "wander") {
     if (world.context === "browsing" && e.curiosity > 0.55) {
       intention = "inspect-recommendation";
-    } else if (traits.mischief > 0.4 && Math.random() < 0.2) {
+    } else if (
+      (traits.mischievousness > 0.35 || traits.playfulness > 0.55) &&
+      Math.random() < 0.22
+    ) {
       intention = "play";
-    } else if (e.curiosity > 0.6) {
+    } else if (e.curiosity > 0.6 || traits.curiosity > 0.7) {
       intention = "investigate";
     } else {
       intention = "explore";
     }
   }
-  if (behaviour.goal === "nap" && r.preferNap) intention = "sleep";
-  if (behaviour.goal === "ponder" && e.stress > 0.5) intention = "hide";
+  if (behaviour.goal === "nap" && (r.preferNap || traits.laziness > 0.55))
+    intention = "sleep";
+  if (behaviour.goal === "ponder" && (e.stress > 0.5 || traits.shyness > 0.65))
+    intention = "hide";
 
   if (
     intention === world.currentIntention &&
@@ -251,9 +241,6 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
   };
 }
 
-/**
- * Event-driven director — maps discrete user/UI events to intentions.
- */
 export function directorOnEvent(
   event:
     | "pet"
@@ -285,14 +272,16 @@ export function directorOnEvent(
       })
     : null;
 
+  const t = COMPANION.traits;
+
   switch (event) {
     case "pet":
       return {
-        intention: "play",
+        intention: t.playfulness > 0.55 ? "play" : "greet",
         goal: decision?.goal,
         decision: decision ?? undefined,
         reason: "user pet → play / trust",
-        expressionHint: "happy",
+        expressionHint: t.shyness > 0.55 ? "embarrassed" : "happy",
         cooldownMs: 3_500,
       };
     case "drag":
@@ -310,15 +299,20 @@ export function directorOnEvent(
         goal: "celebrate",
         decision: decision ?? undefined,
         reason: "seal/complete → celebrate",
-        expressionHint: "proud",
+        expressionHint: t.enthusiasm > 0.5 ? "excited" : "proud",
         cooldownMs: 5_000,
       };
     case "idle-long":
       return {
-        intention: world.emotions.sleepiness > 0.55 ? "sleep" : "rest",
+        intention:
+          world.emotions.sleepiness > 0.55 || t.laziness > 0.55
+            ? "sleep"
+            : "rest",
         goal:
           decision?.goal ??
-          (world.emotions.sleepiness > 0.55 ? "nap" : "ponder"),
+          (world.emotions.sleepiness > 0.55 || t.laziness > 0.55
+            ? "nap"
+            : "ponder"),
         decision: decision ?? undefined,
         reason: "long idle",
         expressionHint: "sleepy",
@@ -353,7 +347,7 @@ export function directorOnEvent(
       };
     case "error":
       return {
-        intention: "hide",
+        intention: t.shyness > 0.5 ? "hide" : "observe",
         goal: "ponder",
         reason: "error — flinch",
         expressionHint: "surprised",
@@ -369,7 +363,8 @@ export function directorOnEvent(
       };
     case "notice-ui":
       return {
-        intention: "inspect-recommendation",
+        intention:
+          t.helpfulness > 0.6 ? "guide" : "inspect-recommendation",
         goal: "wander",
         reason: "noticed UI landmark",
         expressionHint: "curious",
