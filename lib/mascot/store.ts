@@ -30,7 +30,6 @@ import {
   type MotionProfile,
 } from "./emotions";
 import { screenToHabitatTarget } from "./ui-registry";
-import { decide } from "./decision";
 import { executeDecision } from "./execute";
 import {
   directorAmbient,
@@ -76,14 +75,6 @@ type MascotState = {
 };
 
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
-
-function ctxFromStore() {
-  const s = useMascotStore.getState();
-  return {
-    emotions: s.emotions,
-    msSinceInteract: Date.now() - s.lastInteractionAt,
-  };
-}
 
 function worldFromStore(): DirectorWorld {
   const s = useMascotStore.getState();
@@ -269,7 +260,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
     if (directive.goal && directive.goal !== s.goal) {
       s.applyGoal(directive.goal);
     } else if (directive.goal === s.goal && directive.goal === "wander") {
-      // Allow re-wander
       s.applyGoal("wander");
     }
 
