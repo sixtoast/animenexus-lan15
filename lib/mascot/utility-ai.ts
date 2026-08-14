@@ -1,11 +1,13 @@
 /**
- * Utility AI — score goals instead of rigid if/else (Sprint M9).
+ * Utility AI — score goals instead of rigid if/else.
+ * Sprint 6: personality traits bias scores so the same world state
+ * produces different behaviour for different trait profiles.
  */
 
 import type { MascotEmotions } from "./types";
 import type { MascotGoal } from "./behaviour";
 import { bondStage, getMemory } from "./memory";
-import { dayPart } from "./personality";
+import { dayPart, traitGoalBias, traitLonelyScale } from "./personality";
 
 export type UtilityContext = {
   emotions: MascotEmotions;
@@ -30,19 +32,22 @@ const scorers: Scorer[] = [
     let score = sleepiness * 0.7 + (1 - energy) * 0.4;
     if (night) score += 0.2;
     if (sleepiness < 0.4) score *= 0.3;
+    score += traitGoalBias().nap;
     return { goal: "nap", score, reason: night ? "night rest" : "tired" };
   },
   (ctx) => {
     const { stress, confidence } = ctx.emotions;
     let score = stress * 0.85 - confidence * 0.2;
     if (stress < 0.35) score *= 0.25;
+    score += traitGoalBias().ponder;
     return { goal: "ponder", score, reason: "settle nerves" };
   },
   (ctx) => {
     const { attention, boredom } = ctx.emotions;
     const stage = bondStage(getMemory());
-    const lonely =
+    const baseLonely =
       stage === "close" ? 35_000 : stage === "stranger" ? 65_000 : 50_000;
+    const lonely = baseLonely * traitLonelyScale();
     let score = 0;
     if (ctx.msSinceInteract > lonely) {
       score =
@@ -50,6 +55,7 @@ const scorers: Scorer[] = [
         (1 - attention) * 0.35 +
         boredom * 0.15 +
         (stage === "close" ? 0.15 : 0);
+      score += traitGoalBias()["seek-attention"];
     }
     return { goal: "seek-attention", score, reason: "desk quiet too long" };
   },
@@ -60,6 +66,7 @@ const scorers: Scorer[] = [
     if (ctx.modalOpen) score += 0.15;
     if (energy < 0.3) score *= 0.4;
     if (ctx.currentGoal === "wander") score *= 0.85;
+    score += traitGoalBias().wander;
     return { goal: "wander", score, reason: "explore signals" };
   },
   (ctx) => {
@@ -67,6 +74,7 @@ const scorers: Scorer[] = [
     let score = 0;
     if (happiness > 0.8 && ctx.msSinceInteract < 12_000) {
       score = happiness * 0.5 + energy * 0.2;
+      score += traitGoalBias().celebrate;
     }
     return { goal: "celebrate", score, reason: "afterglow" };
   },
@@ -74,6 +82,7 @@ const scorers: Scorer[] = [
     const { happiness, stress, boredom } = ctx.emotions;
     let score = 0.22 + happiness * 0.15 - boredom * 0.1 - stress * 0.05;
     if (ctx.currentGoal === "idle") score += 0.05;
+    score += traitGoalBias().idle;
     return { goal: "idle", score, reason: "content baseline" };
   },
 ];
