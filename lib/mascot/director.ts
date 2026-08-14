@@ -68,14 +68,15 @@ export type DirectorDirective = {
   cooldownMs: number;
 };
 
-const INTENTION_HOLD_MS: Partial<Record<MascotIntention, number>> = {
+const INTENTION_HOLD_MS: Record<MascotIntention, number> = {
   sleep: 14_000,
   rest: 10_000,
   celebrate: 6_000,
-  seek_attention: 10_000 as unknown as number, // typo guard — real key below
   "seek-attention": 10_000,
   explore: 6_000,
   investigate: 5_000,
+  "inspect-recommendation": 5_000,
+  "interact-ui": 4_000,
   hide: 8_000,
   greet: 4_000,
   play: 5_000,
@@ -102,16 +103,18 @@ function intentionFromGoal(goal: MascotGoal): MascotIntention {
   }
 }
 
-function goalFromIntention(intention: MascotIntention): MascotGoal | undefined {
+function goalFromIntention(intention: MascotIntention): MascotGoal {
   switch (intention) {
     case "sleep":
       return "nap";
     case "rest":
+    case "hide":
       return "ponder";
     case "explore":
     case "investigate":
     case "inspect-recommendation":
     case "interact-ui":
+    case "guide":
       return "wander";
     case "seek-attention":
     case "greet":
@@ -119,10 +122,6 @@ function goalFromIntention(intention: MascotIntention): MascotGoal | undefined {
     case "celebrate":
     case "play":
       return "celebrate";
-    case "hide":
-      return "ponder";
-    case "guide":
-      return "wander";
     case "observe":
     case "idle":
     default:
@@ -132,7 +131,6 @@ function goalFromIntention(intention: MascotIntention): MascotGoal | undefined {
 
 /**
  * Ambient director tick — pick an intention when nothing urgent is happening.
- * Prefers existing Utility AI scores, then maps goal → intention with world flavour.
  */
 export function directorAmbient(world: DirectorWorld): DirectorDirective | null {
   if (world.busy) return null;
@@ -143,7 +141,6 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
   const stage = bondStage(mem);
   const traits = COMPANION.traits;
 
-  // Hard constraints first
   if (world.loading && e.sleepiness > 0.55) {
     return {
       intention: "sleep",
@@ -164,7 +161,6 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
     };
   }
 
-  // Relationship-shaped loneliness
   const lonelyMs =
     stage === "close" ? 38_000 : stage === "stranger" ? 72_000 : 52_000;
   if (
@@ -182,18 +178,17 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
       intention,
       goal: "seek-attention",
       reason: `desk quiet (${stage}) → ${intention}`,
-      expressionHint: stage === "close" ? "curious" : "shy_wave" as MascotExpression,
+      expressionHint: stage === "close" ? "curious" : "embarrassed",
       cooldownMs: 10_000,
     };
   }
 
-  // Prefer decideAmbient when it has a strong read
   const ambient = decideAmbient({
     emotions: e,
     msSinceInteract: world.msSinceInteract,
   });
   if (ambient && Math.random() < 0.5) {
-    const intention =
+    const intention: MascotIntention =
       ambient.intent === "nap"
         ? "sleep"
         : ambient.intent === "curious" || ambient.intent === "point"
@@ -207,11 +202,10 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
       decision: ambient,
       reason: `ambient decision → ${intention}`,
       expressionHint: expressionFromEmotions(e),
-      cooldownMs: INTENTION_HOLD_MS[intention] ?? 6_000,
+      cooldownMs: INTENTION_HOLD_MS[intention],
     };
   }
 
-  // Utility AI as the stable backbone
   const behaviour = chooseBehaviour(e, {
     msSinceInteract: world.msSinceInteract,
     currentGoal: world.currentGoal,
@@ -222,7 +216,6 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
 
   let intention = intentionFromGoal(behaviour.goal);
 
-  // Personality flavour on top of utility pick
   if (behaviour.goal === "wander") {
     if (world.context === "browsing" && e.curiosity > 0.55) {
       intention = "inspect-recommendation";
@@ -237,7 +230,6 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
   if (behaviour.goal === "nap" && r.preferNap) intention = "sleep";
   if (behaviour.goal === "ponder" && e.stress > 0.5) intention = "hide";
 
-  // Avoid thrashing the same intention
   if (
     intention === world.currentIntention &&
     behaviour.goal !== "wander" &&
@@ -277,16 +269,21 @@ export function directorOnEvent(
     | "notice-ui",
   world: DirectorWorld,
 ): DirectorDirective {
-  const decision =
+  const decisionEvent =
     event === "error" || event === "empty-list" || event === "notice-ui"
       ? null
-      : decide(
-          event === "search" ? "search" : event === "modal-open" ? "modal-open" : event,
-          {
-            emotions: world.emotions,
-            msSinceInteract: world.msSinceInteract,
-          },
-        );
+      : event === "search"
+        ? ("search" as const)
+        : event === "modal-open"
+          ? ("modal-open" as const)
+          : event;
+
+  const decision = decisionEvent
+    ? decide(decisionEvent, {
+        emotions: world.emotions,
+        msSinceInteract: world.msSinceInteract,
+      })
+    : null;
 
   switch (event) {
     case "pet":
@@ -319,7 +316,9 @@ export function directorOnEvent(
     case "idle-long":
       return {
         intention: world.emotions.sleepiness > 0.55 ? "sleep" : "rest",
-        goal: decision?.goal ?? (world.emotions.sleepiness > 0.55 ? "nap" : "ponder"),
+        goal:
+          decision?.goal ??
+          (world.emotions.sleepiness > 0.55 ? "nap" : "ponder"),
         decision: decision ?? undefined,
         reason: "long idle",
         expressionHint: "sleepy",
@@ -386,5 +385,5 @@ export function directorOnEvent(
 }
 
 export function intentionToGoal(intention: MascotIntention): MascotGoal {
-  return goalFromIntention(intention) ?? "idle";
+  return goalFromIntention(intention);
 }
