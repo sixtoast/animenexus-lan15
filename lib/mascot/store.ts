@@ -61,6 +61,11 @@ import {
   planUiInteraction,
 } from "./ui-interactions";
 import { reactionForAppEvent } from "./ui-events";
+import {
+  canProposeGuide,
+  executeRecGuide,
+  proposeRecGuide,
+} from "./rec-guide";
 
 type MascotState = {
   enabled: boolean;
@@ -183,6 +188,38 @@ function tryUiPhysicalInteract(): boolean {
     lastDirectorReason: `ui-interact:${plan.type}`,
     nextThinkAt: Date.now() + Math.max(ms + 500, 8_000),
     busyUntil: Date.now() + Math.min(ms, 6_000),
+  });
+  return true;
+}
+
+/** Sprint 13 — proactive recommendation discovery */
+function tryRecGuide(): boolean {
+  const s = useMascotStore.getState();
+  const busy = Date.now() < s.busyUntil;
+  if (!canProposeGuide(s.intention, s.emotions, busy)) return false;
+  // Soft random gate so guides feel rare
+  if (Math.random() > 0.22) return false;
+
+  const plan = proposeRecGuide(s.emotions);
+  if (!plan) return false;
+
+  const ms = executeRecGuide(plan, {
+    setTarget: (t) =>
+      useMascotStore.setState({ target: t, goal: "wander" }),
+    requestAnim: (req) => useMascotStore.getState().requestAnim(req),
+    setLookBias: (b) => useMascotStore.setState({ lookBias: b }),
+    setThought: (t) => useMascotStore.setState({ lastThought: t }),
+    setIntention: (i) => useMascotStore.setState({ intention: i }),
+    clampHabitat: (x, z) => clampToHabitat(x, z),
+  });
+
+  useMascotStore.setState({
+    intention: "guide",
+    lastLandmarkType: plan.landmark.type,
+    lastDirectorReason: `rec-guide:${plan.confidence.toFixed(2)}`,
+    lastThought: plan.thought,
+    nextThinkAt: Date.now() + Math.max(ms + 2000, 12_000),
+    busyUntil: Date.now() + Math.min(ms, 4_000),
   });
   return true;
 }
@@ -352,6 +389,9 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       return;
     }
 
+    // Sprint 13 — proactive rec guide (before generic UI interact)
+    if (tryRecGuide()) return;
+
     if (
       canStartUiInteraction(directive.intention, Date.now() < s.busyUntil) &&
       tryUiPhysicalInteract()
@@ -517,7 +557,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         bumpEmotion("energy", 0.05);
         break;
       case "app-event": {
-        // Sprint 12 — semantic app reactions
         const reaction = reactionForAppEvent(e.name);
         if (!reaction) break;
 
