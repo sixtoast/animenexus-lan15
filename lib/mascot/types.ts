@@ -44,6 +44,7 @@ export type MascotEvent =
   | { type: "tick" }
   | { type: "notice-ui"; landmarkId?: string }
   | { type: "ui-hover"; clientX: number; clientY: number }
+  | { type: "cursor-move"; clientX: number; clientY: number }
   | { type: "jump" }
   | { type: "context"; context: MascotContext }
   | { type: "loading"; active: boolean }
