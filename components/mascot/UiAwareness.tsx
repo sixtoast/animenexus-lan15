@@ -11,8 +11,7 @@ import { mascotNotify } from "@/lib/mascot/store";
 
 /**
  * Keeps the landmark registry warm and soft-notices interesting UI.
- * Does NOT force climb/go-to — LiveTerrain owns locomotion and home lock.
- * Auto go-to was causing idle home breakouts on scroll/timer.
+ * Sprint 9: throttled pointermove → cursor relationship (store handles state).
  */
 export function UiAwareness() {
   const pathname = usePathname();
@@ -27,7 +26,6 @@ export function UiAwareness() {
     };
   }, [pathname]);
 
-  // Soft notice only — store may bump curiosity; never teleports the 3D body
   useEffect(() => {
     const id = window.setInterval(() => {
       scanDomLandmarks();
@@ -38,7 +36,6 @@ export function UiAwareness() {
     return () => window.clearInterval(id);
   }, []);
 
-  // Hover anime cards → look that way (lookBias only)
   useEffect(() => {
     let last = 0;
     const onOver = (e: Event) => {
@@ -58,6 +55,23 @@ export function UiAwareness() {
     };
     document.addEventListener("pointerover", onOver, { passive: true });
     return () => document.removeEventListener("pointerover", onOver);
+  }, []);
+
+  // Sprint 9 — cursor as world object (throttled ~10 Hz)
+  useEffect(() => {
+    let last = 0;
+    const onMove = (e: PointerEvent) => {
+      const now = Date.now();
+      if (now - last < 100) return;
+      last = now;
+      mascotNotify({
+        type: "cursor-move",
+        clientX: e.clientX,
+        clientY: e.clientY,
+      });
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
   }, []);
 
   return null;
