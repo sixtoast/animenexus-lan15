@@ -36,6 +36,11 @@ const LiveTerrain = dynamic(
   },
 );
 
+const MascotDebugPanel = dynamic(
+  () => import("./MascotDebugPanel").then((m) => m.MascotDebugPanel),
+  { ssr: false },
+);
+
 export function MascotHost() {
   const enabled = useMascotStore((s) => s.enabled);
   const setEnabled = useMascotStore((s) => s.setEnabled);
@@ -180,7 +185,6 @@ export function MascotHost() {
     setStatusMsg(next ? "Companion interactive." : "Companion look only.");
   };
 
-  // Keyboard shortcuts (never capture typing in form fields)
   useEffect(() => {
     return bindMascotKeyboard({
       toggleHide: () => {
@@ -193,7 +197,6 @@ export function MascotHost() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Expose interaction gate for LiveTerrain drag handle
   useEffect(() => {
     try {
       (window as unknown as { __mascotInteract?: boolean }).__mascotInteract =
@@ -220,58 +223,65 @@ export function MascotHost() {
         >
           🕯️
         </button>
+        <MascotDebugPanel />
       </>
     );
   }
 
   if (reducedMotion) {
     return (
-      <div className="mascot-error" role="status">
-        <strong>3D paused</strong>
-        <p>
-          Reduced motion is on. The site works fully without the companion.
-          Turn on full motion only if you want to show Lantern-ko.
-        </p>
-        <button
-          type="button"
-          className="mascot-error-retry"
-          onClick={() => setPref("full")}
-        >
-          Enable full motion
-        </button>
-        <button
-          type="button"
-          className="mascot-hide"
-          style={{ marginTop: 8 }}
-          onClick={hideCompanion}
-        >
-          Hide companion
-        </button>
-      </div>
+      <>
+        <div className="mascot-error" role="status">
+          <strong>3D paused</strong>
+          <p>
+            Reduced motion is on. The site works fully without the companion.
+            Turn on full motion only if you want to show Lantern-ko.
+          </p>
+          <button
+            type="button"
+            className="mascot-error-retry"
+            onClick={() => setPref("full")}
+          >
+            Enable full motion
+          </button>
+          <button
+            type="button"
+            className="mascot-hide"
+            style={{ marginTop: 8 }}
+            onClick={hideCompanion}
+          >
+            Hide companion
+          </button>
+        </div>
+        <MascotDebugPanel />
+      </>
     );
   }
 
   if (webglError) {
     return (
-      <div className="mascot-error" role="alert">
-        <strong>3D companion unavailable</strong>
-        <p>{webglError} The rest of the site still works.</p>
-        <button
-          type="button"
-          className="mascot-error-retry"
-          onClick={() => window.location.reload()}
-        >
-          Reload page
-        </button>
-        <button
-          type="button"
-          className="mascot-hide"
-          style={{ marginTop: 8 }}
-          onClick={hideCompanion}
-        >
-          Hide
-        </button>
-      </div>
+      <>
+        <div className="mascot-error" role="alert">
+          <strong>3D companion unavailable</strong>
+          <p>{webglError} The rest of the site still works.</p>
+          <button
+            type="button"
+            className="mascot-error-retry"
+            onClick={() => window.location.reload()}
+          >
+            Reload page
+          </button>
+          <button
+            type="button"
+            className="mascot-hide"
+            style={{ marginTop: 8 }}
+            onClick={hideCompanion}
+          >
+            Hide
+          </button>
+        </div>
+        <MascotDebugPanel />
+      </>
     );
   }
 
@@ -356,6 +366,8 @@ export function MascotHost() {
           Hide
         </button>
       </div>
+
+      <MascotDebugPanel />
     </>
   );
 }
