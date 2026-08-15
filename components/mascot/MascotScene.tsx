@@ -7,6 +7,7 @@ import { HabitatPlatforms } from "./HabitatPlatforms";
 import { useMascotStore } from "@/lib/mascot/store";
 import { clampToHabitat } from "@/lib/mascot/navigation";
 import { tryRunSkit } from "@/lib/mascot/run-skit";
+import { HABITAT_LIGHTING, CANVAS_GL } from "@/lib/mascot/visual";
 import { useEffect } from "react";
 
 type Props = {
@@ -31,7 +32,7 @@ function Floor() {
       <meshStandardMaterial
         color="#1a1512"
         transparent
-        opacity={0.15}
+        opacity={0.12}
         roughness={1}
       />
     </mesh>
@@ -39,32 +40,40 @@ function Floor() {
 }
 
 function SceneContent({ reducedMotion }: { reducedMotion?: boolean }) {
+  const L = HABITAT_LIGHTING;
   return (
     <>
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[2.5, 4, 3]} intensity={1.1} color="#fff5f0" />
-      <pointLight position={[-2, 1, 2]} intensity={0.35} color="#f0a090" />
+      <ambientLight intensity={L.ambient.intensity} color={L.ambient.color} />
+      <directionalLight
+        position={L.key.position}
+        intensity={L.key.intensity}
+        color={L.key.color}
+      />
+      <pointLight
+        position={L.fill.position}
+        intensity={L.fill.intensity}
+        color={L.fill.color}
+      />
       <PlaceholderChibi />
       <Floor />
       <HabitatPlatforms />
       {!reducedMotion ? (
         <ContactShadows
           position={[0, -0.72, 0]}
-          opacity={0.35}
-          scale={4}
-          blur={2.2}
-          far={2}
+          opacity={L.contactShadow.opacity}
+          scale={L.contactShadow.scale}
+          blur={L.contactShadow.blur}
+          far={L.contactShadow.far}
         />
       ) : null}
       {!reducedMotion ? (
-        <Environment preset="warehouse" environmentIntensity={0.25} />
+        <Environment preset="warehouse" environmentIntensity={0.22} />
       ) : null}
     </>
   );
 }
 
 export function MascotScene({ reducedMotion, lowPower }: Props) {
-  const dispatch = useMascotStore((s) => s.dispatch);
   const runBehaviourTick = useMascotStore((s) => s.runBehaviourTick);
 
   useEffect(() => {
@@ -89,14 +98,9 @@ export function MascotScene({ reducedMotion, lowPower }: Props) {
   return (
     <Canvas
       className="mascot-canvas"
-      camera={{ position: [0, 0.55, 2.6], fov: 35 }}
-      dpr={lowPower ? [1, 1] : [1, 1.5]}
-      gl={{
-        alpha: true,
-        antialias: !lowPower,
-        powerPreference: "low-power",
-        failIfMajorPerformanceCaveat: false,
-      }}
+      camera={{ position: [0, 0.55, 2.55], fov: 34 }}
+      dpr={lowPower ? [1, 1] : [1, 1.75]}
+      gl={lowPower ? CANVAS_GL.lowPower : CANVAS_GL.full}
       frameloop={reducedMotion ? "demand" : "always"}
       onPointerMissed={() => {}}
       aria-label="Lantern companion"
