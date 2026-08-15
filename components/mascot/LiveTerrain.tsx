@@ -2,13 +2,13 @@
 
 /**
  * 3D companion host — calm in home pad; freer when out but always on-screen & reachable.
- * Safety: idle home never auto-climbs on scroll; clamp every frame; return-home guaranteed.
- * Sprint 20: warmer key/fill/rim lighting + clearer home pad silhouette.
+ * Sprint 21: throttled terrain rebuilds, no per-scroll full scan spam, pause when tab hidden.
  */
 
 import { Canvas, useThree } from "@react-three/fiber";
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   useCallback,
@@ -28,6 +28,14 @@ import {
 } from "@/lib/mascot/terrain-physics";
 import { useMascotStore } from "@/lib/mascot/store";
 import { LIVE_LIGHTING, PALETTE, CANVAS_GL } from "@/lib/mascot/visual";
+import {
+  budgetFor,
+  detectPerfTier,
+  isPageActive,
+  noteTerrainBuild,
+  shouldDeepIdle,
+  throttle,
+} from "@/lib/mascot/performance";
 import { Actor, type Phase, type MascotScreenPos } from "./Actor";
 
 function OrthoCamera() {
@@ -92,35 +100,73 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
     null,
   );
   const [glError, setGlError] = useState<string | null>(null);
+  const [pageActive, setPageActive] = useState(true);
   const bodyRef = useRef<TerrainBody | null>(null);
   const phaseRef = useRef<Phase>("home");
   const dragMoved = useRef(false);
 
+  const budget = useMemo(
+    () => budgetFor(detectPerfTier({ lowPower })),
+    [lowPower],
+  );
+
   const home = platforms.find((p) => p.id === "home-corner") ?? null;
 
+  // Pause work when tab is hidden
   useEffect(() => {
+    const onVis = () => setPageActive(isPageActive());
+    onVis();
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
+  // Terrain rebuild: throttled scroll, slower idle interval, skip when hidden
+  useEffect(() => {
+    if (!pageActive) return;
+
     const rebuild = () => {
+      if (!isPageActive()) return;
+      const t0 = performance.now();
       try {
         setPlatforms(buildTerrain());
       } catch (err) {
         console.warn("[Lantern-ko] terrain rebuild failed", err);
       }
+      noteTerrainBuild(performance.now() - t0);
     };
+
+    const scrollRebuild = throttle(rebuild, budget.terrainScrollMs);
+
     const t0 = window.setTimeout(rebuild, 40);
-    const t1 = window.setTimeout(rebuild, 250);
-    const t2 = window.setTimeout(rebuild, 800);
-    const id = window.setInterval(rebuild, lowPower ? 2500 : 1800);
-    window.addEventListener("resize", rebuild);
-    window.addEventListener("scroll", rebuild, { passive: true });
+    const t1 = window.setTimeout(rebuild, 280);
+    const t2 = window.setTimeout(rebuild, 900);
+
+    let idleMs = budget.terrainIdleMs;
+    const tickIdle = () => {
+      const s = useMascotStore.getState();
+      const deep = shouldDeepIdle({
+        anim: s.anim,
+        intention: s.intention,
+        msSinceInteract: Date.now() - s.lastInteractionAt,
+      });
+      idleMs = deep ? budget.terrainIdleMs * 1.8 : budget.terrainIdleMs;
+      rebuild();
+    };
+    const id = window.setInterval(tickIdle, idleMs);
+
+    window.addEventListener("resize", scrollRebuild);
+    window.addEventListener("scroll", scrollRebuild, { passive: true });
+
     return () => {
       window.clearTimeout(t0);
       window.clearTimeout(t1);
       window.clearTimeout(t2);
       window.clearInterval(id);
-      window.removeEventListener("resize", rebuild);
-      window.removeEventListener("scroll", rebuild);
+      scrollRebuild.cancel();
+      window.removeEventListener("resize", scrollRebuild);
+      window.removeEventListener("scroll", scrollRebuild);
     };
-  }, [lowPower]);
+  }, [pageActive, budget.terrainIdleMs, budget.terrainScrollMs]);
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
@@ -226,6 +272,7 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
   }
 
   const L = LIVE_LIGHTING;
+  const dprMax = budget.dprMax;
 
   return (
     <>
@@ -235,9 +282,9 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
         <Canvas
           className="live-terrain-canvas"
           orthographic
-          dpr={lowPower ? [1, 1.25] : [1, 2]}
-          gl={lowPower ? CANVAS_GL.lowPower : CANVAS_GL.full}
-          frameloop="always"
+          dpr={[1, dprMax]}
+          gl={budget.antialias ? CANVAS_GL.full : CANVAS_GL.lowPower}
+          frameloop={pageActive ? "always" : "never"}
           camera={{
             position: [0, 0, 5],
             zoom: 1,
@@ -284,7 +331,7 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
             onScreenPos={setScreenPos}
             bodyRef={bodyRef}
             phaseRef={phaseRef}
-            lowPower={lowPower}
+            lowPower={budget.tier === "low"}
           />
         </Canvas>
       </div>
