@@ -6,10 +6,10 @@
  * Visible when:
  *   localStorage anime_nexus_mascot_debug === "on"
  *   or ?mascotDebug=1
- *   or process.env.NODE_ENV === "development" && localStorage not "off"
+ *   or NODE_ENV === "development" && localStorage not "off"
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useMascotStore, mascotNotify } from "@/lib/mascot/store";
 import { COMPANION } from "@/lib/mascot/personality";
 import { bondStage, getMemory } from "@/lib/mascot/memory";
@@ -65,6 +65,46 @@ const ANIMS: MascotAnim[] = [
   "sleep",
 ];
 
+const rootStyle: CSSProperties = {
+  position: "fixed",
+  left: 8,
+  bottom: 8,
+  zIndex: 99999,
+  font: "11px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace",
+  color: "#f5e6e0",
+};
+
+const toggleStyle: CSSProperties = {
+  background: "rgba(40, 24, 20, 0.92)",
+  color: "#f5e6e0",
+  border: "1px solid #f0a09088",
+  borderRadius: 6,
+  padding: "4px 8px",
+  cursor: "pointer",
+};
+
+const panelStyle: CSSProperties = {
+  marginTop: 6,
+  width: "min(320px, calc(100vw - 16px))",
+  maxHeight: "min(70vh, 520px)",
+  overflow: "auto",
+  background: "rgba(22, 14, 12, 0.94)",
+  border: "1px solid #f0a09066",
+  borderRadius: 8,
+  padding: "8px 10px 10px",
+  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.45)",
+};
+
+const btnStyle: CSSProperties = {
+  background: "#3a2824",
+  color: "#f5e6e0",
+  border: "1px solid #664840",
+  borderRadius: 4,
+  padding: "2px 6px",
+  font: "inherit",
+  cursor: "pointer",
+};
+
 export function MascotDebugPanel() {
   const [open, setOpen] = useState(false);
   const [allowed, setAllowed] = useState(false);
@@ -80,11 +120,12 @@ export function MascotDebugPanel() {
   const target = useMascotStore((s) => s.target);
   const lastThought = useMascotStore((s) => s.lastThought);
   const lastDirectorReason = useMascotStore((s) => s.lastDirectorReason);
-  const expression = useMascotStore((s) => s.expression);
   const layers = useMascotStore((s) => s.layers);
+  const cursorRelation = useMascotStore((s) => s.cursorRelation);
+  const lastLandmarkType = useMascotStore((s) => s.lastLandmarkType);
   const requestAnim = useMascotStore((s) => s.requestAnim);
   const applyGoal = useMascotStore((s) => s.applyGoal);
-  const setEmotions = useMascotStore((s) => s.setEmotions);
+  const bumpEmotion = useMascotStore((s) => s.bumpEmotion);
 
   useEffect(() => {
     setAllowed(shouldShowDebug());
@@ -104,17 +145,25 @@ export function MascotDebugPanel() {
   void tick;
 
   const row = (label: string, value: string | number) => (
-    <div className="mascot-debug-row">
-      <span className="mascot-debug-k">{label}</span>
-      <span className="mascot-debug-v">{value}</span>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        gap: 8,
+      }}
+    >
+      <span style={{ color: "#c4a99f" }}>{label}</span>
+      <span style={{ textAlign: "right", wordBreak: "break-all" }}>
+        {value}
+      </span>
     </div>
   );
 
   return (
-    <div className="mascot-debug-root">
+    <div style={rootStyle}>
       <button
         type="button"
-        className="mascot-debug-toggle"
+        style={toggleStyle}
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-controls="mascot-debug-panel"
@@ -125,20 +174,33 @@ export function MascotDebugPanel() {
       {open ? (
         <div
           id="mascot-debug-panel"
-          className="mascot-debug-panel"
+          style={panelStyle}
           role="region"
           aria-label="Mascot developer debug"
         >
-          <h3>Lantern-ko debug</h3>
+          <h3 style={{ margin: "0 0 6px", fontSize: 12 }}>Lantern-ko debug</h3>
 
           <section>
-            <h4>State</h4>
+            <h4
+              style={{
+                margin: "8px 0 4px",
+                fontSize: 10,
+                textTransform: "uppercase",
+                color: "#f0a090",
+              }}
+            >
+              State
+            </h4>
             {row("anim", anim)}
             {row("goal", goal)}
             {row("intention", intention)}
             {row("context", context)}
-            {row("expression", expression ?? "—")}
-            {row("layers", `${layers?.locomotion ?? "—"} / ${layers?.social ?? "—"}`)}
+            {row(
+              "layers",
+              `${layers.locomotion} / ${layers.social}`,
+            )}
+            {row("cursor", cursorRelation)}
+            {row("landmark", lastLandmarkType ?? "—")}
             {row("thought", lastThought || "—")}
             {row("director", lastDirectorReason || "—")}
             {row(
@@ -158,23 +220,50 @@ export function MascotDebugPanel() {
           </section>
 
           <section>
-            <h4>Emotions</h4>
+            <h4
+              style={{
+                margin: "8px 0 4px",
+                fontSize: 10,
+                textTransform: "uppercase",
+                color: "#f0a090",
+              }}
+            >
+              Emotions
+            </h4>
             {Object.entries(emotions).map(([k, v]) =>
               row(k, typeof v === "number" ? v.toFixed(2) : String(v)),
             )}
           </section>
 
           <section>
-            <h4>Personality (traits)</h4>
+            <h4
+              style={{
+                margin: "8px 0 4px",
+                fontSize: 10,
+                textTransform: "uppercase",
+                color: "#f0a090",
+              }}
+            >
+              Personality
+            </h4>
             {Object.entries(COMPANION.traits)
-              .filter(([k]) => !k.includes("mischief"))
+              .filter(([k]) => k !== "mischief")
               .slice(0, 10)
               .map(([k, v]) => row(k, Number(v).toFixed(2)))}
           </section>
 
           <section>
-            <h4>Trigger event</h4>
-            <div className="mascot-debug-actions">
+            <h4
+              style={{
+                margin: "8px 0 4px",
+                fontSize: 10,
+                textTransform: "uppercase",
+                color: "#f0a090",
+              }}
+            >
+              Trigger event
+            </h4>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
               {(
                 [
                   "pet",
@@ -189,6 +278,7 @@ export function MascotDebugPanel() {
                 <button
                   key={ev}
                   type="button"
+                  style={btnStyle}
                   onClick={() => {
                     try {
                       mascotNotify({ type: ev } as never);
@@ -204,13 +294,25 @@ export function MascotDebugPanel() {
           </section>
 
           <section>
-            <h4>Anim</h4>
-            <div className="mascot-debug-actions">
+            <h4
+              style={{
+                margin: "8px 0 4px",
+                fontSize: 10,
+                textTransform: "uppercase",
+                color: "#f0a090",
+              }}
+            >
+              Anim
+            </h4>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
               {ANIMS.map((a) => (
                 <button
                   key={a}
                   type="button"
-                  onClick={() => requestAnim({ anim: a, holdMs: 2000, force: true })}
+                  style={btnStyle}
+                  onClick={() =>
+                    requestAnim({ anim: a, holdMs: 2000, force: true })
+                  }
                 >
                   {a}
                 </button>
@@ -219,8 +321,17 @@ export function MascotDebugPanel() {
           </section>
 
           <section>
-            <h4>Goal</h4>
-            <div className="mascot-debug-actions">
+            <h4
+              style={{
+                margin: "8px 0 4px",
+                fontSize: 10,
+                textTransform: "uppercase",
+                color: "#f0a090",
+              }}
+            >
+              Goal
+            </h4>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
               {(
                 [
                   "idle",
@@ -231,7 +342,12 @@ export function MascotDebugPanel() {
                   "celebrate",
                 ] as const
               ).map((g) => (
-                <button key={g} type="button" onClick={() => applyGoal(g)}>
+                <button
+                  key={g}
+                  type="button"
+                  style={btnStyle}
+                  onClick={() => applyGoal(g)}
+                >
                   {g}
                 </button>
               ))}
@@ -239,140 +355,63 @@ export function MascotDebugPanel() {
           </section>
 
           <section>
-            <h4>Emotion nudges</h4>
-            <div className="mascot-debug-actions">
+            <h4
+              style={{
+                margin: "8px 0 4px",
+                fontSize: 10,
+                textTransform: "uppercase",
+                color: "#f0a090",
+              }}
+            >
+              Emotion nudges
+            </h4>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
               <button
                 type="button"
-                onClick={() =>
-                  setEmotions({
-                    ...emotions,
-                    happiness: Math.min(1, emotions.happiness + 0.2),
-                    energy: Math.min(1, emotions.energy + 0.15),
-                  })
-                }
+                style={btnStyle}
+                onClick={() => {
+                  bumpEmotion("happiness", 0.2);
+                  bumpEmotion("energy", 0.15);
+                }}
               >
                 +happy
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  setEmotions({
-                    ...emotions,
-                    sleepiness: Math.min(1, emotions.sleepiness + 0.25),
-                    energy: Math.max(0, emotions.energy - 0.15),
-                  })
-                }
+                style={btnStyle}
+                onClick={() => {
+                  bumpEmotion("sleepiness", 0.25);
+                  bumpEmotion("energy", -0.15);
+                }}
               >
                 +sleepy
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  setEmotions({
-                    ...emotions,
-                    curiosity: Math.min(1, emotions.curiosity + 0.25),
-                    attention: Math.min(1, emotions.attention + 0.15),
-                  })
-                }
+                style={btnStyle}
+                onClick={() => {
+                  bumpEmotion("curiosity", 0.25);
+                  bumpEmotion("attention", 0.15);
+                }}
               >
                 +curious
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  setEmotions({
-                    ...emotions,
-                    stress: Math.min(1, emotions.stress + 0.2),
-                  })
-                }
+                style={btnStyle}
+                onClick={() => bumpEmotion("stress", 0.2)}
               >
                 +stress
               </button>
             </div>
           </section>
 
-          <p className="mascot-debug-hint">
+          <p style={{ margin: "8px 0 0", color: "#8a7068", fontSize: 10 }}>
             Persist: localStorage anime_nexus_mascot_debug=on · URL
             ?mascotDebug=1
           </p>
         </div>
       ) : null}
-
-      <style jsx global>{`
-        .mascot-debug-root {
-          position: fixed;
-          left: 8px;
-          bottom: 8px;
-          z-index: 99999;
-          font: 11px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace;
-          color: #f5e6e0;
-        }
-        .mascot-debug-toggle {
-          background: rgba(40, 24, 20, 0.92);
-          color: #f5e6e0;
-          border: 1px solid #f0a09088;
-          border-radius: 6px;
-          padding: 4px 8px;
-          cursor: pointer;
-        }
-        .mascot-debug-panel {
-          margin-top: 6px;
-          width: min(320px, calc(100vw - 16px));
-          max-height: min(70vh, 520px);
-          overflow: auto;
-          background: rgba(22, 14, 12, 0.94);
-          border: 1px solid #f0a09066;
-          border-radius: 8px;
-          padding: 8px 10px 10px;
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-        }
-        .mascot-debug-panel h3 {
-          margin: 0 0 6px;
-          font-size: 12px;
-          font-weight: 600;
-        }
-        .mascot-debug-panel h4 {
-          margin: 8px 0 4px;
-          font-size: 10px;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-          color: #f0a090;
-        }
-        .mascot-debug-row {
-          display: flex;
-          justify-content: space-between;
-          gap: 8px;
-        }
-        .mascot-debug-k {
-          color: #c4a99f;
-        }
-        .mascot-debug-v {
-          text-align: right;
-          word-break: break-all;
-        }
-        .mascot-debug-actions {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 4px;
-        }
-        .mascot-debug-actions button {
-          background: #3a2824;
-          color: #f5e6e0;
-          border: 1px solid #664840;
-          border-radius: 4px;
-          padding: 2px 6px;
-          font: inherit;
-          cursor: pointer;
-        }
-        .mascot-debug-actions button:hover {
-          border-color: #f0a090;
-        }
-        .mascot-debug-hint {
-          margin: 8px 0 0;
-          color: #8a7068;
-          font-size: 10px;
-        }
-      `}</style>
     </div>
   );
 }
