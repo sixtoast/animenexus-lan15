@@ -1,43 +1,22 @@
-# Mascot Engine — Lantern-ko
+# Lantern-ko mascot components
 
-> Personality first. Systems second.
-
-## Sprint status
-
-| Sprint | Focus | Status |
-|--------|--------|--------|
-| 1 | Identity, tastes, routine | Done |
-| 2 | Thought → decision → action | Done |
-| 3 | Living world / procedural motion | Done |
-| 4 | UI theatre | Done |
-| 5 | Relationship memory | Done |
-| **6** | Utility AI goals | **Done** |
-| 7 | Proactive anime guide | Next |
-
-## Decision stack
+## Live production path (actual)
 
 ```
-Personality + Memory + World mood
-        ↓
-Utility AI (score goals)
-        ↓
-decide() thoughts on events
-        ↓
-execute → anim / emotion / terrain
+MascotHost → LiveTerrain → Actor → CharacterRenderer
+                                      ├── GltfCompanion (/public/mascot/companion.glb)
+                                      └── LanternKoMeshV2 (procedural fallback)
 ```
 
-## Utility scores (examples)
+## Sprint 1 status
 
-| Goal | Driven by |
-|------|-----------|
-| nap | sleepiness, energy, late-night routine |
-| ponder | stress, shyness |
-| seek-attention | time alone, bond stage |
-| wander | boredom, curiosity, modals |
-| idle | soft baseline |
+- [x] `CharacterRenderer` — no AI, render-only
+- [x] Live `Actor` uses `CharacterRenderer` (inline mesh removed)
+- [ ] Director still does not drive Actor movement (Sprint 3–4)
+- [ ] Actor still owns outing/roam timers (Sprint 4)
 
-Noise + hold margins stop robotic flipping.
+## Rules
 
-## Memory key
-
-`localStorage.anime_nexus_mascot_memory_v1`
+1. Renderer does not decide behaviour.
+2. Actor currently still decides outing (temporary until Sprint 4).
+3. GLB drop-in: `public/mascot/companion.glb` with nodes `Head` + `Tip`.
