@@ -153,7 +153,7 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
       intention: sleepy ? "sleep" : "rest",
       goal: sleepy ? "nap" : "ponder",
       reason: "home habitat — favourite spot",
-      expressionHint: sleepy ? "sleepy" : "content",
+      expressionHint: sleepy ? "sleepy" : "happy",
       cooldownMs: sleepy ? 12_000 : 8_000,
       goHome: true,
     };
