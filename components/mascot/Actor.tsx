@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Live page-terrain actor — locomotion + phase machine.
+ * Sprint 1: mesh extracted to CharacterRenderer (no AI in renderer).
+ */
+
 import { useFrame, useThree } from "@react-three/fiber";
 import {
   useEffect,
@@ -32,7 +37,6 @@ import {
   homeRestMs,
   outingIntervalMs,
 } from "@/lib/mascot/living-world";
-import { sampleProcedural } from "@/lib/mascot/procedural-motion";
 import {
   poseOnPlatform,
   theatreForPlatform,
@@ -41,9 +45,8 @@ import {
 import {
   expressionFromAnim,
   expressionFromEmotions,
-  sampleFace,
-  type FacePose,
 } from "@/lib/mascot/expression";
+import { CharacterRenderer } from "./CharacterRenderer";
 
 export type Phase = "home" | "outing" | "returning" | "perform";
 export type MascotScreenPos = { x: number; y: number; visible: boolean };
@@ -71,22 +74,6 @@ function isBreakoutTheatre(b: TheatreBeat | undefined): boolean {
   );
 }
 
-function lerpFace(a: FacePose, b: FacePose, t: number): FacePose {
-  const k = Math.max(0, Math.min(1, t));
-  return {
-    browL: a.browL + (b.browL - a.browL) * k,
-    browR: a.browR + (b.browR - a.browR) * k,
-    eyeOpen: a.eyeOpen + (b.eyeOpen - a.eyeOpen) * k,
-    pupilX: a.pupilX + (b.pupilX - a.pupilX) * k,
-    pupilY: a.pupilY + (b.pupilY - a.pupilY) * k,
-    mouthOpen: a.mouthOpen + (b.mouthOpen - a.mouthOpen) * k,
-    mouthWide: a.mouthWide + (b.mouthWide - a.mouthWide) * k,
-    mouthCurve: a.mouthCurve + (b.mouthCurve - a.mouthCurve) * k,
-    cheek: a.cheek + (b.cheek - a.cheek) * k,
-    headTilt: a.headTilt + (b.headTilt - a.headTilt) * k,
-  };
-}
-
 export function Actor({
   platforms,
   dragging,
@@ -105,25 +92,6 @@ export function Actor({
   lowPower: boolean;
 }) {
   const root = useRef<THREE.Group>(null);
-  const pose = useRef<THREE.Group>(null);
-  const bodyGroup = useRef<THREE.Group>(null);
-  const head = useRef<THREE.Group>(null);
-  const tipGroup = useRef<THREE.Group>(null);
-  const tip = useRef<THREE.Mesh>(null);
-  const tipStem = useRef<THREE.Mesh>(null);
-  const eyeL = useRef<THREE.Group>(null);
-  const eyeR = useRef<THREE.Group>(null);
-  const pupilL = useRef<THREE.Mesh>(null);
-  const pupilR = useRef<THREE.Mesh>(null);
-  const browL = useRef<THREE.Mesh>(null);
-  const browR = useRef<THREE.Mesh>(null);
-  const mouth = useRef<THREE.Mesh>(null);
-  const cheekL = useRef<THREE.Mesh>(null);
-  const cheekR = useRef<THREE.Mesh>(null);
-  const armL = useRef<THREE.Group>(null);
-  const armR = useRef<THREE.Group>(null);
-  const footL = useRef<THREE.Mesh>(null);
-  const footR = useRef<THREE.Mesh>(null);
   const queue = useRef<TerrainPlatform[]>([]);
   const mood = useRef(worldMood());
   const homeUntil = useRef(0);
@@ -135,12 +103,14 @@ export function Actor({
   const facing = useRef(0);
   const seeded = useRef(false);
   const padWander = useRef(0);
-  const faceSmooth = useRef<FacePose | null>(null);
+  const speedRef = useRef(0);
+  const justLandedRef = useRef(false);
+  const wasAirborne = useRef(false);
+
   const emotions = useMascotStore((s) => s.emotions);
   const setAnim = useMascotStore((s) => s.setAnim);
   const anim = useMascotStore((s) => s.anim);
   const layers = useMascotStore((s) => s.layers);
-  const lookBias = useMascotStore((s) => s.lookBias);
   const { camera, size } = useThree();
 
   useEffect(() => {
@@ -201,10 +171,9 @@ export function Actor({
 
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
-    const t = state.clock.elapsedTime;
     const motion = motionFromEmotions(emotions);
     const g = root.current;
-    const p = pose.current;
+    justLandedRef.current = false;
 
     if (!bodyRef.current) {
       const h = homeWorld();
@@ -212,7 +181,7 @@ export function Actor({
       bodyRef.current.onGround = true;
       bodyRef.current.platformId = "home-corner";
     }
-    if (!g || !p) return;
+    if (!g) return;
 
     let body = bodyRef.current;
     const home = getHomePlatform(platforms) ?? null;
@@ -264,7 +233,11 @@ export function Actor({
 
       if (m.preferNap && anim !== "sleep" && Math.random() < 0.001) {
         setAnim("sleep");
-      } else if (anim !== "sleep" && anim !== "idle" && layers.social === "none") {
+      } else if (
+        anim !== "sleep" &&
+        anim !== "idle" &&
+        layers.social === "none"
+      ) {
         setAnim("idle");
       }
 
@@ -482,35 +455,13 @@ export function Actor({
     }
 
     const b = bodyRef.current;
-    const proc = sampleProcedural(t, anim, motion, {
-      onGround: b.onGround,
-      vy: b.vy,
-      vx: b.vx,
-      lookX: lookBias.x,
-      lookY: lookBias.y,
-      dt,
-      social: layers.social,
-      phase: dragging
-        ? "drag"
-        : phaseRef.current === "perform" || phaseRef.current === "outing"
-          ? "outing"
-          : phaseRef.current === "returning"
-            ? "returning"
-            : "home",
-    });
+    if (wasAirborne.current && b.onGround) {
+      justLandedRef.current = true;
+      if (anim === "jump") setAnim("land");
+    }
+    wasAirborne.current = !b.onGround;
 
-    const emoExpr = expressionFromEmotions(emotions);
-    const expr = expressionFromAnim(anim, emoExpr);
-    const faceTarget = sampleFace(
-      expr,
-      t,
-      lookBias.x,
-      lookBias.y,
-      proc.blink,
-    );
-    if (!faceSmooth.current) faceSmooth.current = faceTarget;
-    else faceSmooth.current = lerpFace(faceSmooth.current, faceTarget, 0.18);
-    const face = faceSmooth.current;
+    speedRef.current = Math.hypot(b.vx, b.vy ?? 0);
 
     let targetYaw = 0;
     if (Math.abs(b.vx) > 0.04) targetYaw = b.vx > 0 ? -0.38 : 0.38;
@@ -523,131 +474,12 @@ export function Actor({
     g.rotation.y = facing.current;
     g.rotation.z = THREE.MathUtils.lerp(
       g.rotation.z,
-      (freed ? THREE.MathUtils.clamp(-b.vx * 0.04, -0.12, 0.12) : 0) +
-        proc.leanZ * 0.5,
+      freed ? THREE.MathUtils.clamp(-b.vx * 0.04, -0.12, 0.12) : 0,
       0.12,
     );
-    g.rotation.x = THREE.MathUtils.lerp(g.rotation.x, proc.leanX, 0.1);
 
-    g.position.set(b.x, b.y + 0.06 + proc.bob * (freed ? 1.1 : 0.6), 0.35);
-    const s = 0.58;
-    p.scale.set(proc.scaleX * s, proc.scaleY * s, s);
-
-    if (bodyGroup.current) {
-      bodyGroup.current.scale.set(
-        proc.torsoBreath,
-        1 / Math.sqrt(proc.torsoBreath),
-        proc.torsoBreath,
-      );
-    }
-
-    if (head.current) {
-      head.current.rotation.x = THREE.MathUtils.lerp(
-        head.current.rotation.x,
-        proc.headPitch + face.headTilt * 0.3,
-        0.14,
-      );
-      head.current.rotation.y = THREE.MathUtils.lerp(
-        head.current.rotation.y,
-        proc.headYaw,
-        0.14,
-      );
-      head.current.rotation.z = THREE.MathUtils.lerp(
-        head.current.rotation.z,
-        face.headTilt + proc.headRoll,
-        0.12,
-      );
-    }
-
-    if (eyeL.current) eyeL.current.scale.y = Math.max(0.08, face.eyeOpen);
-    if (eyeR.current) eyeR.current.scale.y = Math.max(0.08, face.eyeOpen);
-    if (pupilL.current)
-      pupilL.current.position.set(
-        -0.012 + face.pupilX * 0.012,
-        0.005 + face.pupilY * 0.01,
-        0.012,
-      );
-    if (pupilR.current)
-      pupilR.current.position.set(
-        0.012 + face.pupilX * 0.012,
-        0.005 + face.pupilY * 0.01,
-        0.012,
-      );
-
-    if (browL.current) {
-      browL.current.position.y = 0.055 + face.browL * 0.022;
-      browL.current.rotation.z = 0.15 - face.browL * 0.25;
-    }
-    if (browR.current) {
-      browR.current.position.y = 0.055 + face.browR * 0.022;
-      browR.current.rotation.z = -0.15 + face.browR * 0.25;
-    }
-
-    if (mouth.current) {
-      mouth.current.scale.set(
-        0.55 + face.mouthWide * 0.55,
-        0.35 + face.mouthOpen * 0.9,
-        1,
-      );
-      mouth.current.rotation.z = face.mouthCurve * -0.15;
-      mouth.current.position.y = -0.035 - face.mouthOpen * 0.01;
-    }
-
-    if (cheekL.current) {
-      const mat = cheekL.current.material as THREE.MeshStandardMaterial;
-      mat.opacity = 0.15 + face.cheek * 0.55;
-    }
-    if (cheekR.current) {
-      const mat = cheekR.current.material as THREE.MeshStandardMaterial;
-      mat.opacity = 0.15 + face.cheek * 0.55;
-    }
-
-    if (armL.current) {
-      armL.current.rotation.z = THREE.MathUtils.lerp(
-        armL.current.rotation.z,
-        proc.armLZ,
-        0.18,
-      );
-      armL.current.rotation.x = THREE.MathUtils.lerp(
-        armL.current.rotation.x,
-        proc.armLX,
-        0.18,
-      );
-    }
-    if (armR.current) {
-      armR.current.rotation.z = THREE.MathUtils.lerp(
-        armR.current.rotation.z,
-        proc.armRZ,
-        0.18,
-      );
-      armR.current.rotation.x = THREE.MathUtils.lerp(
-        armR.current.rotation.x,
-        proc.armRX,
-        0.18,
-      );
-    }
-
-    if (footL.current) {
-      const plant = 1 - proc.footPlant * 0.35;
-      footL.current.scale.set(1 + proc.footPlant * 0.2, plant, 1);
-      footL.current.position.y = -0.26 + proc.footPlant * 0.012;
-    }
-    if (footR.current) {
-      const fp = anim === "walk" ? 1 - proc.footPlant : 0;
-      footR.current.scale.set(1 + fp * 0.2, 1 - fp * 0.35, 1);
-      footR.current.position.y = -0.26 + fp * 0.012;
-    }
-
-    if (tipGroup.current) {
-      tipGroup.current.rotation.x = proc.tipSwayX;
-      tipGroup.current.rotation.z = proc.tipSwayZ;
-    }
-    if (tip.current) {
-      const mat = tip.current.material as THREE.MeshStandardMaterial;
-      mat.color.set(m.tipColor);
-      mat.emissive.set(m.tipColor);
-      mat.emissiveIntensity = Math.max(0.55, proc.tipPulse * m.emissive);
-    }
+    const bob = Math.sin(state.clock.elapsedTime * 2.2) * 0.012 * (freed ? 1 : 0.5);
+    g.position.set(b.x, b.y + 0.06 + bob, 0.35);
 
     const world = new THREE.Vector3(b.x, b.y + 0.1, 0.35);
     world.project(camera);
@@ -659,162 +491,21 @@ export function Actor({
     onScreenPos({ x: sx, y: sy, visible: true });
   });
 
-  const skin = "#f5d0c8";
-  const skinDeep = "#e8a598";
-  const blush = "#f0a090";
-  const eyeDark = "#2a1810";
-  const lip = "#c4786a";
-  const browCol = "#3a2418";
+  const expression = expressionFromAnim(
+    anim,
+    expressionFromEmotions(emotions),
+  );
 
   return (
     <group ref={root}>
-      <group ref={pose}>
-        <group ref={bodyGroup}>
-          <mesh position={[0, -0.12, 0]}>
-            <capsuleGeometry args={[0.1, 0.12, 6, 12]} />
-            <meshStandardMaterial
-              color={skinDeep}
-              roughness={0.4}
-              metalness={0.06}
-            />
-          </mesh>
-        </group>
-
-        <mesh ref={footL} position={[-0.05, -0.26, 0.02]} rotation={[0.3, 0, 0]}>
-          <sphereGeometry args={[0.04, 10, 10]} />
-          <meshStandardMaterial color={skinDeep} roughness={0.5} />
-        </mesh>
-        <mesh ref={footR} position={[0.05, -0.26, 0.02]} rotation={[0.3, 0, 0]}>
-          <sphereGeometry args={[0.04, 10, 10]} />
-          <meshStandardMaterial color={skinDeep} roughness={0.5} />
-        </mesh>
-
-        <group ref={armL} position={[-0.12, -0.06, 0]}>
-          <mesh position={[0, -0.06, 0]}>
-            <capsuleGeometry args={[0.032, 0.07, 4, 8]} />
-            <meshStandardMaterial color={skin} roughness={0.4} />
-          </mesh>
-          <mesh position={[0, -0.12, 0]}>
-            <sphereGeometry args={[0.038, 10, 10]} />
-            <meshStandardMaterial color={skin} roughness={0.35} />
-          </mesh>
-        </group>
-        <group ref={armR} position={[0.12, -0.06, 0]}>
-          <mesh position={[0, -0.06, 0]}>
-            <capsuleGeometry args={[0.032, 0.07, 4, 8]} />
-            <meshStandardMaterial color={skin} roughness={0.4} />
-          </mesh>
-          <mesh position={[0, -0.12, 0]}>
-            <sphereGeometry args={[0.038, 10, 10]} />
-            <meshStandardMaterial color={skin} roughness={0.35} />
-          </mesh>
-        </group>
-
-        <group ref={head} position={[0, 0.14, 0]}>
-          <mesh>
-            <sphereGeometry args={[0.15, 24, 24]} />
-            <meshStandardMaterial
-              color={skin}
-              roughness={0.32}
-              metalness={0.04}
-            />
-          </mesh>
-
-          <group ref={eyeL} position={[-0.048, 0.022, 0.125]}>
-            <mesh>
-              <sphereGeometry args={[0.028, 12, 12]} />
-              <meshStandardMaterial color="#fff8f4" roughness={0.25} />
-            </mesh>
-            <mesh ref={pupilL} position={[-0.012, 0.005, 0.012]}>
-              <sphereGeometry args={[0.014, 10, 10]} />
-              <meshStandardMaterial color={eyeDark} roughness={0.4} />
-            </mesh>
-            <mesh position={[-0.006, 0.01, 0.022]}>
-              <sphereGeometry args={[0.005, 6, 6]} />
-              <meshStandardMaterial
-                color="#ffffff"
-                emissive="#ffffff"
-                emissiveIntensity={0.4}
-              />
-            </mesh>
-          </group>
-          <group ref={eyeR} position={[0.048, 0.022, 0.125]}>
-            <mesh>
-              <sphereGeometry args={[0.028, 12, 12]} />
-              <meshStandardMaterial color="#fff8f4" roughness={0.25} />
-            </mesh>
-            <mesh ref={pupilR} position={[0.012, 0.005, 0.012]}>
-              <sphereGeometry args={[0.014, 10, 10]} />
-              <meshStandardMaterial color={eyeDark} roughness={0.4} />
-            </mesh>
-            <mesh position={[0.006, 0.01, 0.022]}>
-              <sphereGeometry args={[0.005, 6, 6]} />
-              <meshStandardMaterial
-                color="#ffffff"
-                emissive="#ffffff"
-                emissiveIntensity={0.4}
-              />
-            </mesh>
-          </group>
-
-          <mesh
-            ref={browL}
-            position={[-0.05, 0.055, 0.13]}
-            rotation={[0, 0, 0.15]}
-          >
-            <boxGeometry args={[0.045, 0.008, 0.008]} />
-            <meshStandardMaterial color={browCol} roughness={0.6} />
-          </mesh>
-          <mesh
-            ref={browR}
-            position={[0.05, 0.055, 0.13]}
-            rotation={[0, 0, -0.15]}
-          >
-            <boxGeometry args={[0.045, 0.008, 0.008]} />
-            <meshStandardMaterial color={browCol} roughness={0.6} />
-          </mesh>
-
-          <mesh ref={mouth} position={[0, -0.035, 0.13]}>
-            <sphereGeometry args={[0.022, 10, 8]} />
-            <meshStandardMaterial color={lip} roughness={0.45} />
-          </mesh>
-
-          <mesh ref={cheekL} position={[-0.085, -0.015, 0.1]}>
-            <sphereGeometry args={[0.03, 8, 8]} />
-            <meshStandardMaterial
-              color={blush}
-              transparent
-              opacity={0.35}
-              depthWrite={false}
-            />
-          </mesh>
-          <mesh ref={cheekR} position={[0.085, -0.015, 0.1]}>
-            <sphereGeometry args={[0.03, 8, 8]} />
-            <meshStandardMaterial
-              color={blush}
-              transparent
-              opacity={0.35}
-              depthWrite={false}
-            />
-          </mesh>
-
-          <group ref={tipGroup} position={[0, 0.145, 0]}>
-            <mesh ref={tipStem}>
-              <cylinderGeometry args={[0.008, 0.012, 0.04, 6]} />
-              <meshStandardMaterial color="#d4a090" roughness={0.5} />
-            </mesh>
-            <mesh ref={tip} position={[0, 0.035, 0]}>
-              <sphereGeometry args={[0.038, 12, 12]} />
-              <meshStandardMaterial
-                color="#f0a090"
-                emissive="#f0a090"
-                emissiveIntensity={0.9}
-                roughness={0.35}
-              />
-            </mesh>
-          </group>
-        </group>
-      </group>
+      <CharacterRenderer
+        expression={expression}
+        anim={anim}
+        yaw={facing.current}
+        speed={speedRef.current}
+        justLanded={anim === "land" || justLandedRef.current}
+        scale={0.55}
+      />
     </group>
   );
 }
