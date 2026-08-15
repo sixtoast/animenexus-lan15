@@ -8,7 +8,13 @@ import { useMascotStore } from "@/lib/mascot/store";
 import { clampToHabitat } from "@/lib/mascot/navigation";
 import { tryRunSkit } from "@/lib/mascot/run-skit";
 import { HABITAT_LIGHTING, CANVAS_GL } from "@/lib/mascot/visual";
-import { useEffect } from "react";
+import {
+  budgetFor,
+  detectPerfTier,
+  isPageActive,
+  noteBehaviourTick,
+} from "@/lib/mascot/performance";
+import { useEffect, useMemo } from "react";
 
 type Props = {
   reducedMotion?: boolean;
@@ -75,32 +81,36 @@ function SceneContent({ reducedMotion }: { reducedMotion?: boolean }) {
 
 export function MascotScene({ reducedMotion, lowPower }: Props) {
   const runBehaviourTick = useMascotStore((s) => s.runBehaviourTick);
+  const budget = useMemo(
+    () => budgetFor(detectPerfTier({ lowPower })),
+    [lowPower],
+  );
 
   useEffect(() => {
     if (reducedMotion) return;
     const id = window.setInterval(() => {
+      if (!isPageActive()) return;
+      noteBehaviourTick();
       runBehaviourTick();
-    }, lowPower ? 4500 : 3200);
+    }, budget.behaviourMs);
     return () => window.clearInterval(id);
-  }, [reducedMotion, lowPower, runBehaviourTick]);
+  }, [reducedMotion, budget.behaviourMs, runBehaviourTick]);
 
   useEffect(() => {
     if (reducedMotion) return;
-    const id = window.setInterval(
-      () => {
-        tryRunSkit();
-      },
-      lowPower ? 22_000 : 16_000,
-    );
+    const id = window.setInterval(() => {
+      if (!isPageActive()) return;
+      tryRunSkit();
+    }, budget.skitMs);
     return () => window.clearInterval(id);
-  }, [reducedMotion, lowPower]);
+  }, [reducedMotion, budget.skitMs]);
 
   return (
     <Canvas
       className="mascot-canvas"
       camera={{ position: [0, 0.55, 2.55], fov: 34 }}
-      dpr={lowPower ? [1, 1] : [1, 1.75]}
-      gl={lowPower ? CANVAS_GL.lowPower : CANVAS_GL.full}
+      dpr={[1, budget.dprMax]}
+      gl={budget.antialias ? CANVAS_GL.full : CANVAS_GL.lowPower}
       frameloop={reducedMotion ? "demand" : "always"}
       onPointerMissed={() => {}}
       aria-label="Lantern companion"
