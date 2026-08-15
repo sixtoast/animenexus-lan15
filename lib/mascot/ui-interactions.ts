@@ -1,10 +1,6 @@
 /**
  * Sprint 11 — Physical UI interactions
- *
- * Believable sequences toward semantic landmarks.
- * Not cosmetic only: moves toward preferred interaction points.
- *
- * Gated by intention / outing — never forces climb while home-locked idle.
+ * Sprint 14 — Climb phases on climbable surfaces
  */
 
 import type { MascotAnim } from "./types";
@@ -17,9 +13,9 @@ import {
   listByType,
 } from "./ui-registry";
 import { COMPANION } from "./personality";
+import { isSafeClimbTarget } from "./climbing";
 
 export type UiInteractStep = {
-  /** Habitat target; null = stay put */
   habitat?: { x: number; z: number } | null;
   anim?: MascotAnim;
   holdMs?: number;
@@ -55,12 +51,121 @@ function clientOf(
   return p ? { x: p.clientX, y: p.clientY } : null;
 }
 
+/** Sprint 14 — full climb sequence when platform is safe */
+function planClimbSequence(lm: Landmark): UiInteractStep[] {
+  const edge = pointToHabitat(lm, "edge");
+  const top = pointToHabitat(lm, "top");
+  const header = pointToHabitat(lm, "header");
+  const center = pointToHabitat(lm, "center");
+  const surface = header ?? top ?? center;
+  const approach = edge
+    ? { x: edge.x * 0.9, z: Math.min((edge.z ?? 0) + 0.06, 0.22) }
+    : surface
+      ? { x: surface.x * 0.9, z: Math.min(surface.z + 0.06, 0.22) }
+      : null;
+
+  const look = (kind: InteractionPoint["kind"]) => {
+    const c = clientOf(lm, kind);
+    return c ? { lookClient: c } : {};
+  };
+
+  return [
+    {
+      habitat: approach,
+      anim: "walk",
+      holdMs: 700,
+      ...look("edge"),
+      thought: "Up there…",
+      delayMs: 0,
+    },
+    {
+      habitat: approach,
+      anim: "idle",
+      holdMs: 280,
+      ...look("top"),
+      thought: "Ready.",
+      delayMs: 50,
+    },
+    {
+      habitat: surface,
+      anim: "jump",
+      holdMs: 420,
+      jump: true,
+      ...look("top"),
+      delayMs: 40,
+    },
+    {
+      habitat: surface,
+      anim: "point",
+      holdMs: 220,
+      ...look("header"),
+      thought: "Got it.",
+      delayMs: 40,
+    },
+    {
+      habitat: surface,
+      anim: "jump",
+      holdMs: 380,
+      jump: true,
+      delayMs: 40,
+    },
+    {
+      habitat: surface,
+      anim: "idle",
+      holdMs: 450,
+      thought: "Steady…",
+      delayMs: 40,
+    },
+    {
+      habitat: surface,
+      anim: "think",
+      holdMs: 1600,
+      ...look("center"),
+      thought: lm.type === "modal" ? "Nice view." : "Comfy.",
+      delayMs: 40,
+    },
+    // Dismount toward home-ish
+    {
+      habitat: approach
+        ? { x: approach.x * 0.5, z: approach.z * 0.5 }
+        : { x: 0.28, z: 0.1 },
+      anim: "jump",
+      holdMs: 350,
+      jump: true,
+      thought: "Down.",
+      delayMs: 80,
+    },
+    {
+      habitat: { x: 0.32, z: 0.08 },
+      anim: "idle",
+      holdMs: 500,
+      delayMs: 40,
+    },
+  ];
+}
+
 function planFor(lm: Landmark): UiInteractPlan {
   const steps: UiInteractStep[] = [];
   const look = (kind: InteractionPoint["kind"]) => {
     const c = clientOf(lm, kind);
     return c ? { lookClient: c } : {};
   };
+
+  // Sprint 14 — prefer full climb on safe climbable platforms
+  if (isSafeClimbTarget(lm) && (lm.type === "card" || lm.type === "modal" || lm.type === "hero" || lm.type === "rail")) {
+    const climbSteps = planClimbSequence(lm);
+    const totalMs = climbSteps.reduce(
+      (s, st) => s + (st.delayMs ?? 0) + (st.holdMs ?? 600),
+      0,
+    );
+    return {
+      landmarkId: lm.id,
+      type: lm.type,
+      label: `climb:${lm.type}`,
+      steps: climbSteps,
+      totalMs: Math.min(totalMs, 14_000),
+    };
+  }
 
   switch (lm.type) {
     case "card":
@@ -192,9 +297,7 @@ function planFor(lm: Landmark): UiInteractPlan {
       const center = pointToHabitat(lm, "center");
       steps.push(
         {
-          habitat: center
-            ? { x: center.x + 0.08, z: center.z }
-            : null,
+          habitat: center ? { x: center.x + 0.08, z: center.z } : null,
           anim: "walk",
           ...look("center"),
           thought: "Hide…",
@@ -267,13 +370,11 @@ function planFor(lm: Landmark): UiInteractPlan {
     case "progress": {
       const start = pointToHabitat(lm, "edge");
       const end =
-        lm.points.find((p) => p.kind === "edge" && p !== preferredPoint(lm, "edge")) ||
-        preferredPoint(lm, "edge");
+        lm.points.find(
+          (p) => p.kind === "edge" && p !== preferredPoint(lm, "edge"),
+        ) || preferredPoint(lm, "edge");
       const endHab = end
-        ? landmarkToHabitat(
-            { ...lm, points: [end, ...lm.points] },
-            "edge",
-          )
+        ? landmarkToHabitat({ ...lm, points: [end, ...lm.points] }, "edge")
         : start;
       steps.push(
         {
@@ -360,7 +461,6 @@ function planFor(lm: Landmark): UiInteractPlan {
   };
 }
 
-/** Intentions that may leave home for UI interaction */
 const OUTING_INTENTIONS: MascotIntention[] = [
   "investigate",
   "inspect-recommendation",
@@ -376,20 +476,15 @@ export function canStartUiInteraction(
 ): boolean {
   if (busy) return false;
   if (!OUTING_INTENTIONS.includes(intention)) return false;
-  // Shy companions less often leave for UI
   if (COMPANION.traits.shyness > 0.65 && Math.random() < 0.4) return false;
   return true;
 }
 
-/**
- * Pick a landmark and build an interaction plan, or null if cooldown / none.
- */
 export function planUiInteraction(
   intention: MascotIntention,
   opts?: { preferType?: LandmarkType; landmarkId?: string },
 ): UiInteractPlan | null {
   const now = Date.now();
-  // Global soft cooldown
   let recent = 0;
   for (const t of lastPlanAt.values()) {
     if (now - t < GLOBAL_COOLDOWN_MS) recent++;
@@ -411,7 +506,6 @@ export function planUiInteraction(
   const last = lastPlanAt.get(lm.id) ?? 0;
   if (now - last < GLOBAL_COOLDOWN_MS * 1.5) return null;
 
-  // Match intention to surface
   if (
     intention === "inspect-recommendation" &&
     lm.type !== "card" &&
@@ -440,7 +534,6 @@ export type UiInteractRunner = {
   clampHabitat: (x: number, z: number) => { x: number; z: number };
 };
 
-/** Schedule plan steps on the store (uses timeouts). */
 export function executeUiInteraction(
   plan: UiInteractPlan,
   runner: UiInteractRunner,
