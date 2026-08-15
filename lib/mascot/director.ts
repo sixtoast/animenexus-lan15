@@ -1,5 +1,5 @@
 /**
- * Sprint 5 — MascotDirector (+ personality, relationship, home habitat)
+ * Sprint 5 — MascotDirector (+ personality, relationship, home, daily life)
  */
 
 import type { MascotEmotions, MascotContext } from "./types";
@@ -16,6 +16,7 @@ import { bondStage, getMemory, relationshipHints } from "./memory";
 import type { MascotExpression } from "./expression";
 import { expressionFromEmotions } from "./expression";
 import { shouldReturnHome } from "./home-habitat";
+import { pickRoutineBeat } from "./daily-life";
 
 export type MascotIntention =
   | "observe"
@@ -52,7 +53,6 @@ export type DirectorDirective = {
   expressionHint?: MascotExpression;
   reason: string;
   cooldownMs: number;
-  /** Sprint 16 — walk to a habitat favourite spot */
   goHome?: boolean;
 };
 
@@ -138,7 +138,7 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
     };
   }
 
-  // Sprint 16 — voluntary return to desk home / favourite spot
+  // Sprint 16 — voluntary return to desk home
   if (
     shouldReturnHome({
       intention: world.currentIntention,
@@ -157,6 +157,21 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
       cooldownMs: sleepy ? 12_000 : 8_000,
       goHome: true,
     };
+  }
+
+  // Sprint 17 — flexible daily routine beat (~40% of ambient ticks)
+  if (Math.random() < 0.4) {
+    const beat = pickRoutineBeat(e);
+    if (beat) {
+      return {
+        intention: beat.intention,
+        goal: beat.goal,
+        reason: beat.reason,
+        expressionHint: beat.expressionHint ?? expressionFromEmotions(e),
+        cooldownMs: INTENTION_HOLD_MS[beat.intention] ?? 6_000,
+        goHome: beat.goHome,
+      };
+    }
   }
 
   if (world.modalOpen && e.curiosity > 0.45 && traits.curiosity > 0.5) {
