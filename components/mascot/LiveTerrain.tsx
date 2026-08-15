@@ -2,7 +2,7 @@
 
 /**
  * 3D companion host — calm in home pad; freer when out but always on-screen & reachable.
- * Sprint 21: throttled terrain rebuilds, no per-scroll full scan spam, pause when tab hidden.
+ * Sprint 21–22: throttled terrain; pause when hidden; interactions optional.
  */
 
 import { Canvas, useThree } from "@react-three/fiber";
@@ -36,6 +36,7 @@ import {
   shouldDeepIdle,
   throttle,
 } from "@/lib/mascot/performance";
+import { areInteractionsEnabled } from "@/lib/mascot/a11y";
 import { Actor, type Phase, type MascotScreenPos } from "./Actor";
 
 function OrthoCamera() {
@@ -112,7 +113,6 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
 
   const home = platforms.find((p) => p.id === "home-corner") ?? null;
 
-  // Pause work when tab is hidden
   useEffect(() => {
     const onVis = () => setPageActive(isPageActive());
     onVis();
@@ -120,7 +120,6 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
-  // Terrain rebuild: throttled scroll, slower idle interval, skip when hidden
   useEffect(() => {
     if (!pageActive) return;
 
@@ -141,18 +140,16 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
     const t1 = window.setTimeout(rebuild, 280);
     const t2 = window.setTimeout(rebuild, 900);
 
-    let idleMs = budget.terrainIdleMs;
     const tickIdle = () => {
       const s = useMascotStore.getState();
-      const deep = shouldDeepIdle({
+      shouldDeepIdle({
         anim: s.anim,
         intention: s.intention,
         msSinceInteract: Date.now() - s.lastInteractionAt,
       });
-      idleMs = deep ? budget.terrainIdleMs * 1.8 : budget.terrainIdleMs;
       rebuild();
     };
-    const id = window.setInterval(tickIdle, idleMs);
+    const id = window.setInterval(tickIdle, budget.terrainIdleMs);
 
     window.addEventListener("resize", scrollRebuild);
     window.addEventListener("scroll", scrollRebuild, { passive: true });
@@ -169,6 +166,7 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
   }, [pageActive, budget.terrainIdleMs, budget.terrainScrollMs]);
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
+    if (!areInteractionsEnabled()) return;
     e.preventDefault();
     e.stopPropagation();
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -189,6 +187,11 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
 
   const onPointerUp = useCallback(
     (e: React.PointerEvent) => {
+      if (!areInteractionsEnabled()) {
+        setDragging(false);
+        setDragWorld(null);
+        return;
+      }
       e.preventDefault();
       setDragging(false);
       const w = screenToWorld(e.clientX, e.clientY);
@@ -256,7 +259,7 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
     return (
       <div className="mascot-error" role="alert">
         <strong>3D companion failed</strong>
-        <p>{glError}</p>
+        <p>{glError} The rest of the site still works.</p>
         <button
           type="button"
           className="mascot-error-retry"
@@ -273,6 +276,7 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
 
   const L = LIVE_LIGHTING;
   const dprMax = budget.dprMax;
+  const canInteract = areInteractionsEnabled();
 
   return (
     <>
@@ -335,7 +339,7 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
           />
         </Canvas>
       </div>
-      {screenPos.visible ? (
+      {screenPos.visible && canInteract ? (
         <button
           type="button"
           className={
@@ -343,7 +347,7 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
             (dragging ? " mascot-drag-handle--active" : "")
           }
           style={{ left: screenPos.x, top: screenPos.y }}
-          aria-label="Drag Lantern-ko"
+          aria-label="Drag or pet Lantern-ko companion"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
