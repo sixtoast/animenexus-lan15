@@ -1,10 +1,7 @@
 "use client";
 
 /**
- * GltfCompanion V2 (Claude integration)
- *
- * Loads /public/mascot/companion.glb when present and nodes match contract.
- * Falls back to LanternKoMesh so missing GLB never blanks the mascot.
+ * GltfCompanion — load /public/mascot/companion.glb or fall back to LanternKoMesh.
  */
 
 import * as THREE from "three";
@@ -99,15 +96,15 @@ function LoadedGlbCompanion({
     const browL = nodes.BrowL;
     const browR = nodes.BrowR;
     if (browL && browR) {
-      browL.rotation.z = damp(browL.rotation.z, pose.browRotZ[0], 8, dt);
-      browR.rotation.z = damp(browR.rotation.z, pose.browRotZ[1], 8, dt);
+      browL.rotation.z = damp(browL.rotation.z, pose.brow[0], 8, dt);
+      browR.rotation.z = damp(browR.rotation.z, pose.brow[1], 8, dt);
     }
 
     const eyeL = nodes.EyeL;
     const eyeR = nodes.EyeR;
     if (eyeL && eyeR) {
-      eyeL.scale.y = damp(eyeL.scale.y, pose.eyeScaleY, 12, dt);
-      eyeR.scale.y = damp(eyeR.scale.y, pose.eyeScaleY, 12, dt);
+      eyeL.scale.y = damp(eyeL.scale.y, pose.eyeY, 12, dt);
+      eyeR.scale.y = damp(eyeR.scale.y, pose.eyeY, 12, dt);
     }
 
     const mouth = nodes.Mouth as THREE.Mesh | undefined;
@@ -131,7 +128,7 @@ function LoadedGlbCompanion({
       const mat = tip.material as THREE.MeshStandardMaterial | undefined;
       if (mat && "emissiveIntensity" in mat) {
         mat.emissiveIntensity =
-          0.6 + Math.sin(t * pose.tipPulseHz * Math.PI * 2) * 0.4;
+          0.55 + Math.sin(t * pose.pulse * Math.PI * 2) * 0.4;
       }
       const targetX = Math.sin(t * 2.2) * 0.05 * (0.4 + speed);
       const targetZ = -yaw * 0.15;
@@ -224,5 +221,5 @@ export function GltfCompanion(props: GltfCompanionProps) {
 try {
   useGLTF.preload(GLB_PATH);
 } catch {
-  /* optional asset */
+  /* optional */
 }
