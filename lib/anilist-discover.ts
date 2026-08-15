@@ -1,6 +1,8 @@
 import { ANILIST_ENDPOINT, mapAniListMedia } from "./anilist";
 import type { Anime, AnimePage } from "./types";
 import type { AniSeason } from "./season";
+import { kitsuDiscover, kitsuFiltered } from "./providers/kitsu";
+import { shikiDiscover, shikiFiltered } from "./providers/shikimori";
 
 type GqlResponse<T> = {
   data?: T;
@@ -32,6 +34,31 @@ async function gql<T>(
   return json.data;
 }
 
+async function withFallbacks<T>(
+  label: string,
+  primary: () => Promise<T>,
+  fallbacks: { name: string; run: () => Promise<T> }[],
+): Promise<T> {
+  try {
+    return await primary();
+  } catch (primaryErr) {
+    const msg =
+      primaryErr instanceof Error ? primaryErr.message : String(primaryErr);
+    console.warn(`[anime-api] AniList ${label} failed: ${msg}`);
+    let lastErr: unknown = primaryErr;
+    for (const fb of fallbacks) {
+      try {
+        const result = await fb.run();
+        console.warn(`[anime-api] ${label} served via ${fb.name}`);
+        return result;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr;
+  }
+}
+
 const FIELDS = `
   id
   title { romaji english native }
@@ -58,7 +85,8 @@ export async function fetchSeasonal(
   page = 1,
   perPage = 24,
 ): Promise<AnimePage> {
-  const query = `
+  const primary = async (): Promise<AnimePage> => {
+    const query = `
     query ($page: Int, $perPage: Int, $season: MediaSeason, $seasonYear: Int) {
       Page(page: $page, perPage: $perPage) {
         pageInfo { total currentPage lastPage hasNextPage }
@@ -74,34 +102,49 @@ export async function fetchSeasonal(
       }
     }
   `;
-  const data = await gql<{
-    Page: {
-      pageInfo: {
-        total: number;
-        currentPage: number;
-        lastPage: number;
-        hasNextPage: boolean;
+    const data = await gql<{
+      Page: {
+        pageInfo: {
+          total: number;
+          currentPage: number;
+          lastPage: number;
+          hasNextPage: boolean;
+        };
+        media: Record<string, unknown>[];
       };
-      media: Record<string, unknown>[];
-    };
-  }>(query, { page, perPage, season, seasonYear });
+    }>(query, { page, perPage, season, seasonYear });
 
-  return {
-    data: (data.Page.media || []).map(mapAniListMedia),
-    pagination: {
-      total: data.Page.pageInfo.total ?? 0,
-      currentPage: data.Page.pageInfo.currentPage,
-      lastPage: data.Page.pageInfo.lastPage,
-      hasNextPage: Boolean(data.Page.pageInfo.hasNextPage),
-    },
+    return {
+      data: (data.Page.media || []).map(mapAniListMedia),
+      pagination: {
+        total: data.Page.pageInfo.total ?? 0,
+        currentPage: data.Page.pageInfo.currentPage,
+        lastPage: data.Page.pageInfo.lastPage,
+        hasNextPage: Boolean(data.Page.pageInfo.hasNextPage),
+      },
+    };
   };
+
+  return withFallbacks("seasonal", primary, [
+    {
+      name: "Kitsu",
+      run: () =>
+        kitsuFiltered({ year: String(seasonYear), sort: "popularity" }, page, perPage),
+    },
+    {
+      name: "Shikimori",
+      run: () =>
+        shikiFiltered({ year: String(seasonYear), sort: "popularity" }, page, perPage),
+    },
+  ]);
 }
 
 export async function fetchAiring(
   page = 1,
   perPage = 24,
 ): Promise<AnimePage> {
-  const query = `
+  const primary = async (): Promise<AnimePage> => {
+    const query = `
     query ($page: Int, $perPage: Int) {
       Page(page: $page, perPage: $perPage) {
         pageInfo { total currentPage lastPage hasNextPage }
@@ -116,31 +159,46 @@ export async function fetchAiring(
       }
     }
   `;
-  const data = await gql<{
-    Page: {
-      pageInfo: {
-        total: number;
-        currentPage: number;
-        lastPage: number;
-        hasNextPage: boolean;
+    const data = await gql<{
+      Page: {
+        pageInfo: {
+          total: number;
+          currentPage: number;
+          lastPage: number;
+          hasNextPage: boolean;
+        };
+        media: Record<string, unknown>[];
       };
-      media: Record<string, unknown>[];
-    };
-  }>(query, { page, perPage });
+    }>(query, { page, perPage });
 
-  return {
-    data: (data.Page.media || []).map(mapAniListMedia),
-    pagination: {
-      total: data.Page.pageInfo.total ?? 0,
-      currentPage: data.Page.pageInfo.currentPage,
-      lastPage: data.Page.pageInfo.lastPage,
-      hasNextPage: Boolean(data.Page.pageInfo.hasNextPage),
-    },
+    return {
+      data: (data.Page.media || []).map(mapAniListMedia),
+      pagination: {
+        total: data.Page.pageInfo.total ?? 0,
+        currentPage: data.Page.pageInfo.currentPage,
+        lastPage: data.Page.pageInfo.lastPage,
+        hasNextPage: Boolean(data.Page.pageInfo.hasNextPage),
+      },
+    };
   };
+
+  return withFallbacks("airing", primary, [
+    {
+      name: "Kitsu",
+      run: () =>
+        kitsuFiltered({ status: "RELEASING", sort: "popularity" }, page, perPage),
+    },
+    {
+      name: "Shikimori",
+      run: () =>
+        shikiFiltered({ status: "RELEASING", sort: "popularity" }, page, perPage),
+    },
+  ]);
 }
 
 export async function fetchDailyPool(perPage = 50): Promise<Anime[]> {
-  const query = `
+  try {
+    const query = `
     query ($perPage: Int) {
       Page(page: 1, perPage: $perPage) {
         media(
@@ -154,10 +212,19 @@ export async function fetchDailyPool(perPage = 50): Promise<Anime[]> {
       }
     }
   `;
-  const data = await gql<{
-    Page: { media: Record<string, unknown>[] };
-  }>(query, { perPage });
-  return (data.Page.media || []).map(mapAniListMedia);
+    const data = await gql<{
+      Page: { media: Record<string, unknown>[] };
+    }>(query, { perPage });
+    return (data.Page.media || []).map(mapAniListMedia);
+  } catch {
+    try {
+      const page = await kitsuDiscover("popular", 1, perPage);
+      return page.data;
+    } catch {
+      const page = await shikiDiscover("popular", 1, perPage);
+      return page.data;
+    }
+  }
 }
 
 export async function fetchByGenres(
@@ -179,7 +246,9 @@ export async function fetchByGenres(
       pagination: { total: 0, hasNextPage: false },
     };
   }
-  const query = `
+
+  const primary = async (): Promise<AnimePage> => {
+    const query = `
     query ($page: Int, $perPage: Int, $genres: [String], $sort: [MediaSort]) {
       Page(page: $page, perPage: $perPage) {
         pageInfo { total currentPage lastPage hasNextPage }
@@ -194,32 +263,45 @@ export async function fetchByGenres(
       }
     }
   `;
-  const data = await gql<{
-    Page: {
-      pageInfo: {
-        total: number;
-        currentPage: number;
-        lastPage: number;
-        hasNextPage: boolean;
+    const data = await gql<{
+      Page: {
+        pageInfo: {
+          total: number;
+          currentPage: number;
+          lastPage: number;
+          hasNextPage: boolean;
+        };
+        media: Record<string, unknown>[];
       };
-      media: Record<string, unknown>[];
-    };
-  }>(query, { page, perPage, genres: genreFilter, sort });
+    }>(query, { page, perPage, genres: genreFilter, sort });
 
-  let list = (data.Page.media || []).map(mapAniListMedia);
-  if (opts.excludeIds?.length) {
-    const ban = new Set(opts.excludeIds);
-    list = list.filter((a) => !ban.has(a.id));
-  }
-  return {
-    data: list,
-    pagination: {
-      total: data.Page.pageInfo.total ?? 0,
-      currentPage: data.Page.pageInfo.currentPage,
-      lastPage: data.Page.pageInfo.lastPage,
-      hasNextPage: Boolean(data.Page.pageInfo.hasNextPage),
-    },
+    let list = (data.Page.media || []).map(mapAniListMedia);
+    if (opts.excludeIds?.length) {
+      const ban = new Set(opts.excludeIds);
+      list = list.filter((a) => !ban.has(a.id));
+    }
+    return {
+      data: list,
+      pagination: {
+        total: data.Page.pageInfo.total ?? 0,
+        currentPage: data.Page.pageInfo.currentPage,
+        lastPage: data.Page.pageInfo.lastPage,
+        hasNextPage: Boolean(data.Page.pageInfo.hasNextPage),
+      },
+    };
   };
+
+  return withFallbacks("byGenres", primary, [
+    {
+      name: "Kitsu",
+      run: () => kitsuDiscover("top", page, perPage),
+    },
+    {
+      name: "Shikimori",
+      run: () =>
+        shikiFiltered({ genre: genreFilter[0], sort: "score" }, page, perPage),
+    },
+  ]);
 }
 
 export async function fetchAiringSchedule(
@@ -233,7 +315,8 @@ export async function fetchAiringSchedule(
 > {
   const now = Math.floor(Date.now() / 1000);
   const until = now + hoursAhead * 3600;
-  const query = `
+  try {
+    const query = `
     query ($greater: Int, $lesser: Int) {
       Page(page: 1, perPage: 50) {
         airingSchedules(
@@ -250,23 +333,28 @@ export async function fetchAiringSchedule(
       }
     }
   `;
-  const data = await gql<{
-    Page: {
-      airingSchedules: {
-        airingAt: number;
-        episode: number;
-        media: Record<string, unknown> | null;
-      }[];
-    };
-  }>(query, { greater: now, lesser: until });
+    const data = await gql<{
+      Page: {
+        airingSchedules: {
+          airingAt: number;
+          episode: number;
+          media: Record<string, unknown> | null;
+        }[];
+      };
+    }>(query, { greater: now, lesser: until });
 
-  return (data.Page.airingSchedules || [])
-    .filter((row) => row.media)
-    .map((row) => ({
-      airingAt: row.airingAt,
-      episode: row.episode,
-      media: mapAniListMedia(row.media!),
-    }));
+    return (data.Page.airingSchedules || [])
+      .filter((row) => row.media)
+      .map((row) => ({
+        airingAt: row.airingAt,
+        episode: row.episode,
+        media: mapAniListMedia(row.media!),
+      }));
+  } catch {
+    // Schedule is AniList-specific; degrade to empty rather than invent times
+    console.warn("[anime-api] airing schedule unavailable (AniList down)");
+    return [];
+  }
 }
 
 export async function fetchUpcoming(
@@ -278,7 +366,9 @@ export async function fetchUpcoming(
 ): Promise<AnimePage> {
   const page = opts.page ?? 1;
   const perPage = opts.perPage ?? 24;
-  const query = `
+
+  const primary = async (): Promise<AnimePage> => {
+    const query = `
     query ($page: Int, $perPage: Int, $genre: String) {
       Page(page: $page, perPage: $perPage) {
         pageInfo { total currentPage lastPage hasNextPage }
@@ -294,27 +384,49 @@ export async function fetchUpcoming(
       }
     }
   `;
-  const variables: Record<string, unknown> = { page, perPage };
-  if (opts.genre) variables.genre = opts.genre;
-  const data = await gql<{
-    Page: {
-      pageInfo: {
-        total: number;
-        currentPage: number;
-        lastPage: number;
-        hasNextPage: boolean;
+    const variables: Record<string, unknown> = { page, perPage };
+    if (opts.genre) variables.genre = opts.genre;
+    const data = await gql<{
+      Page: {
+        pageInfo: {
+          total: number;
+          currentPage: number;
+          lastPage: number;
+          hasNextPage: boolean;
+        };
+        media: Record<string, unknown>[];
       };
-      media: Record<string, unknown>[];
-    };
-  }>(query, variables);
+    }>(query, variables);
 
-  return {
-    data: (data.Page.media || []).map(mapAniListMedia),
-    pagination: {
-      total: data.Page.pageInfo.total ?? 0,
-      currentPage: data.Page.pageInfo.currentPage,
-      lastPage: data.Page.pageInfo.lastPage,
-      hasNextPage: Boolean(data.Page.pageInfo.hasNextPage),
-    },
+    return {
+      data: (data.Page.media || []).map(mapAniListMedia),
+      pagination: {
+        total: data.Page.pageInfo.total ?? 0,
+        currentPage: data.Page.pageInfo.currentPage,
+        lastPage: data.Page.pageInfo.lastPage,
+        hasNextPage: Boolean(data.Page.pageInfo.hasNextPage),
+      },
+    };
   };
+
+  return withFallbacks("upcoming", primary, [
+    {
+      name: "Kitsu",
+      run: () =>
+        kitsuFiltered(
+          { status: "NOT_YET_RELEASED", sort: "popularity" },
+          page,
+          perPage,
+        ),
+    },
+    {
+      name: "Shikimori",
+      run: () =>
+        shikiFiltered(
+          { status: "NOT_YET_RELEASED", sort: "popularity" },
+          page,
+          perPage,
+        ),
+    },
+  ]);
 }
