@@ -7,6 +7,10 @@ import { useMascotStore } from "@/lib/mascot/store";
 import { HABITAT_BOUNDS } from "@/lib/mascot/types";
 import { motionFromEmotions } from "@/lib/mascot/emotions";
 import {
+  expressionFromAnim,
+  expressionFromEmotions,
+} from "@/lib/mascot/expression";
+import {
   applyJump,
   applyClimbJump,
   createBody,
@@ -15,31 +19,22 @@ import {
   teleportBody,
   type PhysicsBody,
 } from "@/lib/mascot/physics";
-import { MATERIALS, PALETTE } from "@/lib/mascot/visual";
+import { GltfCompanion } from "./GltfCompanion";
 
 export function PlaceholderChibi() {
   const root = useRef<THREE.Group>(null);
-  const pose = useRef<THREE.Group>(null);
-  const head = useRef<THREE.Group>(null);
-  const tip = useRef<THREE.Mesh>(null);
-  const leftEye = useRef<THREE.Mesh>(null);
-  const rightEye = useRef<THREE.Mesh>(null);
-  const leftArm = useRef<THREE.Mesh>(null);
-  const rightArm = useRef<THREE.Mesh>(null);
-  const cheekL = useRef<THREE.Mesh>(null);
-  const cheekR = useRef<THREE.Mesh>(null);
-  const pointer = useRef({ x: 0, y: 0 });
   const facing = useRef(0);
   const decayAcc = useRef(0);
   const body = useRef<PhysicsBody>(createBody(0, 0));
   const wasAirborne = useRef(false);
+  const justLanded = useRef(false);
   const dragging = useRef(false);
   const lastClick = useRef(0);
   const lastStorePos = useRef({ x: 0, z: 0 });
   const dragStart = useRef({ x: 0, z: 0, moved: false });
+  const speedRef = useRef(0);
 
-  useFrame((state, delta) => {
-    const t = state.clock.elapsedTime;
+  useFrame((_state, delta) => {
     const dt = Math.min(delta, 0.05);
     const store = useMascotStore.getState();
     const {
@@ -51,11 +46,11 @@ export function PlaceholderChibi() {
       emotions,
       decayEmotions,
       dispatch,
-      lookBias,
       consumeJump,
     } = store;
 
     const motion = motionFromEmotions(emotions);
+    justLanded.current = false;
 
     decayAcc.current += dt;
     if (decayAcc.current > 1) {
@@ -65,8 +60,7 @@ export function PlaceholderChibi() {
     }
 
     const g = root.current;
-    const p = pose.current;
-    if (!g || !p) return;
+    if (!g) return;
 
     if (
       Math.abs(store.position.x - lastStorePos.current.x) > 0.15 ||
@@ -137,6 +131,7 @@ export function PlaceholderChibi() {
 
     if (wasAirborne.current && body.current.onGround) {
       setAnim("land");
+      justLanded.current = true;
       window.setTimeout(() => {
         if (useMascotStore.getState().anim === "land") setAnim("idle");
       }, 280);
@@ -145,8 +140,9 @@ export function PlaceholderChibi() {
 
     setPosition({ x: body.current.x, z: body.current.z });
 
-    const jit = motion.jitter;
-    g.position.x = body.current.x + (jit ? Math.sin(t * 20) * jit : 0);
+    speedRef.current = Math.hypot(body.current.vx, body.current.vz);
+
+    g.position.x = body.current.x;
     g.position.z = body.current.z;
     g.position.y = -0.15 + body.current.y * 0.22;
     g.rotation.y = THREE.MathUtils.lerp(
@@ -154,135 +150,19 @@ export function PlaceholderChibi() {
       facing.current,
       1 - Math.pow(0.001, dt),
     );
-
-    const breathe = Math.sin(t * (1.8 + emotions.energy)) * 0.02;
-    let bob = Math.sin(t * 1.6) * 0.02 * motion.bobAmp;
-    let scale = 0.96 + motion.poseOpenness * 0.08;
-    let rotZ = 0;
-    let armSwing = 0;
-    let headPitch = motion.headDroop;
-    let pointArm = false;
-
-    switch (anim) {
-      case "walk": {
-        const gait = t * (8 + emotions.energy * 4);
-        bob = Math.abs(Math.sin(gait)) * 0.055 * motion.bobAmp;
-        armSwing = Math.sin(gait) * 0.4 * motion.armAmp;
-        rotZ = Math.sin(gait) * 0.035;
-        break;
-      }
-      case "jump":
-        scale *= 1.04;
-        bob = 0.06;
-        armSwing = -0.4;
-        headPitch = -0.15;
-        break;
-      case "land":
-        scale *= 0.94;
-        bob = -0.04;
-        armSwing = 0.3;
-        break;
-      case "happy":
-        scale *= 1 + Math.sin(t * 14) * 0.045;
-        bob = Math.abs(Math.sin(t * 10)) * 0.11 * motion.bobAmp;
-        rotZ = Math.sin(t * 12) * 0.08;
-        armSwing = Math.sin(t * 14) * 0.55 * motion.armAmp;
-        headPitch = -0.05;
-        break;
-      case "wave":
-        bob = 0.04 + breathe;
-        armSwing = 0.25 + Math.sin(t * 9) * 0.9;
-        rotZ = Math.sin(t * 6) * 0.1;
-        break;
-      case "point":
-        bob = 0.02 + breathe;
-        pointArm = true;
-        headPitch = -0.08;
-        armSwing = 0.1;
-        break;
-      case "think":
-        bob = breathe;
-        headPitch = -0.22 + Math.sin(t * 1.2) * 0.05 + motion.headDroop;
-        armSwing = 0.12;
-        rotZ = 0.06;
-        break;
-      case "sleep":
-        bob = -0.08 + breathe * 0.5;
-        rotZ = -0.18;
-        headPitch = 0.35;
-        break;
-      case "surprised":
-        scale *= 1.06;
-        bob = 0.08;
-        headPitch = -0.12;
-        armSwing = 0.5;
-        break;
-      default:
-        bob = bob + breathe * 0.5;
-    }
-
-    p.position.y = bob;
-    p.rotation.z = rotZ;
-    p.scale.setScalar(scale * (1 + breathe * 0.35));
-
-    if (leftArm.current) leftArm.current.rotation.x = armSwing;
-    if (rightArm.current) {
-      if (pointArm) {
-        rightArm.current.rotation.x = -1.1;
-        rightArm.current.rotation.z = -0.2;
-      } else {
-        rightArm.current.rotation.x = anim === "wave" ? -0.2 : -armSwing;
-        rightArm.current.rotation.z =
-          anim === "wave" ? -0.5 + Math.sin(t * 9) * 0.55 : -0.4;
-      }
-    }
-
-    if (head.current) {
-      const lookY = pointer.current.x * 0.2 + lookBias.x * 0.2;
-      const lookX = -pointer.current.y * 0.12 + headPitch - lookBias.y * 0.12;
-      head.current.rotation.y = THREE.MathUtils.lerp(
-        head.current.rotation.y,
-        lookY,
-        0.08,
-      );
-      head.current.rotation.x = THREE.MathUtils.lerp(
-        head.current.rotation.x,
-        lookX,
-        0.08,
-      );
-    }
-
-    if (tip.current) {
-      const mat = tip.current.material as THREE.MeshStandardMaterial;
-      mat.emissiveIntensity =
-        MATERIALS.tip.emissiveIntensity * (0.55 + motion.glow * 0.55);
-    }
-
-    const cheekOp = 0.35 + emotions.happiness * 0.4;
-    if (cheekL.current) {
-      (cheekL.current.material as THREE.MeshStandardMaterial).opacity = cheekOp;
-    }
-    if (cheekR.current) {
-      (cheekR.current.material as THREE.MeshStandardMaterial).opacity = cheekOp;
-    }
-
-    const blink =
-      anim === "sleep" ? 0.1 : Math.sin(t * 0.7) > 0.96 ? 0.12 : 1;
-    if (leftEye.current) leftEye.current.scale.y = blink;
-    if (rightEye.current) rightEye.current.scale.y = blink;
   });
 
-  const skin = MATERIALS.skin;
-  const bodyMat = MATERIALS.body;
-  const eye = MATERIALS.eye;
-  const tipMat = MATERIALS.tip;
+  const emotions = useMascotStore((s) => s.emotions);
+  const anim = useMascotStore((s) => s.anim);
+  const expression = expressionFromAnim(
+    anim,
+    expressionFromEmotions(emotions),
+  );
 
   return (
     <group
       ref={root}
       onPointerMove={(e) => {
-        pointer.current.x = THREE.MathUtils.clamp(e.point.x * 1.2, -1, 1);
-        pointer.current.y = THREE.MathUtils.clamp(e.point.y * 1.2, -1, 1);
         if (dragging.current) {
           const x = THREE.MathUtils.clamp(
             e.point.x,
@@ -339,107 +219,13 @@ export function PlaceholderChibi() {
         }
       }}
     >
-      <group ref={pose}>
-        <mesh position={[0, -0.35, 0]} castShadow>
-          <capsuleGeometry args={[0.22, 0.28, 8, 16]} />
-          <meshStandardMaterial
-            color={bodyMat.color}
-            roughness={bodyMat.roughness}
-            metalness={bodyMat.metalness}
-          />
-        </mesh>
-
-        <group ref={head} position={[0, 0.22, 0]}>
-          <mesh castShadow>
-            <sphereGeometry args={[0.42, 36, 36]} />
-            <meshStandardMaterial
-              color={skin.color}
-              roughness={skin.roughness}
-              metalness={skin.metalness}
-            />
-          </mesh>
-          <mesh ref={cheekL} position={[-0.22, -0.08, 0.32]}>
-            <sphereGeometry args={[0.08, 12, 12]} />
-            <meshStandardMaterial
-              color={PALETTE.blush}
-              transparent
-              opacity={0.55}
-              roughness={0.55}
-            />
-          </mesh>
-          <mesh ref={cheekR} position={[0.22, -0.08, 0.32]}>
-            <sphereGeometry args={[0.08, 12, 12]} />
-            <meshStandardMaterial
-              color={PALETTE.blush}
-              transparent
-              opacity={0.55}
-              roughness={0.55}
-            />
-          </mesh>
-          {/* Eyes — slightly larger + darker for small-screen readability */}
-          <mesh ref={leftEye} position={[-0.14, 0.06, 0.37]}>
-            <sphereGeometry args={[0.078, 16, 16]} />
-            <meshStandardMaterial
-              color={eye.color}
-              roughness={eye.roughness}
-              metalness={eye.metalness}
-            />
-          </mesh>
-          <mesh ref={rightEye} position={[0.14, 0.06, 0.37]}>
-            <sphereGeometry args={[0.078, 16, 16]} />
-            <meshStandardMaterial
-              color={eye.color}
-              roughness={eye.roughness}
-              metalness={eye.metalness}
-            />
-          </mesh>
-          <mesh position={[-0.12, 0.1, 0.43]}>
-            <sphereGeometry args={[0.022, 8, 8]} />
-            <meshBasicMaterial color={PALETTE.eyeHighlight} />
-          </mesh>
-          <mesh position={[0.16, 0.1, 0.43]}>
-            <sphereGeometry args={[0.022, 8, 8]} />
-            <meshBasicMaterial color={PALETTE.eyeHighlight} />
-          </mesh>
-          <mesh position={[0, -0.1, 0.39]} rotation={[0.2, 0, 0]}>
-            <torusGeometry args={[0.06, 0.014, 8, 16, Math.PI]} />
-            <meshStandardMaterial color={PALETTE.mouth} roughness={0.5} />
-          </mesh>
-          <mesh ref={tip} position={[0, 0.48, 0]}>
-            <sphereGeometry args={[0.085, 14, 14]} />
-            <meshStandardMaterial
-              color={tipMat.color}
-              emissive={tipMat.emissive}
-              emissiveIntensity={tipMat.emissiveIntensity}
-              roughness={tipMat.roughness}
-              metalness={tipMat.metalness}
-            />
-          </mesh>
-          <mesh position={[0, 0.38, 0]}>
-            <cylinderGeometry args={[0.02, 0.02, 0.12, 8]} />
-            <meshStandardMaterial color={PALETTE.skinDeep} />
-          </mesh>
-        </group>
-
-        <mesh ref={leftArm} position={[-0.32, -0.28, 0]} rotation={[0, 0, 0.4]}>
-          <capsuleGeometry args={[0.07, 0.16, 4, 10]} />
-          <meshStandardMaterial
-            color={bodyMat.color}
-            roughness={bodyMat.roughness}
-          />
-        </mesh>
-        <mesh
-          ref={rightArm}
-          position={[0.32, -0.28, 0]}
-          rotation={[0, 0, -0.4]}
-        >
-          <capsuleGeometry args={[0.07, 0.16, 4, 10]} />
-          <meshStandardMaterial
-            color={bodyMat.color}
-            roughness={bodyMat.roughness}
-          />
-        </mesh>
-      </group>
+      <GltfCompanion
+        expression={expression}
+        anim={anim}
+        yaw={facing.current}
+        speed={speedRef.current}
+        justLanded={justLanded.current}
+      />
     </group>
   );
 }
