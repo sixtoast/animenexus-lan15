@@ -3,6 +3,7 @@
 /**
  * 3D companion host — calm in home pad; freer when out but always on-screen & reachable.
  * Safety: idle home never auto-climbs on scroll; clamp every frame; return-home guaranteed.
+ * Sprint 20: warmer key/fill/rim lighting + clearer home pad silhouette.
  */
 
 import { Canvas, useThree } from "@react-three/fiber";
@@ -26,6 +27,7 @@ import {
   type TerrainBody,
 } from "@/lib/mascot/terrain-physics";
 import { useMascotStore } from "@/lib/mascot/store";
+import { LIVE_LIGHTING, PALETTE, CANVAS_GL } from "@/lib/mascot/visual";
 import { Actor, type Phase, type MascotScreenPos } from "./Actor";
 
 function OrthoCamera() {
@@ -55,15 +57,19 @@ function HomePadBox({ home }: { home: TerrainPlatform | null }) {
       <mesh>
         <planeGeometry args={[w, h]} />
         <meshBasicMaterial
-          color="#f0a090"
+          color={PALETTE.padFill}
           transparent
-          opacity={0.08}
+          opacity={0.1}
           depthWrite={false}
         />
       </mesh>
       <lineSegments>
         <edgesGeometry args={[new THREE.PlaneGeometry(w, h)]} />
-        <lineBasicMaterial color="#f0a090" transparent opacity={0.55} />
+        <lineBasicMaterial
+          color={PALETTE.padEdge}
+          transparent
+          opacity={0.65}
+        />
       </lineSegments>
     </group>
   );
@@ -103,7 +109,6 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
     const t0 = window.setTimeout(rebuild, 40);
     const t1 = window.setTimeout(rebuild, 250);
     const t2 = window.setTimeout(rebuild, 800);
-    // Scroll rebuilds terrain only — must not change phase (home lock owns that)
     const id = window.setInterval(rebuild, lowPower ? 2500 : 1800);
     window.addEventListener("resize", rebuild);
     window.addEventListener("scroll", rebuild, { passive: true });
@@ -220,6 +225,8 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
     );
   }
 
+  const L = LIVE_LIGHTING;
+
   return (
     <>
       <div className="mascot-home-pad" aria-hidden />
@@ -228,14 +235,8 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
         <Canvas
           className="live-terrain-canvas"
           orthographic
-          dpr={lowPower ? [1, 1.5] : [1, 2]}
-          gl={{
-            alpha: true,
-            antialias: true,
-            powerPreference: "high-performance",
-            failIfMajorPerformanceCaveat: false,
-            premultipliedAlpha: true,
-          }}
+          dpr={lowPower ? [1, 1.25] : [1, 2]}
+          gl={lowPower ? CANVAS_GL.lowPower : CANVAS_GL.full}
           frameloop="always"
           camera={{
             position: [0, 0, 5],
@@ -258,14 +259,22 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
           }}
         >
           <OrthoCamera />
-          <ambientLight intensity={1.15} />
-          <directionalLight position={[2.5, 3.5, 5]} intensity={1.0} />
-          <directionalLight position={[-2, 1, 3]} intensity={0.4} />
+          <ambientLight intensity={L.ambient.intensity} color={L.ambient.color} />
+          <directionalLight
+            position={L.key.position}
+            intensity={L.key.intensity}
+            color={L.key.color}
+          />
+          <directionalLight
+            position={L.fill.position}
+            intensity={L.fill.intensity}
+            color={L.fill.color}
+          />
           <pointLight
-            position={[1.0, -0.3, 2]}
-            intensity={0.7}
-            distance={5}
-            color="#f0a090"
+            position={L.rim.position}
+            intensity={L.rim.intensity}
+            distance={L.rim.distance}
+            color={L.rim.color}
           />
           <HomePadBox home={home} />
           <Actor
