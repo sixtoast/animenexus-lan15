@@ -5,6 +5,18 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useMascotStore, mascotNotify } from "@/lib/mascot/store";
 import { useMotion } from "@/components/MotionProvider";
+import {
+  isAudioEnabled,
+  loadAudioPref,
+  setAudioEnabled,
+} from "@/lib/mascot/audio";
+import {
+  areInteractionsEnabled,
+  bindMascotKeyboard,
+  companionStatusLine,
+  loadA11yPrefs,
+  setInteractionsEnabled,
+} from "@/lib/mascot/a11y";
 import { UiAwareness } from "./UiAwareness";
 import { ContextBridge } from "./ContextBridge";
 import { ThoughtBubble } from "./ThoughtBubble";
@@ -34,6 +46,9 @@ export function MascotHost() {
   const [modalOpen, setModalOpen] = useState(false);
   const [lowPower, setLowPower] = useState(false);
   const [webglError, setWebglError] = useState<string | null>(null);
+  const [audioOn, setAudioOn] = useState(false);
+  const [interactOn, setInteractOn] = useState(true);
+  const [statusMsg, setStatusMsg] = useState("");
 
   useEffect(() => {
     setReady(true);
@@ -44,13 +59,16 @@ export function MascotHost() {
     } catch {
       setEnabled(true);
     }
+    loadAudioPref();
+    setAudioOn(isAudioEnabled());
+    const a11y = loadA11yPrefs();
+    setInteractOn(a11y.interactionsEnabled);
     setLowPower(
       window.matchMedia("(max-width: 480px)").matches ||
         (navigator as Navigator & { connection?: { saveData?: boolean } })
           .connection?.saveData === true,
     );
 
-    // Probe WebGL — report real failure, never swap to 2D
     try {
       const c = document.createElement("canvas");
       const gl =
@@ -127,39 +145,93 @@ export function MascotHost() {
     return () => window.clearInterval(id);
   }, [enabled, hiddenTab]);
 
+  const hideCompanion = () => {
+    setEnabled(false);
+    try {
+      localStorage.setItem("anime_nexus_mascot", "off");
+    } catch {
+      /* */
+    }
+    setStatusMsg("Companion hidden.");
+  };
+
   const showCompanion = () => {
     setEnabled(true);
-    // Ensure motion is on so 3D is allowed
     setPref("full");
     try {
       localStorage.setItem("anime_nexus_mascot", "on");
     } catch {
       /* */
     }
+    setStatusMsg("Companion shown.");
   };
+
+  const toggleAudio = () => {
+    const next = !isAudioEnabled();
+    setAudioEnabled(next);
+    setAudioOn(next);
+    setStatusMsg(next ? "Companion sound on." : "Companion sound off.");
+  };
+
+  const toggleInteract = () => {
+    const next = !areInteractionsEnabled();
+    setInteractionsEnabled(next);
+    setInteractOn(next);
+    setStatusMsg(next ? "Companion interactive." : "Companion look only.");
+  };
+
+  // Keyboard shortcuts (never capture typing in form fields)
+  useEffect(() => {
+    return bindMascotKeyboard({
+      toggleHide: () => {
+        if (useMascotStore.getState().enabled) hideCompanion();
+        else showCompanion();
+      },
+      toggleMute: toggleAudio,
+      toggleInteractions: toggleInteract,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Expose interaction gate for LiveTerrain drag handle
+  useEffect(() => {
+    try {
+      (window as unknown as { __mascotInteract?: boolean }).__mascotInteract =
+        interactOn;
+    } catch {
+      /* */
+    }
+  }, [interactOn]);
 
   if (!ready) return null;
 
   if (!enabled) {
     return (
-      <button
-        type="button"
-        className="mascot-enable"
-        onClick={showCompanion}
-        title="Show 3D companion"
-        aria-label="Show 3D companion"
-      >
-        🕯️
-      </button>
+      <>
+        <div className="sr-only" role="status" aria-live="polite">
+          {statusMsg || "Companion hidden. Site works without it."}
+        </div>
+        <button
+          type="button"
+          className="mascot-enable"
+          onClick={showCompanion}
+          title="Show 3D companion (optional)"
+          aria-label="Show optional 3D companion"
+        >
+          🕯️
+        </button>
+      </>
     );
   }
 
-  // Reduced motion: user explicitly chose no animation — show message, not 2D fake
   if (reducedMotion) {
     return (
       <div className="mascot-error" role="status">
         <strong>3D paused</strong>
-        <p>Reduced motion is on. Turn on full motion to show Lantern-ko.</p>
+        <p>
+          Reduced motion is on. The site works fully without the companion.
+          Turn on full motion only if you want to show Lantern-ko.
+        </p>
         <button
           type="button"
           className="mascot-error-retry"
@@ -171,16 +243,9 @@ export function MascotHost() {
           type="button"
           className="mascot-hide"
           style={{ marginTop: 8 }}
-          onClick={() => {
-            setEnabled(false);
-            try {
-              localStorage.setItem("anime_nexus_mascot", "off");
-            } catch {
-              /* */
-            }
-          }}
+          onClick={hideCompanion}
         >
-          Hide
+          Hide companion
         </button>
       </div>
     );
@@ -190,13 +255,21 @@ export function MascotHost() {
     return (
       <div className="mascot-error" role="alert">
         <strong>3D companion unavailable</strong>
-        <p>{webglError}</p>
+        <p>{webglError} The rest of the site still works.</p>
         <button
           type="button"
           className="mascot-error-retry"
           onClick={() => window.location.reload()}
         >
           Reload page
+        </button>
+        <button
+          type="button"
+          className="mascot-hide"
+          style={{ marginTop: 8 }}
+          onClick={hideCompanion}
+        >
+          Hide
         </button>
       </div>
     );
@@ -206,8 +279,19 @@ export function MascotHost() {
     return null;
   }
 
+  const srLine = companionStatusLine({
+    enabled: true,
+    reducedMotion: false,
+    audioOn,
+    interactionsOn: interactOn,
+  });
+
   return (
     <>
+      <div className="sr-only" role="status" aria-live="polite">
+        {statusMsg || srLine}
+      </div>
+
       <MemoryBoot />
       <MascotErrorBoundary>
         <UiAwareness />
@@ -215,7 +299,6 @@ export function MascotHost() {
         <UiTheatreBridge />
       </MascotErrorBoundary>
 
-      {/* 3D only — no 2D sprite path */}
       <MascotErrorBoundary>
         <LiveTerrain reducedMotion={false} lowPower={lowPower} />
       </MascotErrorBoundary>
@@ -224,30 +307,50 @@ export function MascotHost() {
 
       <div
         className={"mascot-dock" + (modalOpen ? " mascot-dock--soft" : "")}
-        role="complementary"
-        aria-label="Companion home"
+        role="region"
+        aria-label="Optional companion controls"
       >
-        <span className="mascot-dock-label">Lantern-ko · 3D</span>
+        <span className="mascot-dock-label" aria-hidden="true">
+          Lantern-ko · optional
+        </span>
+        <button
+          type="button"
+          className="mascot-hide"
+          onClick={toggleAudio}
+          title="Toggle companion sound (Alt+Shift+M)"
+          aria-label={audioOn ? "Mute companion sound" : "Unmute companion sound"}
+          aria-pressed={audioOn}
+        >
+          {audioOn ? "🔊" : "🔇"}
+        </button>
+        <button
+          type="button"
+          className="mascot-hide"
+          onClick={toggleInteract}
+          title="Toggle companion interactions (Alt+Shift+I)"
+          aria-label={
+            interactOn
+              ? "Disable companion interactions"
+              : "Enable companion interactions"
+          }
+          aria-pressed={interactOn}
+        >
+          {interactOn ? "👆" : "👀"}
+        </button>
         <button
           type="button"
           className="mascot-hide"
           onClick={toggleMotion}
           title="Reduce motion (pauses 3D)"
-          aria-label="Reduce motion"
+          aria-label="Reduce motion and pause 3D companion"
         >
           ⏸️
         </button>
         <button
           type="button"
           className="mascot-hide"
-          onClick={() => {
-            setEnabled(false);
-            try {
-              localStorage.setItem("anime_nexus_mascot", "off");
-            } catch {
-              /* */
-            }
-          }}
+          onClick={hideCompanion}
+          title="Hide companion (Alt+Shift+H)"
           aria-label="Hide companion"
         >
           Hide
