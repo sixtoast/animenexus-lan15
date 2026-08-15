@@ -358,7 +358,7 @@ export function scanDomLandmarks() {
 
 /** Hint string for thoughts / director debug */
 export function describeLandmark(lm: Landmark): string {
-  const bits = [lm.type];
+  const bits: string[] = [lm.type];
   if (lm.climbable) bits.push("climbable");
   if (lm.interactive) bits.push("interactive");
   if (!lm.open) bits.push("closed");
