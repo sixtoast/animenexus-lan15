@@ -2,17 +2,31 @@
  * Sprint 2 — Face & expressiveness
  *
  * Expression is independent of locomotion.
- * Keys match LanternKoMeshV2 ExpressionKey (no translation layer).
+ * Keys match LanternKoMeshV2 ExpressionKey (same 15 strings).
  */
 
 import type { MascotAnim, MascotEmotions } from "./types";
-import type { ExpressionKey } from "@/components/mascot/LanternKoMeshV2";
 
-/** @deprecated prefer ExpressionKey — same union */
-export type MascotExpression = ExpressionKey;
-export type { ExpressionKey };
+export type MascotExpression =
+  | "neutral"
+  | "happy"
+  | "excited"
+  | "curious"
+  | "confused"
+  | "surprised"
+  | "embarrassed"
+  | "sad"
+  | "sleepy"
+  | "scared"
+  | "annoyed"
+  | "proud"
+  | "mischievous"
+  | "focused"
+  | "smug";
 
-/** Per-frame face targets driven by expression + micro variation */
+/** Alias used by mesh / GltfCompanion */
+export type ExpressionKey = MascotExpression;
+
 export type FacePose = {
   browL: number;
   browR: number;
@@ -199,7 +213,7 @@ const BASE: Record<MascotExpression, FacePose> = {
     browL: 0.3,
     browR: -0.1,
     eyeOpen: 0.7,
-    pupilX: 0.1,
+    pupilX: 0,
     pupilY: 0,
     mouthOpen: 0.12,
     mouthWide: 0.5,
