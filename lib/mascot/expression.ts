@@ -2,40 +2,28 @@
  * Sprint 2 — Face & expressiveness
  *
  * Expression is independent of locomotion.
- * HAPPY + WALK and SAD + WALK share walk physics but different faces.
+ * Keys match LanternKoMeshV2 ExpressionKey (no translation layer).
  */
 
 import type { MascotAnim, MascotEmotions } from "./types";
+import type { ExpressionKey } from "@/components/mascot/LanternKoMeshV2";
 
-export type MascotExpression =
-  | "neutral"
-  | "happy"
-  | "excited"
-  | "curious"
-  | "confused"
-  | "surprised"
-  | "embarrassed"
-  | "sad"
-  | "sleepy"
-  | "scared"
-  | "annoyed"
-  | "proud"
-  | "mischievous"
-  | "focused"
-  | "smug";
+/** @deprecated prefer ExpressionKey — same union */
+export type MascotExpression = ExpressionKey;
+export type { ExpressionKey };
 
 /** Per-frame face targets driven by expression + micro variation */
 export type FacePose = {
-  browL: number; // -1 down … +1 up
+  browL: number;
   browR: number;
-  eyeOpen: number; // 0 closed … 1 open (before blink)
-  pupilX: number; // -1 … 1 local
+  eyeOpen: number;
+  pupilX: number;
   pupilY: number;
-  mouthOpen: number; // 0 closed … 1 open
-  mouthWide: number; // smile width stretch
-  mouthCurve: number; // -1 frown … +1 smile
-  cheek: number; // blush intensity 0…1
-  headTilt: number; // roll Z
+  mouthOpen: number;
+  mouthWide: number;
+  mouthCurve: number;
+  cheek: number;
+  headTilt: number;
 };
 
 const BASE: Record<MascotExpression, FacePose> = {
@@ -221,7 +209,6 @@ const BASE: Record<MascotExpression, FacePose> = {
   },
 };
 
-/** Map continuous emotions → discrete expression (soft priorities). */
 export function expressionFromEmotions(e: MascotEmotions): MascotExpression {
   if (e.sleepiness > 0.72) return "sleepy";
   if (e.stress > 0.7) return "scared";
@@ -236,7 +223,6 @@ export function expressionFromEmotions(e: MascotEmotions): MascotExpression {
   return "neutral";
 }
 
-/** Short-lived anim can override expression while playing. */
 export function expressionFromAnim(
   anim: MascotAnim,
   fallback: MascotExpression,
@@ -269,7 +255,6 @@ export function sampleFace(
   blink: number,
 ): FacePose {
   const b = BASE[expression] ?? BASE.neutral;
-  // Micro idle variation so the face never freezes
   const micro = Math.sin(t * 1.7) * 0.02;
   const pupilTrackX = Math.max(-0.55, Math.min(0.55, lookX * 0.45 + b.pupilX));
   const pupilTrackY = Math.max(-0.4, Math.min(0.4, -lookY * 0.3 + b.pupilY));
@@ -281,7 +266,9 @@ export function sampleFace(
     eyeOpen,
     pupilX: pupilTrackX,
     pupilY: pupilTrackY,
-    mouthOpen: b.mouthOpen + (expression === "excited" ? Math.abs(Math.sin(t * 8)) * 0.08 : 0),
+    mouthOpen:
+      b.mouthOpen +
+      (expression === "excited" ? Math.abs(Math.sin(t * 8)) * 0.08 : 0),
     mouthWide: b.mouthWide,
     mouthCurve: b.mouthCurve,
     cheek: b.cheek,
