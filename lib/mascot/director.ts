@@ -1,5 +1,5 @@
 /**
- * Sprint 5 — MascotDirector (+ Sprint 6 personality + Sprint 7 relationship)
+ * Sprint 5 — MascotDirector (+ personality, relationship, home habitat)
  */
 
 import type { MascotEmotions, MascotContext } from "./types";
@@ -15,6 +15,7 @@ import {
 import { bondStage, getMemory, relationshipHints } from "./memory";
 import type { MascotExpression } from "./expression";
 import { expressionFromEmotions } from "./expression";
+import { shouldReturnHome } from "./home-habitat";
 
 export type MascotIntention =
   | "observe"
@@ -51,6 +52,8 @@ export type DirectorDirective = {
   expressionHint?: MascotExpression;
   reason: string;
   cooldownMs: number;
+  /** Sprint 16 — walk to a habitat favourite spot */
+  goHome?: boolean;
 };
 
 const INTENTION_HOLD_MS: Record<MascotIntention, number> = {
@@ -131,6 +134,28 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
       reason: "loading dragged on — rest",
       expressionHint: "sleepy",
       cooldownMs: 10_000,
+      goHome: true,
+    };
+  }
+
+  // Sprint 16 — voluntary return to desk home / favourite spot
+  if (
+    shouldReturnHome({
+      intention: world.currentIntention,
+      emotions: e,
+      busy: world.busy,
+      hasTarget: world.hasTarget,
+      msSinceInteract: world.msSinceInteract,
+    })
+  ) {
+    const sleepy = e.sleepiness > 0.5 || e.energy < 0.3;
+    return {
+      intention: sleepy ? "sleep" : "rest",
+      goal: sleepy ? "nap" : "ponder",
+      reason: "home habitat — favourite spot",
+      expressionHint: sleepy ? "sleepy" : "content",
+      cooldownMs: sleepy ? 12_000 : 8_000,
+      goHome: true,
     };
   }
 
@@ -144,7 +169,6 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
     };
   }
 
-  // Soft presence after long quiet — never guilt; just a gentle wave
   const baseLonely =
     stage === "close" ? 40_000 : stage === "stranger" ? 80_000 : 55_000;
   const lonelyMs = baseLonely * traitLonelyScale();
@@ -186,6 +210,7 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
       reason: `ambient decision → ${intention}`,
       expressionHint: expressionFromEmotions(e),
       cooldownMs: INTENTION_HOLD_MS[intention],
+      goHome: intention === "sleep",
     };
   }
 
@@ -200,7 +225,6 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
   let intention = intentionFromGoal(behaviour.goal);
 
   if (behaviour.goal === "wander") {
-    // High engagement history → lean into guiding recs
     if (
       (world.context === "browsing" && e.curiosity > 0.55) ||
       (rel.engagementRate > 0.55 && e.curiosity > 0.4)
@@ -240,6 +264,7 @@ export function directorAmbient(world: DirectorWorld): DirectorDirective | null 
     reason: `${behaviour.reason} → ${intention}`,
     expressionHint: expressionFromEmotions(e),
     cooldownMs: INTENTION_HOLD_MS[intention] ?? behaviour.cooldownMs,
+    goHome: behaviour.goal === "nap" || behaviour.goal === "ponder",
   };
 }
 
@@ -306,7 +331,6 @@ export function directorOnEvent(
         cooldownMs: 5_000,
       };
     case "idle-long":
-      // Soft rest — no guilt message
       return {
         intention:
           world.emotions.sleepiness > 0.55 || t.laziness > 0.55
@@ -318,9 +342,10 @@ export function directorOnEvent(
             ? "nap"
             : "ponder"),
         decision: decision ?? undefined,
-        reason: "long idle — quiet rest",
+        reason: "long idle — home rest",
         expressionHint: "sleepy",
         cooldownMs: 8_000,
+        goHome: true,
       };
     case "route":
       return {
@@ -356,6 +381,7 @@ export function directorOnEvent(
         reason: "error — flinch",
         expressionHint: "surprised",
         cooldownMs: 3_000,
+        goHome: true,
       };
     case "empty-list":
       return {
