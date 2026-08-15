@@ -15,6 +15,7 @@ import {
   teleportBody,
   type PhysicsBody,
 } from "@/lib/mascot/physics";
+import { MATERIALS, PALETTE } from "@/lib/mascot/visual";
 
 export function PlaceholderChibi() {
   const root = useRef<THREE.Group>(null);
@@ -253,7 +254,8 @@ export function PlaceholderChibi() {
 
     if (tip.current) {
       const mat = tip.current.material as THREE.MeshStandardMaterial;
-      mat.emissiveIntensity = 0.2 + motion.glow * 0.7;
+      mat.emissiveIntensity =
+        MATERIALS.tip.emissiveIntensity * (0.55 + motion.glow * 0.55);
     }
 
     const cheekOp = 0.35 + emotions.happiness * 0.4;
@@ -265,10 +267,15 @@ export function PlaceholderChibi() {
     }
 
     const blink =
-      anim === "sleep" ? 0.1 : Math.sin(t * 0.7) > 0.96 ? 0.15 : 1;
+      anim === "sleep" ? 0.1 : Math.sin(t * 0.7) > 0.96 ? 0.12 : 1;
     if (leftEye.current) leftEye.current.scale.y = blink;
     if (rightEye.current) rightEye.current.scale.y = blink;
   });
+
+  const skin = MATERIALS.skin;
+  const bodyMat = MATERIALS.body;
+  const eye = MATERIALS.eye;
+  const tipMat = MATERIALS.tip;
 
   return (
     <group
@@ -334,72 +341,103 @@ export function PlaceholderChibi() {
     >
       <group ref={pose}>
         <mesh position={[0, -0.35, 0]} castShadow>
-          <capsuleGeometry args={[0.22, 0.28, 6, 12]} />
+          <capsuleGeometry args={[0.22, 0.28, 8, 16]} />
           <meshStandardMaterial
-            color="#e8a598"
-            roughness={0.45}
-            metalness={0.05}
+            color={bodyMat.color}
+            roughness={bodyMat.roughness}
+            metalness={bodyMat.metalness}
           />
         </mesh>
 
         <group ref={head} position={[0, 0.22, 0]}>
           <mesh castShadow>
-            <sphereGeometry args={[0.42, 32, 32]} />
-            <meshStandardMaterial color="#f5d0c8" roughness={0.4} />
+            <sphereGeometry args={[0.42, 36, 36]} />
+            <meshStandardMaterial
+              color={skin.color}
+              roughness={skin.roughness}
+              metalness={skin.metalness}
+            />
           </mesh>
           <mesh ref={cheekL} position={[-0.22, -0.08, 0.32]}>
             <sphereGeometry args={[0.08, 12, 12]} />
-            <meshStandardMaterial color="#f0a090" transparent opacity={0.55} />
+            <meshStandardMaterial
+              color={PALETTE.blush}
+              transparent
+              opacity={0.55}
+              roughness={0.55}
+            />
           </mesh>
           <mesh ref={cheekR} position={[0.22, -0.08, 0.32]}>
             <sphereGeometry args={[0.08, 12, 12]} />
-            <meshStandardMaterial color="#f0a090" transparent opacity={0.55} />
+            <meshStandardMaterial
+              color={PALETTE.blush}
+              transparent
+              opacity={0.55}
+              roughness={0.55}
+            />
           </mesh>
-          <mesh ref={leftEye} position={[-0.14, 0.06, 0.36]}>
-            <sphereGeometry args={[0.07, 16, 16]} />
-            <meshStandardMaterial color="#2a1810" />
+          {/* Eyes — slightly larger + darker for small-screen readability */}
+          <mesh ref={leftEye} position={[-0.14, 0.06, 0.37]}>
+            <sphereGeometry args={[0.078, 16, 16]} />
+            <meshStandardMaterial
+              color={eye.color}
+              roughness={eye.roughness}
+              metalness={eye.metalness}
+            />
           </mesh>
-          <mesh ref={rightEye} position={[0.14, 0.06, 0.36]}>
-            <sphereGeometry args={[0.07, 16, 16]} />
-            <meshStandardMaterial color="#2a1810" />
+          <mesh ref={rightEye} position={[0.14, 0.06, 0.37]}>
+            <sphereGeometry args={[0.078, 16, 16]} />
+            <meshStandardMaterial
+              color={eye.color}
+              roughness={eye.roughness}
+              metalness={eye.metalness}
+            />
           </mesh>
-          <mesh position={[-0.12, 0.09, 0.42]}>
-            <sphereGeometry args={[0.02, 8, 8]} />
-            <meshStandardMaterial color="#fff" />
+          <mesh position={[-0.12, 0.1, 0.43]}>
+            <sphereGeometry args={[0.022, 8, 8]} />
+            <meshBasicMaterial color={PALETTE.eyeHighlight} />
           </mesh>
-          <mesh position={[0.16, 0.09, 0.42]}>
-            <sphereGeometry args={[0.02, 8, 8]} />
-            <meshStandardMaterial color="#fff" />
+          <mesh position={[0.16, 0.1, 0.43]}>
+            <sphereGeometry args={[0.022, 8, 8]} />
+            <meshBasicMaterial color={PALETTE.eyeHighlight} />
           </mesh>
-          <mesh position={[0, -0.1, 0.38]} rotation={[0.2, 0, 0]}>
-            <torusGeometry args={[0.06, 0.012, 8, 16, Math.PI]} />
-            <meshStandardMaterial color="#c4786a" />
+          <mesh position={[0, -0.1, 0.39]} rotation={[0.2, 0, 0]}>
+            <torusGeometry args={[0.06, 0.014, 8, 16, Math.PI]} />
+            <meshStandardMaterial color={PALETTE.mouth} roughness={0.5} />
           </mesh>
           <mesh ref={tip} position={[0, 0.48, 0]}>
-            <sphereGeometry args={[0.08, 12, 12]} />
+            <sphereGeometry args={[0.085, 14, 14]} />
             <meshStandardMaterial
-              color="#f0a090"
-              emissive="#f0a090"
-              emissiveIntensity={0.45}
+              color={tipMat.color}
+              emissive={tipMat.emissive}
+              emissiveIntensity={tipMat.emissiveIntensity}
+              roughness={tipMat.roughness}
+              metalness={tipMat.metalness}
             />
           </mesh>
           <mesh position={[0, 0.38, 0]}>
             <cylinderGeometry args={[0.02, 0.02, 0.12, 8]} />
-            <meshStandardMaterial color="#d4847a" />
+            <meshStandardMaterial color={PALETTE.skinDeep} />
           </mesh>
         </group>
 
         <mesh ref={leftArm} position={[-0.32, -0.28, 0]} rotation={[0, 0, 0.4]}>
-          <capsuleGeometry args={[0.07, 0.16, 4, 8]} />
-          <meshStandardMaterial color="#e8a598" />
+          <capsuleGeometry args={[0.07, 0.16, 4, 10]} />
+          <meshStandardMaterial
+            color={bodyMat.color}
+            roughness={bodyMat.roughness}
+          />
         </mesh>
         <mesh
           ref={rightArm}
           position={[0.32, -0.28, 0]}
           rotation={[0, 0, -0.4]}
         >
-          <capsuleGeometry args={[0.07, 0.16, 4, 8]} />
-          <meshStandardMaterial color="#e8a598" />
+          <capsuleGeometry args={[0.07, 0.16, 4, 10]} />
+          <meshStandardMaterial
+            color={bodyMat.color}
+            roughness={bodyMat.roughness}
+          />
         </mesh>
       </group>
     </group>
