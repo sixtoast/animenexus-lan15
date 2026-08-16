@@ -1,32 +1,60 @@
-import { HABITAT_BOUNDS } from "./types";
+/**
+ * Navigation targets in canonical PAGE WORLD (x/y).
+ * Legacy habitat x/z is bridged via world-coords helpers.
+ */
 
-export type NavTarget = { x: number; z: number };
+import {
+  clampWorld,
+  HABITAT_BOUNDS,
+  WORLD_BOUNDS,
+  type WorldPoint,
+} from "./world-coords";
 
-export function clampToHabitat(x: number, z: number): NavTarget {
-  return {
-    x: Math.max(HABITAT_BOUNDS.minX, Math.min(HABITAT_BOUNDS.maxX, x)),
-    z: Math.max(HABITAT_BOUNDS.minZ, Math.min(HABITAT_BOUNDS.maxZ, z)),
-  };
+/** Canonical store / Director target — page world x/y. */
+export type NavTarget = WorldPoint;
+
+/** @deprecated use WORLD_BOUNDS */
+export { HABITAT_BOUNDS, WORLD_BOUNDS };
+
+/** Clamp a page-world point (authoritative). */
+export function clampToWorld(x: number, y: number): NavTarget {
+  return clampWorld(x, y);
+}
+
+/**
+ * Legacy name kept so older call sites compile.
+ * Parameters are (x, y) in page world — the second arg used to be habitat z.
+ */
+export function clampToHabitat(x: number, yOrZ: number): NavTarget {
+  return clampWorld(x, yOrZ);
 }
 
 export function randomWanderTarget(): NavTarget {
   const x =
-    HABITAT_BOUNDS.minX +
-    Math.random() * (HABITAT_BOUNDS.maxX - HABITAT_BOUNDS.minX);
-  const z =
-    HABITAT_BOUNDS.minZ +
-    Math.random() * (HABITAT_BOUNDS.maxZ - HABITAT_BOUNDS.minZ);
-  return clampToHabitat(x, z);
+    WORLD_BOUNDS.minX +
+    Math.random() * (WORLD_BOUNDS.maxX - WORLD_BOUNDS.minX);
+  const y =
+    WORLD_BOUNDS.minY +
+    Math.random() * (WORLD_BOUNDS.maxY - WORLD_BOUNDS.minY);
+  return clampWorld(x, y);
 }
 
-/** Distance on XZ plane */
+/** Distance on the page plane (x/y). */
+export function distWorld(
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+): number {
+  return Math.hypot(bx - ax, by - ay);
+}
+
+/** @deprecated use distWorld */
 export function distXZ(
   ax: number,
   az: number,
   bx: number,
   bz: number,
 ): number {
-  const dx = bx - ax;
-  const dz = bz - az;
-  return Math.hypot(dx, dz);
+  return distWorld(ax, az, bx, bz);
 }
