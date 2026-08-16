@@ -5,6 +5,7 @@ import type {
   MascotEmotions,
   MascotEvent,
 } from "./types";
+import { eventAxisY } from "./types";
 import {
   clampToHabitat,
   randomWanderTarget,
@@ -31,11 +32,11 @@ import {
 } from "./emotions";
 import {
   describeLandmark,
-  landmarkToHabitat,
+  landmarkToWorld,
   listByType,
   pickInterestingLandmark,
   preferredPoint,
-  screenToHabitatTarget,
+  screenToWorldTarget,
 } from "./ui-registry";
 import { executeDecision } from "./execute";
 import {
@@ -83,6 +84,7 @@ type MascotState = {
   emotions: MascotEmotions;
   lastInteractionAt: number;
   lastThought: string | null;
+  /** Page-world position (x/y). Not yet authoritative vs Actor bodyRef. */
   position: NavTarget;
   target: NavTarget | null;
   lookBias: { x: number; y: number };
@@ -180,7 +182,7 @@ function tryUiPhysicalInteract(): boolean {
     setLookBias: (b) => useMascotStore.setState({ lookBias: b }),
     setJump: () => useMascotStore.setState({ jumpQueued: true }),
     setThought: (t) => useMascotStore.setState({ lastThought: t }),
-    clampHabitat: (x, z) => clampToHabitat(x, z),
+    clampHabitat: (x, y) => clampToHabitat(x, y),
   });
 
   useMascotStore.setState({
@@ -192,12 +194,10 @@ function tryUiPhysicalInteract(): boolean {
   return true;
 }
 
-/** Sprint 13 — proactive recommendation discovery */
 function tryRecGuide(): boolean {
   const s = useMascotStore.getState();
   const busy = Date.now() < s.busyUntil;
   if (!canProposeGuide(s.intention, s.emotions, busy)) return false;
-  // Soft random gate so guides feel rare
   if (Math.random() > 0.22) return false;
 
   const plan = proposeRecGuide(s.emotions);
@@ -210,7 +210,7 @@ function tryRecGuide(): boolean {
     setLookBias: (b) => useMascotStore.setState({ lookBias: b }),
     setThought: (t) => useMascotStore.setState({ lastThought: t }),
     setIntention: (i) => useMascotStore.setState({ intention: i }),
-    clampHabitat: (x, z) => clampToHabitat(x, z),
+    clampHabitat: (x, y) => clampToHabitat(x, y),
   });
 
   useMascotStore.setState({
@@ -240,7 +240,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
   emotions: defaultEmotions(),
   lastInteractionAt: Date.now(),
   lastThought: null,
-  position: { x: 0, z: 0 },
+  position: { x: 0, y: 0 },
   target: null,
   lookBias: { x: 0, y: 0 },
   jumpQueued: false,
@@ -389,7 +389,6 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       return;
     }
 
-    // Sprint 13 — proactive rec guide (before generic UI interact)
     if (tryRecGuide()) return;
 
     if (
@@ -604,10 +603,10 @@ export const useMascotStore = create<MascotState>((set, get) => ({
                 : lm.type === "card"
                   ? "thumb"
                   : "center";
-            const hab = landmarkToHabitat(lm, kind);
-            if (hab) {
+            const w = landmarkToWorld(lm, kind);
+            if (w) {
               set({
-                target: clampToHabitat(hab.x * 0.8, hab.z * 0.8),
+                target: clampToHabitat(w.x * 0.8, w.y * 0.8),
                 goal: "wander",
                 lastLandmarkType: lm.type,
               });
@@ -669,10 +668,10 @@ export const useMascotStore = create<MascotState>((set, get) => ({
               get().intention === "guide" ||
               get().intention === "inspect-recommendation"
             ) {
-              const hab = landmarkToHabitat(lm, pointKind);
-              if (hab && Math.random() < 0.3) {
+              const w = landmarkToWorld(lm, pointKind);
+              if (w && Math.random() < 0.3) {
                 set({
-                  target: clampToHabitat(hab.x * 0.75, hab.z * 0.75),
+                  target: clampToHabitat(w.x * 0.75, w.y * 0.75),
                   goal: "wander",
                 });
                 requestAnim({ anim: "walk" });
@@ -690,8 +689,8 @@ export const useMascotStore = create<MascotState>((set, get) => ({
       case "ui-hover": {
         bumpEmotion("curiosity", 0.04);
         bumpEmotion("attention", 0.06);
-        const hz = screenToHabitatTarget(e.clientX, e.clientY);
-        const t = clampToHabitat(hz.x * 0.85, hz.z);
+        const w = screenToWorldTarget(e.clientX, e.clientY);
+        const t = clampToHabitat(w.x * 0.85, w.y);
         set({
           lookBias: {
             x: (e.clientX / window.innerWidth - 0.5) * 2,
@@ -746,9 +745,9 @@ export const useMascotStore = create<MascotState>((set, get) => ({
           });
         }
         if (reaction.seekTarget) {
-          const hz = screenToHabitatTarget(e.clientX, e.clientY);
+          const w = screenToWorldTarget(e.clientX, e.clientY);
           set({
-            target: clampToHabitat(hz.x * 0.7, hz.z * 0.7),
+            target: clampToHabitat(w.x * 0.7, w.y * 0.7),
             goal: "wander",
           });
           if (reaction.anim === "walk") requestAnim({ anim: "walk" });
@@ -785,7 +784,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         if (get().anim === "sleep") {
           requestAnim({ anim: "surprised", holdMs: 500, force: true });
         }
-        const t = clampToHabitat(e.x, e.z);
+        const t = clampToHabitat(e.x, eventAxisY(e));
         set({
           target: t,
           goal: "wander",
@@ -797,7 +796,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         break;
       }
       case "climb": {
-        const t = clampToHabitat(e.x, e.z);
+        const t = clampToHabitat(e.x, eventAxisY(e));
         set({
           target: t,
           goal: "wander",
@@ -811,7 +810,7 @@ export const useMascotStore = create<MascotState>((set, get) => ({
         break;
       }
       case "drag": {
-        const t = clampToHabitat(e.x, e.z);
+        const t = clampToHabitat(e.x, eventAxisY(e));
         set({ position: t, target: null });
         runDirected("drag");
         break;
