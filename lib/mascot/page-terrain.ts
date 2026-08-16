@@ -1,5 +1,5 @@
 /**
- * Map the live page into walkable platforms.
+ * Map the live page into walkable platforms (canonical page world x/y).
  * Closed overlays are never treated as climbable modals.
  */
 
@@ -11,6 +11,11 @@ import {
   type Landmark,
   type LandmarkType,
 } from "./ui-registry";
+import {
+  domRectToWorld,
+  screenToWorld,
+  worldToScreen,
+} from "./world-coords";
 
 export type TerrainPlatform = {
   id: string;
@@ -24,17 +29,8 @@ export type TerrainPlatform = {
   clientY: number;
 };
 
-export function screenToWorld(
-  clientX: number,
-  clientY: number,
-): { x: number; y: number } {
-  const vw = window.innerWidth || 1;
-  const vh = window.innerHeight || 1;
-  const aspect = vw / vh;
-  const x = ((clientX / vw) * 2 - 1) * aspect;
-  const y = -((clientY / vh) * 2 - 1);
-  return { x, y };
-}
+// Re-export canonical conversions so callers import from one place
+export { screenToWorld, worldToScreen, domRectToWorld };
 
 export function nearestPlatform(
   platforms: TerrainPlatform[],
@@ -66,36 +62,22 @@ export function rectToPlatformFromDom(
   const vw = window.innerWidth || 1;
   const vh = window.innerHeight || 1;
   if (r.width < 10 || r.height < 10) return null;
-  // Must be substantially in the viewport to be a land target
   if (r.bottom < 40 || r.top > vh - 40 || r.right < 40 || r.left > vw - 40)
     return null;
 
-  const aspect = vw / vh;
-  const left = Math.max(0, r.left);
-  const right = Math.min(vw, r.right);
-  const top = Math.max(0, r.top);
-  const bottom = Math.min(vh, r.bottom);
-  const w = right - left;
-  const h = bottom - top;
-  if (w < 10 || h < 10) return null;
-
-  const cx = (left + right) / 2;
-  const cy = (top + bottom) / 2;
-  const center = screenToWorld(cx, cy);
-
-  const hw = Math.max(0.04, (w / vw) * aspect * 0.96);
-  const hh = Math.max(0.025, (h / vh) * 0.96 * 0.5);
+  const mapped = domRectToWorld(r);
+  if (!mapped) return null;
 
   return {
     id,
     type,
-    x: center.x,
-    y: center.y,
-    hw,
-    hh,
+    x: mapped.center.x,
+    y: mapped.center.y,
+    hw: mapped.hw,
+    hh: mapped.hh,
     priority,
-    clientX: cx,
-    clientY: cy,
+    clientX: mapped.clientX,
+    clientY: mapped.clientY,
   };
 }
 
@@ -219,6 +201,7 @@ export function buildTerrain(): TerrainPlatform[] {
 
   const aspect = window.innerWidth / (window.innerHeight || 1);
   const homeX = Math.min(aspect * 0.78, 1.32);
+  const homeClient = worldToScreen(homeX, -0.72);
 
   out.push({
     id: "home-corner",
@@ -228,8 +211,8 @@ export function buildTerrain(): TerrainPlatform[] {
     hw: 0.2,
     hh: 0.11,
     priority: 1,
-    clientX: window.innerWidth - 56,
-    clientY: window.innerHeight - 100,
+    clientX: homeClient.clientX,
+    clientY: homeClient.clientY,
   });
 
   out.push({
@@ -259,7 +242,6 @@ export function pickWanderPlatform(
   let candidates = platforms.filter((p) => {
     if (p.id === fromId || p.type === "floor" || p.type === "home") return false;
     if (p.priority < 2) return false;
-    // Reachable: rect center must be well inside the viewport
     if (
       p.clientX < 48 ||
       p.clientX > vw - 48 ||
@@ -323,7 +305,6 @@ export function planHops(
   let best = Infinity;
   for (const p of platforms) {
     if (p.id === from.id || p.id === to.id || p.type === "floor") continue;
-    // Prefer mid hops that stay on-screen
     if (
       typeof window !== "undefined" &&
       (p.clientX < 40 ||
