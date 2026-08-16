@@ -1,9 +1,12 @@
 /**
  * Sprint 10 — UI as a physical world
- *
- * DOM → semantic terrain. Not every rectangle is the same platform.
- * Landmarks carry type, climbability, interaction points, and importance.
+ * Sprint 2 — targets expressed in canonical page world (x/y)
  */
+
+import {
+  screenToWorldTargetSafe,
+  type WorldPoint,
+} from "./world-coords";
 
 export type LandmarkType =
   | "card"
@@ -19,11 +22,10 @@ export type LandmarkType =
   | "carousel"
   | "progress"
   | "rail"
-  | "nav" // legacy alias → navbar
+  | "nav"
   | "generic";
 
 export type InteractionPoint = {
-  /** Screen client coords */
   clientX: number;
   clientY: number;
   kind: "center" | "top" | "edge" | "header" | "thumb" | "label";
@@ -32,18 +34,14 @@ export type InteractionPoint = {
 export type Landmark = {
   id: string;
   type: LandmarkType;
-  /** Higher = more interesting to the Director */
   priority: number;
-  /** 0–1 semantic importance (cards/modals higher than generic) */
   importance: number;
   rect: DOMRect | null;
   el: WeakRef<Element> | null;
   visible: boolean;
   interactive: boolean;
   climbable: boolean;
-  /** open for modals/dropdowns; true for static surfaces */
   open: boolean;
-  /** Preferred screen points for approach / peek / sit */
   points: InteractionPoint[];
 };
 
@@ -214,7 +212,9 @@ export function listLandmarks(): Landmark[] {
 }
 
 export function listByType(type: LandmarkType): Landmark[] {
-  return listLandmarks().filter((l) => l.type === type || (type === "navbar" && l.type === "nav"));
+  return listLandmarks().filter(
+    (l) => l.type === type || (type === "navbar" && l.type === "nav"),
+  );
 }
 
 export function pickInterestingLandmark(): Landmark | null {
@@ -245,7 +245,6 @@ export function pickInterestingLandmark(): Landmark | null {
   return best;
 }
 
-/** Preferred approach point for a landmark (header / thumb / center). */
 export function preferredPoint(
   lm: Landmark,
   prefer: InteractionPoint["kind"] = "center",
@@ -254,30 +253,51 @@ export function preferredPoint(
   return lm.points.find((p) => p.kind === prefer) ?? lm.points[0];
 }
 
+/** Canonical: screen → page world target. */
+export function screenToWorldTarget(
+  clientX: number,
+  clientY: number,
+): WorldPoint {
+  return screenToWorldTargetSafe(clientX, clientY);
+}
+
+/**
+ * @deprecated use screenToWorldTarget — returns {x,z} where z === world y
+ * for one release of call-site compatibility.
+ */
 export function screenToHabitatTarget(
   clientX: number,
   clientY: number,
 ): { x: number; z: number } {
-  const nx = clientX / window.innerWidth;
-  const ny = clientY / window.innerHeight;
-  const x = (0.5 - nx) * 1.0;
-  const z = (0.55 - ny) * 0.45;
-  return { x, z };
+  const w = screenToWorldTargetSafe(clientX, clientY);
+  return { x: w.x, z: w.y };
 }
 
+/** Landmark approach point in page world. */
+export function landmarkToWorld(
+  lm: Landmark,
+  pointKind: InteractionPoint["kind"] = "center",
+): WorldPoint | null {
+  const p = preferredPoint(lm, pointKind);
+  if (p) return screenToWorldTargetSafe(p.clientX, p.clientY);
+  if (!lm.rect) return null;
+  const cx = lm.rect.left + lm.rect.width / 2;
+  const cy = lm.rect.top + lm.rect.height / 2;
+  return screenToWorldTargetSafe(cx, cy);
+}
+
+/**
+ * @deprecated use landmarkToWorld — z mirrors world y
+ */
 export function landmarkToHabitat(
   lm: Landmark,
   pointKind: InteractionPoint["kind"] = "center",
 ): { x: number; z: number } | null {
-  const p = preferredPoint(lm, pointKind);
-  if (p) return screenToHabitatTarget(p.clientX, p.clientY);
-  if (!lm.rect) return null;
-  const cx = lm.rect.left + lm.rect.width / 2;
-  const cy = lm.rect.top + lm.rect.height / 2;
-  return screenToHabitatTarget(cx, cy);
+  const w = landmarkToWorld(lm, pointKind);
+  if (!w) return null;
+  return { x: w.x, z: w.y };
 }
 
-/** What surface is under a habitat-ish screen point (best overlapping landmark). */
 export function standingOn(
   clientX: number,
   clientY: number,
@@ -295,7 +315,6 @@ export function standingOn(
       clientY <= r.bottom
     ) {
       const area = r.width * r.height;
-      // Prefer smallest containing surface (most specific)
       if (area < bestArea) {
         bestArea = area;
         best = lm;
@@ -305,26 +324,69 @@ export function standingOn(
   return best;
 }
 
-const AUTO_SELECTORS: { selector: string; type: LandmarkType; priority: number }[] =
-  [
-    { selector: ".anime-card, .home-rail-card, [data-anime-card]", type: "card", priority: 3 },
-    { selector: '[role="dialog"], .modal-root, .modal, .ai-panel', type: "modal", priority: 5 },
-    { selector: 'header nav, nav[aria-label], .site-nav, .navbar', type: "navbar", priority: 1.5 },
-    { selector: 'input[type="search"], [role="search"], .search-bar, .cmdk-input', type: "search", priority: 3.5 },
-    { selector: ".hero, .home-hero, [data-mascot-hero]", type: "hero", priority: 4 },
-    { selector: '[role="alert"], .toast, .notification', type: "notification", priority: 4.5 },
-    { selector: '[role="menu"], .dropdown-menu, [data-open="true"].menu', type: "dropdown", priority: 3 },
-    { selector: '[role="tablist"] [role="tab"], .tabs button', type: "tab", priority: 2 },
-    { selector: ".carousel, .rail-scroll, [data-carousel]", type: "carousel", priority: 3.5 },
-    { selector: 'progress, [role="progressbar"], .progress-bar', type: "progress", priority: 2.5 },
-    { selector: "aside, .sidebar, [data-sidebar]", type: "sidebar", priority: 2 },
-    { selector: ".home-rail, [data-rail]", type: "rail", priority: 2.5 },
-  ];
+const AUTO_SELECTORS: {
+  selector: string;
+  type: LandmarkType;
+  priority: number;
+}[] = [
+  {
+    selector: ".anime-card, .home-rail-card, [data-anime-card]",
+    type: "card",
+    priority: 3,
+  },
+  {
+    selector: '[role="dialog"], .modal-root, .modal, .ai-panel',
+    type: "modal",
+    priority: 5,
+  },
+  {
+    selector: "header nav, nav[aria-label], .site-nav, .navbar",
+    type: "navbar",
+    priority: 1.5,
+  },
+  {
+    selector:
+      'input[type="search"], [role="search"], .search-bar, .cmdk-input',
+    type: "search",
+    priority: 3.5,
+  },
+  {
+    selector: ".hero, .home-hero, [data-mascot-hero]",
+    type: "hero",
+    priority: 4,
+  },
+  {
+    selector: '[role="alert"], .toast, .notification',
+    type: "notification",
+    priority: 4.5,
+  },
+  {
+    selector: '[role="menu"], .dropdown-menu, [data-open="true"].menu',
+    type: "dropdown",
+    priority: 3,
+  },
+  {
+    selector: '[role="tablist"] [role="tab"], .tabs button',
+    type: "tab",
+    priority: 2,
+  },
+  {
+    selector: ".carousel, .rail-scroll, [data-carousel]",
+    type: "carousel",
+    priority: 3.5,
+  },
+  {
+    selector: 'progress, [role="progressbar"], .progress-bar',
+    type: "progress",
+    priority: 2.5,
+  },
+  { selector: "aside, .sidebar, [data-sidebar]", type: "sidebar", priority: 2 },
+  { selector: ".home-rail, [data-rail]", type: "rail", priority: 2.5 },
+];
 
 export function scanDomLandmarks() {
   if (typeof document === "undefined") return;
 
-  // Explicit opt-in markers always win
   document.querySelectorAll("[data-mascot-landmark]").forEach((el, i) => {
     const id =
       el.getAttribute("data-mascot-id") ||
@@ -342,10 +404,9 @@ export function scanDomLandmarks() {
     );
   });
 
-  // Semantic auto-scan
   for (const rule of AUTO_SELECTORS) {
     document.querySelectorAll(rule.selector).forEach((el, i) => {
-      if (el.hasAttribute("data-mascot-landmark")) return; // already registered
+      if (el.hasAttribute("data-mascot-landmark")) return;
       const id =
         el.id ||
         el.getAttribute("data-mascot-id") ||
@@ -356,7 +417,6 @@ export function scanDomLandmarks() {
   }
 }
 
-/** Hint string for thoughts / director debug */
 export function describeLandmark(lm: Landmark): string {
   const bits: string[] = [lm.type];
   if (lm.climbable) bits.push("climbable");
