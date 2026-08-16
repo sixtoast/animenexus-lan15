@@ -1,6 +1,7 @@
 /**
  * Sprint 11 — Physical UI interactions
  * Sprint 14 — Climb phases on climbable surfaces
+ * Sprint 2 — habitat.x/z maps to page world x/y (z mirrors y)
  */
 
 import type { MascotAnim } from "./types";
@@ -14,9 +15,13 @@ import {
 } from "./ui-registry";
 import { COMPANION } from "./personality";
 import { isSafeClimbTarget } from "./climbing";
+import type { WorldPoint } from "./world-coords";
+
+/** Step target — z is legacy alias for y */
+export type StepTarget = { x: number; y?: number; z?: number };
 
 export type UiInteractStep = {
-  habitat?: { x: number; z: number } | null;
+  habitat?: StepTarget | null;
   anim?: MascotAnim;
   holdMs?: number;
   jump?: boolean;
@@ -36,10 +41,16 @@ export type UiInteractPlan = {
 const lastPlanAt = new Map<string, number>();
 const GLOBAL_COOLDOWN_MS = 14_000;
 
+function axisY(p: StepTarget): number {
+  if (typeof p.y === "number") return p.y;
+  if (typeof p.z === "number") return p.z;
+  return 0;
+}
+
 function pointToHabitat(
   lm: Landmark,
   kind: InteractionPoint["kind"],
-): { x: number; z: number } | null {
+): StepTarget | null {
   return landmarkToHabitat(lm, kind);
 }
 
@@ -51,7 +62,6 @@ function clientOf(
   return p ? { x: p.clientX, y: p.clientY } : null;
 }
 
-/** Sprint 14 — full climb sequence when platform is safe */
 function planClimbSequence(lm: Landmark): UiInteractStep[] {
   const edge = pointToHabitat(lm, "edge");
   const top = pointToHabitat(lm, "top");
@@ -59,9 +69,9 @@ function planClimbSequence(lm: Landmark): UiInteractStep[] {
   const center = pointToHabitat(lm, "center");
   const surface = header ?? top ?? center;
   const approach = edge
-    ? { x: edge.x * 0.9, z: Math.min((edge.z ?? 0) + 0.06, 0.22) }
+    ? { x: edge.x * 0.9, z: Math.min(axisY(edge) + 0.06, 0.22) }
     : surface
-      ? { x: surface.x * 0.9, z: Math.min(surface.z + 0.06, 0.22) }
+      ? { x: surface.x * 0.9, z: Math.min(axisY(surface) + 0.06, 0.22) }
       : null;
 
   const look = (kind: InteractionPoint["kind"]) => {
@@ -124,10 +134,9 @@ function planClimbSequence(lm: Landmark): UiInteractStep[] {
       thought: lm.type === "modal" ? "Nice view." : "Comfy.",
       delayMs: 40,
     },
-    // Dismount toward home-ish
     {
       habitat: approach
-        ? { x: approach.x * 0.5, z: approach.z * 0.5 }
+        ? { x: approach.x * 0.5, z: axisY(approach) * 0.5 }
         : { x: 0.28, z: 0.1 },
       anim: "jump",
       holdMs: 350,
@@ -151,8 +160,13 @@ function planFor(lm: Landmark): UiInteractPlan {
     return c ? { lookClient: c } : {};
   };
 
-  // Sprint 14 — prefer full climb on safe climbable platforms
-  if (isSafeClimbTarget(lm) && (lm.type === "card" || lm.type === "modal" || lm.type === "hero" || lm.type === "rail")) {
+  if (
+    isSafeClimbTarget(lm) &&
+    (lm.type === "card" ||
+      lm.type === "modal" ||
+      lm.type === "hero" ||
+      lm.type === "rail")
+  ) {
     const climbSteps = planClimbSequence(lm);
     const totalMs = climbSteps.reduce(
       (s, st) => s + (st.delayMs ?? 0) + (st.holdMs ?? 600),
@@ -297,7 +311,7 @@ function planFor(lm: Landmark): UiInteractPlan {
       const center = pointToHabitat(lm, "center");
       steps.push(
         {
-          habitat: center ? { x: center.x + 0.08, z: center.z } : null,
+          habitat: center ? { x: center.x + 0.08, z: axisY(center) } : null,
           anim: "walk",
           ...look("center"),
           thought: "Hide…",
@@ -522,7 +536,7 @@ export function planUiInteraction(
 }
 
 export type UiInteractRunner = {
-  setTarget: (t: { x: number; z: number } | null) => void;
+  setTarget: (t: WorldPoint | null) => void;
   requestAnim: (req: {
     anim: MascotAnim;
     holdMs?: number;
@@ -531,7 +545,7 @@ export type UiInteractRunner = {
   setLookBias: (b: { x: number; y: number }) => void;
   setJump: () => void;
   setThought: (t: string) => void;
-  clampHabitat: (x: number, z: number) => { x: number; z: number };
+  clampHabitat: (x: number, y: number) => WorldPoint;
 };
 
 export function executeUiInteraction(
@@ -549,7 +563,7 @@ export function executeUiInteraction(
         });
       }
       if (step.habitat) {
-        const c = runner.clampHabitat(step.habitat.x, step.habitat.z);
+        const c = runner.clampHabitat(step.habitat.x, axisY(step.habitat));
         runner.setTarget(c);
       }
       if (step.jump) runner.setJump();
