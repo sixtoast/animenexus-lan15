@@ -4,28 +4,29 @@
 
 ```
 MascotHost → LiveTerrain → Actor → CharacterRenderer
-                                      ├── GltfCompanion (/public/mascot/companion.glb)
-                                      └── LanternKoMeshV2 (procedural fallback)
+                                      ├── GltfCompanion
+                                      └── LanternKoMeshV2
 ```
 
-## Coordinate system (Sprint 2)
+## Brain → body (Sprint 3)
 
-Canonical **page world**: `x` / `y` (see `lib/mascot/world-coords.ts`)
+```
+Director / store / UI
+  → MovementCommand (lib/mascot/movement-command.ts)
+  → Actor hop queue / steer
+  → bodyRef (runtime pose)
+```
 
-- `screenToWorld` / `worldToScreen`
-- `domRectToWorld`
-- Store `position` / `target` are `WorldPoint` (`{ x, y }`)
-- Legacy habitat `z` is treated as alias for `y` where still present
+Actor also follows `store.target` when present.
+Ambient roam is suppressed while a command is active.
+
+## Coordinates (Sprint 2)
+
+Canonical page world `x` / `y` — `lib/mascot/world-coords.ts`
 
 ## Sprint status
 
-- [x] Sprint 1 — CharacterRenderer on live Actor
-- [x] Sprint 2 — Unified page world x/y
-- [ ] Sprint 3 — Director drives movement commands
+- [x] Sprint 1 — CharacterRenderer
+- [x] Sprint 2 — Unified x/y
+- [x] Sprint 3 — MovementCommand channel
 - [ ] Sprint 4 — Remove Actor timer AI
-
-## Rules
-
-1. Renderer does not decide behaviour.
-2. Prefer `world-coords` over ad-hoc viewport math.
-3. GLB drop-in: `public/mascot/companion.glb` with nodes `Head` + `Tip`.
