@@ -2,7 +2,8 @@
 
 /**
  * Live page-terrain actor — locomotion + phase machine.
- * Sprint 1: mesh extracted to CharacterRenderer (no AI in renderer).
+ * Sprint 1: CharacterRenderer
+ * Sprint 3: consumes MovementCommand / store.target (brain → body)
  */
 
 import { useFrame, useThree } from "@react-three/fiber";
@@ -14,6 +15,7 @@ import {
 import * as THREE from "three";
 import {
   getHomePlatform,
+  nearestPlatform,
   pickWanderPlatform,
   planHops,
   type TerrainPlatform,
@@ -46,6 +48,10 @@ import {
   expressionFromAnim,
   expressionFromEmotions,
 } from "@/lib/mascot/expression";
+import {
+  clearMovementCommand,
+  peekMovementCommand,
+} from "@/lib/mascot/movement-command";
 import { CharacterRenderer } from "./CharacterRenderer";
 
 export type Phase = "home" | "outing" | "returning" | "perform";
@@ -72,6 +78,22 @@ function isBreakoutTheatre(b: TheatreBeat | undefined): boolean {
     intent === "point" ||
     intent === "shy_wave"
   );
+}
+
+function resolveCommandDest(
+  platforms: TerrainPlatform[],
+  cmd: NonNullable<ReturnType<typeof peekMovementCommand>>,
+): TerrainPlatform | null {
+  if (cmd.platformId) {
+    const byId = platforms.find((p) => p.id === cmd.platformId);
+    if (byId) return byId;
+  }
+  if (cmd.mode === "return-home") {
+    return getHomePlatform(platforms);
+  }
+  // Nearest platform near command target (or invent a soft goal platform)
+  const near = nearestPlatform(platforms, cmd.target.x, cmd.target.y);
+  return near;
 }
 
 export function Actor({
@@ -106,11 +128,15 @@ export function Actor({
   const speedRef = useRef(0);
   const justLandedRef = useRef(false);
   const wasAirborne = useRef(false);
+  const activeCmdId = useRef<string | null>(null);
+  const cmdSpeed = useRef(1);
 
   const emotions = useMascotStore((s) => s.emotions);
   const setAnim = useMascotStore((s) => s.setAnim);
   const anim = useMascotStore((s) => s.anim);
   const layers = useMascotStore((s) => s.layers);
+  const storeTarget = useMascotStore((s) => s.target);
+  const setStorePosition = useMascotStore((s) => s.setPosition);
   const { camera, size } = useThree();
 
   useEffect(() => {
@@ -191,6 +217,70 @@ export function Actor({
     const freed =
       phase === "outing" || phase === "returning" || phase === "perform";
 
+    // ── Sprint 3: honor brain MovementCommand / store.target ───────────
+    const cmd = peekMovementCommand();
+    if (!dragging && cmd && cmd.id !== activeCmdId.current) {
+      const dest = resolveCommandDest(platforms, cmd);
+      if (dest && bodyRef.current) {
+        activeCmdId.current = cmd.id;
+        cmdSpeed.current = cmd.speed;
+        beat.current = null;
+        phaseRef.current =
+          cmd.mode === "return-home" ? "returning" : "outing";
+        const current =
+          platforms.find((x) => x.id === bodyRef.current!.platformId) ?? null;
+        queue.current = planHops(current, dest, platforms);
+        const first = queue.current[0];
+        if (first) {
+          bodyRef.current = jumpToward(bodyRef.current, first, true);
+          setAnim(cmd.mode === "jump" ? "jump" : "walk");
+        }
+        homeUntil.current = 0;
+        nextRoam.current = now + 4000;
+        nextOuting.current = now + 8000;
+      }
+    } else if (
+      !dragging &&
+      !cmd &&
+      storeTarget &&
+      activeCmdId.current !== `store-${storeTarget.x.toFixed(2)}-${storeTarget.y.toFixed(2)}`
+    ) {
+      // Fallback: store target without explicit command module write
+      const dest =
+        nearestPlatform(platforms, storeTarget.x, storeTarget.y) ??
+        pickWanderPlatform(platforms, body.platformId ?? undefined);
+      if (dest && bodyRef.current) {
+        activeCmdId.current = `store-${storeTarget.x.toFixed(2)}-${storeTarget.y.toFixed(2)}`;
+        cmdSpeed.current = 1;
+        phaseRef.current = "outing";
+        const current =
+          platforms.find((x) => x.id === bodyRef.current!.platformId) ?? null;
+        queue.current = planHops(current, dest, platforms);
+        const first = queue.current[0];
+        if (first) {
+          bodyRef.current = jumpToward(bodyRef.current, first, true);
+          setAnim("walk");
+        }
+      }
+    }
+
+    // Arrive: clear command when hop queue empty near dest
+    if (
+      activeCmdId.current &&
+      queue.current.length === 0 &&
+      body.onGround &&
+      cmd
+    ) {
+      const d = Math.hypot(body.x - cmd.target.x, body.y - cmd.target.y);
+      if (d < 0.35 || body.platformId === cmd.platformId) {
+        clearMovementCommand(cmd.id);
+        activeCmdId.current = null;
+        useMascotStore.getState().setTarget(null);
+      }
+    }
+
+    const brainDriving = !!peekMovementCommand() || !!activeCmdId.current;
+
     if (dragging && dragWorld) {
       body.x = dragWorld.x;
       body.y = dragWorld.y;
@@ -202,10 +292,12 @@ export function Actor({
       bodyRef.current = body;
       queue.current = [];
       phaseRef.current = "outing";
+      activeCmdId.current = null;
+      clearMovementCommand();
       setAnim("surprised");
       nextFreeHop.current = now + 500;
       nextRoam.current = now + 1000;
-    } else if (phase === "home") {
+    } else if (phase === "home" && !brainDriving) {
       if (home) {
         padWander.current += dt;
         if (padWander.current > 3 + Math.random() * 2.5) {
@@ -270,7 +362,9 @@ export function Actor({
         nextRoam.current = now + 500;
       }
 
+      // Ambient free-hop / roam only when brain is not driving
       if (
+        !brainDriving &&
         body.onGround &&
         queue.current.length === 0 &&
         now > nextFreeHop.current &&
@@ -286,6 +380,7 @@ export function Actor({
       }
 
       if (
+        !brainDriving &&
         body.onGround &&
         queue.current.length === 0 &&
         phaseRef.current === "outing" &&
@@ -330,7 +425,8 @@ export function Actor({
         (phaseRef.current === "outing" || phaseRef.current === "perform") &&
         queue.current.length === 0 &&
         body.onGround &&
-        home
+        home &&
+        !brainDriving
       ) {
         if (body.platformId !== "home-corner") {
           if (beat.current && phaseRef.current === "outing") {
@@ -389,17 +485,21 @@ export function Actor({
         homeUntil.current = now + homeRestMs(m);
         nextOuting.current = now + outingIntervalMs(m, lowPower);
         beat.current = null;
+        activeCmdId.current = null;
+        clearMovementCommand();
       }
 
       const goal = queue.current[0];
       if (goal) {
         const goalY = goal.y + goal.hh;
+        const spd =
+          Math.max(0.7, motion.walkSpeed * 1.8) * (cmdSpeed.current || 1);
         if (body.onGround) {
           bodyRef.current = steerTerrain(
             bodyRef.current,
             goal.x,
             goalY,
-            Math.max(0.7, motion.walkSpeed * 1.8),
+            spd,
             true,
           );
           if (anim !== "walk" && anim !== "jump") setAnim("walk");
@@ -417,7 +517,7 @@ export function Actor({
             setAnim("jump");
           } else if (!(beat.current && phaseRef.current === "outing")) {
             setAnim("happy");
-            if (phaseRef.current === "outing") {
+            if (phaseRef.current === "outing" && !brainDriving) {
               homeUntil.current = Date.now() + lingerMs(m) * 1.4;
               nextFreeHop.current = Date.now() + 600;
             }
@@ -446,6 +546,8 @@ export function Actor({
         bodyRef.current = snapToPlatform(bSafe, home);
         phaseRef.current = "home";
         queue.current = [];
+        activeCmdId.current = null;
+        clearMovementCommand();
         homeUntil.current = now + homeRestMs(m);
         nextOuting.current = now + outingIntervalMs(m, lowPower);
         setAnim("idle");
@@ -463,13 +565,18 @@ export function Actor({
 
     speedRef.current = Math.hypot(b.vx, b.vy ?? 0);
 
+    // Sync soft store position (not full runtime authority yet)
+    if (Math.floor(state.clock.elapsedTime * 4) % 2 === 0) {
+      setStorePosition({ x: b.x, y: b.y });
+    }
+
     let targetYaw = 0;
     if (Math.abs(b.vx) > 0.04) targetYaw = b.vx > 0 ? -0.38 : 0.38;
     if (dragging || phaseRef.current === "home") targetYaw = 0;
     facing.current = THREE.MathUtils.lerp(
       facing.current,
       targetYaw,
-      freed ? 0.2 : 0.14,
+      freed || brainDriving ? 0.2 : 0.14,
     );
     g.rotation.y = facing.current;
     g.rotation.z = THREE.MathUtils.lerp(
@@ -478,7 +585,10 @@ export function Actor({
       0.12,
     );
 
-    const bob = Math.sin(state.clock.elapsedTime * 2.2) * 0.012 * (freed ? 1 : 0.5);
+    const bob =
+      Math.sin(state.clock.elapsedTime * 2.2) *
+      0.012 *
+      (freed || brainDriving ? 1 : 0.5);
     g.position.set(b.x, b.y + 0.06 + bob, 0.35);
 
     const world = new THREE.Vector3(b.x, b.y + 0.1, 0.35);
