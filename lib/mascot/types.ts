@@ -1,5 +1,7 @@
 /** Mascot Engine — shared types */
 
+import { HABITAT_BOUNDS as WORLD_HABITAT_BOUNDS } from "./world-coords";
+
 export type MascotAnim =
   | "idle"
   | "walk"
@@ -31,6 +33,10 @@ export type MascotContext =
   | "browsing"
   | "watching";
 
+/**
+ * Movement events use page-world coordinates.
+ * `y` is preferred; `z` is accepted as a legacy alias for the same axis.
+ */
 export type MascotEvent =
   | { type: "pet" }
   | { type: "click" }
@@ -38,9 +44,9 @@ export type MascotEvent =
   | { type: "complete" }
   | { type: "route"; path: string }
   | { type: "idle-long" }
-  | { type: "go-to"; x: number; z: number }
-  | { type: "climb"; x: number; z: number }
-  | { type: "drag"; x: number; z: number }
+  | { type: "go-to"; x: number; y?: number; z?: number }
+  | { type: "climb"; x: number; y?: number; z?: number }
+  | { type: "drag"; x: number; y?: number; z?: number }
   | { type: "tick" }
   | { type: "notice-ui"; landmarkId?: string }
   | { type: "ui-hover"; clientX: number; clientY: number }
@@ -53,7 +59,6 @@ export type MascotEvent =
   | { type: "theme"; theme: "dark" | "light" }
   | { type: "scroll-fast" }
   | { type: "skit" }
-  /** Sprint 12 — semantic app chrome events */
   | {
       type: "app-event";
       name:
@@ -69,9 +74,12 @@ export type MascotEvent =
         | "modal-close";
     };
 
-export const HABITAT_BOUNDS = {
-  minX: -0.55,
-  maxX: 0.55,
-  minZ: -0.25,
-  maxZ: 0.25,
-} as const;
+/** @deprecated Prefer WORLD_BOUNDS from world-coords for live path */
+export const HABITAT_BOUNDS = WORLD_HABITAT_BOUNDS;
+
+/** Normalize event axis: prefer y, fall back to legacy z. */
+export function eventAxisY(e: { y?: number; z?: number }): number {
+  if (typeof e.y === "number") return e.y;
+  if (typeof e.z === "number") return e.z;
+  return 0;
+}
