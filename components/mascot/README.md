@@ -5,27 +5,25 @@
 | Layer | Owns |
 |--------|------|
 | Director / store | why & where |
-| `climbing.ts` | climb phases (brain-issued) |
-| `runtime.ts` | live body pose |
-| Actor | physics execution |
-| CharacterRenderer | mesh only |
+| climbing.ts | climb phases |
+| runtime.ts | body pose |
+| expression-pipeline.ts | face resolution |
+| Actor | physics |
+| CharacterRenderer | mesh |
 
-## Climb (Sprint 6)
-
-One path only:
+## Expression (Sprint 7)
 
 ```
-intention / UI interact
-  → pickClimbTarget (safe + on-screen)
-  → executeClimb phases
-  → each phase issues MovementCommand (page x/y)
-  → Actor executes hops
+anim + emotions + climbPhase
+  → resolveExpression() / faceForActor()
+  → ExpressionKey
+  → CharacterRenderer / GltfCompanion
 ```
 
-No second Actor climb AI.
+Priority: climb face → social gesture → locomotion → emotion baseline.
 
 ## Sprint status
 
-- [x] 1–5 Character, coords, commands, executor, runtime
-- [x] 6 Climb system unification
-- [ ] 7 Expression / anim layer cleanup (optional)
+- [x] 1–6 Character, coords, commands, executor, runtime, climb
+- [x] 7 Expression / anim priority pipeline
+- [ ] 8 Polish / debug / remaining audit items
