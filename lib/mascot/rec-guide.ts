@@ -29,14 +29,13 @@ export type RecGuidePlan = {
   landmark: Landmark;
   confidence: number;
   thought: string;
-  habitat: { x: number; z: number };
+  habitat: { x: number; y?: number; z?: number };
   lookClient: { x: number; y: number };
 };
 
 function scoreCard(lm: Landmark, emotions: MascotEmotions): number {
   let score = lm.importance * 0.35 + lm.priority * 0.08;
 
-  // Prefer larger, more central cards
   if (lm.rect) {
     const area = lm.rect.width * lm.rect.height;
     score += Math.min(0.2, area / 80_000);
@@ -56,10 +55,8 @@ function scoreCard(lm: Landmark, emotions: MascotEmotions): number {
   score += COMPANION.traits.helpfulness * 0.08;
   score += COMPANION.traits.curiosity * 0.06;
 
-  // Engagement history soft bias
   score += (rel.engagementRate - 0.4) * 0.1;
 
-  // Avoid recently guided cards
   const last = guidedIds.get(lm.id) ?? 0;
   if (Date.now() - last < PER_CARD_COOLDOWN_MS) score -= 0.5;
 
@@ -79,10 +76,6 @@ function pickThought(): string {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-/**
- * Confidence threshold: only guide when score is high enough.
- * Strangers need higher confidence; close companions can guide more freely.
- */
 function confidenceThreshold(): number {
   const stage = bondStage();
   switch (stage) {
@@ -106,7 +99,6 @@ export function canProposeGuide(
   if (guidesThisSession >= MAX_GUIDES_PER_SESSION) return false;
   if (Date.now() - lastGuideAt < GLOBAL_COOLDOWN_MS) return false;
 
-  // Only when browsing / guiding / inspecting / idle-curious
   const okIntent: MascotIntention[] = [
     "idle",
     "observe",
@@ -117,14 +109,12 @@ export function canProposeGuide(
   ];
   if (!okIntent.includes(intention)) return false;
 
-  // Too sleepy / stressed → stay quiet
   if (emotions.sleepiness > 0.65 || emotions.stress > 0.55) return false;
   if (emotions.curiosity < 0.3 && emotions.attention < 0.3) return false;
 
   const rel = relationshipHints();
   if (rel.prefersQuiet && Math.random() < 0.6) return false;
 
-  // Helpfulness + engagement gate
   const help = COMPANION.traits.helpfulness;
   if (help < 0.35 && Math.random() < 0.5) return false;
 
@@ -179,13 +169,12 @@ export function markGuideFired(landmarkId: string) {
   guidedIds.set(landmarkId, Date.now());
 }
 
-/** Call on full page reload / session boundary if desired */
 export function resetGuideSession() {
   guidesThisSession = 0;
 }
 
 export type RecGuideRunner = {
-  setTarget: (t: { x: number; z: number } | null) => void;
+  setTarget: (t: { x: number; y: number } | null) => void;
   requestAnim: (req: {
     anim: "walk" | "point" | "think" | "happy";
     holdMs?: number;
@@ -194,7 +183,7 @@ export type RecGuideRunner = {
   setLookBias: (b: { x: number; y: number }) => void;
   setThought: (t: string) => void;
   setIntention: (i: MascotIntention) => void;
-  clampHabitat: (x: number, z: number) => { x: number; z: number };
+  clampHabitat: (x: number, y: number) => { x: number; y: number };
 };
 
 /** Walk → look → point sequence (~2.5s) */
@@ -206,7 +195,11 @@ export function executeRecGuide(
   runner.setIntention("guide");
   runner.setThought(plan.thought);
 
-  const target = runner.clampHabitat(plan.habitat.x * 0.85, plan.habitat.z * 0.85);
+  const hy =
+    "y" in plan.habitat && typeof (plan.habitat as { y?: number }).y === "number"
+      ? (plan.habitat as { y: number }).y
+      : (plan.habitat as { z: number }).z;
+  const target = runner.clampHabitat(plan.habitat.x * 0.85, hy * 0.85);
   runner.setTarget(target);
   runner.requestAnim({ anim: "walk" });
 
