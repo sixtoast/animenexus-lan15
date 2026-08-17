@@ -2,16 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  addConfession,
   countBingoWins,
   markedCount,
   newBingo,
   readBingo,
-  readConfessions,
   toggleBingo,
   type BingoBoard,
-  type Confession,
 } from "@/lib/fanzone";
+import {
+  fetchConfessions,
+  postConfession,
+  isSupabaseConfigured,
+  type Confession,
+} from "@/lib/supabase/confessions";
 import {
   buildTasteDNA,
   parseTasteDNA,
@@ -29,6 +32,8 @@ export function FanzoneClient() {
   const { entries } = useWatchlist();
   const { showToast } = useToast();
   const [confessions, setConfessions] = useState<Confession[]>([]);
+  const [confessSource, setConfessSource] = useState<"supabase" | "local">("local");
+  const [posting, setPosting] = useState(false);
   const [text, setText] = useState("");
   const [bingo, setBingo] = useState<BingoBoard | null>(null);
   const [importCode, setImportCode] = useState("");
@@ -38,17 +43,43 @@ export function FanzoneClient() {
   const prevWins = useRef(0);
 
   useEffect(() => {
-    setConfessions(readConfessions());
+    let cancelled = false;
+    (async () => {
+      const res = await fetchConfessions();
+      if (!cancelled) {
+        setConfessions(res.items);
+        setConfessSource(res.source);
+      }
+    })();
     const b = readBingo() || newBingo();
     setBingo(b);
     prevWins.current = countBingoWins(b.marked);
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  function submitConfess() {
-    const next = addConfession(text);
-    setConfessions(next);
-    setText("");
-    showToast("Confession logged", "💌");
+  async function submitConfess() {
+    if (!text.trim() || posting) return;
+    setPosting(true);
+    try {
+      const res = await postConfession(text);
+      setConfessions(res.items);
+      setConfessSource(res.source);
+      setText("");
+      if (res.error) {
+        showToast(res.error, "😅");
+      } else {
+        showToast(
+          res.source === "supabase"
+            ? "Confession shared"
+            : "Confession saved locally",
+          "💌",
+        );
+      }
+    } finally {
+      setPosting(false);
+    }
   }
 
   function onToggleCell(i: number) {
@@ -145,25 +176,44 @@ export function FanzoneClient() {
     <div className="tools-panel fanzone">
       <section className="fz-section">
         <h2>Confessions</h2>
+        <p className="tools-hint" style={{ marginTop: 0 }}>
+          {confessSource === "supabase" || isSupabaseConfigured()
+            ? "Anonymous notes shared with the desk (Supabase)."
+            : "Local-only until Supabase env vars are set."}
+        </p>
         <div className="picker-row">
           <input
             className="filter-input"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Anonymous local note…"
+            placeholder="Anonymous confession…"
             maxLength={280}
+            disabled={posting}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void submitConfess();
+            }}
           />
-          <Button variant="accent" size="sm" onClick={submitConfess}>
-            Post
+          <Button
+            variant="accent"
+            size="sm"
+            onClick={() => void submitConfess()}
+            disabled={posting || !text.trim()}
+          >
+            {posting ? "…" : "Post"}
           </Button>
         </div>
         <ul className="confession-list">
           {confessions.map((c) => (
-            <li key={c.id}>{c.text}</li>
+            <li key={c.id}>
+              <span>{c.text}</span>
+              <time dateTime={c.at} className="confession-time">
+                {new Date(c.at).toLocaleDateString()}
+              </time>
+            </li>
           ))}
           {!confessions.length ? (
             <li className="tools-hint lantern-empty">
-              The booth is empty. Leave a local note only this browser will see.
+              The booth is empty. Be the first note on the board.
             </li>
           ) : null}
         </ul>
