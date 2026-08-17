@@ -3,7 +3,7 @@
 /**
  * Live page-terrain actor — physics + command execution only.
  * Sprint 5: writes authoritative runtime body state every frame.
- * Sprint 7/8: faceForActor for expression resolution.
+ * Sprint 7/8: faceForActor + dev debug global.
  */
 
 import { useFrame, useThree } from "@react-three/fiber";
@@ -40,6 +40,7 @@ import {
   type MovementCommand,
 } from "@/lib/mascot/movement-command";
 import { writeRuntime, type Phase } from "@/lib/mascot/runtime";
+import { installMascotDebugGlobal } from "@/lib/mascot/debug-snapshot";
 import { CharacterRenderer } from "./CharacterRenderer";
 import { faceForActor } from "./expression-bridge";
 
@@ -108,6 +109,13 @@ export function Actor({
   const storeTarget = useMascotStore((s) => s.target);
   const setStorePosition = useMascotStore((s) => s.setPosition);
   const { camera, size } = useThree();
+
+  // Dev: window.__mascotDebug() — same as LiveTerrain host install
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      installMascotDebugGlobal();
+    }
+  }, []);
 
   useEffect(() => {
     const h = homeWorld();
