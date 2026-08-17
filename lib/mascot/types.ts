@@ -5,6 +5,7 @@ import { HABITAT_BOUNDS as WORLD_HABITAT_BOUNDS } from "./world-coords";
 export type MascotAnim =
   | "idle"
   | "walk"
+  | "run"
   | "jump"
   | "land"
   | "happy"
@@ -12,7 +13,13 @@ export type MascotAnim =
   | "think"
   | "sleep"
   | "surprised"
-  | "point";
+  | "point"
+  | "sit"
+  | "stretch"
+  | "nod"
+  | "shy"
+  | "celebrate"
+  | "bow";
 
 export type MascotEmotions = {
   curiosity: number;
@@ -71,7 +78,15 @@ export type MascotEvent =
         | "search-results"
         | "loading-long"
         | "modal-open"
-        | "modal-close";
+        | "modal-close"
+        | "page-view"
+        | "anime-open"
+        | "daily-checkin"
+        | "fusion-result"
+        | "challenge-complete"
+        | "night-mode"
+        | "first-visit"
+        | "pet-long";
     };
 
 /** @deprecated Prefer WORLD_BOUNDS from world-coords for live path */
