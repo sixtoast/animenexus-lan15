@@ -1,4 +1,3 @@
-const CONFESS_KEY = "anime_nexus_confessions_v1";
 const BINGO_KEY = "anime_nexus_bingo_v1";
 
 const TROPES = [
@@ -29,30 +28,35 @@ const TROPES = [
   "Anti-hero turn",
 ];
 
-export type Confession = {
-  id: string;
-  text: string;
-  at: string;
-};
+export type { Confession } from "@/lib/supabase/confessions";
+export {
+  fetchConfessions,
+  postConfession,
+  isSupabaseConfigured,
+} from "@/lib/supabase/confessions";
 
-export function readConfessions(): Confession[] {
+/** @deprecated Prefer fetchConfessions() */
+export function readConfessions(): import("@/lib/supabase/confessions").Confession[] {
   if (typeof window === "undefined") return [];
   try {
-    const j = JSON.parse(localStorage.getItem(CONFESS_KEY) || "[]");
+    const j = JSON.parse(localStorage.getItem("anime_nexus_confessions_v1") || "[]");
     return Array.isArray(j) ? j : [];
   } catch {
     return [];
   }
 }
 
-export function addConfession(text: string): Confession[] {
+/** @deprecated Prefer postConfession() */
+export function addConfession(
+  text: string,
+): import("@/lib/supabase/confessions").Confession[] {
   const t = text.trim().slice(0, 280);
   if (!t) return readConfessions();
   const next = [
     { id: `${Date.now()}`, text: t, at: new Date().toISOString() },
     ...readConfessions(),
   ].slice(0, 40);
-  localStorage.setItem(CONFESS_KEY, JSON.stringify(next));
+  localStorage.setItem("anime_nexus_confessions_v1", JSON.stringify(next));
   return next;
 }
 
