@@ -236,7 +236,7 @@ const REACTIONS: Record<AppUiEvent, UiEventReaction> = {
     cooldownMs: 30_000,
   },
   "pet-long": {
-    intention: "bond",
+    intention: "greet",
     emotionDeltas: { happiness: 0.14, stress: -0.1, confidence: 0.05 },
     anim: "shy",
     holdMs: 1500,
@@ -256,7 +256,6 @@ export function reactionForAppEvent(event: AppUiEvent): UiEventReaction | null {
   return { ...base };
 }
 
-/** Normalize custom event names from the app chrome */
 export function parseAppEventName(name: string): AppUiEvent | null {
   const n = name.replace(/^animenexus:/, "").toLowerCase();
   const map: Record<string, AppUiEvent> = {
@@ -281,19 +280,19 @@ export function parseAppEventName(name: string): AppUiEvent | null {
     complete: "complete",
     "empty-list": "empty-list",
     "page-view": "page-view",
-    "pageview": "page-view",
+    pageview: "page-view",
     "anime-open": "anime-open",
     "anime:open": "anime-open",
     "daily-checkin": "daily-checkin",
-    "daily": "daily-checkin",
+    daily: "daily-checkin",
     "fusion-result": "fusion-result",
-    "fusion": "fusion-result",
+    fusion: "fusion-result",
     "challenge-complete": "challenge-complete",
-    "challenge": "challenge-complete",
+    challenge: "challenge-complete",
     "night-mode": "night-mode",
-    "night": "night-mode",
+    night: "night-mode",
     "first-visit": "first-visit",
-    "welcome": "first-visit",
+    welcome: "first-visit",
     "pet-long": "pet-long",
     "long-pet": "pet-long",
   };
