@@ -57,7 +57,7 @@ const GENRE_PRIORS: Record<string, Partial<ResonanceVector>> = {
   Supernatural: { wonder: 0.65, mystery: 0.55, darkness: 0.35 },
   Mecha: { intensity: 0.6, worldBuilding: 0.7, energy: 0.55 },
   Sports: { energy: 0.85, hope: 0.55, intensity: 0.5 },
-  Music: { emotion: 0.5, hope: 0.45, characterFocus: 0.55 } as Partial<ResonanceVector>,
+  Music: { hope: 0.5, characterFocus: 0.55, nostalgia: 0.4 },
   "Martial Arts": { intensity: 0.7, energy: 0.65, adventure: 0.5 },
   Military: { intensity: 0.65, tension: 0.6, darkness: 0.4 },
   Historical: { nostalgia: 0.6, worldBuilding: 0.55, reflection: 0.5 },
@@ -66,7 +66,7 @@ const GENRE_PRIORS: Record<string, Partial<ResonanceVector>> = {
   "Magical Girl": { wonder: 0.75, hope: 0.7, energy: 0.55 },
   Isekai: { adventure: 0.8, wonder: 0.7, worldBuilding: 0.65 },
   Tragedy: { melancholy: 0.9, darkness: 0.7, reflection: 0.65 },
-  "Gore": { darkness: 0.85, intensity: 0.8 },
+  Gore: { darkness: 0.85, intensity: 0.8 },
   Suspense: { tension: 0.85, mystery: 0.55 },
   "Avant Garde": { reflection: 0.7, mystery: 0.5 },
   Kids: { comfort: 0.7, hope: 0.6, humour: 0.4 },
@@ -133,7 +133,7 @@ export function interactionWeight(e: WatchlistEntry): number {
             ? 0.7
             : 0.85;
   if (e.userRating && e.userRating > 0) {
-    w *= 0.55 + e.userRating / 10; // 1→0.65 … 10→1.55
+    w *= 0.55 + e.userRating / 10;
   }
   return w;
 }
