@@ -16,16 +16,16 @@ import { isClimbing, isSafeClimbTarget } from "./climbing";
 import type { Landmark } from "./ui-registry";
 import { listLandmarks, refreshLandmarkRects } from "./ui-registry";
 
-export const HOME_SPOT: NavTarget = { x: 0.32, z: 0.08 };
+export const HOME_SPOT: NavTarget = { x: 0.32, y: 0.08 };
 
 /** Habitat home — always reachable */
 export function homeTarget(): NavTarget {
-  return clampToHabitat(HOME_SPOT.x, HOME_SPOT.z);
+  return clampToHabitat(HOME_SPOT.x, HOME_SPOT.y);
 }
 
 /** Clamp position every frame / tick */
 export function safePosition(p: NavTarget): NavTarget {
-  return clampToHabitat(p.x, p.z);
+  return clampToHabitat(p.x, p.y);
 }
 
 /** True if target is outside habitat bounds */
@@ -33,8 +33,8 @@ export function isOutOfBounds(p: NavTarget, margin = 0.02): boolean {
   return (
     p.x < HABITAT_BOUNDS.minX - margin ||
     p.x > HABITAT_BOUNDS.maxX + margin ||
-    p.z < HABITAT_BOUNDS.minZ - margin ||
-    p.z > HABITAT_BOUNDS.maxZ + margin
+    p.y < HABITAT_BOUNDS.minZ - margin ||
+    p.y > HABITAT_BOUNDS.maxZ + margin
   );
 }
 
