@@ -3,6 +3,7 @@
 /**
  * Live page-terrain actor — physics + command execution only.
  * Sprint 5: writes authoritative runtime body state every frame.
+ * Sprint 7/8: faceForActor for expression resolution.
  */
 
 import { useFrame, useThree } from "@react-three/fiber";
@@ -32,10 +33,6 @@ import { useMascotStore } from "@/lib/mascot/store";
 import { motionFromEmotions } from "@/lib/mascot/emotions";
 import { worldMood, homeRestMs } from "@/lib/mascot/living-world";
 import {
-  expressionFromAnim,
-  expressionFromEmotions,
-} from "@/lib/mascot/expression";
-import {
   clearMovementCommand,
   issueFromStoreTarget,
   issueReturnHome,
@@ -44,6 +41,7 @@ import {
 } from "@/lib/mascot/movement-command";
 import { writeRuntime, type Phase } from "@/lib/mascot/runtime";
 import { CharacterRenderer } from "./CharacterRenderer";
+import { faceForActor } from "./expression-bridge";
 
 export type { Phase };
 export type MascotScreenPos = { x: number; y: number; visible: boolean };
@@ -464,7 +462,6 @@ export function Actor({
     sy = Math.max(pad, Math.min(size.height - pad, sy));
     onScreenPos({ x: sx, y: sy, visible: true });
 
-    // Sprint 5 — single source of truth for body pose
     writeRuntime({
       x: b.x,
       y: b.y,
@@ -479,9 +476,10 @@ export function Actor({
     });
   });
 
-  const expression = expressionFromAnim(
+  const expression = faceForActor(
     anim,
-    expressionFromEmotions(emotions),
+    emotions,
+    layers.social !== "none",
   );
 
   return (
