@@ -11,19 +11,24 @@
 | Actor | physics |
 | CharacterRenderer | mesh |
 
-## Expression (Sprint 7)
+## Debug
 
-```
-anim + emotions + climbPhase
-  → resolveExpression() / faceForActor()
-  → ExpressionKey
-  → CharacterRenderer / GltfCompanion
+```js
+// after installMascotDebugGlobal() in dev
+__mascotDebug()
 ```
 
-Priority: climb face → social gesture → locomotion → emotion baseline.
+See `docs/mascot/SPRINT8_POLISH.md`.
 
 ## Sprint status
 
-- [x] 1–6 Character, coords, commands, executor, runtime, climb
-- [x] 7 Expression / anim priority pipeline
-- [ ] 8 Polish / debug / remaining audit items
+- [x] 1 CharacterRenderer
+- [x] 2 Page world x/y
+- [x] 3 MovementCommand
+- [x] 4 Actor pure executor
+- [x] 5 Runtime state
+- [x] 6 Climb unification
+- [x] 7 Expression pipeline
+- [x] 8 Debug snapshot + architecture map
+
+Architecture: `lib/mascot/architecture.ts`
