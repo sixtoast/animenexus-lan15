@@ -186,8 +186,8 @@ const PERFORMANCES: PerformanceDef[] = [
       c.emotions.energy > 0.4 &&
       ["explore", "play", "investigate"].includes(c.intention),
     build: (c) => {
-      const edge = clampToHabitat(c.position.x + 0.12, c.position.z + 0.08);
-      const recover = clampToHabitat(c.position.x, c.position.z);
+      const edge = clampToHabitat(c.position.x + 0.12, c.position.y + 0.08);
+      const recover = clampToHabitat(c.position.x, c.position.y);
       return [
         {
           delayMs: 0,
@@ -240,7 +240,7 @@ const PERFORMANCES: PerformanceDef[] = [
       COMPANION.traits.playfulness > 0.35,
     build: (c) => {
       const lx = c.lookX ?? 0.3;
-      const chase = clampToHabitat(c.position.x - lx * 0.15, c.position.z + 0.06);
+      const chase = clampToHabitat(c.position.x - lx * 0.15, c.position.y + 0.06);
       return [
         {
           delayMs: 0,
@@ -331,8 +331,8 @@ const PERFORMANCES: PerformanceDef[] = [
     when: (c) =>
       ["explore", "idle", "observe"].includes(c.intention),
     build: (c) => {
-      const a = clampToHabitat(c.position.x + 0.1, c.position.z);
-      const b = clampToHabitat(c.position.x - 0.08, c.position.z + 0.05);
+      const a = clampToHabitat(c.position.x + 0.1, c.position.y);
+      const b = clampToHabitat(c.position.x - 0.08, c.position.y + 0.05);
       return [
         { delayMs: 0, anim: "walk", target: a, thought: "Patrol." },
         { delayMs: 800, anim: "point", holdMs: 500 },
