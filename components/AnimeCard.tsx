@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import type { Anime } from "@/lib/types";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { readMemory } from "@/lib/lantern-memory";
+import { emitAnimeHoverStart, emitAnimeHoverEnd } from "@/lib/nexus";
 
 type Props = {
   anime: Anime;
@@ -48,56 +49,33 @@ export function AnimeCard({ anime, index = 0 }: Props) {
 
   return (
     <Link
+      onMouseEnter={() => emitAnimeHoverStart(anime.id)}
+      onMouseLeave={() => emitAnimeHoverEnd(anime.id)}
       href={href}
       className={
-        "anime-card grid-enter" +
-        (onList ? " is-sealed" : "") +
-        (recent && !onList ? " is-recent" : "")
+        "anime-card" +
+        (onList ? " on-list" : "") +
+        (recent ? " was-viewed" : "")
       }
-      title={anime.title}
-      data-on-list={onList ? "true" : "false"}
+      style={{ viewTransitionName: vt, animationDelay: `${Math.min(index, 12) * 30}ms` }}
       onClick={navigate}
-      style={
-        {
-          "--i": index,
-          "--vt-cover": vt,
-        } as React.CSSProperties
-      }
     >
-      {onList ? (
-        <span className="card-badge card-badge-sealed" aria-label="On watchlist">
-          Sealed
-        </span>
-      ) : recent ? (
-        <span className="card-badge card-badge-recent" aria-label="Recently opened">
-          Signal
-        </span>
-      ) : null}
-      {canOptimize ? (
+      <div className="poster-wrap">
         <Image
           src={src}
           alt=""
           width={300}
           height={450}
-          sizes="(max-width: 640px) 45vw, 160px"
-          style={{ viewTransitionName: vt } as React.CSSProperties}
+          className="poster"
+          unoptimized={!canOptimize}
         />
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt=""
-          loading="lazy"
-          style={{ viewTransitionName: vt } as React.CSSProperties}
-        />
-      )}
-      {anime.format ? <span className="card-tag">{anime.format}</span> : null}
-      <div className="card-body">
-        <div className="card-title">{anime.title}</div>
-        <div className="card-meta">
-          <span>{anime.year || "—"}</span>
-          <span className="card-score">★ {score}</span>
-        </div>
+        <span className="score-badge">{score}</span>
+      </div>
+      <div className="card-meta">
+        <h3 className="card-title">{anime.title}</h3>
+        <p className="card-sub">
+          {[anime.format, anime.year].filter(Boolean).join(" · ")}
+        </p>
       </div>
     </Link>
   );
