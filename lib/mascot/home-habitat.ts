@@ -26,8 +26,8 @@ export type HabitatSpotId =
 export type HabitatSpot = {
   id: HabitatSpotId;
   label: string;
-  /** Habitat-local XZ */
-  pos: NavTarget;
+  /** Habitat-local XZ (legacy z axis — not WorldPoint) */
+  pos: { x: number; z: number };
   /** Preferred anim while there */
   anim: MascotAnim;
   holdMs: number;
@@ -138,11 +138,9 @@ export function pickFavouriteSpot(emotions: MascotEmotions): HabitatSpot {
   const scored = HABITAT_SPOTS.map((s) => {
     let w = s.weight;
     if (s.preferWhen?.(emotions)) w *= 2.2;
-    // Close companions linger on pillow/lantern more
     if (stage === "close" && (s.id === "pillow" || s.id === "lantern"))
       w *= 1.3;
     if (stage === "stranger" && s.id === "desk-edge") w *= 1.4;
-    // Night → pillow/blanket
     const part = dayPart();
     if (part === "night" && (s.id === "pillow" || s.id === "blanket")) w *= 1.8;
     if (part === "morning" && (s.id === "window" || s.id === "plant")) w *= 1.4;
@@ -164,7 +162,6 @@ export function thoughtForSpot(spot: HabitatSpot): string {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-/** When should ambient AI prefer going home? */
 export function shouldReturnHome(input: {
   intention: MascotIntention;
   emotions: MascotEmotions;
@@ -178,15 +175,10 @@ export function shouldReturnHome(input: {
   const e = input.emotions;
   const part = dayPart();
 
-  // Tired / sleepy → home
   if (e.sleepiness > 0.55 || e.energy < 0.28) return Math.random() < 0.55;
-  // Stressed → blanket
   if (e.stress > 0.5) return Math.random() < 0.4;
-  // Night routine
   if (part === "night" && e.energy < 0.55) return Math.random() < 0.45;
-  // Lazy trait
   if (COMPANION.traits.laziness > 0.5 && Math.random() < 0.12) return true;
-  // After long outing-ish intentions, soft pull home
   if (
     (input.intention === "explore" ||
       input.intention === "investigate" ||
@@ -194,7 +186,6 @@ export function shouldReturnHome(input: {
     Math.random() < 0.08
   )
     return true;
-  // Idle quiet desk
   if (
     (input.intention === "idle" || input.intention === "observe") &&
     input.msSinceInteract > 25_000 &&
@@ -216,7 +207,6 @@ export type HomeRunner = {
   setIntention: (i: MascotIntention) => void;
 };
 
-/** Walk to a favourite spot and settle */
 export function executeGoHome(
   emotions: MascotEmotions,
   runner: HomeRunner,
@@ -246,12 +236,10 @@ export function executeGoHome(
   return { ms: settleDelay + spot.holdMs, spot };
 }
 
-/** Default dock position (legacy home) */
 export function defaultHomePos(): NavTarget {
   return clampToHabitat(0.32, 0.08);
 }
 
-/** Soft description for debug / thoughts */
 export function describeHabitat(): string {
   const mem = getMemory();
   const stage = bondStage(mem);
