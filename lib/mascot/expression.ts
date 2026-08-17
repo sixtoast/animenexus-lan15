@@ -243,7 +243,7 @@ export function expressionFromAnim(
 ): MascotExpression {
   switch (anim) {
     case "happy":
-      return "happy";
+    case "celebrate":
     case "wave":
       return "happy";
     case "surprised":
@@ -251,10 +251,18 @@ export function expressionFromAnim(
     case "point":
       return "curious";
     case "think":
+    case "nod":
       return "focused";
     case "sleep":
+    case "sit":
       return "sleepy";
+    case "shy":
+    case "bow":
+      return "embarrassed";
+    case "stretch":
+      return "mischievous";
     case "jump":
+    case "run":
       return fallback === "neutral" ? "excited" : fallback;
     default:
       return fallback;
