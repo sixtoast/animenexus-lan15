@@ -1,17 +1,9 @@
 /**
  * Sprint 4 — Layered animation system
- *
- * Locomotion and social channels are independent.
- * Expression (Sprint 2) is a third channel and stays in expression.ts.
- *
- * Example: walk (loco) + wave (social) + happy (expression) can coexist.
- * We still publish a single MascotAnim for legacy consumers; that is a
- * *resolved* view, not the source of truth.
  */
 
 import type { MascotAnim, MascotEmotions } from "./types";
 
-/** Body / movement channel */
 export type LocomotionAnim =
   | "idle"
   | "walk"
@@ -20,9 +12,9 @@ export type LocomotionAnim =
   | "fall"
   | "land"
   | "climb"
-  | "sleep";
+  | "sleep"
+  | "sit";
 
-/** Gesture / social overlay — plays on top of locomotion when possible */
 export type SocialAnim =
   | "none"
   | "wave"
@@ -31,14 +23,15 @@ export type SocialAnim =
   | "think"
   | "surprised"
   | "bow"
-  | "celebrate";
+  | "celebrate"
+  | "nod"
+  | "shy"
+  | "stretch";
 
 export type AnimLayers = {
   locomotion: LocomotionAnim;
   social: SocialAnim;
-  /** When social hold expires (ms epoch); 0 = none */
   socialUntil: number;
-  /** When locomotion is locked (e.g. jump arc); 0 = free */
   locoUntil: number;
 };
 
@@ -51,37 +44,46 @@ export const DEFAULT_LAYERS: AnimLayers = {
 
 const LOCO_PRIORITY: Record<LocomotionAnim, number> = {
   idle: 1,
-  sleep: 2,
-  walk: 3,
-  run: 4,
-  land: 5,
-  climb: 6,
-  fall: 7,
-  jump: 8,
+  sit: 2,
+  sleep: 3,
+  walk: 4,
+  run: 5,
+  land: 6,
+  climb: 7,
+  fall: 8,
+  jump: 9,
 };
 
 const SOCIAL_PRIORITY: Record<SocialAnim, number> = {
   none: 0,
+  nod: 2,
   think: 3,
   point: 4,
   wave: 5,
   happy: 6,
   bow: 6,
+  stretch: 6,
+  shy: 6,
   celebrate: 7,
   surprised: 8,
 };
 
-/** Map legacy single anim → layers */
-export function layersFromAnim(anim: MascotAnim): Pick<AnimLayers, "locomotion" | "social"> {
+export function layersFromAnim(
+  anim: MascotAnim,
+): Pick<AnimLayers, "locomotion" | "social"> {
   switch (anim) {
     case "walk":
       return { locomotion: "walk", social: "none" };
+    case "run":
+      return { locomotion: "run", social: "none" };
     case "jump":
       return { locomotion: "jump", social: "none" };
     case "land":
       return { locomotion: "land", social: "none" };
     case "sleep":
       return { locomotion: "sleep", social: "none" };
+    case "sit":
+      return { locomotion: "sit", social: "none" };
     case "idle":
       return { locomotion: "idle", social: "none" };
     case "wave":
@@ -90,38 +92,38 @@ export function layersFromAnim(anim: MascotAnim): Pick<AnimLayers, "locomotion" 
       return { locomotion: "idle", social: "point" };
     case "happy":
       return { locomotion: "idle", social: "happy" };
+    case "celebrate":
+      return { locomotion: "idle", social: "celebrate" };
     case "think":
       return { locomotion: "idle", social: "think" };
     case "surprised":
       return { locomotion: "idle", social: "surprised" };
+    case "bow":
+      return { locomotion: "idle", social: "bow" };
+    case "nod":
+      return { locomotion: "idle", social: "nod" };
+    case "shy":
+      return { locomotion: "idle", social: "shy" };
+    case "stretch":
+      return { locomotion: "idle", social: "stretch" };
     default:
       return { locomotion: "idle", social: "none" };
   }
 }
 
-/**
- * Resolve layers → single MascotAnim for procedural-motion / Actor that still
- * key off one string. Social overlays win for gestures; loco wins for movement.
- */
 export function resolveAnim(layers: AnimLayers, now = Date.now()): MascotAnim {
   const socialActive =
     layers.social !== "none" &&
     (layers.socialUntil === 0 || now < layers.socialUntil);
 
-  // Airborne / hard loco always visible in body
   if (layers.locomotion === "jump") return "jump";
-  if (layers.locomotion === "fall") return "jump"; // fall uses jump stretch
+  if (layers.locomotion === "fall") return "jump";
   if (layers.locomotion === "land") return "land";
   if (layers.locomotion === "climb") return "jump";
   if (layers.locomotion === "sleep") return "sleep";
+  if (layers.locomotion === "sit") return "sit";
   if (layers.locomotion === "walk" || layers.locomotion === "run") {
-    // Walking can keep a short social gesture on arms via social channel;
-    // resolved anim stays walk so body keeps walk bob.
-    if (socialActive && (layers.social === "wave" || layers.social === "point")) {
-      // Prefer walk body; social is applied separately in procedural arms
-      return "walk";
-    }
-    return "walk";
+    return layers.locomotion === "run" ? "run" : "walk";
   }
 
   if (socialActive) {
@@ -131,14 +133,21 @@ export function resolveAnim(layers: AnimLayers, now = Date.now()): MascotAnim {
       case "point":
         return "point";
       case "happy":
-      case "celebrate":
         return "happy";
+      case "celebrate":
+        return "celebrate";
       case "think":
         return "think";
       case "surprised":
         return "surprised";
       case "bow":
-        return "think";
+        return "bow";
+      case "nod":
+        return "nod";
+      case "shy":
+        return "shy";
+      case "stretch":
+        return "stretch";
       default:
         break;
     }
@@ -152,7 +161,6 @@ export type LayerRequest =
   | { channel: "social"; anim: SocialAnim; holdMs?: number; force?: boolean }
   | { channel: "legacy"; anim: MascotAnim; holdMs?: number; force?: boolean };
 
-/** Apply a request onto layers (immutable update). */
 export function applyLayerRequest(
   prev: AnimLayers,
   req: LayerRequest,
@@ -160,16 +168,8 @@ export function applyLayerRequest(
 ): AnimLayers {
   if (req.channel === "legacy") {
     const mapped = layersFromAnim(req.anim);
-    const isLoco =
-      mapped.social === "none" &&
-      (mapped.locomotion === "walk" ||
-        mapped.locomotion === "jump" ||
-        mapped.locomotion === "land" ||
-        mapped.locomotion === "sleep" ||
-        mapped.locomotion === "idle");
 
     if (mapped.social !== "none") {
-      // Social legacy anim
       if (
         !req.force &&
         prev.social !== "none" &&
@@ -180,7 +180,6 @@ export function applyLayerRequest(
       }
       return {
         ...prev,
-        // Keep current loco if walking/jumping
         locomotion:
           prev.locomotion === "walk" ||
           prev.locomotion === "jump" ||
@@ -192,7 +191,6 @@ export function applyLayerRequest(
       };
     }
 
-    // Locomotion legacy
     if (
       !req.force &&
       now < prev.locoUntil &&
@@ -203,8 +201,11 @@ export function applyLayerRequest(
     return {
       ...prev,
       locomotion: mapped.locomotion,
-      locoUntil: req.holdMs ? now + req.holdMs : mapped.locomotion === "jump" ? now + 450 : 0,
-      // Clear social on sleep
+      locoUntil: req.holdMs
+        ? now + req.holdMs
+        : mapped.locomotion === "jump"
+          ? now + 450
+          : 0,
       social: mapped.locomotion === "sleep" ? "none" : prev.social,
       socialUntil: mapped.locomotion === "sleep" ? 0 : prev.socialUntil,
     };
@@ -221,13 +222,16 @@ export function applyLayerRequest(
     return {
       ...prev,
       locomotion: req.anim,
-      locoUntil: req.holdMs ? now + req.holdMs : req.anim === "jump" ? now + 450 : 0,
+      locoUntil: req.holdMs
+        ? now + req.holdMs
+        : req.anim === "jump"
+          ? now + 450
+          : 0,
       social: req.anim === "sleep" ? "none" : prev.social,
       socialUntil: req.anim === "sleep" ? 0 : prev.socialUntil,
     };
   }
 
-  // social channel
   if (
     !req.force &&
     prev.social !== "none" &&
@@ -239,11 +243,14 @@ export function applyLayerRequest(
   return {
     ...prev,
     social: req.anim,
-    socialUntil: req.holdMs ? now + req.holdMs : req.anim === "none" ? 0 : now + 1200,
+    socialUntil: req.holdMs
+      ? now + req.holdMs
+      : req.anim === "none"
+        ? 0
+        : now + 1200,
   };
 }
 
-/** Tick: expire holds, auto land after jump if grounded signal provided. */
 export function tickLayers(
   layers: AnimLayers,
   opts: { onGround: boolean; now?: number },
@@ -266,7 +273,6 @@ export function tickLayers(
     }
   }
 
-  // Grounded while marked fall → land
   if (next.locomotion === "fall" && opts.onGround) {
     next.locomotion = "land";
     next.locoUntil = now + 280;
