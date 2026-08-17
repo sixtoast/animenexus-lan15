@@ -25,7 +25,15 @@ export type AppUiEvent =
   | "scroll-fast"
   | "seal"
   | "complete"
-  | "empty-list";
+  | "empty-list"
+  | "page-view"
+  | "anime-open"
+  | "daily-checkin"
+  | "fusion-result"
+  | "challenge-complete"
+  | "night-mode"
+  | "first-visit"
+  | "pet-long";
 
 export type UiEventReaction = {
   intention: MascotIntention;
@@ -33,7 +41,6 @@ export type UiEventReaction = {
   anim?: MascotAnim;
   holdMs?: number;
   goal?: MascotGoal;
-  /** Prefer approaching this surface type */
   preferLandmark?: LandmarkType;
   approachUi?: boolean;
   thought?: string;
@@ -55,8 +62,8 @@ const REACTIONS: Record<AppUiEvent, UiEventReaction> = {
   "recommendation-engaged": {
     intention: "celebrate",
     emotionDeltas: { happiness: 0.14, confidence: 0.06, curiosity: 0.04 },
-    anim: "happy",
-    holdMs: 1000,
+    anim: "celebrate",
+    holdMs: 1200,
     goal: "celebrate",
     thought: "Good pick.",
     cooldownMs: 5_000,
@@ -81,7 +88,7 @@ const REACTIONS: Record<AppUiEvent, UiEventReaction> = {
   "watchlist-remove": {
     intention: "observe",
     emotionDeltas: { attention: 0.04 },
-    anim: "think",
+    anim: "nod",
     holdMs: 800,
     cooldownMs: 4_000,
   },
@@ -106,8 +113,8 @@ const REACTIONS: Record<AppUiEvent, UiEventReaction> = {
   "loading-long": {
     intention: "rest",
     emotionDeltas: { boredom: 0.12, sleepiness: 0.08, energy: -0.06 },
-    anim: "think",
-    holdMs: 2000,
+    anim: "sit",
+    holdMs: 2500,
     thought: "Still loading…",
     cooldownMs: 10_000,
   },
@@ -154,8 +161,8 @@ const REACTIONS: Record<AppUiEvent, UiEventReaction> = {
   complete: {
     intention: "celebrate",
     emotionDeltas: { happiness: 0.18, confidence: 0.08 },
-    anim: "happy",
-    holdMs: 1000,
+    anim: "celebrate",
+    holdMs: 1200,
     goal: "celebrate",
     thought: "Finished.",
     cooldownMs: 5_000,
@@ -167,6 +174,74 @@ const REACTIONS: Record<AppUiEvent, UiEventReaction> = {
     holdMs: 1500,
     thought: "Empty shelf.",
     cooldownMs: 8_000,
+  },
+  "page-view": {
+    intention: "observe",
+    emotionDeltas: { curiosity: 0.04, attention: 0.05 },
+    anim: "nod",
+    holdMs: 700,
+    thought: "New page.",
+    cooldownMs: 4_000,
+  },
+  "anime-open": {
+    intention: "inspect-recommendation",
+    emotionDeltas: { curiosity: 0.12, attention: 0.12, happiness: 0.06 },
+    anim: "point",
+    holdMs: 1100,
+    preferLandmark: "hero",
+    approachUi: true,
+    thought: "This one…",
+    cooldownMs: 6_000,
+  },
+  "daily-checkin": {
+    intention: "greet",
+    emotionDeltas: { happiness: 0.1, energy: 0.08 },
+    anim: "wave",
+    holdMs: 1100,
+    thought: "You’re back.",
+    cooldownMs: 12_000,
+  },
+  "fusion-result": {
+    intention: "celebrate",
+    emotionDeltas: { happiness: 0.12, curiosity: 0.1, energy: 0.08 },
+    anim: "celebrate",
+    holdMs: 1400,
+    goal: "celebrate",
+    thought: "Fusion!",
+    cooldownMs: 8_000,
+  },
+  "challenge-complete": {
+    intention: "celebrate",
+    emotionDeltas: { happiness: 0.16, confidence: 0.12, energy: 0.1 },
+    anim: "celebrate",
+    holdMs: 1600,
+    goal: "celebrate",
+    thought: "Challenge clear!",
+    cooldownMs: 10_000,
+  },
+  "night-mode": {
+    intention: "rest",
+    emotionDeltas: { sleepiness: 0.1, energy: -0.06 },
+    anim: "stretch",
+    holdMs: 1400,
+    thought: "Dim lights…",
+    cooldownMs: 8_000,
+  },
+  "first-visit": {
+    intention: "greet",
+    emotionDeltas: { curiosity: 0.1, happiness: 0.08 },
+    anim: "bow",
+    holdMs: 1300,
+    thought: "Hello.",
+    cooldownMs: 30_000,
+  },
+  "pet-long": {
+    intention: "bond",
+    emotionDeltas: { happiness: 0.14, stress: -0.1, confidence: 0.05 },
+    anim: "shy",
+    holdMs: 1500,
+    thought: "…soft.",
+    cooldownMs: 6_000,
   },
 };
 
@@ -186,7 +261,7 @@ export function parseAppEventName(name: string): AppUiEvent | null {
   const n = name.replace(/^animenexus:/, "").toLowerCase();
   const map: Record<string, AppUiEvent> = {
     "recommendation-generated": "recommendation-generated",
-    "recommendation": "recommendation-generated",
+    recommendation: "recommendation-generated",
     "recs-ready": "recommendation-generated",
     "recommendation-engaged": "recommendation-engaged",
     "rec-click": "recommendation-engaged",
@@ -205,6 +280,22 @@ export function parseAppEventName(name: string): AppUiEvent | null {
     seal: "seal",
     complete: "complete",
     "empty-list": "empty-list",
+    "page-view": "page-view",
+    "pageview": "page-view",
+    "anime-open": "anime-open",
+    "anime:open": "anime-open",
+    "daily-checkin": "daily-checkin",
+    "daily": "daily-checkin",
+    "fusion-result": "fusion-result",
+    "fusion": "fusion-result",
+    "challenge-complete": "challenge-complete",
+    "challenge": "challenge-complete",
+    "night-mode": "night-mode",
+    "night": "night-mode",
+    "first-visit": "first-visit",
+    "welcome": "first-visit",
+    "pet-long": "pet-long",
+    "long-pet": "pet-long",
   };
   return map[n] ?? null;
 }
