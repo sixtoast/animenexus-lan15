@@ -10,10 +10,9 @@ import {
   type AIProviderId,
   type AISettings,
 } from "@/lib/ai-settings";
-import { streamChatCompletions, testAIConnection } from "@/lib/ai-chat";
+import { testAIConnection } from "@/lib/ai-chat";
 import { runLanternAgent } from "@/lib/lantern-agent/run-agent";
 import { executeTool, type ToolName } from "@/lib/lantern-agent/tools";
-import { memoryDigestForAI } from "@/lib/lantern-memory";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { useToast } from "@/components/ToastProvider";
 import { Modal } from "@/components/ui/Modal";
@@ -39,7 +38,7 @@ export function AIPanel() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const { showToast } = useToast();
-  const { entries, add, remove } = useWatchlist();
+  const { add, remove } = useWatchlist();
 
   useEffect(() => {
     const s = readAISettings();
@@ -104,22 +103,6 @@ export function AIPanel() {
     } finally {
       setBusy(false);
     }
-  }
-
-  function systemPrompt() {
-    const watching = entries
-      .filter((e) => e.watchStatus === "watching")
-      .map((e) => e.title);
-    const completedCount = entries.filter(
-      (e) => e.watchStatus === "completed",
-    ).length;
-    const digest = memoryDigestForAI({ watching, completedCount });
-    return [
-      "You are Lantern — host of AnimeNexus, not a generic chatbot.",
-      "Speak warm, concise, anime-literate. No fake ARG codes or invented lists the user doesn't have.",
-      "Use the memory digest when relevant; if memory is empty, say so honestly.",
-      digest,
-    ].join("\n\n");
   }
 
   async function send(text: string) {
