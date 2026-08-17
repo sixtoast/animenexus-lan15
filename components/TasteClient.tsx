@@ -7,6 +7,12 @@ import { TasteExtras } from "@/components/TasteExtras";
 import { SignalBars } from "@/components/ui/SignalBars";
 import { computeTaste, statusLabel } from "@/lib/taste";
 import { readMemory } from "@/lib/lantern-memory";
+import {
+  userResonance,
+  describeUserResonance,
+  topResonanceDims,
+  resonanceLabel,
+} from "@/lib/resonance";
 import type { WatchStatus } from "@/lib/types";
 
 const STATUS_ORDER: WatchStatus[] = [
@@ -78,8 +84,6 @@ export function TasteClient() {
     if (!ready || entries.length === 0) return [] as string[];
     const s = computeTaste(entries);
     const m = readMemory();
-    const genreFromList: Record<string, number> = {};
-    // soft: use memory genre counts + status stats
     const topMem = Object.entries(m.genreCounts).sort((a, b) => b[1] - a[1])[0];
     const secondMem = Object.entries(m.genreCounts).sort(
       (a, b) => b[1] - a[1],
@@ -143,6 +147,10 @@ export function TasteClient() {
     .filter(Boolean)
     .join(" · ");
 
+  const resonance = userResonance(entries);
+  const resonanceLine = describeUserResonance(resonance);
+  const resonanceTop = topResonanceDims(resonance, 6);
+
   return (
     <div className="taste">
       {memNotes.length > 0 ? (
@@ -173,6 +181,60 @@ export function TasteClient() {
             <span>Highest rated on your list</span>
           </Link>
         ) : null}
+      </div>
+
+      <div className="taste-growth" style={{ marginTop: 16 }}>
+        <p className="taste-growth-kicker">Resonance profile</p>
+        <p className="taste-portrait-body" style={{ marginBottom: 10 }}>
+          {resonanceLine}
+        </p>
+        {resonanceTop.length ? (
+          <ul
+            className="taste-resonance-list"
+            style={{ listStyle: "none", padding: 0, margin: 0 }}
+          >
+            {resonanceTop.map(({ dim, value }) => (
+              <li
+                key={dim}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 6,
+                  fontSize: "0.9rem",
+                }}
+              >
+                <span style={{ minWidth: 120 }}>{resonanceLabel(dim)}</span>
+                <span
+                  style={{
+                    flex: 1,
+                    height: 6,
+                    borderRadius: 3,
+                    background: "rgba(255,255,255,0.08)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "block",
+                      height: "100%",
+                      width: `${Math.round(value * 100)}%`,
+                      background: "var(--accent, #c9a227)",
+                      borderRadius: 3,
+                    }}
+                  />
+                </span>
+                <span className="meta" style={{ minWidth: 36, textAlign: "right" }}>
+                  {Math.round(value * 100)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <p className="meta" style={{ marginTop: 8, opacity: 0.75 }}>
+          Heuristic emotional space from your shelf + memory — not a factual claim
+          about each title.
+        </p>
       </div>
 
       <div className="taste-grid">
