@@ -17,6 +17,7 @@ import {
 import { fireSeal } from "@/components/SealMoment";
 import { recordCompletion } from "@/lib/lantern-memory";
 import { emitNexus } from "@/lib/nexus";
+import { markRecAccepted } from "@/lib/recommend-feedback";
 
 type Ctx = {
   entries: WatchlistEntry[];
@@ -94,6 +95,7 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
           animeId: anime.id,
           title: anime.title,
         });
+        markRecAccepted(anime.id);
         if (status === "watching") {
           emitNexus({ type: "anime_started", animeId: anime.id });
         }
