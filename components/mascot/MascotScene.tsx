@@ -31,7 +31,7 @@ function Floor() {
       onClick={(e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
         const t = clampToHabitat(e.point.x, e.point.z);
-        dispatch({ type: "go-to", x: t.x, z: t.z });
+        dispatch({ type: "go-to", x: t.x, y: t.y });
       }}
     >
       <planeGeometry args={[1.4, 0.8]} />
