@@ -10,14 +10,21 @@ import {
 /** Legacy priority table (kept for canInterrupt compatibility). */
 export const ANIM_PRIORITY: Record<MascotAnim, number> = {
   sleep: 1,
+  sit: 2,
   idle: 2,
   walk: 3,
+  run: 4,
   land: 4,
   think: 4,
+  nod: 4,
+  stretch: 5,
   point: 5,
+  bow: 5,
+  shy: 5,
   jump: 6,
   wave: 6,
   happy: 7,
+  celebrate: 7,
   surprised: 8,
 };
 
@@ -43,7 +50,7 @@ export function preferredAmbient(
   hasTarget: boolean,
 ): MascotAnim {
   if (emotions.sleepiness > 0.72 && emotions.energy < 0.35) return "sleep";
-  if (hasTarget) return "walk";
+  if (hasTarget) return emotions.energy > 0.75 ? "run" : "walk";
   if (emotions.curiosity > 0.7 && emotions.boredom > 0.45) return "think";
   if (emotions.boredom > 0.65) return "think";
   return "idle";
