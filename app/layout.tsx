@@ -19,6 +19,7 @@ import { RouteTune } from "@/components/RouteTune";
 import { LanternMemoryBoot } from "@/components/LanternMemoryBoot";
 import { SealMomentHost } from "@/components/SealMoment";
 import { EnvironmentController } from "@/components/EnvironmentController";
+import { NexusRouteBeacon } from "@/components/NexusRouteBeacon";
 import { MascotHost } from "@/components/mascot/MascotHost";
 import { MascotErrorBoundary } from "@/components/mascot/MascotErrorBoundary";
 import "./globals.css";
@@ -94,6 +95,7 @@ export default function RootLayout({
               <WatchlistProvider>
                 <SessionProvider>
                   <LanternMemoryBoot />
+                  <NexusRouteBeacon />
                   <EnvironmentController />
                   <ScrollProgress />
                   <SakuraCanvas />
