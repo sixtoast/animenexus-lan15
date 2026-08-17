@@ -2,7 +2,7 @@
 
 /**
  * 3D companion host — calm in home pad; freer when out but always on-screen & reachable.
- * Sprint 21–22: throttled terrain; pause when hidden; interactions optional.
+ * Sprint 4: brain movement wired on mount; Actor no longer invents outings.
  */
 
 import { Canvas, useThree } from "@react-three/fiber";
@@ -27,6 +27,7 @@ import {
   type TerrainBody,
 } from "@/lib/mascot/terrain-physics";
 import { useMascotStore } from "@/lib/mascot/store";
+import { wireStoreMovement } from "@/lib/mascot/wire-movement";
 import { LIVE_LIGHTING, PALETTE, CANVAS_GL } from "@/lib/mascot/visual";
 import {
   budgetFor,
@@ -112,6 +113,10 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
   );
 
   const home = platforms.find((p) => p.id === "home-corner") ?? null;
+
+  useEffect(() => {
+    wireStoreMovement();
+  }, []);
 
   useEffect(() => {
     const onVis = () => setPageActive(isPageActive());
