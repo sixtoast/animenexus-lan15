@@ -2,20 +2,7 @@
 
 /**
  * Live page-terrain actor — physics + command execution only.
- *
- * Sprint 1: CharacterRenderer
- * Sprint 3: MovementCommand / store.target
- * Sprint 4: NO independent outing / roam / free-hop AI
- *
- * Actor may:
- *  - execute MovementCommand + store.target hop queues
- *  - run terrain physics, clamp, drag
- *  - micro-fidget inside home pad
- *  - return home after a command finishes (completion, not destination inventing)
- *
- * Actor may NOT:
- *  - schedule nextOuting / nextRoam / freeHop destinations
- *  - pickWanderPlatform for its own amusement
+ * Sprint 5: writes authoritative runtime body state every frame.
  */
 
 import { useFrame, useThree } from "@react-three/fiber";
@@ -55,9 +42,10 @@ import {
   peekMovementCommand,
   type MovementCommand,
 } from "@/lib/mascot/movement-command";
+import { writeRuntime, type Phase } from "@/lib/mascot/runtime";
 import { CharacterRenderer } from "./CharacterRenderer";
 
-export type Phase = "home" | "outing" | "returning" | "perform";
+export type { Phase };
 export type MascotScreenPos = { x: number; y: number; visible: boolean };
 
 function homeWorld(): { x: number; y: number } {
@@ -148,12 +136,9 @@ export function Actor({
     return () => window.clearInterval(id);
   }, []);
 
-  // External theatre events → MovementCommand (not Actor inventing destinations)
   useEffect(() => {
     const onTheatre = (e: Event) => {
       const detail = (e as CustomEvent).detail as {
-        clientX?: number;
-        clientY?: number;
         platformId?: string;
         x?: number;
         y?: number;
@@ -207,7 +192,6 @@ export function Actor({
     const freed =
       phase === "outing" || phase === "returning" || phase === "perform";
 
-    // ── Brain commands ────────────────────────────────────────────────
     const cmd = peekMovementCommand();
     if (!dragging && cmd && cmd.id !== activeCmdId.current) {
       const dest = resolveCommandDest(platforms, cmd);
@@ -250,7 +234,6 @@ export function Actor({
       }
     }
 
-    // Arrive at command dest
     if (
       activeCmdId.current &&
       queue.current.length === 0 &&
@@ -266,14 +249,16 @@ export function Actor({
         activeCmdId.current = null;
         useMascotStore.getState().setTarget(null);
 
-        if (body.platformId === "home-corner" || phaseRef.current === "returning") {
+        if (
+          body.platformId === "home-corner" ||
+          phaseRef.current === "returning"
+        ) {
           phaseRef.current = "home";
           if (home) bodyRef.current = snapToPlatform(bodyRef.current, home);
           setAnim(m.preferNap ? "sleep" : "idle");
           homeUntil.current = now + homeRestMs(m);
           returnAfterCmd.current = false;
         } else if (returnAfterCmd.current && home) {
-          // Completion path: go home after brain-directed outing (not ambient roam)
           returnAfterCmd.current = false;
           issueReturnHome(
             { x: home.x, y: home.y + home.hh },
@@ -309,7 +294,6 @@ export function Actor({
       clearMovementCommand();
       setAnim("surprised");
     } else if (phase === "home" && !brainDriving) {
-      // Home pad only — micro fidget, no self-initiated outing
       if (home) {
         padWander.current += dt;
         if (padWander.current > 3 + Math.random() * 2.5) {
@@ -345,7 +329,6 @@ export function Actor({
         setAnim("idle");
       }
     } else {
-      // Outing / returning — execute hop queue only
       if (
         phaseRef.current === "returning" &&
         queue.current.length === 0 &&
@@ -398,7 +381,6 @@ export function Actor({
         body.platformId !== "home-corner" &&
         now > homeUntil.current
       ) {
-        // Stuck outing with no brain command → return home
         phaseRef.current = "returning";
         issueReturnHome(
           { x: home.x, y: home.y + home.hh },
@@ -481,6 +463,20 @@ export function Actor({
     sx = Math.max(pad, Math.min(size.width - pad, sx));
     sy = Math.max(pad, Math.min(size.height - pad, sy));
     onScreenPos({ x: sx, y: sy, visible: true });
+
+    // Sprint 5 — single source of truth for body pose
+    writeRuntime({
+      x: b.x,
+      y: b.y,
+      vx: b.vx,
+      vy: b.vy ?? 0,
+      onGround: b.onGround,
+      platformId: b.platformId,
+      phase: phaseRef.current,
+      speed: speedRef.current,
+      screenX: sx,
+      screenY: sy,
+    });
   });
 
   const expression = expressionFromAnim(
