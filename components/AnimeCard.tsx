@@ -49,33 +49,58 @@ export function AnimeCard({ anime, index = 0 }: Props) {
 
   return (
     <Link
-      onMouseEnter={() => emitAnimeHoverStart(anime.id)}
-      onMouseLeave={() => emitAnimeHoverEnd(anime.id)}
       href={href}
       className={
-        "anime-card" +
-        (onList ? " on-list" : "") +
-        (recent ? " was-viewed" : "")
+        "anime-card grid-enter" +
+        (onList ? " is-sealed" : "") +
+        (recent && !onList ? " is-recent" : "")
       }
-      style={{ viewTransitionName: vt, animationDelay: `${Math.min(index, 12) * 30}ms` }}
+      title={anime.title}
+      data-on-list={onList ? "true" : "false"}
       onClick={navigate}
+      onMouseEnter={() => emitAnimeHoverStart(anime.id)}
+      onMouseLeave={() => emitAnimeHoverEnd(anime.id)}
+      style={
+        {
+          "--i": index,
+          "--vt-cover": vt,
+        } as React.CSSProperties
+      }
     >
-      <div className="poster-wrap">
+      {onList ? (
+        <span className="card-badge card-badge-sealed" aria-label="On watchlist">
+          Sealed
+        </span>
+      ) : recent ? (
+        <span className="card-badge card-badge-recent" aria-label="Recently opened">
+          Signal
+        </span>
+      ) : null}
+      {canOptimize ? (
         <Image
           src={src}
           alt=""
           width={300}
           height={450}
-          className="poster"
-          unoptimized={!canOptimize}
+          sizes="(max-width: 640px) 45vw, 160px"
+          style={{ viewTransitionName: vt } as React.CSSProperties}
         />
-        <span className="score-badge">{score}</span>
-      </div>
-      <div className="card-meta">
-        <h3 className="card-title">{anime.title}</h3>
-        <p className="card-sub">
-          {[anime.format, anime.year].filter(Boolean).join(" · ")}
-        </p>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt=""
+          loading="lazy"
+          style={{ viewTransitionName: vt } as React.CSSProperties}
+        />
+      )}
+      {anime.format ? <span className="card-tag">{anime.format}</span> : null}
+      <div className="card-body">
+        <div className="card-title">{anime.title}</div>
+        <div className="card-meta">
+          <span>{anime.year || "—"}</span>
+          <span className="card-score">★ {score}</span>
+        </div>
       </div>
     </Link>
   );
