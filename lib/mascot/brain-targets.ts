@@ -1,6 +1,6 @@
 /**
  * Sprint 5 — Map Director intentions to concrete page-world targets.
- * Keeps destination choice in the brain, not in Actor.
+ * Sprint 6 — Prefer climb sequence on climbable landmarks.
  */
 
 import {
@@ -12,6 +12,14 @@ import {
 import type { MascotIntention } from "./director";
 import type { WorldPoint } from "./world-coords";
 import { issueMovementCommand, issueReturnHome } from "./movement-command";
+import {
+  isSafeClimbTarget,
+  pickClimbTarget,
+  startBrainClimb,
+  type ClimbRunner,
+} from "./climbing";
+import { useMascotStore } from "./store";
+import { readRuntime } from "./runtime";
 
 function homePoint(): WorldPoint {
   if (typeof window === "undefined") return { x: 1.05, y: -0.72 };
@@ -38,7 +46,20 @@ function preferTypes(intention: MascotIntention): LandmarkType[] {
   }
 }
 
-/** Pick a live landmark target for an outing intention. */
+function makeClimbRunner(): ClimbRunner {
+  return {
+    setTarget: (t) => useMascotStore.getState().setTarget(t),
+    requestAnim: (req) => useMascotStore.getState().requestAnim(req),
+    setLookBias: (b) => useMascotStore.setState({ lookBias: b }),
+    setJump: () => useMascotStore.setState({ jumpQueued: true }),
+    setThought: (t) => useMascotStore.setState({ lastThought: t }),
+    getPosition: () => {
+      const r = readRuntime();
+      return { x: r.x, y: r.y };
+    },
+  };
+}
+
 export function targetForIntention(
   intention: MascotIntention,
 ): { point: WorldPoint; platformHint?: string; landmarkType?: string } | null {
@@ -53,7 +74,6 @@ export function targetForIntention(
   }
 
   if (intention === "celebrate") {
-    // Stay near current / center-ish
     return { point: { x: 0, y: -0.2 } };
   }
 
@@ -91,7 +111,6 @@ export function targetForIntention(
     }
   }
 
-  // Soft center wander if no landmarks scanned yet
   return {
     point: {
       x: (Math.random() - 0.5) * 0.8,
@@ -100,7 +119,10 @@ export function targetForIntention(
   };
 }
 
-/** Issue MovementCommand for intention if it needs travel. */
+/**
+ * Issue movement (or full climb) for intention.
+ * Climb preferred for investigate/play when a safe surface exists (~45%).
+ */
 export function issueForIntention(
   intention: MascotIntention,
   reason: string,
@@ -113,6 +135,23 @@ export function issueForIntention(
     const h = homePoint();
     issueReturnHome(h, reason);
     return h;
+  }
+
+  const wantClimb =
+    (intention === "investigate" ||
+      intention === "play" ||
+      intention === "inspect-recommendation") &&
+    Math.random() < 0.45;
+
+  if (wantClimb) {
+    const lm = pickClimbTarget();
+    if (lm && isSafeClimbTarget(lm)) {
+      const ms = startBrainClimb(makeClimbRunner(), lm.id);
+      if (ms > 0) {
+        const surface = landmarkToWorld(lm, "top") ?? landmarkToWorld(lm, "center");
+        return surface;
+      }
+    }
   }
 
   const resolved = targetForIntention(intention);
