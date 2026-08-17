@@ -2,73 +2,39 @@
  * Sprint 7 — Single expression resolution path.
  *
  * Priority (highest wins):
- *  1. Explicit social/gesture anim (wave, point, surprised, …)
- *  2. Locomotion-driven (walk / jump / land / sleep)
- *  3. Emotion baseline
+ *  1. Climb phase face
+ *  2. Explicit social/gesture anim (wave, point, surprised, …)
+ *  3. Locomotion-driven (walk / jump / land / sleep)
+ *  4. Emotion baseline
  *
- * CharacterRenderer / mesh should only consume the resolved ExpressionKey.
+ * ExpressionKey is the mesh-aligned set from expression.ts / LanternKoMeshV2.
  */
 
 import type { MascotAnim, MascotEmotions } from "./types";
+import {
+  expressionFromAnim as baseFromAnim,
+  expressionFromEmotions as baseFromEmotions,
+  type ExpressionKey,
+} from "./expression";
 
-/** Face keys used by procedural mesh + GLB morph/pose tables. */
-export type ExpressionKey =
-  | "neutral"
-  | "happy"
-  | "excited"
-  | "curious"
-  | "think"
-  | "sleepy"
-  | "surprised"
-  | "embarrassed"
-  | "annoyed"
-  | "proud"
-  | "confused"
-  | "sad"
-  | "focused"
-  | "playful"
-  | "wave";
-
-/** @deprecated alias — prefer ExpressionKey */
+export type { ExpressionKey };
+/** @deprecated alias */
 export type MascotExpression = ExpressionKey;
-
-const ANIM_FACE: Partial<Record<MascotAnim, ExpressionKey>> = {
-  happy: "happy",
-  wave: "wave",
-  think: "think",
-  sleep: "sleepy",
-  surprised: "surprised",
-  point: "curious",
-  jump: "excited",
-  land: "happy",
-  walk: "focused",
-  idle: "neutral",
-};
 
 export function expressionFromAnim(
   anim: MascotAnim,
   fallback: ExpressionKey = "neutral",
 ): ExpressionKey {
-  return ANIM_FACE[anim] ?? fallback;
+  return baseFromAnim(anim, fallback);
 }
 
 export function expressionFromEmotions(e: MascotEmotions): ExpressionKey {
-  if (e.stress > 0.65) return "annoyed";
-  if (e.sleepiness > 0.7) return "sleepy";
-  if (e.happiness > 0.75 && e.energy > 0.6) return "excited";
-  if (e.happiness > 0.6) return "happy";
-  if (e.curiosity > 0.65) return "curious";
-  if (e.confidence > 0.7 && e.happiness > 0.45) return "proud";
-  if (e.boredom > 0.65) return "confused";
-  if (e.attention > 0.7) return "focused";
-  if (e.energy > 0.75 && e.happiness > 0.4) return "playful";
-  return "neutral";
+  return baseFromEmotions(e);
 }
 
 export type ExpressionResolveInput = {
   anim: MascotAnim;
   emotions: MascotEmotions;
-  /** Social layer still holding a gesture */
   socialActive?: boolean;
   climbPhase?: string | null;
 };
