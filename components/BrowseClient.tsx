@@ -14,6 +14,7 @@ import {
   yearOptions,
 } from "@/lib/genres";
 import type { Anime } from "@/lib/types";
+import { emitNexus } from "@/lib/nexus";
 
 type Props = {
   initialItems: Anime[];
@@ -90,15 +91,23 @@ export function BrowseClient({
   );
 
   const applyFilters = () => {
+    const query = q.trim();
     pushParams({
-      q: q.trim() || undefined,
+      q: query || undefined,
       genre: genre || undefined,
       status: status || undefined,
       format: format || undefined,
       year: year || undefined,
       sort: sort || "score",
-      feed: q.trim() || genre || status || format || year ? undefined : feed,
+      feed: query || genre || status || format || year ? undefined : feed,
     });
+    if (query) {
+      emitNexus({ type: "search_performed", query });
+    }
+    if (genre) emitNexus({ type: "filter_used", filter: `genre:${genre}` });
+    if (status) emitNexus({ type: "filter_used", filter: `status:${status}` });
+    if (format) emitNexus({ type: "filter_used", filter: `format:${format}` });
+    if (year) emitNexus({ type: "filter_used", filter: `year:${year}` });
   };
 
   const resetFilters = () => {
