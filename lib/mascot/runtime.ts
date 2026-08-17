@@ -3,12 +3,9 @@
  *
  * Actor writes body pose here every frame.
  * Director / debug / UI read it — do not invent a second pose.
- *
- * Store.position remains a soft mirror for React subscribers;
- * this module is the ground truth for x/y/platform/phase/speed.
  */
 
-import type { Phase } from "@/components/mascot/Actor";
+export type Phase = "home" | "outing" | "returning" | "perform";
 
 export type RuntimeBody = {
   x: number;
@@ -19,7 +16,6 @@ export type RuntimeBody = {
   platformId: string | null;
   phase: Phase;
   speed: number;
-  /** Screen CSS pixels (drag handle) */
   screenX: number;
   screenY: number;
   updatedAt: number;
@@ -57,10 +53,7 @@ export function readRuntime(): RuntimeBody {
 }
 
 export function runtimeIsHome(): boolean {
-  return (
-    runtime.phase === "home" ||
-    runtime.platformId === "home-corner"
-  );
+  return runtime.phase === "home" || runtime.platformId === "home-corner";
 }
 
 export function runtimeIsBusyMoving(): boolean {
