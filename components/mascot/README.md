@@ -1,32 +1,25 @@
 # Lantern-ko mascot components
 
-## Live production path (actual)
+## Live production path
 
 ```
 MascotHost → LiveTerrain → Actor → CharacterRenderer
-                                      ├── GltfCompanion
-                                      └── LanternKoMeshV2
 ```
 
-## Brain → body (Sprint 3)
+## Authority (Sprint 4)
 
-```
-Director / store / UI
-  → MovementCommand (lib/mascot/movement-command.ts)
-  → Actor hop queue / steer
-  → bodyRef (runtime pose)
-```
+| Layer | Owns |
+|--------|------|
+| Director / store | *why* and *where* (intentions, targets, MovementCommand) |
+| Actor | *how* (physics, hop queue, clamp, drag) |
+| CharacterRenderer | *looks* (mesh only) |
 
-Actor also follows `store.target` when present.
-Ambient roam is suppressed while a command is active.
-
-## Coordinates (Sprint 2)
-
-Canonical page world `x` / `y` — `lib/mascot/world-coords.ts`
+Actor **does not** schedule `nextOuting` / free-hop / random roam.
 
 ## Sprint status
 
 - [x] Sprint 1 — CharacterRenderer
-- [x] Sprint 2 — Unified x/y
-- [x] Sprint 3 — MovementCommand channel
-- [ ] Sprint 4 — Remove Actor timer AI
+- [x] Sprint 2 — Page world x/y
+- [x] Sprint 3 — MovementCommand
+- [x] Sprint 4 — Actor pure executor
+- [ ] Sprint 5+ — runtime state, climb system unification, …
