@@ -1,23 +1,25 @@
 /**
  * Sprint 11 — Physical UI interactions
- * Sprint 14 — Climb phases on climbable surfaces
- * Sprint 2 — habitat.x/z maps to page world x/y (z mirrors y)
+ * Sprint 6 — Climb sequences go through lib/mascot/climbing.ts
  */
 
 import type { MascotAnim } from "./types";
 import type { MascotIntention } from "./director";
 import type { Landmark, LandmarkType, InteractionPoint } from "./ui-registry";
 import {
-  landmarkToHabitat,
+  landmarkToWorld,
   preferredPoint,
   pickInterestingLandmark,
   listByType,
 } from "./ui-registry";
 import { COMPANION } from "./personality";
-import { isSafeClimbTarget } from "./climbing";
+import {
+  executeClimb,
+  isSafeClimbTarget,
+  type ClimbRunner,
+} from "./climbing";
 import type { WorldPoint } from "./world-coords";
 
-/** Step target — z is legacy alias for y */
 export type StepTarget = { x: number; y?: number; z?: number };
 
 export type UiInteractStep = {
@@ -36,6 +38,8 @@ export type UiInteractPlan = {
   label: string;
   steps: UiInteractStep[];
   totalMs: number;
+  /** When set, execute via climbing module instead of step list */
+  climbLandmark?: Landmark;
 };
 
 const lastPlanAt = new Map<string, number>();
@@ -47,11 +51,11 @@ function axisY(p: StepTarget): number {
   return 0;
 }
 
-function pointToHabitat(
+function pointToWorld(
   lm: Landmark,
   kind: InteractionPoint["kind"],
-): StepTarget | null {
-  return landmarkToHabitat(lm, kind);
+): WorldPoint | null {
+  return landmarkToWorld(lm, kind);
 }
 
 function clientOf(
@@ -62,104 +66,8 @@ function clientOf(
   return p ? { x: p.clientX, y: p.clientY } : null;
 }
 
-function planClimbSequence(lm: Landmark): UiInteractStep[] {
-  const edge = pointToHabitat(lm, "edge");
-  const top = pointToHabitat(lm, "top");
-  const header = pointToHabitat(lm, "header");
-  const center = pointToHabitat(lm, "center");
-  const surface = header ?? top ?? center;
-  const approach = edge
-    ? { x: edge.x * 0.9, z: Math.min(axisY(edge) + 0.06, 0.22) }
-    : surface
-      ? { x: surface.x * 0.9, z: Math.min(axisY(surface) + 0.06, 0.22) }
-      : null;
-
-  const look = (kind: InteractionPoint["kind"]) => {
-    const c = clientOf(lm, kind);
-    return c ? { lookClient: c } : {};
-  };
-
-  return [
-    {
-      habitat: approach,
-      anim: "walk",
-      holdMs: 700,
-      ...look("edge"),
-      thought: "Up there…",
-      delayMs: 0,
-    },
-    {
-      habitat: approach,
-      anim: "idle",
-      holdMs: 280,
-      ...look("top"),
-      thought: "Ready.",
-      delayMs: 50,
-    },
-    {
-      habitat: surface,
-      anim: "jump",
-      holdMs: 420,
-      jump: true,
-      ...look("top"),
-      delayMs: 40,
-    },
-    {
-      habitat: surface,
-      anim: "point",
-      holdMs: 220,
-      ...look("header"),
-      thought: "Got it.",
-      delayMs: 40,
-    },
-    {
-      habitat: surface,
-      anim: "jump",
-      holdMs: 380,
-      jump: true,
-      delayMs: 40,
-    },
-    {
-      habitat: surface,
-      anim: "idle",
-      holdMs: 450,
-      thought: "Steady…",
-      delayMs: 40,
-    },
-    {
-      habitat: surface,
-      anim: "think",
-      holdMs: 1600,
-      ...look("center"),
-      thought: lm.type === "modal" ? "Nice view." : "Comfy.",
-      delayMs: 40,
-    },
-    {
-      habitat: approach
-        ? { x: approach.x * 0.5, z: axisY(approach) * 0.5 }
-        : { x: 0.28, z: 0.1 },
-      anim: "jump",
-      holdMs: 350,
-      jump: true,
-      thought: "Down.",
-      delayMs: 80,
-    },
-    {
-      habitat: { x: 0.32, z: 0.08 },
-      anim: "idle",
-      holdMs: 500,
-      delayMs: 40,
-    },
-  ];
-}
-
 function planFor(lm: Landmark): UiInteractPlan {
-  const steps: UiInteractStep[] = [];
-  const look = (kind: InteractionPoint["kind"]) => {
-    const c = clientOf(lm, kind);
-    return c ? { lookClient: c } : {};
-  };
-
+  // Unified climb path
   if (
     isSafeClimbTarget(lm) &&
     (lm.type === "card" ||
@@ -167,25 +75,27 @@ function planFor(lm: Landmark): UiInteractPlan {
       lm.type === "hero" ||
       lm.type === "rail")
   ) {
-    const climbSteps = planClimbSequence(lm);
-    const totalMs = climbSteps.reduce(
-      (s, st) => s + (st.delayMs ?? 0) + (st.holdMs ?? 600),
-      0,
-    );
     return {
       landmarkId: lm.id,
       type: lm.type,
       label: `climb:${lm.type}`,
-      steps: climbSteps,
-      totalMs: Math.min(totalMs, 14_000),
+      steps: [],
+      totalMs: 12_000,
+      climbLandmark: lm,
     };
   }
+
+  const steps: UiInteractStep[] = [];
+  const look = (kind: InteractionPoint["kind"]) => {
+    const c = clientOf(lm, kind);
+    return c ? { lookClient: c } : {};
+  };
 
   switch (lm.type) {
     case "card":
     case "rail": {
-      const thumb = pointToHabitat(lm, "thumb");
-      const label = pointToHabitat(lm, "label");
+      const thumb = pointToWorld(lm, "thumb");
+      const label = pointToWorld(lm, "label");
       steps.push(
         {
           habitat: thumb,
@@ -195,9 +105,8 @@ function planFor(lm: Landmark): UiInteractPlan {
           delayMs: 0,
         },
         {
-          anim: lm.climbable ? "jump" : "point",
-          holdMs: lm.climbable ? 450 : 900,
-          jump: lm.climbable,
+          anim: "point",
+          holdMs: 900,
           ...look("thumb"),
           delayMs: 400,
         },
@@ -209,55 +118,11 @@ function planFor(lm: Landmark): UiInteractPlan {
           thought: "Title check.",
           delayMs: 500,
         },
-        {
-          anim: "point",
-          holdMs: 1100,
-          ...look("center"),
-          delayMs: 200,
-        },
-      );
-      break;
-    }
-    case "modal": {
-      const edge = pointToHabitat(lm, "edge");
-      const header = pointToHabitat(lm, "header");
-      const top = pointToHabitat(lm, "top");
-      steps.push(
-        {
-          habitat: edge,
-          anim: "walk",
-          ...look("edge"),
-          thought: "Big panel…",
-          delayMs: 0,
-        },
-        {
-          anim: "jump",
-          holdMs: 500,
-          jump: true,
-          ...look("header"),
-          delayMs: 350,
-        },
-        {
-          habitat: header,
-          anim: "point",
-          holdMs: 900,
-          ...look("header"),
-          thought: "Peek.",
-          delayMs: 400,
-        },
-        {
-          habitat: top,
-          anim: "think",
-          holdMs: 1400,
-          ...look("center"),
-          delayMs: 200,
-        },
       );
       break;
     }
     case "search": {
-      const label = pointToHabitat(lm, "label");
-      const center = pointToHabitat(lm, "center");
+      const label = pointToWorld(lm, "label");
       steps.push(
         {
           habitat: label,
@@ -267,24 +132,16 @@ function planFor(lm: Landmark): UiInteractPlan {
           delayMs: 0,
         },
         {
-          habitat: center,
           anim: "think",
           holdMs: 1500,
           ...look("center"),
-          thought: "Searching… sort of.",
           delayMs: 400,
-        },
-        {
-          anim: "point",
-          holdMs: 800,
-          ...look("center"),
-          delayMs: 200,
         },
       );
       break;
     }
     case "button": {
-      const center = pointToHabitat(lm, "center");
+      const center = pointToWorld(lm, "center");
       steps.push(
         {
           habitat: center,
@@ -299,151 +156,11 @@ function planFor(lm: Landmark): UiInteractPlan {
           thought: "Press?",
           delayMs: 300,
         },
-        {
-          anim: "happy",
-          holdMs: 600,
-          delayMs: 200,
-        },
       );
       break;
     }
-    case "dropdown": {
-      const center = pointToHabitat(lm, "center");
-      steps.push(
-        {
-          habitat: center ? { x: center.x + 0.08, z: axisY(center) } : null,
-          anim: "walk",
-          ...look("center"),
-          thought: "Hide…",
-          delayMs: 0,
-        },
-        {
-          anim: "think",
-          holdMs: 1200,
-          ...look("center"),
-          delayMs: 300,
-        },
-      );
-      break;
-    }
-    case "notification": {
-      const top = pointToHabitat(lm, "top");
-      steps.push(
-        {
-          habitat: top,
-          anim: "walk",
-          ...look("top"),
-          thought: "A signal.",
-          delayMs: 0,
-        },
-        {
-          anim: "surprised",
-          holdMs: 600,
-          ...look("center"),
-          delayMs: 250,
-        },
-        {
-          anim: "point",
-          holdMs: 900,
-          delayMs: 150,
-        },
-      );
-      break;
-    }
-    case "carousel": {
-      const a = pointToHabitat(lm, "thumb");
-      const b = pointToHabitat(lm, "label");
-      steps.push(
-        {
-          habitat: a,
-          anim: "walk",
-          ...look("thumb"),
-          delayMs: 0,
-        },
-        {
-          anim: "jump",
-          holdMs: 450,
-          jump: true,
-          delayMs: 300,
-        },
-        {
-          habitat: b,
-          anim: "walk",
-          ...look("label"),
-          thought: "Next card.",
-          delayMs: 200,
-        },
-        {
-          anim: "point",
-          holdMs: 800,
-          delayMs: 200,
-        },
-      );
-      break;
-    }
-    case "progress": {
-      const start = pointToHabitat(lm, "edge");
-      const end =
-        lm.points.find(
-          (p) => p.kind === "edge" && p !== preferredPoint(lm, "edge"),
-        ) || preferredPoint(lm, "edge");
-      const endHab = end
-        ? landmarkToHabitat({ ...lm, points: [end, ...lm.points] }, "edge")
-        : start;
-      steps.push(
-        {
-          habitat: start,
-          anim: "walk",
-          ...look("edge"),
-          thought: "Along the bar.",
-          delayMs: 0,
-        },
-        {
-          habitat: endHab,
-          anim: "walk",
-          delayMs: 400,
-        },
-        {
-          anim: "happy",
-          holdMs: 700,
-          delayMs: 200,
-        },
-      );
-      break;
-    }
-    case "hero": {
-      const top = pointToHabitat(lm, "top");
-      const center = pointToHabitat(lm, "center");
-      steps.push(
-        {
-          habitat: top,
-          anim: "walk",
-          ...look("top"),
-          delayMs: 0,
-        },
-        {
-          habitat: center,
-          anim: "jump",
-          holdMs: 450,
-          jump: true,
-          delayMs: 300,
-        },
-        {
-          anim: "point",
-          holdMs: 1000,
-          ...look("center"),
-          thought: "Big one.",
-          delayMs: 200,
-        },
-      );
-      break;
-    }
-    case "tab":
-    case "navbar":
-    case "nav":
-    case "sidebar":
     default: {
-      const center = pointToHabitat(lm, "center");
+      const center = pointToWorld(lm, "center");
       steps.push(
         {
           habitat: center,
@@ -552,6 +269,21 @@ export function executeUiInteraction(
   plan: UiInteractPlan,
   runner: UiInteractRunner,
 ): number {
+  if (plan.climbLandmark) {
+    const climbRunner: ClimbRunner = {
+      setTarget: runner.setTarget,
+      requestAnim: runner.requestAnim,
+      setLookBias: runner.setLookBias,
+      setJump: runner.setJump,
+      setThought: runner.setThought,
+      getPosition: () => {
+        // Soft default; Actor/runtime is authoritative
+        return { x: 0, y: -0.5 };
+      },
+    };
+    return executeClimb(plan.climbLandmark, climbRunner);
+  }
+
   let t = 0;
   for (const step of plan.steps) {
     const delay = t + (step.delayMs ?? 0);
