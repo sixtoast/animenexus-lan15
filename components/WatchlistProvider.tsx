@@ -16,6 +16,7 @@ import {
 } from "@/lib/watchlist-storage";
 import { fireSeal } from "@/components/SealMoment";
 import { recordCompletion } from "@/lib/lantern-memory";
+import { emitNexus } from "@/lib/nexus";
 
 type Ctx = {
   entries: WatchlistEntry[];
@@ -87,6 +88,23 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
         next = [animeToEntry(anime, status), ...prev];
       }
       writeWatchlist(next);
+      queueMicrotask(() => {
+        emitNexus({
+          type: "anime_added",
+          animeId: anime.id,
+          title: anime.title,
+        });
+        if (status === "watching") {
+          emitNexus({ type: "anime_started", animeId: anime.id });
+        }
+        if (status === "completed") {
+          emitNexus({
+            type: "anime_completed",
+            animeId: anime.id,
+            title: anime.title,
+          });
+        }
+      });
       return next;
     });
   }, []);
@@ -95,6 +113,9 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
     setEntries((prev) => {
       const next = prev.filter((e) => e.id !== id);
       writeWatchlist(next);
+      queueMicrotask(() => {
+        emitNexus({ type: "anime_removed", animeId: id });
+      });
       return next;
     });
   }, []);
@@ -109,7 +130,16 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
       );
       writeWatchlist(next);
 
-      // Quiet completion — only when transitioning into completed
+      if (
+        status === "dropped" &&
+        current &&
+        current.watchStatus !== "dropped"
+      ) {
+        queueMicrotask(() => {
+          emitNexus({ type: "anime_dropped", animeId: id });
+        });
+      }
+
       if (
         status === "completed" &&
         current &&
@@ -118,6 +148,11 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
         queueMicrotask(() => {
           fireSeal(current.title, "completed");
           recordCompletion({ id: current.id, title: current.title });
+          emitNexus({
+            type: "anime_completed",
+            animeId: current.id,
+            title: current.title,
+          });
         });
       }
 
