@@ -1,22 +1,24 @@
 /**
  * Sprint 14 — Climbing system
+ * Sprint 6 — Unified on page-world x/y; issued by brain, not Actor AI
  *
- * Believable geometry interaction, not teleport:
- * approach → anticipate → jump → grab → pull-up → balance → sit
- * dismount / fall → recovery
- *
- * Sprint 15 safety hooks: only climbable + visible + open platforms.
+ * Phases: approach → anticipate → jump → grab → pull-up → balance → sit
+ *         → dismount → recover
  */
 
 import type { MascotAnim } from "./types";
 import type { Landmark } from "./ui-registry";
 import {
-  landmarkToHabitat,
+  landmarkToWorld,
   preferredPoint,
   listLandmarks,
   refreshLandmarkRects,
 } from "./ui-registry";
-import { clampToHabitat, distXZ, type NavTarget } from "./navigation";
+import { clampWorld, distWorld, type WorldPoint } from "./world-coords";
+import {
+  issueMovementCommand,
+  clearMovementCommand,
+} from "./movement-command";
 
 export type ClimbPhase =
   | "idle"
@@ -34,7 +36,7 @@ export type ClimbPhase =
 export type ClimbState = {
   phase: ClimbPhase;
   landmarkId: string | null;
-  surface: { x: number; z: number } | null;
+  surface: WorldPoint | null;
   startedAt: number;
   phaseUntil: number;
 };
@@ -47,18 +49,28 @@ export const IDLE_CLIMB: ClimbState = {
   phaseUntil: 0,
 };
 
+let climbState: ClimbState = { ...IDLE_CLIMB };
+
+export function getClimbState(): ClimbState {
+  return climbState;
+}
+
+export function setClimbState(s: ClimbState) {
+  climbState = s;
+}
+
 export type ClimbStep = {
   phase: ClimbPhase;
   durationMs: number;
   anim: MascotAnim;
   force?: boolean;
   jump?: boolean;
-  target?: NavTarget | null;
+  target?: WorldPoint | null;
+  platformId?: string;
   lookClient?: { x: number; y: number };
   thought?: string;
 };
 
-/** Safety: platform must be climbable, visible, open, on-screen, large enough */
 export function isSafeClimbTarget(lm: Landmark): boolean {
   if (!lm.climbable || !lm.visible || !lm.open) return false;
   if (!lm.rect) return false;
@@ -66,16 +78,12 @@ export function isSafeClimbTarget(lm: Landmark): boolean {
   if (r.width < 64 || r.height < 48) return false;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  // Must be substantially on-screen
   if (r.bottom < 40 || r.top > vh - 40) return false;
   if (r.right < 40 || r.left > vw - 40) return false;
-  // Reject near-invisible / zero opacity is handled at registration time
   return true;
 }
 
-export function pickClimbTarget(
-  preferId?: string,
-): Landmark | null {
+export function pickClimbTarget(preferId?: string): Landmark | null {
   refreshLandmarkRects();
   const all = listLandmarks().filter(isSafeClimbTarget);
   if (!all.length) return null;
@@ -83,7 +91,6 @@ export function pickClimbTarget(
     const hit = all.find((l) => l.id === preferId);
     if (hit) return hit;
   }
-  // Prefer cards / modals / hero by score
   let best: Landmark | null = null;
   let bestScore = -Infinity;
   for (const lm of all) {
@@ -104,27 +111,25 @@ export function pickClimbTarget(
   return best;
 }
 
-function edgeHabitat(lm: Landmark): NavTarget | null {
-  // Approach from below / side of surface
-  const edge = landmarkToHabitat(lm, "edge");
-  const top = landmarkToHabitat(lm, "top");
-  const center = landmarkToHabitat(lm, "center");
+function edgeWorld(lm: Landmark): WorldPoint | null {
+  const edge = landmarkToWorld(lm, "edge");
+  const top = landmarkToWorld(lm, "top");
+  const center = landmarkToWorld(lm, "center");
   const base = edge ?? top ?? center;
   if (!base) return null;
-  // Stand slightly in front of surface
-  return clampToHabitat(base.x * 0.9, Math.min(base.z + 0.06, 0.22));
+  return clampWorld(base.x * 0.9, Math.min(base.y + 0.06, 0.85));
 }
 
-function surfaceHabitat(lm: Landmark): NavTarget | null {
+function surfaceWorld(lm: Landmark): WorldPoint | null {
   const kind =
     lm.type === "modal"
       ? "header"
       : lm.type === "card" || lm.type === "hero"
         ? "top"
         : "center";
-  const hab = landmarkToHabitat(lm, kind);
-  if (!hab) return null;
-  return clampToHabitat(hab.x * 0.85, hab.z * 0.85);
+  const w = landmarkToWorld(lm, kind);
+  if (!w) return null;
+  return clampWorld(w.x * 0.85, w.y * 0.85);
 }
 
 function lookOf(lm: Landmark, kind: "edge" | "top" | "header" | "center") {
@@ -132,19 +137,19 @@ function lookOf(lm: Landmark, kind: "edge" | "top" | "header" | "center") {
   return p ? { x: p.clientX, y: p.clientY } : undefined;
 }
 
-/** Build full climb sequence for a landmark */
 export function planClimb(lm: Landmark): ClimbStep[] | null {
   if (!isSafeClimbTarget(lm)) return null;
-  const approach = edgeHabitat(lm);
-  const surface = surfaceHabitat(lm);
+  const approach = edgeWorld(lm);
+  const surface = surfaceWorld(lm);
   if (!approach || !surface) return null;
 
-  const steps: ClimbStep[] = [
+  return [
     {
       phase: "approach",
       durationMs: 700,
       anim: "walk",
       target: approach,
+      platformId: lm.id,
       lookClient: lookOf(lm, "edge"),
       thought: "Up there…",
     },
@@ -153,6 +158,7 @@ export function planClimb(lm: Landmark): ClimbStep[] | null {
       durationMs: 280,
       anim: "idle",
       target: approach,
+      platformId: lm.id,
       lookClient: lookOf(lm, "top"),
       thought: "Ready.",
     },
@@ -163,6 +169,7 @@ export function planClimb(lm: Landmark): ClimbStep[] | null {
       force: true,
       jump: true,
       target: surface,
+      platformId: lm.id,
       lookClient: lookOf(lm, "top"),
     },
     {
@@ -171,6 +178,7 @@ export function planClimb(lm: Landmark): ClimbStep[] | null {
       anim: "point",
       force: true,
       target: surface,
+      platformId: lm.id,
       lookClient: lookOf(lm, "header"),
       thought: "Got it.",
     },
@@ -181,12 +189,14 @@ export function planClimb(lm: Landmark): ClimbStep[] | null {
       force: true,
       jump: true,
       target: surface,
+      platformId: lm.id,
     },
     {
       phase: "balance",
       durationMs: 450,
       anim: "idle",
       target: surface,
+      platformId: lm.id,
       thought: "Steady…",
     },
     {
@@ -194,18 +204,23 @@ export function planClimb(lm: Landmark): ClimbStep[] | null {
       durationMs: 1800,
       anim: "think",
       target: surface,
+      platformId: lm.id,
       lookClient: lookOf(lm, "center"),
       thought: lm.type === "modal" ? "Nice view." : "Comfy.",
     },
   ];
-  return steps;
 }
 
-/** Dismount back toward home / habitat center */
-export function planDismount(from: NavTarget | null): ClimbStep[] {
-  const home = clampToHabitat(0.28, 0.1);
+function homePoint(): WorldPoint {
+  if (typeof window === "undefined") return { x: 1.05, y: -0.72 };
+  const aspect = window.innerWidth / (window.innerHeight || 1);
+  return { x: Math.min(aspect * 0.78, 1.32), y: -0.72 };
+}
+
+export function planDismount(from: WorldPoint | null): ClimbStep[] {
+  const home = homePoint();
   const mid = from
-    ? clampToHabitat((from.x + home.x) / 2, (from.z + home.z) / 2)
+    ? clampWorld((from.x + home.x) / 2, (from.y + home.y) / 2)
     : home;
   return [
     {
@@ -222,20 +237,20 @@ export function planDismount(from: NavTarget | null): ClimbStep[] {
       durationMs: 500,
       anim: "idle",
       target: home,
+      platformId: "home-corner",
     },
   ];
 }
 
-/** Fall recovery if climb aborted mid-air */
-export function planFall(from: NavTarget | null): ClimbStep[] {
-  const home = clampToHabitat(0.3, 0.08);
+export function planFall(from: WorldPoint | null): ClimbStep[] {
+  const home = homePoint();
   return [
     {
       phase: "fall",
       durationMs: 300,
       anim: "surprised",
       force: true,
-      target: from ? clampToHabitat(from.x, from.z * 0.5) : home,
+      target: from ? clampWorld(from.x, from.y * 0.5) : home,
       thought: "Whoa—",
     },
     {
@@ -243,12 +258,13 @@ export function planFall(from: NavTarget | null): ClimbStep[] {
       durationMs: 600,
       anim: "idle",
       target: home,
+      platformId: "home-corner",
     },
   ];
 }
 
 export type ClimbRunner = {
-  setTarget: (t: NavTarget | null) => void;
+  setTarget: (t: WorldPoint | null) => void;
   requestAnim: (req: {
     anim: MascotAnim;
     holdMs?: number;
@@ -257,8 +273,7 @@ export type ClimbRunner = {
   setLookBias: (b: { x: number; y: number }) => void;
   setJump: () => void;
   setThought: (t: string) => void;
-  setClimbState: (s: ClimbState) => void;
-  getPosition: () => NavTarget;
+  getPosition: () => WorldPoint;
 };
 
 let activeTimers: number[] = [];
@@ -268,18 +283,30 @@ function clearClimbTimers() {
   activeTimers = [];
 }
 
+function issueStepMove(step: ClimbStep, reason: string) {
+  if (!step.target) return;
+  issueMovementCommand({
+    target: step.target,
+    platformId: step.platformId,
+    mode: step.jump ? "jump" : "walk",
+    speed: step.jump ? 1.25 : 1,
+    urgency: 0.85,
+    interruptible: false,
+    reason,
+    ttlMs: step.durationMs + 4000,
+  });
+}
+
 /**
- * Execute a climb plan. Returns total ms and aborts previous climb timers.
+ * Execute climb via MovementCommands + phase state.
+ * Returns total duration ms.
  */
-export function executeClimb(
-  lm: Landmark,
-  runner: ClimbRunner,
-): number {
+export function executeClimb(lm: Landmark, runner: ClimbRunner): number {
   const steps = planClimb(lm);
   if (!steps) return 0;
   clearClimbTimers();
 
-  const surface = surfaceHabitat(lm);
+  const surface = surfaceWorld(lm);
   let t = 0;
   const startedAt = Date.now();
 
@@ -287,7 +314,7 @@ export function executeClimb(
     const delay = t;
     const phaseUntil = startedAt + t + step.durationMs;
     const timer = window.setTimeout(() => {
-      runner.setClimbState({
+      setClimbState({
         phase: step.phase,
         landmarkId: lm.id,
         surface,
@@ -300,7 +327,10 @@ export function executeClimb(
           y: (step.lookClient.y / window.innerHeight - 0.5) * 2,
         });
       }
-      if (step.target !== undefined) runner.setTarget(step.target);
+      if (step.target !== undefined) {
+        runner.setTarget(step.target);
+        issueStepMove(step, `climb:${step.phase}`);
+      }
       if (step.jump) runner.setJump();
       runner.requestAnim({
         anim: step.anim,
@@ -313,20 +343,22 @@ export function executeClimb(
     t += step.durationMs;
   }
 
-  // Auto-dismount after sit
   const dismountSteps = planDismount(surface);
   for (const step of dismountSteps) {
     const delay = t;
     const phaseUntil = startedAt + t + step.durationMs;
     const timer = window.setTimeout(() => {
-      runner.setClimbState({
+      setClimbState({
         phase: step.phase,
         landmarkId: step.phase === "recover" ? null : lm.id,
         surface: step.phase === "recover" ? null : surface,
         startedAt,
         phaseUntil,
       });
-      if (step.target !== undefined) runner.setTarget(step.target);
+      if (step.target !== undefined) {
+        runner.setTarget(step.target);
+        issueStepMove(step, `climb:${step.phase}`);
+      }
       if (step.jump) runner.setJump();
       runner.requestAnim({
         anim: step.anim,
@@ -335,7 +367,8 @@ export function executeClimb(
       });
       if (step.thought) runner.setThought(step.thought);
       if (step.phase === "recover") {
-        runner.setClimbState({ ...IDLE_CLIMB });
+        setClimbState({ ...IDLE_CLIMB });
+        clearMovementCommand();
       }
     }, delay);
     activeTimers.push(timer);
@@ -345,7 +378,6 @@ export function executeClimb(
   return t;
 }
 
-/** Abort climb with fall recovery */
 export function abortClimb(runner: ClimbRunner): number {
   clearClimbTimers();
   const pos = runner.getPosition();
@@ -355,14 +387,17 @@ export function abortClimb(runner: ClimbRunner): number {
   for (const step of steps) {
     const delay = t;
     const timer = window.setTimeout(() => {
-      runner.setClimbState({
+      setClimbState({
         phase: step.phase,
         landmarkId: null,
         surface: null,
         startedAt,
         phaseUntil: startedAt + delay + step.durationMs,
       });
-      if (step.target) runner.setTarget(step.target);
+      if (step.target) {
+        runner.setTarget(step.target);
+        issueStepMove(step, `climb:${step.phase}`);
+      }
       runner.requestAnim({
         anim: step.anim,
         holdMs: step.durationMs,
@@ -370,7 +405,8 @@ export function abortClimb(runner: ClimbRunner): number {
       });
       if (step.thought) runner.setThought(step.thought);
       if (step.phase === "recover") {
-        runner.setClimbState({ ...IDLE_CLIMB });
+        setClimbState({ ...IDLE_CLIMB });
+        clearMovementCommand();
       }
     }, delay);
     activeTimers.push(timer);
@@ -379,25 +415,44 @@ export function abortClimb(runner: ClimbRunner): number {
   return t;
 }
 
-/** Force return home (Sprint 15 safety) */
 export function returnHome(runner: ClimbRunner): void {
   clearClimbTimers();
-  const home = clampToHabitat(0.32, 0.08);
+  const home = homePoint();
   runner.setTarget(home);
+  issueMovementCommand({
+    target: home,
+    platformId: "home-corner",
+    mode: "return-home",
+    speed: 1.1,
+    urgency: 0.9,
+    interruptible: true,
+    reason: "climb:returnHome",
+    ttlMs: 12_000,
+  });
   runner.requestAnim({ anim: "walk", force: true });
-  runner.setClimbState({ ...IDLE_CLIMB });
+  setClimbState({ ...IDLE_CLIMB });
   runner.setThought("Home.");
 }
 
-export function isClimbing(state: ClimbState): boolean {
+export function isClimbing(state: ClimbState = climbState): boolean {
   return state.phase !== "idle" && state.phase !== "recover";
 }
 
-/** Distance check — only start jump when near approach point */
 export function nearEnough(
-  pos: NavTarget,
-  target: NavTarget,
-  radius = 0.12,
+  pos: WorldPoint,
+  target: WorldPoint,
+  radius = 0.18,
 ): boolean {
-  return distXZ(pos.x, pos.z, target.x, target.z) <= radius;
+  return distWorld(pos.x, pos.y, target.x, target.y) <= radius;
+}
+
+/** Brain entry: pick a climbable surface and run the full sequence. */
+export function startBrainClimb(
+  runner: ClimbRunner,
+  preferId?: string,
+): number {
+  if (isClimbing()) return 0;
+  const lm = pickClimbTarget(preferId);
+  if (!lm) return 0;
+  return executeClimb(lm, runner);
 }
