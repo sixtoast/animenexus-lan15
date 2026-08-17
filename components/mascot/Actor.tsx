@@ -47,6 +47,9 @@ import { faceForActor } from "./expression-bridge";
 export type { Phase };
 export type MascotScreenPos = { x: number; y: number; visible: boolean };
 
+/** Live page-terrain character scale (smaller = less UI occlusion). */
+export const ACTOR_SCALE = 0.38;
+
 function homeWorld(): { x: number; y: number } {
   if (typeof window === "undefined") return { x: 1.05, y: -0.72 };
   const aspect = window.innerWidth / (window.innerHeight || 1);
@@ -110,7 +113,6 @@ export function Actor({
   const setStorePosition = useMascotStore((s) => s.setPosition);
   const { camera, size } = useThree();
 
-  // Dev: window.__mascotDebug() — same as LiveTerrain host install
   useEffect(() => {
     if (process.env.NODE_ENV === "development") {
       installMascotDebugGlobal();
@@ -498,7 +500,7 @@ export function Actor({
         yaw={facing.current}
         speed={speedRef.current}
         justLanded={anim === "land" || justLandedRef.current}
-        scale={0.55}
+        scale={ACTOR_SCALE}
       />
     </group>
   );
