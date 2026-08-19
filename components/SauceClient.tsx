@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { SauceHit } from "@/lib/sauce";
 import { formatTime } from "@/lib/sauce";
+import { loadingStart, loadingStop } from "@/components/LoadingTheater";
 
 export function SauceClient() {
   const [url, setUrl] = useState("");
@@ -15,6 +16,7 @@ export function SauceClient() {
 
   const searchByFile = useCallback(async (file: File) => {
     setLoading(true);
+    loadingStart("sauce");
     setError(null);
     setHits([]);
     setPreview(URL.createObjectURL(file));
@@ -32,6 +34,7 @@ export function SauceClient() {
       setError(err instanceof Error ? err.message : "Search failed");
     } finally {
       setLoading(false);
+      loadingStop();
     }
   }, []);
 
@@ -39,6 +42,7 @@ export function SauceClient() {
     e?.preventDefault();
     if (!url.trim()) return;
     setLoading(true);
+    loadingStart("sauce");
     setError(null);
     setHits([]);
     setPreview(url.trim());
@@ -58,6 +62,7 @@ export function SauceClient() {
       setError(err instanceof Error ? err.message : "Search failed");
     } finally {
       setLoading(false);
+      loadingStop();
     }
   }
 
