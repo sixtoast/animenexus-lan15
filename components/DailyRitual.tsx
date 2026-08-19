@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { readMemory, recordView } from "@/lib/lantern-memory";
 import { useWatchlist } from "@/components/WatchlistProvider";
@@ -8,13 +8,33 @@ import { useToast } from "@/components/ToastProvider";
 import { Button } from "@/components/ui/Button";
 import { fireSeal } from "@/components/SealMoment";
 import type { Anime } from "@/lib/types";
+import { pickIndex } from "@/lib/season";
+import {
+  rankRecommendations,
+  confidenceCopy,
+  whyThisIsHere,
+  type RankedRecommendation,
+} from "@/lib/recommend-rank";
+import {
+  markRecShown,
+  markRecOpened,
+  markRecAccepted,
+  markRecRejected,
+  rejectedAnimeIds,
+  REJECT_REASON_LABELS,
+  type RejectReason,
+} from "@/lib/recommend-feedback";
 
 type Props = {
-  anime: Anime;
+  pool: Anime[];
+  seed: number;
   dateLabel: string;
 };
 
-function observation(anime: Anime): string {
+function observation(anime: Anime, ranked: RankedRecommendation | null): string {
+  if (ranked && ranked.reasons[0]) {
+    return `${confidenceCopy(ranked.confidence)}. ${whyThisIsHere(ranked)}`;
+  }
   const m = readMemory();
   const h = new Date().getHours();
   const seen = m.recentViews.some((r) => r.id === anime.id);
@@ -37,24 +57,77 @@ function observation(anime: Anime): string {
   return `Lantern chose one title for ${new Date().toLocaleDateString(undefined, { weekday: "long" })}. The seed holds until midnight.`;
 }
 
-export function DailyRitual({ anime, dateLabel }: Props) {
-  const { add, isInList, ready } = useWatchlist();
+export function DailyRitual({ pool, seed, dateLabel }: Props) {
+  const { add, isInList, ready, entries } = useWatchlist();
   const { showToast } = useToast();
-  const [line, setLine] = useState("");
   const [accepted, setAccepted] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const [showReject, setShowReject] = useState(false);
+
+  const rankedList = useMemo(() => {
+    if (!ready) return [] as RankedRecommendation[];
+    if (entries.length < 1) return [];
+    const exclude = new Set<number>([
+      ...entries.map((e) => e.id),
+      ...rejectedAnimeIds(),
+    ]);
+    return rankRecommendations(pool, entries, {
+      excludeIds: exclude,
+      resonanceWeight: 0.7,
+    });
+  }, [ready, entries, pool]);
+
+  const anime = useMemo(() => {
+    if (rankedList.length > 0) {
+      const i = pickIndex(seed, rankedList.length);
+      return rankedList[i]?.anime ?? pool[pickIndex(seed, pool.length)];
+    }
+    return pool[pickIndex(seed, pool.length)] ?? pool[0];
+  }, [rankedList, pool, seed]);
+
+  const rankedMeta = useMemo(() => {
+    return rankedList.find((r) => r.anime.id === anime?.id) ?? null;
+  }, [rankedList, anime]);
+
+  const line = anime ? observation(anime, rankedMeta) : "…";
 
   useEffect(() => {
-    setLine(observation(anime));
+    if (!anime) return;
+    markRecShown(anime.id);
   }, [anime]);
+
+  if (!anime) {
+    return (
+      <div className="state-box lantern-empty">
+        <h3>No pick on the desk</h3>
+        <p>The pool came back empty after ranking.</p>
+      </div>
+    );
+  }
+
+  if (dismissed) {
+    return (
+      <div className="state-box lantern-empty">
+        <h3>Signal passed</h3>
+        <p>Lantern noted the pass. The seed still holds — a new channel tomorrow.</p>
+        <p style={{ marginTop: 12 }}>
+          <Link href="/browse" className="btn btn-outline btn-sm">
+            Browse instead
+          </Link>
+        </p>
+      </div>
+    );
+  }
 
   function accept() {
     recordView({
       id: anime.id,
       title: anime.title,
       image: anime.image,
-      genres: anime.tags,
+      genres: anime.tags || anime.genres,
       studios: anime.studios,
     });
+    markRecAccepted(anime.id);
     if (ready && !isInList(anime.id)) {
       add(anime, "planning");
       fireSeal(anime.title, "seal");
@@ -65,11 +138,18 @@ export function DailyRitual({ anime, dateLabel }: Props) {
     setAccepted(true);
   }
 
+  function reject(reason: RejectReason) {
+    markRecRejected(anime.id, reason);
+    setDismissed(true);
+    setShowReject(false);
+    showToast("Passed for today", "📡");
+  }
+
   return (
     <div className="daily-ritual">
       <div className="daily-ritual-line">
         <span className="daily-ritual-kicker">Lantern · {dateLabel}</span>
-        <p>{line || "…"}</p>
+        <p>{line}</p>
       </div>
 
       <article className="daily-card">
@@ -91,11 +171,16 @@ export function DailyRitual({ anime, dateLabel }: Props) {
             {anime.year ? (
               <span className="detail-pill">{anime.year}</span>
             ) : null}
-            {anime.tags?.slice(0, 3).map((g) => (
+            {(anime.tags || anime.genres)?.slice(0, 3).map((g) => (
               <span key={g} className="detail-pill">
                 {g}
               </span>
             ))}
+            {rankedMeta ? (
+              <span className="detail-pill">
+                {confidenceCopy(rankedMeta.confidence)}
+              </span>
+            ) : null}
           </div>
           <p className="daily-desc">
             {(anime.description || "").slice(0, 320)}
@@ -110,13 +195,48 @@ export function DailyRitual({ anime, dateLabel }: Props) {
             >
               {accepted ? "Signal accepted" : "Accept signal"}
             </Button>
-            <Link href={`/anime/${anime.id}`} className="btn btn-outline btn-sm">
+            <Link
+              href={`/anime/${anime.id}`}
+              className="btn btn-outline btn-sm"
+              onClick={() => markRecOpened(anime.id)}
+            >
               Open detail
             </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowReject((v) => !v)}
+              disabled={accepted}
+            >
+              Not for me
+            </Button>
             <Link href="/browse" className="btn btn-outline btn-sm">
               Browse instead
             </Link>
           </div>
+          {showReject ? (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 6,
+                marginTop: 10,
+              }}
+            >
+              {(Object.keys(REJECT_REASON_LABELS) as RejectReason[]).map(
+                (reason) => (
+                  <button
+                    key={reason}
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => reject(reason)}
+                  >
+                    {REJECT_REASON_LABELS[reason]}
+                  </button>
+                ),
+              )}
+            </div>
+          ) : null}
         </div>
       </article>
     </div>
