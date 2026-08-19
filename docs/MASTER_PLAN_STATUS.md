@@ -6,11 +6,10 @@
 
 | Plan sprint | Status |
 |-------------|--------|
-| 0–15 | Through intelligent errors |
-| **16 Adaptive mascot** | Tiers High/Medium/Low/Mobile; reduced motion keeps companion (`demand` frameloop); dock shows tier |
+| 0–16 | Through adaptive mascot |
+| **17 Motion tokens** | `--motion-enter/exit/seal/celebrate/pulse/overlay` + utility classes; reduced-motion collapses durations |
 
 ## Next
 
-1. **17** Motion choreography tokens  
-2. **18** View transitions polish  
-3. Later: Sakura removal, cohesion  
+1. **18** View transitions polish  
+2. Later: Sakura removal, design cohesion  
