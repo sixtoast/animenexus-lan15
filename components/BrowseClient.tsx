@@ -43,7 +43,6 @@ export function BrowseClient({
   const [error, setError] = useState(initialError);
   const [loadingMore, setLoadingMore] = useState(false);
   const [pending, startTransition] = useTransition();
-  /** Soft blend toward shelf resonance; default on when shelf has signal. */
   const [shelfBlend, setShelfBlend] = useState(true);
 
   const parsed = useMemo(
@@ -169,7 +168,6 @@ export function BrowseClient({
     ]);
     const ranked = rankRecommendations(items, entries, {
       excludeIds: exclude,
-      // Lighter weight so catalog sort still matters
       resonanceWeight: 0.45,
     });
     if (!ranked.length) return items;
@@ -306,7 +304,7 @@ export function BrowseClient({
           <p style={{ marginTop: 8, fontSize: "0.85rem", opacity: 0.85 }}>{error}</p>
         </div>
       ) : pending ? (
-        <PosterSkeleton count={12} label="Tuning the frequency…" />
+        <PosterSkeleton count={12} label="search" />
       ) : (
         <>
           <AnimeGrid items={displayItems} />
