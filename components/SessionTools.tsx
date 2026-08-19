@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import {
   buildTonightFromList,
-  readTonightQueue,
   writeTonightQueue,
   type TonightItem,
 } from "@/lib/tonight";
@@ -34,11 +33,9 @@ export function SessionTools() {
   }, [breakRunning]);
 
   const openTonight = useCallback(() => {
-    let q = readTonightQueue();
-    if (!q.length) {
-      q = buildTonightFromList(entries);
-      writeTonightQueue(q);
-    }
+    // Always rebuild from current shelf so resonance order stays fresh
+    const q = buildTonightFromList(entries);
+    writeTonightQueue(q);
     setQueue(q);
     setPanel("tonight");
     setSessionEnv("tonight");
@@ -169,7 +166,8 @@ export function SessionTools() {
               </button>
             </div>
             <p className="tools-hint">
-              Watching first, then planning. Cap 6. Shortcut <kbd>Q</kbd>.
+              Ranked for tonight by engagement + resonance. Cap 6. Shortcut{" "}
+              <kbd>Q</kbd>.
             </p>
             <div className="daily-actions" style={{ marginBottom: 12 }}>
               <button
@@ -200,7 +198,21 @@ export function SessionTools() {
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={item.image} alt="" />
-                    <span>{item.title}</span>
+                    <span>
+                      {item.title}
+                      {item.why ? (
+                        <span
+                          style={{
+                            display: "block",
+                            fontSize: "0.75rem",
+                            opacity: 0.7,
+                            marginTop: 2,
+                          }}
+                        >
+                          {item.why}
+                        </span>
+                      ) : null}
+                    </span>
                   </Link>
                 ))}
               </div>
