@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AnimeGrid } from "@/components/AnimeGrid";
 import { MoodChips } from "@/components/MoodChips";
+import { MoodFeedClient } from "@/components/MoodFeedClient";
 import { fetchDiscover, fetchFiltered } from "@/lib/anilist";
 import { getMood, moodToFilters } from "@/lib/moods";
 import type { Metadata } from "next";
@@ -58,7 +58,7 @@ export default async function MoodPage({ params }: Props) {
       <section className="hero" style={{ paddingBottom: 16 }}>
         <div className="container">
           <div className="hero-badge">
-            Mood · Sprint 5 · {mood.emoji} {mood.label}
+            Mood · {mood.emoji} {mood.label}
           </div>
           <h1>
             Tonight feels like <span>{mood.label}</span>
@@ -97,7 +97,7 @@ export default async function MoodPage({ params }: Props) {
             </p>
           </div>
         ) : (
-          <AnimeGrid items={items} />
+          <MoodFeedClient items={items} moodLabel={mood.label} />
         )}
 
         <p style={{ marginTop: 28, textAlign: "center" }}>
