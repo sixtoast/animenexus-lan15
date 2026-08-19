@@ -18,6 +18,7 @@ import { RoomEnter } from "@/components/RoomEnter";
 import { RouteTune } from "@/components/RouteTune";
 import { LanternMemoryBoot } from "@/components/LanternMemoryBoot";
 import { SealMomentHost } from "@/components/SealMoment";
+import { FirstVisitHost } from "@/components/FirstVisitHost";
 import { EnvironmentController } from "@/components/EnvironmentController";
 import { NexusRouteBeacon } from "@/components/NexusRouteBeacon";
 import { MascotHost } from "@/components/mascot/MascotHost";
@@ -42,6 +43,7 @@ import "./oracle-vibe.css";
 import "./motion.css";
 import "./desk.css";
 import "./ui-lift.css";
+import "./first-visit.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
@@ -113,6 +115,7 @@ export default function RootLayout({
                   <SessionTools />
                   <ConfettiHost />
                   <SealMomentHost />
+                  <FirstVisitHost />
                   <ShortcutsHelp />
                   <LoadingTheater />
                   <footer className="site-footer">
