@@ -6,11 +6,11 @@
 
 | Plan sprint | Status |
 |-------------|--------|
-| 0–14 | Through Loading Theatre |
-| **15 Intelligent errors** | `SignalError` — human title/body, expandable technical detail, retry; Radar + CSS; Browse/Sauce/Challenge patches in progress on pattern |
+| 0–15 | Through intelligent errors |
+| **16 Adaptive mascot** | Tiers High/Medium/Low/Mobile; reduced motion keeps companion (`demand` frameloop); dock shows tier |
 
 ## Next
 
-1. **16** Adaptive mascot rendering tiers  
-2. **17** Motion choreography tokens  
+1. **17** Motion choreography tokens  
+2. **18** View transitions polish  
 3. Later: Sakura removal, cohesion  
