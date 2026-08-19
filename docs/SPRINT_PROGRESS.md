@@ -2,9 +2,9 @@
 
 | Plan sprint | Deliverable |
 |-------------|-------------|
-| 0–13 | Through first visit + return |
-| **14** | **Loading Theatre** — shared context copy; Radar/Browse wired; Challenge/Sauce/Oracle/Ancestry local patches ready |
+| 0–14 | Through Loading Theatre |
+| **15** | **SignalError** — human message + technical details + retry; Radar wired |
 
 ## Next
 
-**15 — Intelligent error states**
+**16 — Adaptive mascot rendering** (or continue wiring SignalError on Browse/Sauce/Challenge).
