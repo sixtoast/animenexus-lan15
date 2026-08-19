@@ -1,24 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Anime } from "@/lib/types";
 import { AnimeSearchPicker } from "@/components/AnimeSearchPicker";
 import { fusionBlurb, fusionScore, sharedTags } from "@/lib/tools";
 import { AnimeCard } from "@/components/AnimeCard";
+import { useWatchlist } from "@/components/WatchlistProvider";
+import { rankRecommendations } from "@/lib/recommend-rank";
+import { rejectedAnimeIds } from "@/lib/recommend-feedback";
+import { emitNexus } from "@/lib/nexus";
 
 export function FusionClient() {
+  const { entries, ready } = useWatchlist();
   const [a, setA] = useState<Anime | null>(null);
   const [b, setB] = useState<Anime | null>(null);
-  const [recs, setRecs] = useState<Anime[]>([]);
+  const [raw, setRaw] = useState<Anime[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const ready = a && b;
-  const shared = ready ? sharedTags(a!, b!) : [];
+  const pairReady = a && b;
+  const shared = pairReady ? sharedTags(a!, b!) : [];
+
+  useEffect(() => {
+    emitNexus({ type: "tool_opened", tool: "fusion" });
+  }, []);
 
   useEffect(() => {
     if (!a || !b) {
-      setRecs([]);
+      setRaw([]);
       return;
     }
     const genres = shared.length
@@ -35,10 +44,10 @@ export function FusionClient() {
     fetch(`/api/recommend?${params}`)
       .then((r) => r.json())
       .then((j) => {
-        if (!cancelled) setRecs((j.data || []) as Anime[]);
+        if (!cancelled) setRaw((j.data || []) as Anime[]);
       })
       .catch(() => {
-        if (!cancelled) setRecs([]);
+        if (!cancelled) setRaw([]);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -48,6 +57,27 @@ export function FusionClient() {
     };
   }, [a, b, shared.join("|")]);
 
+  const recs = useMemo(() => {
+    if (!raw.length) return [] as Anime[];
+    if (!ready || entries.length < 2) return raw;
+    const exclude = new Set<number>([
+      ...entries.map((e) => e.id),
+      ...rejectedAnimeIds(),
+      ...(a ? [a.id] : []),
+      ...(b ? [b.id] : []),
+    ]);
+    const ranked = rankRecommendations(raw, entries, {
+      excludeIds: exclude,
+      resonanceWeight: 0.55,
+    });
+    if (!ranked.length) return raw;
+    const ids = new Set(ranked.map((r) => r.anime.id));
+    const tail = raw.filter((x) => !ids.has(x.id));
+    return [...ranked.map((r) => r.anime), ...tail];
+  }, [raw, ready, entries, a, b]);
+
+  const shelfTuned = ready && entries.length >= 2 && recs.length > 0;
+
   return (
     <div className="tools-panel">
       <div className="tools-pickers">
@@ -55,7 +85,7 @@ export function FusionClient() {
         <AnimeSearchPicker label="Parent B" selected={b} onSelect={setB} />
       </div>
 
-      {ready ? (
+      {pairReady ? (
         <div className="fusion-result">
           <div className="fusion-covers">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -89,6 +119,11 @@ export function FusionClient() {
             <h3 style={{ fontSize: "1rem", marginBottom: 12 }}>
               Catalog children (genre blend)
             </h3>
+            {shelfTuned ? (
+              <p className="tools-hint" role="status" aria-live="polite">
+                Soft-ranked for your shelf within this blend — not a scoreboard.
+              </p>
+            ) : null}
             {loading ? (
               <p className="tools-hint">Scanning AniList…</p>
             ) : recs.length ? (
