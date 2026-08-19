@@ -1,1 +1,329 @@
-SEE_FILE
+"use client";
+
+/**
+ * 3D companion host — calm in home pad; freer when out but always on-screen & reachable.
+ * Sprint 16: adaptive perf tiers; reduced motion keeps companion with demand frameloop.
+ */
+
+import { Canvas, useThree } from "@react-three/fiber";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
+import * as THREE from "three";
+import {
+  buildTerrain,
+  getHomePlatform,
+  screenToWorld,
+  type TerrainPlatform,
+} from "@/lib/mascot/page-terrain";
+import {
+  clampToViewport,
+  jumpToward,
+  snapToPlatform,
+  type TerrainBody,
+} from "@/lib/mascot/terrain-physics";
+import { useMascotStore } from "@/lib/mascot/store";
+import { wireStoreMovement } from "@/lib/mascot/wire-movement";
+import { installMascotDebugGlobal } from "@/lib/mascot/debug-snapshot";
+import { installBuiltinMascotEvents } from "@/lib/mascot/builtin-events";
+import { installNexusAttentionBridge } from "@/lib/mascot/nexus-attention-bridge";
+import { LIVE_LIGHTING, PALETTE, CANVAS_GL } from "@/lib/mascot/visual";
+import {
+  budgetFor,
+  detectPerfTier,
+  isPageActive,
+  noteTerrainBuild,
+  shouldDeepIdle,
+  throttle,
+} from "@/lib/mascot/performance";
+import { areInteractionsEnabled } from "@/lib/mascot/a11y";
+import { Actor, type Phase, type MascotScreenPos } from "./Actor";
+
+function OrthoCamera() {
+  const { camera, size } = useThree();
+  useEffect(() => {
+    const cam = camera as THREE.OrthographicCamera;
+    const aspect = size.width / Math.max(size.height, 1);
+    cam.left = -aspect;
+    cam.right = aspect;
+    cam.top = 1;
+    cam.bottom = -1;
+    cam.near = 0.1;
+    cam.far = 20;
+    cam.position.set(0, 0, 5);
+    cam.lookAt(0, 0, 0);
+    cam.updateProjectionMatrix();
+  }, [camera, size]);
+  return null;
+}
+
+function HomePadBox({ home }: { home: TerrainPlatform | null }) {
+  if (!home) return null;
+  const w = home.hw * 2;
+  const h = home.hh * 2.2;
+  return (
+    <group position={[home.x, home.y + home.hh, 0.05]}>
+      <mesh>
+        <planeGeometry args={[w, h]} />
+        <meshBasicMaterial
+          color={PALETTE.padFill}
+          transparent
+          opacity={0.1}
+          depthWrite={false}
+        />
+      </mesh>
+      <lineSegments>
+        <edgesGeometry args={[new THREE.PlaneGeometry(w, h)]} />
+        <lineBasicMaterial
+          color={PALETTE.padEdge}
+          transparent
+          opacity={0.65}
+        />
+      </lineSegments>
+    </group>
+  );
+}
+
+type Props = {
+  reducedMotion?: boolean;
+  lowPower?: boolean;
+};
+
+export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
+  const [platforms, setPlatforms] = useState<TerrainPlatform[]>([]);
+  const [screenPos, setScreenPos] = useState<MascotScreenPos>({
+    x: 0,
+    y: 0,
+    visible: false,
+  });
+  const [dragging, setDragging] = useState(false);
+  const [dragWorld, setDragWorld] = useState<{ x: number; y: number } | null>(
+    null,
+  );
+  const [glError, setGlError] = useState<string | null>(null);
+  const [pageActive, setPageActive] = useState(true);
+  const bodyRef = useRef<TerrainBody | null>(null);
+  const phaseRef = useRef<Phase>("home");
+  const dragMoved = useRef(false);
+
+  const budget = useMemo(
+    () =>
+      budgetFor(
+        detectPerfTier({
+          lowPower: lowPower || !!reducedMotion,
+          mobile: lowPower,
+        }),
+      ),
+    [lowPower, reducedMotion],
+  );
+
+  const home = platforms.find((p) => p.id === "home-corner") ?? null;
+
+  useEffect(() => {
+    wireStoreMovement();
+    installBuiltinMascotEvents();
+    installNexusAttentionBridge();
+    if (process.env.NODE_ENV === "development") {
+      installMascotDebugGlobal();
+    }
+  }, []);
+
+  useEffect(() => {
+    const onVis = () => setPageActive(isPageActive());
+    onVis();
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
+  useEffect(() => {
+    if (!pageActive) return;
+
+    const rebuild = () => {
+      if (!isPageActive()) return;
+      const t0 = performance.now();
+      try {
+        setPlatforms(buildTerrain());
+      } catch (err) {
+        console.warn("[Lantern-ko] terrain rebuild failed", err);
+      }
+      noteTerrainBuild(performance.now() - t0);
+    };
+
+    const scrollRebuild = throttle(rebuild, budget.terrainScrollMs);
+
+    const t0 = window.setTimeout(rebuild, 40);
+    const t1 = window.setTimeout(rebuild, 280);
+    const t2 = window.setTimeout(rebuild, 900);
+
+    const tickIdle = () => {
+      const s = useMascotStore.getState();
+      shouldDeepIdle({
+        anim: s.anim,
+        intention: s.intention,
+        msSinceInteract: Date.now() - s.lastInteractionAt,
+      });
+      rebuild();
+    };
+    const id = window.setInterval(tickIdle, budget.terrainIdleMs);
+
+    window.addEventListener("resize", scrollRebuild);
+    window.addEventListener("scroll", scrollRebuild, { passive: true });
+
+    return () => {
+      window.clearTimeout(t0);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearInterval(id);
+      scrollRebuild.cancel();
+      window.removeEventListener("resize", scrollRebuild);
+      window.removeEventListener("scroll", scrollRebuild);
+    };
+  }, [pageActive, budget.terrainIdleMs, budget.terrainScrollMs]);
+
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    if (!areInteractionsEnabled()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    dragMoved.current = false;
+    setDragging(true);
+    setDragWorld(screenToWorld(e.clientX, e.clientY));
+  }, []);
+
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!dragging) return;
+      e.preventDefault();
+      dragMoved.current = true;
+      setDragWorld(screenToWorld(e.clientX, e.clientY));
+    },
+    [dragging],
+  );
+
+  const onPointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (!dragging) return;
+      e.preventDefault();
+      setDragging(false);
+      setDragWorld(null);
+      if (!dragMoved.current && bodyRef.current) {
+        const world = screenToWorld(e.clientX, e.clientY);
+        jumpToward(bodyRef.current, world.x, world.y);
+      }
+    },
+    [dragging],
+  );
+
+  // Reduced motion: keep companion with demand frameloop (plan 16)
+
+  if (glError) {
+    return (
+      <div className="mascot-error" role="alert">
+        <strong>3D companion failed</strong>
+        <p>{glError} The rest of the site still works.</p>
+        <button
+          type="button"
+          className="mascot-error-retry"
+          onClick={() => {
+            setGlError(null);
+            window.location.reload();
+          }}
+        >
+          Reload
+        </button>
+      </div>
+    );
+  }
+
+  const L = LIVE_LIGHTING;
+  const dprMax = budget.dprMax;
+  const canInteract = areInteractionsEnabled();
+
+  return (
+    <>
+      <div className="mascot-home-pad" aria-hidden />
+
+      <div className="live-terrain" aria-hidden>
+        <Canvas
+          className="live-terrain-canvas"
+          orthographic
+          dpr={[1, dprMax]}
+          gl={budget.antialias ? CANVAS_GL.full : CANVAS_GL.lowPower}
+          frameloop={
+            reducedMotion ? "demand" : pageActive ? "always" : "never"
+          }
+          camera={{
+            position: [0, 0, 5],
+            zoom: 1,
+            near: 0.1,
+            far: 20,
+          }}
+          style={{ pointerEvents: "none", width: "100%", height: "100%" }}
+          onCreated={({ gl }) => {
+            gl.setClearColor(0x000000, 0);
+            if (!gl.getContext()) {
+              setGlError("WebGL context lost after Canvas create.");
+            }
+          }}
+          onError={(err) => {
+            console.error("[Lantern-ko] Canvas error", err);
+            setGlError(
+              err instanceof Error ? err.message : "Canvas failed to initialize",
+            );
+          }}
+        >
+          <OrthoCamera />
+          <ambientLight intensity={L.ambient.intensity} color={L.ambient.color} />
+          <directionalLight
+            position={L.key.position}
+            intensity={L.key.intensity}
+            color={L.key.color}
+          />
+          <directionalLight
+            position={L.fill.position}
+            intensity={L.fill.intensity}
+            color={L.fill.color}
+          />
+          <pointLight
+            position={L.rim.position}
+            intensity={L.rim.intensity}
+            distance={L.rim.distance}
+            color={L.rim.color}
+          />
+          <HomePadBox home={home} />
+          <Actor
+            platforms={platforms}
+            dragging={dragging}
+            dragWorld={dragWorld}
+            onScreenPos={setScreenPos}
+            bodyRef={bodyRef}
+            phaseRef={phaseRef}
+            lowPower={budget.tier === "low" || budget.tier === "mobile"}
+          />
+        </Canvas>
+      </div>
+      {screenPos.visible && canInteract ? (
+        <button
+          type="button"
+          className={
+            "mascot-drag-handle" +
+            (dragging ? " mascot-drag-handle--active" : "")
+          }
+          style={{
+            left: screenPos.x,
+            top: screenPos.y,
+          }}
+          aria-label="Drag companion"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+        />
+      ) : null}
+    </>
+  );
+}
