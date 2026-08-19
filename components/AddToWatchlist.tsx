@@ -4,7 +4,6 @@ import type { Anime, WatchStatus } from "@/lib/types";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { useToast } from "@/components/ToastProvider";
 import { Button } from "@/components/ui/Button";
-import { fireSeal } from "@/components/SealMoment";
 
 const STATUSES: { value: WatchStatus; label: string }[] = [
   { value: "planning", label: "Planning" },
@@ -17,6 +16,8 @@ const STATUSES: { value: WatchStatus; label: string }[] = [
 type Props = {
   anime: Anime;
 };
+
+const FAIL_MSG = "The signal didn’t hold — could not save to this browser.";
 
 export function AddToWatchlist({ anime }: Props) {
   const { ready, getEntry, add, remove, setStatus } = useWatchlist();
@@ -38,9 +39,9 @@ export function AddToWatchlist({ anime }: Props) {
           variant="accent"
           size="sm"
           onClick={() => {
-            add(anime, "planning");
-            fireSeal(anime.title, "seal");
-            showToast("Sealed to your list", "🕯️", true);
+            const ok = add(anime, "planning");
+            if (ok) showToast("Sealed to your list", "🕯️", true);
+            else showToast(FAIL_MSG, "⚠️");
           }}
         >
           + Add to watchlist
@@ -49,9 +50,9 @@ export function AddToWatchlist({ anime }: Props) {
           variant="outline"
           size="sm"
           onClick={() => {
-            add(anime, "watching");
-            fireSeal(anime.title, "watching");
-            showToast("Now watching", "▶", true);
+            const ok = add(anime, "watching");
+            if (ok) showToast("Now watching", "▶", true);
+            else showToast(FAIL_MSG, "⚠️");
           }}
         >
           Start watching
@@ -67,7 +68,10 @@ export function AddToWatchlist({ anime }: Props) {
         <select
           className="filter-input"
           value={entry.watchStatus}
-          onChange={(e) => setStatus(anime.id, e.target.value as WatchStatus)}
+          onChange={(e) => {
+            const ok = setStatus(anime.id, e.target.value as WatchStatus);
+            if (!ok) showToast(FAIL_MSG, "⚠️");
+          }}
         >
           {STATUSES.map((s) => (
             <option key={s.value} value={s.value}>
@@ -80,8 +84,9 @@ export function AddToWatchlist({ anime }: Props) {
         variant="danger"
         size="sm"
         onClick={() => {
-          remove(anime.id);
-          showToast("Removed from list", "·");
+          const ok = remove(anime.id);
+          if (ok) showToast("Removed from list", "·");
+          else showToast(FAIL_MSG, "⚠️");
         }}
       >
         Remove
