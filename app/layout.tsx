@@ -41,6 +41,7 @@ import "./ancestry.css";
 import "./session-tools.css";
 import "./oracle-vibe.css";
 import "./motion.css";
+import "./view-transitions.css";
 import "./desk.css";
 import "./ui-lift.css";
 import "./first-visit.css";
