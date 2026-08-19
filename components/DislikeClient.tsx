@@ -60,7 +60,7 @@ export function DislikeClient() {
 
   async function run() {
     if (!anime) return;
-    const avoided = anime.tags || anime.genres || [];
+    const avoided = anime.tags || [];
     const suggested = new Set<string>();
     for (const g of avoided) {
       for (const a of ALT[g] || []) suggested.add(a);
