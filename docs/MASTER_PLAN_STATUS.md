@@ -4,7 +4,7 @@ Source: sequenced engineering programme (Events → Memory → Taste → Recs �
 
 **Rule:** do not implement the whole 36-feature list in one PR. Ship by dependency order; preserve Confessions, Oracle, AniList, real AI, mascot.
 
-## Already in place (approx.)
+## Already in place
 
 | Plan area | Status |
 |-----------|--------|
@@ -17,22 +17,21 @@ Source: sequenced engineering programme (Events → Memory → Taste → Recs �
 | 6 Environment | `lib/nexus-environment.ts`, `EnvironmentController` |
 | 7 Attention | `lib/mascot/nexus-attention-bridge.ts` |
 | 8 Home / Daily / Tonight | ranked surfaces |
-| 9 Journey / Timeline | **`/journey`** + `lib/journey.ts` (this ship) |
+| 9 Journey / Timeline | `/journey` + `lib/journey.ts` |
 | 10 Watchlist sort | Recent / signal / progress |
+| **11 Stateful AnimeCard** | **Visual states (ring + border + progress); no text badge spam** |
 | 25–26 Why / dislike reasons | ranking + feedback types |
-| 27 Insights | **on Journey** |
-| 34 Reduced motion | attention bridge + existing a11y |
+| 27 Insights | on Journey |
+| 34 Reduced motion | attention bridge + card CSS |
 | QA | `docs/QA_CHECKLIST.md` |
 
-## Next recommended sequence
+## Next in plan order
 
-1. Stateful AnimeCard (visual states, not badge spam)  
-2. Seal moment authenticity (fail → no seal)  
-3. Loading Theatre copy pass  
-4. Intelligent error states  
-5. Sakura removal (Sprint 35)  
-6. Design tokens / motion choreography  
-7. Final cohesion walkthrough  
+1. **Sprint 12** — Seal moment authenticity (mutation fail → no seal)  
+2. Sprint 13 — First visit + return experience  
+3. Sprint 14 — Loading Theatre  
+4. Sprint 15 — Intelligent error states  
+5. … then motion / tokens / Sakura removal / cohesion  
 
 ## Explicitly out of scope for one-shot
 
