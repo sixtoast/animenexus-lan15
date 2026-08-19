@@ -1,5 +1,5 @@
 /**
- * Lantern application tools (Sprint 5).
+ * Lantern application tools (Sprint 5 + 23).
  * Executors return real data or explicit errors — never fabricated success.
  */
 
@@ -11,7 +11,15 @@ import {
   memoryDigestForAI,
   getGenrePreferences,
 } from "@/lib/lantern-memory";
-import { userResonance, describeUserResonance, topResonanceDims, resonanceLabel } from "@/lib/resonance";
+import {
+  userResonance,
+  describeUserResonance,
+  topResonanceDims,
+  resonanceLabel,
+  cosineSimilarity,
+  resonanceFromGenres,
+  interactionWeight,
+} from "@/lib/resonance";
 import { rankRecommendations } from "@/lib/recommend-rank";
 import { fetchByGenres } from "@/lib/anilist-discover";
 import type { Anime, WatchlistEntry } from "@/lib/types";
@@ -24,6 +32,7 @@ export type ToolName =
   | "getStats"
   | "getRecentActivity"
   | "getRecommendations"
+  | "getCompletionQueue"
   | "addToWatchlist"
   | "removeFromWatchlist";
 
@@ -79,6 +88,13 @@ export const TOOL_SPECS: ToolSpec[] = [
     parameters: { genres: "optional comma-separated genres" },
   },
   {
+    name: "getCompletionQueue",
+    description:
+      "Rank watching + planning titles by engagement and resonance (what to finish next).",
+    requiresConfirmation: false,
+    parameters: {},
+  },
+  {
     name: "addToWatchlist",
     description: "Request adding an anime to the watchlist (needs user confirmation).",
     requiresConfirmation: true,
@@ -122,6 +138,14 @@ function compactEntry(e: WatchlistEntry) {
     progress: e.progress,
     userRating: e.userRating || undefined,
   };
+}
+
+function episodeCount(e: WatchlistEntry): number {
+  const n =
+    typeof e.episodes === "number"
+      ? e.episodes
+      : parseInt(String(e.episodes || ""), 10);
+  return Number.isFinite(n) && n > 0 ? n : 12;
 }
 
 export async function executeTool(
@@ -257,7 +281,61 @@ export async function executeTool(
               ...compactAnime(r.anime),
               confidence: r.confidence,
               why: r.reasons[0],
+              reasons: r.reasons.slice(0, 3),
             })),
+          },
+        };
+      }
+      case "getCompletionQueue": {
+        const entries = readWatchlist();
+        if (!entries.length) {
+          return {
+            ok: false,
+            tool: name,
+            error: "Watchlist is empty — seal a few titles first.",
+          };
+        }
+        const user = userResonance(entries);
+        const score = (e: WatchlistEntry, kind: "watching" | "queue") => {
+          const w = interactionWeight(e);
+          const sim = cosineSimilarity(user, resonanceFromGenres(e.genres));
+          if (kind === "watching") {
+            const progressHint = Math.min(
+              1,
+              (e.progress || 0) / episodeCount(e),
+            );
+            return 0.35 * w + 0.35 * sim + 0.3 * progressHint;
+          }
+          const community =
+            e.score && e.score > 0
+              ? e.score > 10
+                ? e.score / 100
+                : e.score / 10
+              : 0.45;
+          return 0.4 * w + 0.4 * sim + 0.2 * community;
+        };
+        const watching = entries
+          .filter((e) => e.watchStatus === "watching")
+          .map((e) => ({ e, s: score(e, "watching") }))
+          .sort((a, b) => b.s - a.s)
+          .slice(0, 8)
+          .map((x) => compactEntry(x.e));
+        const planning = entries
+          .filter(
+            (e) =>
+              e.watchStatus === "planning" || e.watchStatus === "paused",
+          )
+          .map((e) => ({ e, s: score(e, "queue") }))
+          .sort((a, b) => b.s - a.s)
+          .slice(0, 10)
+          .map((x) => compactEntry(x.e));
+        return {
+          ok: true,
+          tool: name,
+          data: {
+            note: "Soft ranks by engagement + resonance — not a rigid order.",
+            finishFirst: watching,
+            planningQueue: planning,
           },
         };
       }
