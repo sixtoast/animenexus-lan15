@@ -1,0 +1,47 @@
+/* Intelligent error states (master plan · Sprint 15) */
+
+.signal-error {
+  text-align: left;
+  max-width: 32rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.signal-error-title {
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin: 0 0 6px;
+}
+
+.signal-error-body {
+  margin: 0 0 14px;
+  opacity: 0.88;
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+.signal-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.signal-error-detail {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(245, 235, 230, 0.75);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+[data-theme="light"] .signal-error-detail {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(40, 30, 28, 0.8);
+}
