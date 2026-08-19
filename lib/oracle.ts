@@ -1,6 +1,8 @@
 import type { WatchlistEntry } from "./types";
 import { MOODS } from "./moods";
 import { readMemory } from "./lantern-memory";
+import { buildTonightFromList } from "./tonight";
+import { interactionWeight } from "./resonance";
 
 export type OracleReading = {
   headline: string;
@@ -8,6 +10,14 @@ export type OracleReading = {
   moodSlug?: string;
   moodLabel?: string;
 };
+
+function bestWatching(entries: WatchlistEntry[]): WatchlistEntry {
+  return [...entries].sort((a, b) => {
+    const pw = interactionWeight(b) - interactionWeight(a);
+    if (Math.abs(pw) > 0.01) return pw;
+    return (b.progress || 0) - (a.progress || 0);
+  })[0];
+}
 
 /** Local Lantern reading — on-device, memory-aware */
 export function consultOracle(entries: WatchlistEntry[]): OracleReading {
@@ -49,7 +59,7 @@ export function consultOracle(entries: WatchlistEntry[]): OracleReading {
     }, 0) / 60;
 
   if (watching.length > 0) {
-    const top = [...watching].sort((a, b) => b.progress - a.progress)[0];
+    const top = bestWatching(watching);
     return {
       headline: "Stay on the current frequency",
       body: `You’re mid-signal on “${top.title}” (${top.progress} ep logged). Lantern says: one more session before opening a new channel. You’ve tracked ~${hours.toFixed(1)} hours total.`,
@@ -67,12 +77,18 @@ export function consultOracle(entries: WatchlistEntry[]): OracleReading {
     };
   }
 
-  if (planning.length >= 3) {
+  if (planning.length >= 1) {
+    const ranked = buildTonightFromList(entries);
     const pick =
-      planning[Math.floor(Math.random() * Math.min(planning.length, 5))];
+      ranked.find((r) => planning.some((p) => p.id === r.id)) ||
+      ranked[0] ||
+      null;
+    const title = pick?.title || planning[0].title;
+    const why = pick?.why ? ` (${pick.why})` : "";
     return {
-      headline: "The queue is stacking",
-      body: `${planning.length} titles wait in Planning. Tonight’s draw from the stack: “${pick.title}”. Move it to Watching and log the first episode.`,
+      headline:
+        planning.length >= 3 ? "The queue is stacking" : "One channel ready",
+      body: `${planning.length} title${planning.length === 1 ? "" : "s"} in Planning. Tonight’s ranked draw: “${title}”${why}. Move it to Watching and log the first episode.`,
       moodSlug: "chill",
       moodLabel: "Chill",
     };
