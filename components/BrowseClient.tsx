@@ -18,6 +18,8 @@ import { emitNexus } from "@/lib/nexus";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { rankRecommendations } from "@/lib/recommend-rank";
 import { rejectedAnimeIds } from "@/lib/recommend-feedback";
+import { SignalError, signalErrorBody } from "@/components/SignalError";
+import { SignalEmpty } from "@/components/SignalEmpty";
 
 type Props = {
   initialItems: Anime[];
@@ -209,7 +211,11 @@ export function BrowseClient({
             }}
             aria-label="Search anime"
           />
-          <button type="button" className="btn btn-accent btn-sm" onClick={applyFilters}>
+          <button
+            type="button"
+            className="btn btn-accent btn-sm"
+            onClick={applyFilters}
+          >
             Search
           </button>
         </div>
@@ -217,52 +223,90 @@ export function BrowseClient({
         <div className="filter-row">
           <label className="filter-field">
             <span className="filter-label">Genre</span>
-            <select className="filter-input" value={genre} onChange={(e) => setGenre(e.target.value)}>
+            <select
+              className="filter-input"
+              value={genre}
+              onChange={(e) => setGenre(e.target.value)}
+            >
               <option value="">Any genre</option>
               {ANIME_GENRES.map((g) => (
-                <option key={g} value={g}>{g}</option>
+                <option key={g} value={g}>
+                  {g}
+                </option>
               ))}
             </select>
           </label>
           <label className="filter-field">
             <span className="filter-label">Status</span>
-            <select className="filter-input" value={status} onChange={(e) => setStatus(e.target.value)}>
+            <select
+              className="filter-input"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
               {MEDIA_STATUSES.map((s) => (
-                <option key={s.value || "any"} value={s.value}>{s.label}</option>
+                <option key={s.value || "any"} value={s.value}>
+                  {s.label}
+                </option>
               ))}
             </select>
           </label>
           <label className="filter-field">
             <span className="filter-label">Format</span>
-            <select className="filter-input" value={format} onChange={(e) => setFormat(e.target.value)}>
+            <select
+              className="filter-input"
+              value={format}
+              onChange={(e) => setFormat(e.target.value)}
+            >
               {MEDIA_FORMATS.map((f) => (
-                <option key={f.value || "any"} value={f.value}>{f.label}</option>
+                <option key={f.value || "any"} value={f.value}>
+                  {f.label}
+                </option>
               ))}
             </select>
           </label>
           <label className="filter-field">
             <span className="filter-label">Year</span>
-            <select className="filter-input" value={year} onChange={(e) => setYear(e.target.value)}>
+            <select
+              className="filter-input"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+            >
               {years.map((y) => (
-                <option key={y.value || "any"} value={y.value}>{y.label}</option>
+                <option key={y.value || "any"} value={y.value}>
+                  {y.label}
+                </option>
               ))}
             </select>
           </label>
           <label className="filter-field">
             <span className="filter-label">Sort</span>
-            <select className="filter-input" value={sort} onChange={(e) => setSort(e.target.value)}>
+            <select
+              className="filter-input"
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+            >
               {SORT_OPTIONS.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
               ))}
             </select>
           </label>
         </div>
 
         <div className="filter-actions">
-          <button type="button" className="btn btn-accent btn-sm" onClick={applyFilters}>
+          <button
+            type="button"
+            className="btn btn-accent btn-sm"
+            onClick={applyFilters}
+          >
             Apply filters
           </button>
-          <button type="button" className="btn btn-outline btn-sm" onClick={resetFilters}>
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={resetFilters}
+          >
             Reset
           </button>
           {canBlend ? (
@@ -289,7 +333,11 @@ export function BrowseClient({
       <div className="section-head">
         <h2>
           <span className="accent">📡</span> {title}
-          {pending ? <span className="meta" style={{ marginLeft: 10 }}>Tuning…</span> : null}
+          {pending ? (
+            <span className="meta" style={{ marginLeft: 10 }}>
+              Tuning…
+            </span>
+          ) : null}
         </h2>
         <span className="meta">
           {error
@@ -299,12 +347,29 @@ export function BrowseClient({
       </div>
 
       {error ? (
-        <div className="state-box error">
-          <p>Could not load results.</p>
-          <p style={{ marginTop: 8, fontSize: "0.85rem", opacity: 0.85 }}>{error}</p>
-        </div>
+        <SignalError
+          title="The signal went quiet."
+          body={signalErrorBody(error)}
+          detail={error}
+          onRetry={() => {
+            setError(null);
+            router.refresh();
+          }}
+          retryLabel="Try again"
+        />
       ) : pending ? (
         <PosterSkeleton count={12} label="search" />
+      ) : displayItems.length === 0 ? (
+        <SignalEmpty
+          title="Nothing on this frequency."
+          body={
+            parsed.mode === "search"
+              ? `No titles matched “${parsed.filters.search || q}”. Try a shorter query or reset filters.`
+              : "This filter set is empty. Open Trending or clear filters."
+          }
+          action={{ label: "Reset filters", onClick: resetFilters }}
+          secondary={{ label: "Trending", href: "/browse?feed=trending" }}
+        />
       ) : (
         <>
           <AnimeGrid items={displayItems} />
