@@ -1,5 +1,5 @@
 import { fetchDailyPool } from "@/lib/anilist-discover";
-import { dailySeed, pickIndex } from "@/lib/season";
+import { dailySeed } from "@/lib/season";
 import { DailyRitual } from "@/components/DailyRitual";
 import type { Metadata } from "next";
 import "./daily.css";
@@ -21,15 +21,10 @@ export default async function DailyPage() {
   });
 
   let error: string | null = null;
-  let anime = null as Awaited<
-    ReturnType<typeof fetchDailyPool>
-  >[number] | null;
+  let pool: Awaited<ReturnType<typeof fetchDailyPool>> = [];
 
   try {
-    const pool = await fetchDailyPool(48);
-    if (pool.length) {
-      anime = pool[pickIndex(seed, pool.length)] || null;
-    }
+    pool = await fetchDailyPool(48);
   } catch (e) {
     error = e instanceof Error ? e.message : "Failed to load daily pool";
   }
@@ -44,7 +39,8 @@ export default async function DailyPage() {
           </h1>
           <p>
             One title, locked for {dateLabel}. Same seed all day — refresh won’t
-            change it. Lantern keeps the channel steady.
+            change it. When your shelf has signal, Lantern ranks the pool to your
+            resonance first.
           </p>
         </div>
       </section>
@@ -55,13 +51,13 @@ export default async function DailyPage() {
             <h3>Signal interrupted</h3>
             <p>{error}</p>
           </div>
-        ) : !anime ? (
+        ) : pool.length === 0 ? (
           <div className="state-box lantern-empty">
             <h3>No pick on the desk</h3>
             <p>The pool came back empty. Try again in a moment.</p>
           </div>
         ) : (
-          <DailyRitual anime={anime} dateLabel={dateLabel} />
+          <DailyRitual pool={pool} seed={seed} dateLabel={dateLabel} />
         )}
       </section>
     </main>
