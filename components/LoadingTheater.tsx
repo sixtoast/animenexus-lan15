@@ -2,15 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { SignalBars } from "@/components/ui/SignalBars";
+import {
+  loadingLabel,
+  type LoadingContext,
+  LOADING_COPY,
+} from "@/lib/loading-theatre";
 
 export function LoadingTheater() {
   const [on, setOn] = useState(false);
-  const [label, setLabel] = useState("Tuning the frequency…");
+  const [label, setLabel] = useState(LOADING_COPY.default);
 
   useEffect(() => {
     const start = (e: Event) => {
-      const d = (e as CustomEvent).detail as { label?: string } | undefined;
-      setLabel(d?.label || "Tuning the frequency…");
+      const d = (e as CustomEvent).detail as
+        | { label?: string; context?: LoadingContext | string }
+        | undefined;
+      setLabel(
+        d?.label || loadingLabel(d?.context) || LOADING_COPY.default,
+      );
       setOn(true);
     };
     const stop = () => setOn(false);
@@ -25,17 +34,31 @@ export function LoadingTheater() {
   if (!on) return null;
 
   return (
-    <div className="loading-theater nx-loading-signal" role="status" aria-live="polite">
+    <div
+      className="loading-theater nx-loading-signal"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
       <SignalBars level={4} animated label="Receiving signal" />
       <p>{label}</p>
     </div>
   );
 }
 
-export function loadingStart(label?: string) {
+/** Start global theatre. Prefer a named context from LOADING_COPY. */
+export function loadingStart(contextOrLabel?: LoadingContext | string) {
   if (typeof window === "undefined") return;
+  const isKey =
+    !!contextOrLabel &&
+    typeof contextOrLabel === "string" &&
+    contextOrLabel in LOADING_COPY;
   window.dispatchEvent(
-    new CustomEvent("animenexus:loading-start", { detail: { label } }),
+    new CustomEvent("animenexus:loading-start", {
+      detail: isKey
+        ? { context: contextOrLabel as LoadingContext }
+        : { label: contextOrLabel || LOADING_COPY.default },
+    }),
   );
 }
 
