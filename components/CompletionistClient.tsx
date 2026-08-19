@@ -11,11 +11,18 @@ import {
   userResonance,
 } from "@/lib/resonance";
 
+function episodeCount(e: WatchlistEntry): number {
+  const n =
+    typeof e.episodes === "number"
+      ? e.episodes
+      : parseInt(String(e.episodes || ""), 10);
+  return Number.isFinite(n) && n > 0 ? n : 12;
+}
+
 function scoreWatching(e: WatchlistEntry, user: ReturnType<typeof userResonance>) {
   const w = interactionWeight(e);
   const sim = cosineSimilarity(user, resonanceFromGenres(e.genres));
-  // Prefer near-complete + aligned with shelf
-  const progressHint = Math.min(1, (e.progress || 0) / Math.max(1, e.episodes || 12));
+  const progressHint = Math.min(1, (e.progress || 0) / episodeCount(e));
   return 0.35 * w + 0.35 * sim + 0.3 * progressHint;
 }
 
