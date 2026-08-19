@@ -1,5 +1,5 @@
 /**
- * Lantern agent runner (Sprint 5 + 12–13 polish).
+ * Lantern agent runner (Sprint 5 + 12–13 + 23 polish).
  *
  * Flow:
  * 1) Model proposes tools as JSON (or none).
@@ -46,6 +46,7 @@ function plannerSystem(): string {
     toolsCatalogForPrompt(),
     "Rules:",
     "- MUST call getWatchlist for questions about their list, watching, planning, or 'what should I watch from my list'.",
+    "- MUST call getCompletionQueue for 'what should I finish', 'what to complete next', backlog / queue prioritization.",
     "- MUST call getTasteProfile or getStats for taste/stats questions.",
     "- MUST call searchAnime when the user names a title to look up.",
     "- MUST call getRecommendations for 'recommend something' when not pure chat.",
@@ -63,6 +64,7 @@ function answerSystem(toolBlock: string): string {
     "You MUST treat TOOL_RESULTS as ground truth.",
     "If a tool failed or returned empty, say so honestly. Never invent titles or claim you modified the list unless a tool confirmed it.",
     "If a tool needs confirmation, tell the user what would happen and that they must confirm in the UI.",
+    "When recommending, prefer the tool's confidence + reasons; do not invent match percentages.",
     "No fake ARG codes.",
     "",
     "Local memory digest:",
@@ -93,6 +95,7 @@ const ALLOWED = new Set<string>([
   "getStats",
   "getRecentActivity",
   "getRecommendations",
+  "getCompletionQueue",
   "addToWatchlist",
   "removeFromWatchlist",
 ]);
