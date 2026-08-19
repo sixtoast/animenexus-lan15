@@ -6,10 +6,10 @@
 
 | Plan sprint | Status |
 |-------------|--------|
-| 0–17 | Through motion tokens |
-| **18 View transitions** | `withViewTransition` helper; cover morph; root crossfade; RoomEnter avoids double motion |
+| 0–18 | Through view transitions |
+| **19 Empty states** | `SignalEmpty` + Browse empty/error polish; CTAs for reset / trending |
 
 ## Next
 
-1. Later plan items (Sakura removal, design cohesion, etc.)  
-2. Or continue sequential polish from remaining master-plan backlog  
+1. Design cohesion / optional Sakura control  
+2. Remaining backlog (Sakura removal is inventory Sprint 35)  
