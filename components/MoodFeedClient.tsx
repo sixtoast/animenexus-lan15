@@ -13,7 +13,7 @@ type Props = {
 };
 
 /**
- * Mood catalog from the server, optionally re-ordered by shelf resonance.
+ * Mood / seasonal catalog from the server, optionally re-ordered by shelf resonance.
  * Cold shelf → original API order (no disruption).
  */
 export function MoodFeedClient({ items, moodLabel }: Props) {
@@ -30,7 +30,6 @@ export function MoodFeedClient({ items, moodLabel }: Props) {
       resonanceWeight: 0.6,
     });
     if (!ranked.length) return items;
-    // Keep excluded-on-list titles at the end so the grid still feels full
     const rankedIds = new Set(ranked.map((r) => r.anime.id));
     const tail = items.filter((a) => !rankedIds.has(a.id));
     return [...ranked.map((r) => r.anime), ...tail];
@@ -41,8 +40,14 @@ export function MoodFeedClient({ items, moodLabel }: Props) {
   return (
     <div>
       {personalized ? (
-        <p className="meta" style={{ marginBottom: 12 }}>
-          Ordered for your shelf within {moodLabel} — soft ranks, not a scoreboard.
+        <p
+          className="meta"
+          style={{ marginBottom: 12 }}
+          role="status"
+          aria-live="polite"
+        >
+          Ordered for your shelf within {moodLabel} — soft ranks, not a
+          scoreboard.
         </p>
       ) : null}
       <AnimeGrid items={ordered} />
