@@ -30,6 +30,7 @@ import { useMascotStore } from "@/lib/mascot/store";
 import { wireStoreMovement } from "@/lib/mascot/wire-movement";
 import { installMascotDebugGlobal } from "@/lib/mascot/debug-snapshot";
 import { installBuiltinMascotEvents } from "@/lib/mascot/builtin-events";
+import { installNexusAttentionBridge } from "@/lib/mascot/nexus-attention-bridge";
 import { LIVE_LIGHTING, PALETTE, CANVAS_GL } from "@/lib/mascot/visual";
 import {
   budgetFor,
@@ -119,6 +120,7 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
   useEffect(() => {
     wireStoreMovement();
     installBuiltinMascotEvents();
+    installNexusAttentionBridge();
     if (process.env.NODE_ENV === "development") {
       installMascotDebugGlobal();
     }
