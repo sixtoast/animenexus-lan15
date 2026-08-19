@@ -1,0 +1,35 @@
+/* Intelligent empty states (master plan · Sprint 19) */
+
+.signal-empty {
+  text-align: center;
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 28px 20px;
+}
+
+.signal-empty-glyph {
+  font-size: 1.6rem;
+  margin: 0 0 8px;
+  opacity: 0.85;
+}
+
+.signal-empty-title {
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin: 0 0 6px;
+}
+
+.signal-empty-body {
+  margin: 0 0 16px;
+  opacity: 0.88;
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+.signal-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
