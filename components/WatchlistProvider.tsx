@@ -24,13 +24,14 @@ type Ctx = {
   ready: boolean;
   getEntry: (id: number) => WatchlistEntry | undefined;
   isInList: (id: number) => boolean;
-  add: (anime: Anime, status?: WatchStatus) => void;
-  remove: (id: number) => void;
-  setStatus: (id: number, status: WatchStatus) => void;
-  setProgress: (id: number, progress: number) => void;
-  setUserRating: (id: number, rating: number) => void;
-  clearAll: () => void;
-  replaceAll: (entries: WatchlistEntry[]) => void;
+  /** Returns false if persistence failed — do not show seal. */
+  add: (anime: Anime, status?: WatchStatus) => boolean;
+  remove: (id: number) => boolean;
+  setStatus: (id: number, status: WatchStatus) => boolean;
+  setProgress: (id: number, progress: number) => boolean;
+  setUserRating: (id: number, rating: number) => boolean;
+  clearAll: () => boolean;
+  replaceAll: (entries: WatchlistEntry[]) => boolean;
 };
 
 const WatchlistContext = createContext<Ctx | null>(null);
@@ -51,9 +52,11 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const persist = useCallback((next: WatchlistEntry[]) => {
-    setEntries(next);
-    writeWatchlist(next);
+  /** Write first; only commit React state on success. */
+  const commit = useCallback((next: WatchlistEntry[]): boolean => {
+    const ok = writeWatchlist(next);
+    if (ok) setEntries(next);
+    return ok;
   }, []);
 
   const getEntry = useCallback(
@@ -66,8 +69,9 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
     [entries],
   );
 
-  const add = useCallback((anime: Anime, status: WatchStatus = "planning") => {
-    setEntries((prev) => {
+  const add = useCallback(
+    (anime: Anime, status: WatchStatus = "planning"): boolean => {
+      const prev = entries;
       const existing = prev.find((e) => e.id === anime.id);
       let next: WatchlistEntry[];
       if (existing) {
@@ -88,7 +92,10 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
       } else {
         next = [animeToEntry(anime, status), ...prev];
       }
-      writeWatchlist(next);
+
+      const ok = commit(next);
+      if (!ok) return false;
+
       queueMicrotask(() => {
         emitNexus({
           type: "anime_added",
@@ -98,39 +105,47 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
         markRecAccepted(anime.id);
         if (status === "watching") {
           emitNexus({ type: "anime_started", animeId: anime.id });
-        }
-        if (status === "completed") {
+          fireSeal(anime.title, "watching");
+        } else if (status === "completed") {
           emitNexus({
             type: "anime_completed",
             animeId: anime.id,
             title: anime.title,
           });
+          recordCompletion({ id: anime.id, title: anime.title });
+          fireSeal(anime.title, "completed");
+        } else {
+          fireSeal(anime.title, "seal");
         }
       });
-      return next;
-    });
-  }, []);
+      return true;
+    },
+    [entries, commit],
+  );
 
-  const remove = useCallback((id: number) => {
-    setEntries((prev) => {
-      const next = prev.filter((e) => e.id !== id);
-      writeWatchlist(next);
+  const remove = useCallback(
+    (id: number): boolean => {
+      const next = entries.filter((e) => e.id !== id);
+      const ok = commit(next);
+      if (!ok) return false;
       queueMicrotask(() => {
         emitNexus({ type: "anime_removed", animeId: id });
       });
-      return next;
-    });
-  }, []);
+      return true;
+    },
+    [entries, commit],
+  );
 
-  const setStatus = useCallback((id: number, status: WatchStatus) => {
-    setEntries((prev) => {
-      const current = prev.find((e) => e.id === id);
-      const next = prev.map((e) =>
+  const setStatus = useCallback(
+    (id: number, status: WatchStatus): boolean => {
+      const current = entries.find((e) => e.id === id);
+      const next = entries.map((e) =>
         e.id === id
           ? { ...e, watchStatus: status, updatedAt: new Date().toISOString() }
           : e,
       );
-      writeWatchlist(next);
+      const ok = commit(next);
+      if (!ok) return false;
 
       if (
         status === "dropped" &&
@@ -158,13 +173,14 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
         });
       }
 
-      return next;
-    });
-  }, []);
+      return true;
+    },
+    [entries, commit],
+  );
 
-  const setProgress = useCallback((id: number, progress: number) => {
-    setEntries((prev) => {
-      const next = prev.map((e) =>
+  const setProgress = useCallback(
+    (id: number, progress: number): boolean => {
+      const next = entries.map((e) =>
         e.id === id
           ? {
               ...e,
@@ -173,14 +189,14 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
             }
           : e,
       );
-      writeWatchlist(next);
-      return next;
-    });
-  }, []);
+      return commit(next);
+    },
+    [entries, commit],
+  );
 
-  const setUserRating = useCallback((id: number, rating: number) => {
-    setEntries((prev) => {
-      const next = prev.map((e) =>
+  const setUserRating = useCallback(
+    (id: number, rating: number): boolean => {
+      const next = entries.map((e) =>
         e.id === id
           ? {
               ...e,
@@ -189,20 +205,16 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
             }
           : e,
       );
-      writeWatchlist(next);
-      return next;
-    });
-  }, []);
+      return commit(next);
+    },
+    [entries, commit],
+  );
 
-  const clearAll = useCallback(() => {
-    persist([]);
-  }, [persist]);
+  const clearAll = useCallback((): boolean => commit([]), [commit]);
 
   const replaceAll = useCallback(
-    (next: WatchlistEntry[]) => {
-      persist(next);
-    },
-    [persist],
+    (next: WatchlistEntry[]): boolean => commit(next),
+    [commit],
   );
 
   const value = useMemo(
