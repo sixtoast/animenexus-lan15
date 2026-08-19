@@ -1,14 +1,12 @@
 # AnimeNexus evolution — sprint progress
 
-## Completed (evolution track)
+Aligned with [MASTER_PLAN_STATUS.md](./MASTER_PLAN_STATUS.md).
 
-| Sprint | Deliverable |
-|--------|-------------|
-| 0–25 | Events → ranking surfaces → agent → QA → watchlist sort |
-| 26 | **`/journey`** timeline + insights; nav link; master plan status map |
-
-See [MASTER_PLAN_STATUS.md](./MASTER_PLAN_STATUS.md) for the full 36-feature programme vs repo.
+| Plan sprint | Deliverable |
+|-------------|-------------|
+| 0–10 | Foundation through Journey + watchlist sort |
+| **11** | **Stateful AnimeCard** — watching/completed/sealed/recent/recommended via border + ring + progress bar |
 
 ## Next
 
-Stateful AnimeCard → Seal authenticity → Loading Theatre → errors → Sakura removal → cohesion.
+**12 — Seal moment authenticity** (fail → no seal animation).
