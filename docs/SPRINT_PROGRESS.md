@@ -4,10 +4,9 @@
 
 | Sprint | Deliverable |
 |--------|-------------|
-| 0–22 | Ranking surfaces + stats resonance + build green |
-| 23 | **Agent:** `getCompletionQueue` tool; richer rec reasons; planner routing |
+| 0–23 | Ranking surfaces through agent completion queue |
+| 24 | **docs/QA_CHECKLIST.md**; Oracle `tool_opened` emit |
 
 ## QA
 
-1. Ask Lantern “what should I finish next?” → uses completion queue  
-2. Recommend path still returns confidence + reasons  
+See [QA_CHECKLIST.md](./QA_CHECKLIST.md) for cold vs warm shelf matrix.
