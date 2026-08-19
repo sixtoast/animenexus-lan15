@@ -275,6 +275,12 @@ export function BrowseClient({
               }
               onClick={() => setShelfBlend((v) => !v)}
               title="Blend catalog order with your shelf resonance"
+              aria-pressed={shelfBlend}
+              aria-label={
+                shelfBlend
+                  ? "Shelf blend on — results ordered with your taste"
+                  : "Shelf blend off — catalog order only"
+              }
             >
               {shelfBlend ? "Shelf blend on" : "Shelf blend off"}
             </button>
