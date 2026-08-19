@@ -6,11 +6,15 @@ import type { Anime } from "@/lib/types";
 import { dailySeed, pickSeeded, seededRandom } from "@/lib/daily-seed";
 import { useToast } from "@/components/ToastProvider";
 import { fireConfetti } from "@/components/ConfettiBurst";
+import { useWatchlist } from "@/components/WatchlistProvider";
+import { rankRecommendations } from "@/lib/recommend-rank";
+import { emitNexus } from "@/lib/nexus";
 
 type Mode = "silhouette" | "hard";
 
 export function ChallengeClient() {
   const { showToast } = useToast();
+  const { entries, ready } = useWatchlist();
   const [mode, setMode] = useState<Mode>("silhouette");
   const [pool, setPool] = useState<Anime[]>([]);
   const [anime, setAnime] = useState<Anime | null>(null);
@@ -20,14 +24,31 @@ export function ChallengeClient() {
   const [err, setErr] = useState<string | null>(null);
   const [streak, setStreak] = useState(0);
   const [hardGuess, setHardGuess] = useState("");
+  const [shelfTuned, setShelfTuned] = useState(false);
 
   const seed = useMemo(() => dailySeed(), []);
+
+  const tunedPool = useMemo(() => {
+    if (!pool.length) return pool;
+    if (!ready || entries.length < 2) return pool;
+    // Keep every candidate; order so familiar frequencies land more often
+    const ranked = rankRecommendations(pool, entries, {
+      excludeIds: [],
+      resonanceWeight: 0.55,
+    });
+    if (!ranked.length) return pool;
+    const rankedIds = new Set(ranked.map((r) => r.anime.id));
+    const tail = pool.filter((a) => !rankedIds.has(a.id));
+    return [...ranked.map((r) => r.anime), ...tail];
+  }, [pool, ready, entries]);
 
   const buildRound = useCallback(
     (list: Anime[], extraSeed = 0) => {
       if (list.length < 4) return;
       const rnd = seededRandom(seed + extraSeed + list.length);
-      const idx = Math.floor(rnd() * list.length);
+      // Bias toward front of tuned list (shelf-aligned) without locking the answer
+      const biasSpan = Math.max(4, Math.floor(list.length * 0.55));
+      const idx = Math.floor(rnd() * biasSpan);
       const correct = list[idx];
       const distractors = pickSeeded(
         list.filter((a) => a.id !== correct.id),
@@ -57,18 +78,26 @@ export function ChallengeClient() {
       const data = json.data || [];
       if (data.length < 4) throw new Error("Pool too small");
       setPool(data);
-      buildRound(data, 0);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Load failed");
       setAnime(null);
     } finally {
       setLoading(false);
     }
-  }, [buildRound]);
+  }, []);
 
   useEffect(() => {
     load();
+    emitNexus({ type: "tool_opened", tool: "challenge" });
   }, [load]);
+
+  // Build first round once pool (and optional shelf tune) is ready
+  useEffect(() => {
+    if (!tunedPool.length) return;
+    const tuned = ready && entries.length >= 2;
+    setShelfTuned(tuned);
+    buildRound(tunedPool, 0);
+  }, [tunedPool, ready, entries.length, buildRound]);
 
   function answer(title: string) {
     if (!anime || result) return;
@@ -103,7 +132,7 @@ export function ChallengeClient() {
   }
 
   function nextRound() {
-    if (pool.length) buildRound(pool, Date.now() % 10000);
+    if (tunedPool.length) buildRound(tunedPool, Date.now() % 10000);
   }
 
   if (err) {
@@ -160,6 +189,7 @@ export function ChallengeClient() {
         <div>
           <p className="daily-kicker">
             Daily seed {seed} · Streak {streak}
+            {shelfTuned ? " · shelf-tuned" : ""}
           </p>
           <h2 className="challenge-q">
             {mode === "silhouette"
@@ -170,6 +200,9 @@ export function ChallengeClient() {
             {mode === "silhouette"
               ? "Pick the title. Art dissolves into color after you answer."
               : "Free-text: year, score (e.g. 8.5), format, or full title."}
+            {shelfTuned
+              ? " Rounds lean toward frequencies on your shelf — still fair."
+              : ""}
           </p>
         </div>
       </div>
