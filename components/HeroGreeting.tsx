@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { readMemory } from "@/lib/lantern-memory";
 import { useWatchlist } from "@/components/WatchlistProvider";
+import { readSessionTouch } from "@/components/FirstVisitHost";
 
 function baseGreeting(h: number): { icon: string; text: string } {
   if (h >= 5 && h < 12)
@@ -25,9 +26,38 @@ export function HeroGreeting() {
     const h = new Date().getHours();
     const base = baseGreeting(h);
     const m = readMemory();
+    const touch = readSessionTouch();
 
     if (!ready) {
       setG(base);
+      return;
+    }
+
+    if (touch?.isFirstVisit || (m.sessionOpens <= 1 && entries.length === 0)) {
+      setG({
+        icon: base.icon,
+        text:
+          h >= 21 || h < 5
+            ? "First night on the desk — Lantern is listening."
+            : "First visit — the frequency is open.",
+      });
+      return;
+    }
+
+    if (touch && touch.daysAway >= 14) {
+      const days = Math.floor(touch.daysAway);
+      setG({
+        icon: base.icon,
+        text: `It’s been a while — about ${days} day${days === 1 ? "" : "s"} since this browser last opened the desk.`,
+      });
+      return;
+    }
+
+    if (touch && touch.daysAway >= 3) {
+      setG({
+        icon: base.icon,
+        text: "You’re back — the shelf is still here.",
+      });
       return;
     }
 
@@ -35,7 +65,7 @@ export function HeroGreeting() {
     if (watching.length > 0) {
       setG({
         icon: base.icon,
-        text: `Welcome back — still mid-frequency with “${watching[0].title}”.`,
+        text: `You left something open — still mid-frequency with “${watching[0].title}”.`,
       });
       return;
     }
@@ -61,18 +91,10 @@ export function HeroGreeting() {
       return;
     }
 
-    if (m.sessionOpens <= 1 && entries.length === 0) {
-      setG({
-        icon: base.icon,
-        text:
-          h >= 21 || h < 5
-            ? "First night on the desk — Lantern is listening."
-            : "First visit — the frequency is open.",
-      });
-      return;
-    }
-
-    setG(base);
+    setG({
+      icon: base.icon,
+      text: "You’re back. " + base.text,
+    });
   }, [ready, entries]);
 
   return (
