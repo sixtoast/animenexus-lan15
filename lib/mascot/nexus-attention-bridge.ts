@@ -1,5 +1,6 @@
 /**
  * Sprint 7 — Lantern agency / attention bridge
+ * Sprint 16 — respect prefers-reduced-motion for anim requests
  *
  * Maps Nexus app events → mascot store (emotions + light intentions).
  * Soft bias from html[data-nx-lantern] (environment engine).
@@ -10,10 +11,26 @@ import { subscribeNexus } from "@/lib/nexus";
 import type { NexusEvent } from "@/lib/nexus/events";
 import { useMascotStore } from "./store";
 import type { MascotEmotions } from "./types";
+import type { MascotAnim } from "./types";
 
 let unsub: (() => void) | null = null;
 let lastFire = 0;
 const GLOBAL_COOLDOWN_MS = 2_200;
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") return false;
+  if (document.documentElement.dataset.nxMotion === "reduced") return true;
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
+}
+
+function softAnim(anim: MascotAnim, holdMs: number) {
+  if (prefersReducedMotion()) return;
+  useMascotStore.getState().requestAnim({ anim, holdMs });
+}
 
 function lanternMoodBias(): Partial<Record<keyof MascotEmotions, number>> {
   if (typeof document === "undefined") return {};
@@ -125,13 +142,13 @@ function onEvent(ev: NexusEvent): void {
       store.bumpEmotion("happiness", 0.12);
       store.bumpEmotion("confidence", 0.06);
       store.bumpEmotion("energy", 0.05);
-      store.requestAnim({ anim: "celebrate", holdMs: 2200 });
+      softAnim("celebrate", 2200);
       break;
 
     case "recommendation_rejected":
       store.bumpEmotion("curiosity", 0.05);
       store.bumpEmotion("happiness", -0.02);
-      store.requestAnim({ anim: "think", holdMs: 1600 });
+      softAnim("think", 1600);
       break;
 
     default:
