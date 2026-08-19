@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { touchStreak, readStreak } from "@/lib/streak";
 import { readMemory, type RecentView } from "@/lib/lantern-memory";
 import { useToast } from "@/components/ToastProvider";
 import type { Anime } from "@/lib/types";
+import {
+  rankRecommendations,
+  confidenceCopy,
+  type RankedRecommendation,
+} from "@/lib/recommend-rank";
+import { markRecShown, markRecOpened, rejectedAnimeIds } from "@/lib/recommend-feedback";
 
 type Props = {
   /** Optional; home page uses the full trending grid instead */
@@ -18,6 +24,7 @@ export function HomeDashboard({ trending = [] }: Props) {
   const { showToast } = useToast();
   const [streak, setStreak] = useState(0);
   const [recent, setRecent] = useState<RecentView[]>([]);
+  const shownRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     const { state, milestone } = touchStreak();
@@ -60,6 +67,27 @@ export function HomeDashboard({ trending = [] }: Props) {
   );
   const signalRecent = recent.filter((r) => !continueIds.has(r.id));
 
+  /** Resonance-ranked subset of trending when shelf has signal. */
+  const forYou: RankedRecommendation[] = useMemo(() => {
+    if (!ready || entries.length < 2 || trending.length === 0) return [];
+    const exclude = new Set<number>([
+      ...entries.map((e) => e.id),
+      ...rejectedAnimeIds(),
+    ]);
+    return rankRecommendations(trending, entries, {
+      excludeIds: exclude,
+      resonanceWeight: 0.7,
+    }).slice(0, 8);
+  }, [ready, entries, trending]);
+
+  useEffect(() => {
+    for (const r of forYou) {
+      if (shownRef.current.has(r.anime.id)) continue;
+      shownRef.current.add(r.anime.id);
+      markRecShown(r.anime.id);
+    }
+  }, [forYou]);
+
   return (
     <div className="home-dash">
       <div className="home-stat-chips">
@@ -101,6 +129,35 @@ export function HomeDashboard({ trending = [] }: Props) {
                   <div className="hrc-meta">
                     Ep {e.progress}
                     {e.episodes ? ` / ${e.episodes}` : ""}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {forYou.length > 0 ? (
+        <section className="home-rail-section">
+          <div className="home-rail-head">
+            <h2>For you</h2>
+            <span className="home-rail-note">Resonance · soft ranks</span>
+          </div>
+          <div className="home-rail">
+            {forYou.map((r) => (
+              <Link
+                key={r.anime.id}
+                href={`/anime/${r.anime.id}`}
+                className="home-rail-card"
+                onClick={() => markRecOpened(r.anime.id)}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={r.anime.image} alt="" />
+                <div className="hrc-body">
+                  <div className="hrc-title">{r.anime.title}</div>
+                  <div className="hrc-meta">
+                    {confidenceCopy(r.confidence)}
+                    {r.reasons[0] ? ` · ${r.reasons[0]}` : ""}
                   </div>
                 </div>
               </Link>
@@ -170,6 +227,7 @@ export function HomeDashboard({ trending = [] }: Props) {
       {ready &&
       continueList.length === 0 &&
       signalRecent.length === 0 &&
+      forYou.length === 0 &&
       trending.length === 0 ? (
         <p className="home-dash-empty">
           Open a few titles or seal one to your list — this desk fills as you
