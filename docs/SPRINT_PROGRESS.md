@@ -4,17 +4,12 @@
 
 | Sprint | Deliverable |
 |--------|-------------|
-| 0–8 | Core systems (events → memory → resonance → agent → env → attention) |
-| 9 | Home For you |
-| 10 | Daily ranked |
-| 11 | Tonight ranked |
-| 12 | Oracle + agent title confirms |
-| 13 | Mood feeds ranked |
-| 14 | Browse shelf-blend + build green |
-| 15 | **Seasonal + airing** shelf ranking; mascot **celebrate** on rec accept |
+| 0–14 | Core + ranking surfaces (home, daily, tonight, mood, browse) |
+| 15 | Seasonal ranking; celebrate on accept |
+| 16 | **A11y:** reduced-motion skips celebrate/think; shelf notes `aria-live`; browse blend `aria-pressed` |
 
 ## QA
 
-1. Seal ≥2 titles → `/seasonal` shows soft “Ordered for your shelf…”  
-2. Accept daily signal → Lantern-ko celebrate (if mascot visible)  
-3. Browse shelf blend still toggles  
+1. OS reduced motion on → accept daily → no celebrate anim (emotions still update)  
+2. Browse shelf blend announces state to assistive tech  
+3. Mood/seasonal personalized note is a polite live region  
