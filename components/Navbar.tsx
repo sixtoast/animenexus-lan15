@@ -15,6 +15,7 @@ const LINKS = [
   { href: "/tools", label: "Tools" },
   { href: "/watchlist", label: "Watchlist" },
   { href: "/taste", label: "Taste" },
+  { href: "/journey", label: "Journey" },
   { href: "/account", label: "Account" },
 ];
 
