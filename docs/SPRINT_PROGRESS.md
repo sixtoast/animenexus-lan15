@@ -6,19 +6,18 @@
 |--------|-------------|
 | 0–8 | Events, memory, resonance, recs, agent, environment, attention, debug |
 | 9 | Home **For you** rail |
-| 10 | Daily signal ranked by resonance |
-| 11 | Tonight queue ranked + why lines |
-| 12 | Oracle ranked picks; agent confirms with title names |
-| 13 | **Mood feeds** re-ordered by shelf resonance; stricter agent planner |
+| 10 | Daily ranked by resonance |
+| 11 | Tonight queue ranked |
+| 12 | Oracle ranked picks; agent title confirms |
+| 13 | Mood feeds ranked; stricter agent planner |
+| 14 | **Browse shelf-blend** toggle + TS build fixes (`Anime.tags`) |
 
-## Deferred
+## Build
 
-- Sakura removal (Sprint 35)
-- Fabricated precision scores
-- Cloud accounts for memory
+Production `next build` green after Sprint 14 (tags-only on Anime model).
 
 ## QA
 
-1. Seal ≥2 titles → `/mood/hype` (etc.) shows “Ordered for your shelf…”
-2. AI: “what’s on my watchlist?” should tool-call getWatchlist
-3. Home For you · Daily · Tonight (Q) still ranked
+1. `/browse` with ≥2 sealed titles → **Shelf blend on** button  
+2. Toggle off → catalog order restored  
+3. Mood / Daily / For you still personalize  
