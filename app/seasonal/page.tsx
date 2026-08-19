@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AnimeGrid } from "@/components/AnimeGrid";
+import { MoodFeedClient } from "@/components/MoodFeedClient";
 import { fetchAiring, fetchSeasonal } from "@/lib/anilist-discover";
 import {
   allSeasonsAround,
@@ -41,6 +41,7 @@ export default async function SeasonalPage({ searchParams }: Props) {
   );
   const year = sp.year ? parseInt(sp.year, 10) : cur.year;
   const tabs = allSeasonsAround();
+  const seasonName = `${seasonLabel(season)} ${year}`;
 
   let seasonalError: string | null = null;
   let airingError: string | null = null;
@@ -67,13 +68,13 @@ export default async function SeasonalPage({ searchParams }: Props) {
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">Discover · Sprint 8</div>
+          <div className="hero-badge">Discover · seasonal</div>
           <h1>
             {seasonLabel(season)} <span>{year}</span>
           </h1>
           <p>
-            Seasonal popularity chart and what’s still on the air. Daily pick is
-            on a separate frequency.
+            Seasonal chart and what’s still on the air. With a shelf on the desk,
+            Lantern softly ranks these lists to your resonance.
           </p>
           <div className="season-tabs">
             {tabs.map((t) => {
@@ -112,8 +113,12 @@ export default async function SeasonalPage({ searchParams }: Props) {
           <div className="state-box error">
             <p>{seasonalError}</p>
           </div>
+        ) : seasonalItems.length === 0 ? (
+          <div className="state-box">
+            <p>No titles for this season right now.</p>
+          </div>
         ) : (
-          <AnimeGrid items={seasonalItems} />
+          <MoodFeedClient items={seasonalItems} moodLabel={seasonName} />
         )}
       </section>
 
@@ -130,8 +135,12 @@ export default async function SeasonalPage({ searchParams }: Props) {
           <div className="state-box error">
             <p>{airingError}</p>
           </div>
+        ) : airingItems.length === 0 ? (
+          <div className="state-box">
+            <p>No airing titles loaded.</p>
+          </div>
         ) : (
-          <AnimeGrid items={airingItems} />
+          <MoodFeedClient items={airingItems} moodLabel="airing now" />
         )}
       </section>
     </main>
