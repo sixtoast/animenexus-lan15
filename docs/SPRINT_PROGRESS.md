@@ -2,9 +2,9 @@
 
 | Plan sprint | Deliverable |
 |-------------|-------------|
-| 0–12 | Through seal authenticity |
-| **13** | **First visit + return** — `FirstVisitHost`, session touch, evidence-based greetings |
+| 0–13 | Through first visit + return |
+| **14** | **Loading Theatre** — shared context copy; Radar/Browse wired; Challenge/Sauce/Oracle/Ancestry local patches ready |
 
 ## Next
 
-**14 — Loading Theatre**
+**15 — Intelligent error states**
