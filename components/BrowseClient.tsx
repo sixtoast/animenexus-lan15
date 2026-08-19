@@ -15,6 +15,9 @@ import {
 } from "@/lib/genres";
 import type { Anime } from "@/lib/types";
 import { emitNexus } from "@/lib/nexus";
+import { useWatchlist } from "@/components/WatchlistProvider";
+import { rankRecommendations } from "@/lib/recommend-rank";
+import { rejectedAnimeIds } from "@/lib/recommend-feedback";
 
 type Props = {
   initialItems: Anime[];
@@ -32,6 +35,7 @@ export function BrowseClient({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { entries, ready } = useWatchlist();
   const [items, setItems] = useState(initialItems);
   const [total, setTotal] = useState(initialTotal);
   const [hasNext, setHasNext] = useState(initialHasNext);
@@ -39,6 +43,8 @@ export function BrowseClient({
   const [error, setError] = useState(initialError);
   const [loadingMore, setLoadingMore] = useState(false);
   const [pending, startTransition] = useTransition();
+  /** Soft blend toward shelf resonance; default on when shelf has signal. */
+  const [shelfBlend, setShelfBlend] = useState(true);
 
   const parsed = useMemo(
     () => parseBrowseParams(new URLSearchParams(searchParams.toString())),
@@ -153,6 +159,25 @@ export function BrowseClient({
         ? "Filtered results"
         : FEED_TABS.find((t) => t.value === feed)?.label || "Browse";
 
+  const canBlend = ready && entries.length >= 2 && items.length > 1;
+
+  const displayItems = useMemo(() => {
+    if (!shelfBlend || !canBlend) return items;
+    const exclude = new Set<number>([
+      ...entries.map((e) => e.id),
+      ...rejectedAnimeIds(),
+    ]);
+    const ranked = rankRecommendations(items, entries, {
+      excludeIds: exclude,
+      // Lighter weight so catalog sort still matters
+      resonanceWeight: 0.45,
+    });
+    if (!ranked.length) return items;
+    const rankedIds = new Set(ranked.map((r) => r.anime.id));
+    const tail = items.filter((a) => !rankedIds.has(a.id));
+    return [...ranked.map((r) => r.anime), ...tail];
+  }, [shelfBlend, canBlend, items, entries]);
+
   return (
     <div>
       <div className="feed-tabs" role="tablist" aria-label="Discover feeds">
@@ -242,6 +267,18 @@ export function BrowseClient({
           <button type="button" className="btn btn-outline btn-sm" onClick={resetFilters}>
             Reset
           </button>
+          {canBlend ? (
+            <button
+              type="button"
+              className={
+                "btn btn-sm " + (shelfBlend ? "btn-accent" : "btn-outline")
+              }
+              onClick={() => setShelfBlend((v) => !v)}
+              title="Blend catalog order with your shelf resonance"
+            >
+              {shelfBlend ? "Shelf blend on" : "Shelf blend off"}
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -251,7 +288,9 @@ export function BrowseClient({
           {pending ? <span className="meta" style={{ marginLeft: 10 }}>Tuning…</span> : null}
         </h2>
         <span className="meta">
-          {error ? "—" : `${items.length} shown${total ? ` · ${total.toLocaleString()} total` : ""}`}
+          {error
+            ? "—"
+            : `${items.length} shown${total ? ` · ${total.toLocaleString()} total` : ""}${shelfBlend && canBlend ? " · shelf blend" : ""}`}
         </span>
       </div>
 
@@ -264,7 +303,7 @@ export function BrowseClient({
         <PosterSkeleton count={12} label="Tuning the frequency…" />
       ) : (
         <>
-          <AnimeGrid items={items} />
+          <AnimeGrid items={displayItems} />
           {hasNext ? (
             <div style={{ textAlign: "center", marginTop: 28 }}>
               <button
