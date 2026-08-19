@@ -6,11 +6,10 @@
 
 | Plan sprint | Status |
 |-------------|--------|
-| 0–12 | Through seal authenticity |
-| **13 First visit + return** | Intro overlay (skip + reduced motion); session touch daysAway; greetings for first / long absence / unfinished |
+| 0–13 | Through first visit + return |
+| **14 Loading Theatre** | Shared `lib/loading-theatre.ts` copy; global overlay + PosterSkeleton; Radar (and wired) contexts |
 
 ## Next
 
-1. **14** Loading Theatre  
-2. **15** Intelligent error states  
-3. Later: motion tokens, Sakura removal, cohesion  
+1. **15** Intelligent error states  
+2. Later: motion tokens, Sakura removal, cohesion  
