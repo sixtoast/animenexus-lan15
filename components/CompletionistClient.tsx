@@ -3,23 +3,54 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useWatchlist } from "@/components/WatchlistProvider";
+import type { WatchlistEntry } from "@/lib/types";
+import {
+  cosineSimilarity,
+  interactionWeight,
+  resonanceFromGenres,
+  userResonance,
+} from "@/lib/resonance";
+
+function scoreWatching(e: WatchlistEntry, user: ReturnType<typeof userResonance>) {
+  const w = interactionWeight(e);
+  const sim = cosineSimilarity(user, resonanceFromGenres(e.genres));
+  // Prefer near-complete + aligned with shelf
+  const progressHint = Math.min(1, (e.progress || 0) / Math.max(1, e.episodes || 12));
+  return 0.35 * w + 0.35 * sim + 0.3 * progressHint;
+}
+
+function scoreQueue(e: WatchlistEntry, user: ReturnType<typeof userResonance>) {
+  const w = interactionWeight(e);
+  const sim = cosineSimilarity(user, resonanceFromGenres(e.genres));
+  const community =
+    e.score && e.score > 0
+      ? e.score > 10
+        ? e.score / 100
+        : e.score / 10
+      : 0.45;
+  return 0.4 * w + 0.4 * sim + 0.2 * community;
+}
 
 export function CompletionistClient() {
   const { entries, ready } = useWatchlist();
 
+  const user = useMemo(() => userResonance(entries), [entries]);
+
+  const watching = useMemo(() => {
+    return entries
+      .filter((e) => e.watchStatus === "watching")
+      .map((e) => ({ e, s: scoreWatching(e, user) }))
+      .sort((a, b) => b.s - a.s)
+      .map((x) => x.e);
+  }, [entries, user]);
+
   const queue = useMemo(() => {
     return entries
       .filter((e) => e.watchStatus === "planning" || e.watchStatus === "paused")
-      .sort((a, b) => (b.score || 0) - (a.score || 0));
-  }, [entries]);
-
-  const watching = useMemo(
-    () =>
-      entries
-        .filter((e) => e.watchStatus === "watching")
-        .sort((a, b) => b.progress - a.progress),
-    [entries],
-  );
+      .map((e) => ({ e, s: scoreQueue(e, user) }))
+      .sort((a, b) => b.s - a.s)
+      .map((x) => x.e);
+  }, [entries, user]);
 
   if (!ready) {
     return (
@@ -44,6 +75,9 @@ export function CompletionistClient() {
     <div>
       <section className="taste-section">
         <h2>Finish these first</h2>
+        <p className="tools-hint" role="status" aria-live="polite">
+          Ordered by progress, engagement, and shelf resonance — soft ranks.
+        </p>
         {watching.length === 0 ? (
           <p className="tools-hint">No active Watching titles.</p>
         ) : (
@@ -63,7 +97,10 @@ export function CompletionistClient() {
       </section>
 
       <section className="taste-section">
-        <h2>Planning queue (by community score)</h2>
+        <h2>Planning queue</h2>
+        <p className="tools-hint" role="status" aria-live="polite">
+          Ranked by resonance + engagement + community score — not a rigid order.
+        </p>
         {queue.length === 0 ? (
           <p className="tools-hint">Planning / Paused is empty.</p>
         ) : (
