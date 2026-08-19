@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Mascot debug overlay — page-world x/y (no habitat z).
+ * Mascot debug overlay — page-world x/y, emotions, environment.
  */
 
 import { useEffect, useState } from "react";
@@ -25,6 +25,23 @@ function row(label: string, value: string) {
       <span style={{ fontFamily: "ui-monospace, monospace", textAlign: "right" }}>
         {value}
       </span>
+    </div>
+  );
+}
+
+function section(title: string) {
+  return (
+    <div
+      style={{
+        marginTop: 8,
+        marginBottom: 4,
+        fontSize: 10,
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        opacity: 0.5,
+      }}
+    >
+      {title}
     </div>
   );
 }
@@ -76,6 +93,8 @@ export function MascotDebugPanel({
   }
 
   const s = snap;
+  const em = s?.emotions;
+  const env = s?.environment;
 
   return (
     <div
@@ -84,8 +103,8 @@ export function MascotDebugPanel({
         left: 8,
         bottom: 8,
         zIndex: 9999,
-        width: 280,
-        maxHeight: "50vh",
+        width: 300,
+        maxHeight: "55vh",
         overflow: "auto",
         padding: 10,
         borderRadius: 10,
@@ -120,10 +139,15 @@ export function MascotDebugPanel({
       </div>
       {s ? (
         <>
+          {section("mind")}
           {row("intention", s.intention)}
           {row("goal", s.goal)}
           {row("anim", s.anim)}
           {row("expression", s.expression)}
+          {row("reason", s.directorReason ?? "—")}
+          {row("thought", s.thought ?? "—")}
+
+          {section("body")}
           {row(
             "pos",
             `${s.runtime.x.toFixed(2)}, ${s.runtime.y.toFixed(2)}`,
@@ -143,8 +167,33 @@ export function MascotDebugPanel({
             s.command ? `${s.command.mode} · ${s.command.reason}` : "—",
           )}
           {row("climb", s.climbing ? s.climbPhase : "idle")}
-          {row("reason", s.directorReason ?? "—")}
-          {row("thought", s.thought ?? "—")}
+
+          {section("emotions")}
+          {em ? (
+            <>
+              {row("attention", em.attention.toFixed(2))}
+              {row("curiosity", em.curiosity.toFixed(2))}
+              {row("happiness", em.happiness.toFixed(2))}
+              {row("energy", em.energy.toFixed(2))}
+              {row("boredom", em.boredom.toFixed(2))}
+              {row("sleepiness", em.sleepiness.toFixed(2))}
+              {row("stress", em.stress.toFixed(2))}
+              {row("confidence", em.confidence.toFixed(2))}
+            </>
+          ) : null}
+
+          {section("environment")}
+          {env ? (
+            <>
+              {row("tod", env.tod)}
+              {row("route", env.route)}
+              {row("intensity", env.intensity)}
+              {row("accent", env.accent)}
+              {row("motion", env.motion)}
+              {row("lantern", env.lantern)}
+              {row("anime", env.animeId)}
+            </>
+          ) : null}
         </>
       ) : (
         <div style={{ fontSize: 11, opacity: 0.7 }}>No snapshot yet…</div>
