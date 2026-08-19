@@ -14,6 +14,7 @@
 | 7 | Nexus → mascot attention bridge |
 | 8 | Debug snapshot + panel (emotions + environment) |
 | 9 | Home **For you** rail (resonance rank + soft why + feedback) |
+| 10 | Daily signal ranks pool by resonance; accept / pass feedback |
 
 ## Intentional non-goals still deferred
 
@@ -24,7 +25,8 @@
 ## How to QA quickly
 
 1. Seal ≥2 titles → home shows **For you** above Trending
-2. Taste page → resonance bars
-3. Tools → Dislike reverse → ranked why + reject
-4. AI desk (API key) → “what’s on my watchlist?”
-5. Dev: open **mascot dbg** or `window.__mascotDebug()`
+2. `/daily` → when shelf has signal, pick is ranked; soft why line; Accept / Not for me
+3. Taste page → resonance bars
+4. Tools → Dislike reverse → ranked why + reject
+5. AI desk (API key) → “what’s on my watchlist?”
+6. Dev: open **mascot dbg** or `window.__mascotDebug()`
