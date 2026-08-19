@@ -8,6 +8,7 @@ import { useWatchlist } from "@/components/WatchlistProvider";
 import { rankRecommendations } from "@/lib/recommend-rank";
 import { rejectedAnimeIds } from "@/lib/recommend-feedback";
 import { emitNexus } from "@/lib/nexus";
+import { SignalError, signalErrorBody } from "@/components/SignalError";
 
 const PREFS_KEY = "anime_nexus_radar_prefs";
 const ALERTS_KEY = "anime_nexus_radar_alerts";
@@ -181,7 +182,15 @@ export function RadarClient() {
         </p>
       </div>
 
-      {err ? <p className="tools-hint">{err}</p> : null}
+      {err ? (
+        <SignalError
+          title="The signal went quiet."
+          body={signalErrorBody(err)}
+          detail={err}
+          onRetry={scan}
+          retryLabel="Scan again"
+        />
+      ) : null}
 
       {items.length > 0 ? (
         <>
