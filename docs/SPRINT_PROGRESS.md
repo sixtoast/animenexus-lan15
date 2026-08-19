@@ -4,20 +4,17 @@
 
 | Sprint | Deliverable |
 |--------|-------------|
-| 0–8 | Events, memory, resonance, recs, agent, environment, attention, debug |
-| 9 | Home **For you** rail |
-| 10 | Daily ranked by resonance |
-| 11 | Tonight queue ranked |
-| 12 | Oracle ranked picks; agent title confirms |
-| 13 | Mood feeds ranked; stricter agent planner |
-| 14 | **Browse shelf-blend** toggle + TS build fixes (`Anime.tags`) |
-
-## Build
-
-Production `next build` green after Sprint 14 (tags-only on Anime model).
+| 0–8 | Core systems (events → memory → resonance → agent → env → attention) |
+| 9 | Home For you |
+| 10 | Daily ranked |
+| 11 | Tonight ranked |
+| 12 | Oracle + agent title confirms |
+| 13 | Mood feeds ranked |
+| 14 | Browse shelf-blend + build green |
+| 15 | **Seasonal + airing** shelf ranking; mascot **celebrate** on rec accept |
 
 ## QA
 
-1. `/browse` with ≥2 sealed titles → **Shelf blend on** button  
-2. Toggle off → catalog order restored  
-3. Mood / Daily / For you still personalize  
+1. Seal ≥2 titles → `/seasonal` shows soft “Ordered for your shelf…”  
+2. Accept daily signal → Lantern-ko celebrate (if mascot visible)  
+3. Browse shelf blend still toggles  
