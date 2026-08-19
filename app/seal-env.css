@@ -170,10 +170,39 @@ html[data-tod="late-night"] body {
     var(--color-primary);
 }
 
+/* Sprint 6 — soft intensity / accent temperature (does not replace theme) */
+html[data-nx-intensity="low"] body {
+  filter: saturate(0.92);
+}
+
+html[data-nx-intensity="high"] body {
+  filter: saturate(1.06);
+}
+
+html[data-nx-accent="warm"] {
+  --nx-ambient-glow: rgba(240, 160, 144, 0.08);
+}
+
+html[data-nx-accent="cool"] {
+  --nx-ambient-glow: rgba(160, 190, 220, 0.07);
+}
+
+html[data-nx-accent="neutral"] {
+  --nx-ambient-glow: transparent;
+}
+
+html[data-nx-motion="still"] .nx-route-tune {
+  display: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .seal-moment,
   .seal-card,
   .seal-wax {
     animation: none;
+  }
+
+  html body {
+    filter: none;
   }
 }
