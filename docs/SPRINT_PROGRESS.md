@@ -4,18 +4,11 @@
 
 | Sprint | Deliverable |
 |--------|-------------|
-| 0 | Feature inventory |
-| 1 | Nexus event bus + emitters + memory subscriber |
-| 2 | Lantern Memory 2.0 |
-| 3 | Resonance dimensions + Taste profile |
-| 4 | Rec ranking + feedback lifecycle |
-| 5 | Lantern agent tools |
-| 6 | Global environment engine |
-| 7 | Nexus → mascot attention bridge |
-| 8 | Debug snapshot + panel |
+| 0–8 | Events, memory, resonance, recs, agent, environment, attention, debug |
 | 9 | Home **For you** rail |
 | 10 | Daily signal ranked by resonance |
-| 11 | **Tonight queue** ordered by engagement + resonance; soft why lines |
+| 11 | Tonight queue ranked + why lines |
+| 12 | Oracle local picks use ranked weights; agent confirms show **title names** |
 
 ## Intentional non-goals still deferred
 
@@ -25,8 +18,7 @@
 
 ## Quick QA
 
-1. Seal ≥2 titles → home **For you**
-2. `/daily` → ranked pick + Accept / Not for me
-3. Press **Q** → Tonight queue ranked; Rebuild refreshes order
-4. Taste → resonance bars
-5. Dev: **mascot dbg** or `window.__mascotDebug()`
+1. Oracle (local) with planning titles → ranked draw in the body text  
+2. AI desk: ask to add a known id → pending button names the title  
+3. **Q** → Tonight ranked; `/daily` → ranked pick  
+4. Dev: `window.__mascotDebug()`
