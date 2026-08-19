@@ -3,6 +3,7 @@
  * Safe to call from a debug panel or console:
  *   import { mascotDebugSnapshot } from '@/lib/mascot/debug-snapshot'
  *   console.table(mascotDebugSnapshot())
+ *   window.__mascotDebug()
  */
 
 import { useMascotStore } from "./store";
@@ -36,13 +37,57 @@ export type MascotDebugSnapshot = {
   climbing: boolean;
   climbPhase: string;
   enabled: boolean;
+  emotions: {
+    attention: number;
+    curiosity: number;
+    happiness: number;
+    energy: number;
+    boredom: number;
+    sleepiness: number;
+    stress: number;
+    confidence: number;
+  };
+  environment: {
+    tod: string;
+    route: string;
+    intensity: string;
+    accent: string;
+    motion: string;
+    lantern: string;
+    animeId: string;
+  };
 };
+
+function readEnvAttrs() {
+  if (typeof document === "undefined") {
+    return {
+      tod: "—",
+      route: "—",
+      intensity: "—",
+      accent: "—",
+      motion: "—",
+      lantern: "—",
+      animeId: "—",
+    };
+  }
+  const d = document.documentElement.dataset;
+  return {
+    tod: d.tod || "—",
+    route: d.nxRoute || "—",
+    intensity: d.nxIntensity || "—",
+    accent: d.nxAccent || "—",
+    motion: d.nxMotion || "—",
+    lantern: d.nxLantern || "—",
+    animeId: d.nxAnime || "—",
+  };
+}
 
 export function mascotDebugSnapshot(): MascotDebugSnapshot {
   const s = useMascotStore.getState();
   const rt = readRuntime();
   const cmd = peekMovementCommand();
   const climb = getClimbState();
+  const e = s.emotions;
 
   return {
     intention: s.intention,
@@ -79,12 +124,26 @@ export function mascotDebugSnapshot(): MascotDebugSnapshot {
     climbing: isClimbing(climb),
     climbPhase: climb.phase,
     enabled: s.enabled,
+    emotions: {
+      attention: +e.attention.toFixed(3),
+      curiosity: +e.curiosity.toFixed(3),
+      happiness: +e.happiness.toFixed(3),
+      energy: +e.energy.toFixed(3),
+      boredom: +e.boredom.toFixed(3),
+      sleepiness: +e.sleepiness.toFixed(3),
+      stress: +e.stress.toFixed(3),
+      confidence: +e.confidence.toFixed(3),
+    },
+    environment: readEnvAttrs(),
   };
 }
 
 /** Attach to window in dev for quick inspection. */
 export function installMascotDebugGlobal() {
   if (typeof window === "undefined") return;
-  (window as unknown as { __mascotDebug?: () => MascotDebugSnapshot }).__mascotDebug =
-    mascotDebugSnapshot;
+  (
+    window as unknown as {
+      __mascotDebug?: () => MascotDebugSnapshot;
+    }
+  ).__mascotDebug = mascotDebugSnapshot;
 }
