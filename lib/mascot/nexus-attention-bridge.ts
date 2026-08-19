@@ -48,7 +48,8 @@ function onEvent(ev: NexusEvent): void {
     if (
       ev.type !== "anime_added" &&
       ev.type !== "anime_completed" &&
-      ev.type !== "recommendation_rejected"
+      ev.type !== "recommendation_rejected" &&
+      ev.type !== "recommendation_accepted"
     ) {
       return;
     }
@@ -121,8 +122,10 @@ function onEvent(ev: NexusEvent): void {
       break;
 
     case "recommendation_accepted":
-      store.bumpEmotion("happiness", 0.1);
-      store.bumpEmotion("confidence", 0.05);
+      store.bumpEmotion("happiness", 0.12);
+      store.bumpEmotion("confidence", 0.06);
+      store.bumpEmotion("energy", 0.05);
+      store.requestAnim({ anim: "celebrate", holdMs: 2200 });
       break;
 
     case "recommendation_rejected":
