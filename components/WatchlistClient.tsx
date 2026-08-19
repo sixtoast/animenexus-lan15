@@ -5,8 +5,24 @@ import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { WatchlistToolbar } from "@/components/WatchlistToolbar";
 import { SignalBars } from "@/components/ui/SignalBars";
-import type { WatchStatus } from "@/lib/types";
+import type { WatchStatus, WatchlistEntry } from "@/lib/types";
 import { WATCH_STATUS_TABS } from "@/lib/watchlist-storage";
+import {
+  cosineSimilarity,
+  interactionWeight,
+  resonanceFromGenres,
+  userResonance,
+} from "@/lib/resonance";
+
+type SortMode = "recent" | "signal" | "progress";
+
+function episodeCount(e: WatchlistEntry): number {
+  const n =
+    typeof e.episodes === "number"
+      ? e.episodes
+      : parseInt(String(e.episodes || ""), 10);
+  return Number.isFinite(n) && n > 0 ? n : 12;
+}
 
 export function WatchlistClient() {
   const {
@@ -19,11 +35,37 @@ export function WatchlistClient() {
     clearAll,
   } = useWatchlist();
   const [tab, setTab] = useState<WatchStatus | "all">("all");
+  const [sort, setSort] = useState<SortMode>("recent");
+
+  const user = useMemo(() => userResonance(entries), [entries]);
 
   const filtered = useMemo(() => {
-    if (tab === "all") return entries;
-    return entries.filter((e) => e.watchStatus === tab);
-  }, [entries, tab]);
+    const base =
+      tab === "all" ? [...entries] : entries.filter((e) => e.watchStatus === tab);
+
+    if (sort === "recent") {
+      // Preserve storage order (typically last-touched first)
+      return base;
+    }
+
+    if (sort === "progress") {
+      return base.sort((a, b) => {
+        const pa = (a.progress || 0) / episodeCount(a);
+        const pb = (b.progress || 0) / episodeCount(b);
+        return pb - pa || (b.progress || 0) - (a.progress || 0);
+      });
+    }
+
+    // signal: engagement + resonance vs whole shelf
+    return base
+      .map((e) => {
+        const w = interactionWeight(e);
+        const sim = cosineSimilarity(user, resonanceFromGenres(e.genres));
+        return { e, s: 0.5 * w + 0.5 * sim };
+      })
+      .sort((a, b) => b.s - a.s)
+      .map((x) => x.e);
+  }, [entries, tab, sort, user]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: entries.length };
@@ -60,6 +102,35 @@ export function WatchlistClient() {
         ))}
       </div>
 
+      {entries.length > 0 ? (
+        <div
+          className="daily-actions"
+          style={{ marginBottom: 12, flexWrap: "wrap" }}
+          role="group"
+          aria-label="Watchlist sort"
+        >
+          {(
+            [
+              ["recent", "Recent"],
+              ["signal", "Shelf signal"],
+              ["progress", "Progress"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className={
+                "btn btn-sm " + (sort === id ? "btn-accent" : "btn-outline")
+              }
+              aria-pressed={sort === id}
+              onClick={() => setSort(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       <WatchlistToolbar />
 
       {entries.length === 0 ? (
@@ -91,87 +162,104 @@ export function WatchlistClient() {
           </p>
         </div>
       ) : (
-        <ul className="wl-list">
-          {filtered.map((e) => {
-            const maxEp =
-              typeof e.episodes === "number" ? e.episodes : undefined;
-            return (
-              <li key={e.id} className="wl-row">
-                <Link href={`/anime/${e.id}`} className="wl-thumb">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={e.image} alt="" />
-                </Link>
-                <div className="wl-body">
-                  <Link href={`/anime/${e.id}`} className="wl-title">
-                    {e.title}
+        <>
+          {sort !== "recent" ? (
+            <p className="tools-hint" role="status" aria-live="polite">
+              {sort === "signal"
+                ? "Ordered by engagement + resonance vs your shelf — soft ranks."
+                : "Ordered by episode progress toward finishing."}
+            </p>
+          ) : null}
+          <ul className="wl-list">
+            {filtered.map((e) => {
+              const maxEp =
+                typeof e.episodes === "number" ? e.episodes : undefined;
+              return (
+                <li key={e.id} className="wl-row">
+                  <Link href={`/anime/${e.id}`} className="wl-thumb">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={e.image} alt="" />
                   </Link>
-                  <div className="wl-meta">
-                    {e.format ? <span>{e.format}</span> : null}
-                    {e.year ? <span>{e.year}</span> : null}
-                    {e.score ? (
-                      <span className="card-score">★ {e.score.toFixed(1)}</span>
-                    ) : null}
-                  </div>
-                  <div className="wl-controls">
-                    <label>
-                      Status
-                      <select
-                        className="filter-input"
-                        value={e.watchStatus}
-                        onChange={(ev) =>
-                          setStatus(e.id, ev.target.value as WatchStatus)
-                        }
-                      >
-                        {WATCH_STATUS_TABS.filter((t) => t.value !== "all").map(
-                          (t) => (
+                  <div className="wl-body">
+                    <Link href={`/anime/${e.id}`} className="wl-title">
+                      {e.title}
+                    </Link>
+                    <div className="wl-meta">
+                      {e.format ? <span>{e.format}</span> : null}
+                      {e.year ? <span>{e.year}</span> : null}
+                      {e.score ? (
+                        <span className="card-score">
+                          ★ {e.score.toFixed(1)}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="wl-controls">
+                      <label>
+                        Status
+                        <select
+                          className="filter-input"
+                          value={e.watchStatus}
+                          onChange={(ev) =>
+                            setStatus(e.id, ev.target.value as WatchStatus)
+                          }
+                        >
+                          {WATCH_STATUS_TABS.filter(
+                            (t) => t.value !== "all",
+                          ).map((t) => (
                             <option key={t.value} value={t.value}>
                               {t.label}
                             </option>
-                          ),
-                        )}
-                      </select>
-                    </label>
-                    <label>
-                      Progress
-                      <input
-                        type="number"
-                        className="filter-input"
-                        min={0}
-                        max={maxEp || 9999}
-                        value={e.progress}
-                        onChange={(ev) =>
-                          setProgress(e.id, parseInt(ev.target.value, 10) || 0)
-                        }
-                      />
-                    </label>
-                    <label>
-                      Your score
-                      <input
-                        type="number"
-                        className="filter-input"
-                        min={0}
-                        max={10}
-                        step={0.5}
-                        value={e.userRating || ""}
-                        placeholder="—"
-                        onChange={(ev) =>
-                          setUserRating(e.id, parseFloat(ev.target.value) || 0)
-                        }
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      className="btn btn-outline btn-sm"
-                      onClick={() => remove(e.id)}
-                    >
-                      Remove
-                    </button>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Progress
+                        <input
+                          type="number"
+                          className="filter-input"
+                          min={0}
+                          max={maxEp || 9999}
+                          value={e.progress}
+                          onChange={(ev) =>
+                            setProgress(
+                              e.id,
+                              parseInt(ev.target.value, 10) || 0,
+                            )
+                          }
+                        />
+                      </label>
+                      <label>
+                        Your score
+                        <input
+                          type="number"
+                          className="filter-input"
+                          min={0}
+                          max={10}
+                          step={0.5}
+                          value={e.userRating || ""}
+                          placeholder="—"
+                          onChange={(ev) =>
+                            setUserRating(
+                              e.id,
+                              parseFloat(ev.target.value) || 0,
+                            )
+                          }
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        onClick={() => remove(e.id)}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
 
       {entries.length > 0 ? (
