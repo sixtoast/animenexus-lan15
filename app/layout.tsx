@@ -46,6 +46,7 @@ import "./desk.css";
 import "./ui-lift.css";
 import "./first-visit.css";
 import "./signal-error.css";
+import "./signal-empty.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
