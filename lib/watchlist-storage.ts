@@ -56,9 +56,18 @@ export function readWatchlist(): WatchlistEntry[] {
   }
 }
 
-export function writeWatchlist(entries: WatchlistEntry[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(WATCHLIST_KEY, JSON.stringify(entries));
+/**
+ * Persist shelf. Returns false if storage failed (quota, private mode, etc.).
+ * Callers must not fire seal / success UX when this returns false.
+ */
+export function writeWatchlist(entries: WatchlistEntry[]): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    localStorage.setItem(WATCHLIST_KEY, JSON.stringify(entries));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function animeToEntry(
