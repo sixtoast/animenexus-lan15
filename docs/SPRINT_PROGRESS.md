@@ -2,9 +2,9 @@
 
 | Plan sprint | Deliverable |
 |-------------|-------------|
-| 0–15 | Through SignalError |
-| **16** | **Adaptive mascot tiers** — full/balanced/low/mobile; reduced motion = calm, not removed |
+| 0–16 | Through adaptive mascot tiers |
+| **17** | **Motion choreography tokens** — `--motion-enter/exit/seal/celebrate/pulse/overlay` |
 
 ## Next
 
-**17 — Motion choreography system**
+**18 — View transitions polish**
