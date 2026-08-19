@@ -124,7 +124,7 @@ export function DailyRitual({ pool, seed, dateLabel }: Props) {
       id: anime.id,
       title: anime.title,
       image: anime.image,
-      genres: anime.tags || anime.genres,
+      genres: anime.tags,
       studios: anime.studios,
     });
     markRecAccepted(anime.id);
@@ -171,7 +171,7 @@ export function DailyRitual({ pool, seed, dateLabel }: Props) {
             {anime.year ? (
               <span className="detail-pill">{anime.year}</span>
             ) : null}
-            {(anime.tags || anime.genres)?.slice(0, 3).map((g) => (
+            {anime.tags?.slice(0, 3).map((g) => (
               <span key={g} className="detail-pill">
                 {g}
               </span>
