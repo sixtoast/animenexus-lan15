@@ -9,6 +9,7 @@ import { BingeCalculator } from "@/components/BingeCalculator";
 import { AnimeNotes } from "@/components/AnimeNotes";
 import { DetailAI } from "@/components/DetailAI";
 import { AncestryGraph } from "@/components/AncestryGraph";
+import { DetailRelatedClient } from "@/components/DetailRelatedClient";
 import { MemoryVisit } from "@/components/MemoryVisit";
 import type { Metadata } from "next";
 
@@ -191,6 +192,11 @@ export default async function AnimeDetailPage({ params }: Props) {
             {anime.description || "No description available."}
           </p>
         </section>
+
+        <DetailRelatedClient
+          relations={relations}
+          centerTitle={anime.title}
+        />
 
         <AncestryGraph
           centerTitle={anime.title}
