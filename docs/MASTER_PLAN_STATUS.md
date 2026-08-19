@@ -6,10 +6,10 @@
 
 | Plan sprint | Status |
 |-------------|--------|
-| 0–16 | Through adaptive mascot |
-| **17 Motion tokens** | `--motion-enter/exit/seal/celebrate/pulse/overlay` + utility classes; reduced-motion collapses durations |
+| 0–17 | Through motion tokens |
+| **18 View transitions** | `withViewTransition` helper; cover morph; root crossfade; RoomEnter avoids double motion |
 
 ## Next
 
-1. **18** View transitions polish  
-2. Later: Sakura removal, design cohesion  
+1. Later plan items (Sakura removal, design cohesion, etc.)  
+2. Or continue sequential polish from remaining master-plan backlog  
