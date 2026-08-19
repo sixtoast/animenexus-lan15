@@ -8,17 +8,17 @@
 | 9 | Home **For you** rail |
 | 10 | Daily signal ranked by resonance |
 | 11 | Tonight queue ranked + why lines |
-| 12 | Oracle local picks use ranked weights; agent confirms show **title names** |
+| 12 | Oracle ranked picks; agent confirms with title names |
+| 13 | **Mood feeds** re-ordered by shelf resonance; stricter agent planner |
 
-## Intentional non-goals still deferred
+## Deferred
 
-- Sakura removal (plan Sprint 35)
+- Sakura removal (Sprint 35)
 - Fabricated precision scores
-- Server-side user accounts for memory (stays on-device)
+- Cloud accounts for memory
 
-## Quick QA
+## QA
 
-1. Oracle (local) with planning titles → ranked draw in the body text  
-2. AI desk: ask to add a known id → pending button names the title  
-3. **Q** → Tonight ranked; `/daily` → ranked pick  
-4. Dev: `window.__mascotDebug()`
+1. Seal ≥2 titles → `/mood/hype` (etc.) shows “Ordered for your shelf…”
+2. AI: “what’s on my watchlist?” should tool-call getWatchlist
+3. Home For you · Daily · Tonight (Q) still ranked
