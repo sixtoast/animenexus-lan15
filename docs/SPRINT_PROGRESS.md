@@ -2,9 +2,9 @@
 
 | Plan sprint | Deliverable |
 |-------------|-------------|
-| 0–17 | Through motion choreography tokens |
-| **18** | **View transitions polish** — helper, cover morph, reduced-motion safe |
+| 0–18 | Through view transitions |
+| **19** | **SignalEmpty** — human empty states + CTAs on Browse |
 
 ## Next
 
-Continue master plan (design cohesion / Sakura / remaining backlog).
+Design cohesion / remaining master-plan polish.
