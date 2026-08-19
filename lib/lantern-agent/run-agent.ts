@@ -1,5 +1,5 @@
 /**
- * Lantern agent runner (Sprint 5 + 12 polish).
+ * Lantern agent runner (Sprint 5 + 12–13 polish).
  *
  * Flow:
  * 1) Model proposes tools as JSON (or none).
@@ -41,13 +41,18 @@ function plannerSystem(): string {
     "Decide which tools (if any) are needed to answer the user.",
     "Respond with ONLY valid JSON, no markdown:",
     '{"tools":[{"name":"toolName","args":{...}}],"answerDirectly":false}',
-    "or {\"tools\":[],\"answerDirectly\":true} for pure chat.",
+    'or {"tools":[],"answerDirectly":true} for pure chat.',
     "Available tools:",
     toolsCatalogForPrompt(),
     "Rules:",
-    "- Prefer tools for watchlist, taste, stats, search, recommendations.",
+    "- MUST call getWatchlist for questions about their list, watching, planning, or 'what should I watch from my list'.",
+    "- MUST call getTasteProfile or getStats for taste/stats questions.",
+    "- MUST call searchAnime when the user names a title to look up.",
+    "- MUST call getRecommendations for 'recommend something' when not pure chat.",
+    "- Use getRecentActivity for 'what was I looking at'.",
+    "- answerDirectly:true only for greetings, meta questions about Lantern, or when no data is needed.",
     "- Never invent anime titles or watchlist contents.",
-    "- Max 3 tools.",
+    "- Max 3 tools; prefer 1–2 precise tools over many.",
   ].join("\n");
 }
 
@@ -113,7 +118,7 @@ export async function runLanternAgent(
       ...prior.slice(-6),
       { role: "user", content: userMessage },
     ],
-    { temperature: 0.2 },
+    { temperature: 0.15 },
   );
 
   const plan = parsePlan(planRaw);
