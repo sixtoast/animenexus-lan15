@@ -99,7 +99,7 @@ export function rankRecommendations(
 
   for (const anime of candidates) {
     if (exclude.has(anime.id)) continue;
-    const animeVec = resonanceFromGenres(anime.genres || anime.tags);
+    const animeVec = resonanceFromGenres(anime.tags);
     const sim = cosineSimilarity(user, animeVec);
     const community = communityNorm(anime.score);
     const score = sim * rw + community * cw;
@@ -113,8 +113,8 @@ export function rankRecommendations(
           : anime.score.toFixed(1);
       reasons.push(`Community score around ${display}`);
     }
-    if (anime.genres?.length) {
-      const g = anime.genres.slice(0, 2).join(" / ");
+    if (anime.tags?.length) {
+      const g = anime.tags.slice(0, 2).join(" / ");
       reasons.push(`Catalog genres: ${g}`);
     }
     if (!reasons.length) {
