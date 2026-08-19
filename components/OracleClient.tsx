@@ -88,24 +88,29 @@ export function OracleClient() {
 
   async function runCloud() {
     if (!isAIConfigured()) {
-      showToast("Set an API key in the AI panel first", "🔑");
+      showToast("Add an API key in the AI panel (🤖)", "🤖");
       return;
     }
     setBusy(true);
-    setUseCloud(true);
-    setVibeCards([]);
     setCloudText(null);
+    setVibeCards([]);
     try {
       const text = await consultOracleCloud(mode, entries, note || undefined);
-      setCloudText(text);
+      setUseCloud(true);
       if (mode === "vibecast") {
         const picks = parseVibecastPicks(text);
-        const resolved = await Promise.all(picks.map(resolvePick));
-        setVibeCards(resolved);
+        if (picks.length) {
+          const resolved = await Promise.all(picks.map(resolvePick));
+          setVibeCards(resolved);
+          setCloudText(null);
+        } else {
+          setCloudText(text);
+        }
+      } else {
+        setCloudText(text);
       }
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Oracle failed", "😅");
-      setUseCloud(false);
     } finally {
       setBusy(false);
     }
@@ -114,45 +119,57 @@ export function OracleClient() {
   if (!ready) {
     return (
       <div className="state-box">
-        <div className="spinner" />
+        <SignalBars level={3} animated />
+        <p style={{ marginTop: 12 }}>Lantern is opening the desk…</p>
       </div>
     );
   }
 
   return (
-    <div className="tools-panel oracle-panel">
-      <div className={"oracle-band" + (bandFlash ? " flash" : "")}>
-        <SignalBars active />
-        <span className="oracle-band-label">Lantern frequency</span>
-      </div>
+    <div className={"oracle" + (bandFlash ? " band-flash" : "")}>
+      <p className="oracle-host-line">
+        Lantern is listening — local reading uses your shelf and memory; cloud
+        bands need a key.
+      </p>
 
-      <div className="feed-tabs" role="tablist" aria-label="Oracle modes">
+      <div
+        className="feed-tabs oracle-bands"
+        role="tablist"
+        aria-label="Oracle modes"
+      >
         {ORACLE_MODES.map((m) => (
           <button
             key={m.id}
             type="button"
-            role="tab"
-            aria-selected={mode === m.id}
             className={"feed-tab" + (mode === m.id ? " active" : "")}
             onClick={() => switchMode(m.id)}
+            title={m.blurb}
           >
             {m.label}
           </button>
         ))}
       </div>
 
-      <label className="filter-label" style={{ marginTop: 12 }}>
+      <label className="filter-label" htmlFor="oracle-note">
         Optional note to Lantern
       </label>
       <input
+        id="oracle-note"
         className="filter-input"
+        style={{ maxWidth: "100%", marginBottom: 12 }}
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        placeholder="e.g. short, cozy, something new…"
+        placeholder="e.g. only 45 minutes free"
       />
 
-      <div className="daily-actions" style={{ marginTop: 12 }}>
-        <Button size="sm" onClick={runCloud} disabled={busy}>
+      <div className="daily-actions" style={{ marginBottom: 16 }}>
+        <Button
+          variant="accent"
+          size="sm"
+          loading={busy}
+          disabled={busy}
+          onClick={runCloud}
+        >
           {busy ? "Consulting…" : "Ask Lantern (cloud)"}
         </Button>
         <Button
