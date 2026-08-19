@@ -110,7 +110,7 @@ function compactAnime(a: Anime) {
     year: a.year,
     score: a.score,
     format: a.format,
-    genres: a.genres?.slice(0, 6),
+    genres: a.tags?.slice(0, 6),
   };
 }
 
@@ -279,7 +279,6 @@ export async function executeTool(
             },
           };
         }
-        // Actual mutation is done by UI after confirm (WatchlistProvider.add).
         return {
           ok: true,
           tool: name,
