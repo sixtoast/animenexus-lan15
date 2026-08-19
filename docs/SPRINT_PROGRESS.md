@@ -1,12 +1,14 @@
 # AnimeNexus evolution — sprint progress
 
-## Completed
+## Completed (evolution track)
 
 | Sprint | Deliverable |
 |--------|-------------|
-| 0–24 | Ranking surfaces through QA checklist |
-| 25 | **Watchlist** sort (Recent / Shelf signal / Progress); [CHANGELOG_EVOLUTION.md](./CHANGELOG_EVOLUTION.md) |
+| 0–25 | Events → ranking surfaces → agent → QA → watchlist sort |
+| 26 | **`/journey`** timeline + insights; nav link; master plan status map |
+
+See [MASTER_PLAN_STATUS.md](./MASTER_PLAN_STATUS.md) for the full 36-feature programme vs repo.
 
 ## Next
 
-Optional: freeze on ranking, or new feature track (social, MAL sync polish, etc.).
+Stateful AnimeCard → Seal authenticity → Loading Theatre → errors → Sakura removal → cohesion.
