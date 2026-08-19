@@ -9,6 +9,7 @@ import { useWatchlist } from "@/components/WatchlistProvider";
 import { readMemory } from "@/lib/lantern-memory";
 import { emitAnimeHoverStart, emitAnimeHoverEnd } from "@/lib/nexus";
 import { markRecOpened } from "@/lib/recommend-feedback";
+import { withViewTransition } from "@/lib/view-transition";
 
 type Props = {
   anime: Anime;
@@ -97,12 +98,8 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
       return;
     }
-    const doc = document as Document & {
-      startViewTransition?: (cb: () => void) => { finished: Promise<void> };
-    };
-    if (!doc.startViewTransition) return;
     e.preventDefault();
-    doc.startViewTransition(() => {
+    withViewTransition(() => {
       router.push(href);
     });
   }
@@ -114,7 +111,9 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
       title={anime.title}
       aria-label={ariaState ? `${anime.title}. ${ariaState}` : anime.title}
       data-on-list={entry ? "true" : "false"}
-      data-status={status || (recent ? "recent" : recommended ? "recommended" : "default")}
+      data-status={
+        status || (recent ? "recent" : recommended ? "recommended" : "default")
+      }
       onClick={navigate}
       onMouseEnter={() => emitAnimeHoverStart(anime.id)}
       onMouseLeave={() => emitAnimeHoverEnd(anime.id)}
@@ -126,7 +125,6 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
         } as React.CSSProperties
       }
     >
-      {/* Visual-only status cue (sr-only text for assistive tech via aria-label) */}
       <span className="card-status-ring" aria-hidden />
 
       {canOptimize ? (
