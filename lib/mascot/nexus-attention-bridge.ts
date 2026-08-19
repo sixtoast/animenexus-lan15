@@ -45,7 +45,6 @@ function applyBias() {
 function onEvent(ev: NexusEvent): void {
   const now = Date.now();
   if (now - lastFire < GLOBAL_COOLDOWN_MS) {
-    // Still allow tiny emotion ticks on high-signal events
     if (
       ev.type !== "anime_added" &&
       ev.type !== "anime_completed" &&
@@ -93,7 +92,7 @@ function onEvent(ev: NexusEvent): void {
     case "search_performed":
       store.bumpEmotion("curiosity", 0.07);
       store.bumpEmotion("attention", 0.05);
-      store.dispatch({ type: "context", context: "search" });
+      store.dispatch({ type: "context", context: "browsing" });
       break;
 
     case "filter_used":
@@ -103,12 +102,11 @@ function onEvent(ev: NexusEvent): void {
     case "tool_opened":
       store.bumpEmotion("attention", 0.07);
       store.bumpEmotion("energy", 0.03);
-      store.dispatch({ type: "context", context: "tool" });
+      store.dispatch({ type: "context", context: "browsing" });
       break;
 
     case "page_viewed":
       store.bumpEmotion("attention", 0.03);
-      // soft route pulse without forcing a full wander
       break;
 
     case "recommendation_shown":
@@ -130,7 +128,6 @@ function onEvent(ev: NexusEvent): void {
     case "recommendation_rejected":
       store.bumpEmotion("curiosity", 0.05);
       store.bumpEmotion("happiness", -0.02);
-      // mild think — not scolding
       store.requestAnim({ anim: "think", holdMs: 1600 });
       break;
 
