@@ -4,10 +4,10 @@
 
 | Sprint | Deliverable |
 |--------|-------------|
-| 0–21 | Ranking surfaces through radar |
-| 22 | **Stats** resonance dimensions; completionist TS fix; **production build green** |
+| 0–22 | Ranking surfaces + stats resonance + build green |
+| 23 | **Agent:** `getCompletionQueue` tool; richer rec reasons; planner routing |
 
 ## QA
 
-1. `/tools/stats` — resonance bars + portrait line when shelf has signal  
-2. `npm run build` passes  
+1. Ask Lantern “what should I finish next?” → uses completion queue  
+2. Recommend path still returns confidence + reasons  
