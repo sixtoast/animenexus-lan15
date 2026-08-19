@@ -1,47 +1,76 @@
 /**
- * Sprint 21 — Performance
+ * Adaptive mascot rendering (master plan · Sprint 16).
  *
- * Budgets and helpers. Prefer event-driven / throttled work over per-frame cost.
- * Never scan the full DOM every frame.
+ * Plan mapping:
+ *   High    → full
+ *   Medium  → balanced
+ *   Low     → low
+ *   Mobile  → mobile (phones / save-data)
+ *   Reduced motion → host keeps companion with minimal movement (not forced remove)
+ *
+ * Prefer event-driven / throttled work over per-frame cost.
  */
 
-export type PerfTier = "full" | "balanced" | "low";
+export type PerfTier = "full" | "balanced" | "low" | "mobile";
+
+/** Human labels for dock / a11y. */
+export const PERF_TIER_LABEL: Record<PerfTier, string> = {
+  full: "High",
+  balanced: "Medium",
+  low: "Low",
+  mobile: "Mobile",
+};
 
 export type PerfBudget = {
   tier: PerfTier;
-  /** Terrain rebuild interval (ms) when idle */
   terrainIdleMs: number;
-  /** Terrain rebuild interval (ms) while scrolling */
   terrainScrollMs: number;
-  /** Behaviour tick interval (ms) */
   behaviourMs: number;
-  /** Skit attempt interval (ms) */
   skitMs: number;
-  /** Max DPR */
   dprMax: number;
   antialias: boolean;
-  /** Cap landmarks registered per scan */
   maxLandmarks: number;
+  richLighting: boolean;
+  secondaryMotion: boolean;
 };
 
 export function detectPerfTier(opts?: {
   lowPower?: boolean;
   width?: number;
+  mobile?: boolean;
 }): PerfTier {
-  if (opts?.lowPower) return "low";
+  if (opts?.lowPower || opts?.mobile) return "mobile";
   if (typeof window === "undefined") return "balanced";
+
   const w = opts?.width ?? window.innerWidth;
   const saveData =
     (navigator as Navigator & { connection?: { saveData?: boolean } })
       .connection?.saveData === true;
   const cores = navigator.hardwareConcurrency ?? 4;
-  if (saveData || w <= 480 || cores <= 2) return "low";
-  if (w <= 900 || cores <= 4) return "balanced";
+  const mem =
+    (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 4;
+
+  if (saveData || w <= 480 || (w <= 640 && cores <= 4)) return "mobile";
+  if (cores <= 2 || mem <= 2) return "low";
+  if (w <= 900 || cores <= 4 || mem <= 4) return "balanced";
   return "full";
 }
 
 export function budgetFor(tier: PerfTier): PerfBudget {
   switch (tier) {
+    case "mobile":
+      return {
+        tier,
+        terrainIdleMs: 4000,
+        terrainScrollMs: 1200,
+        behaviourMs: 5600,
+        skitMs: 36_000,
+        dprMax: 1.15,
+        antialias: false,
+        maxLandmarks: 16,
+        richLighting: false,
+        secondaryMotion: false,
+      };
     case "low":
       return {
         tier,
@@ -52,6 +81,8 @@ export function budgetFor(tier: PerfTier): PerfBudget {
         dprMax: 1.25,
         antialias: false,
         maxLandmarks: 24,
+        richLighting: false,
+        secondaryMotion: false,
       };
     case "balanced":
       return {
@@ -63,6 +94,8 @@ export function budgetFor(tier: PerfTier): PerfBudget {
         dprMax: 1.75,
         antialias: true,
         maxLandmarks: 40,
+        richLighting: true,
+        secondaryMotion: true,
       };
     case "full":
     default:
@@ -75,11 +108,12 @@ export function budgetFor(tier: PerfTier): PerfBudget {
         dprMax: 2,
         antialias: true,
         maxLandmarks: 56,
+        richLighting: true,
+        secondaryMotion: true,
       };
   }
 }
 
-/** Leading+trailing throttle */
 export function throttle<T extends (...args: never[]) => void>(
   fn: T,
   ms: number,
@@ -125,13 +159,11 @@ export function throttle<T extends (...args: never[]) => void>(
   return wrapped;
 }
 
-/** True when the tab is visible and document is focused enough to animate. */
 export function isPageActive(): boolean {
   if (typeof document === "undefined") return true;
   return !document.hidden;
 }
 
-/** Soft sleep mode — expensive systems can idle harder. */
 export function shouldDeepIdle(input: {
   anim?: string;
   intention?: string;
@@ -142,7 +174,6 @@ export function shouldDeepIdle(input: {
   return false;
 }
 
-/** Optional debug counters (dev only). */
 const counters = {
   terrainBuilds: 0,
   behaviourTicks: 0,
