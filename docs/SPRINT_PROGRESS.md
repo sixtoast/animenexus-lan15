@@ -4,9 +4,9 @@
 
 | Sprint | Deliverable |
 |--------|-------------|
-| 0–23 | Ranking surfaces through agent completion queue |
-| 24 | **docs/QA_CHECKLIST.md**; Oracle `tool_opened` emit |
+| 0–24 | Ranking surfaces through QA checklist |
+| 25 | **Watchlist** sort (Recent / Shelf signal / Progress); [CHANGELOG_EVOLUTION.md](./CHANGELOG_EVOLUTION.md) |
 
-## QA
+## Next
 
-See [QA_CHECKLIST.md](./QA_CHECKLIST.md) for cold vs warm shelf matrix.
+Optional: freeze on ranking, or new feature track (social, MAL sync polish, etc.).
