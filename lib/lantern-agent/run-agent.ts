@@ -1,5 +1,5 @@
 /**
- * Lantern agent runner (Sprint 5).
+ * Lantern agent runner (Sprint 5 + 12 polish).
  *
  * Flow:
  * 1) Model proposes tools as JSON (or none).
@@ -9,6 +9,8 @@
 
 import { callChatCompletions, type ChatMessage } from "@/lib/ai-chat";
 import { memoryDigestForAI } from "@/lib/lantern-memory";
+import { fetchAnimeById } from "@/lib/anilist";
+import { readWatchlist } from "@/lib/watchlist-storage";
 import {
   executeTool,
   toolsCatalogForPrompt,
@@ -90,6 +92,17 @@ const ALLOWED = new Set<string>([
   "removeFromWatchlist",
 ]);
 
+async function titleForAnimeId(id: number): Promise<string | null> {
+  try {
+    const local = readWatchlist().find((e) => e.id === id);
+    if (local) return local.title;
+    const anime = await fetchAnimeById(id);
+    return anime?.title ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function runLanternAgent(
   userMessage: string,
   prior: ChatMessage[] = [],
@@ -118,24 +131,35 @@ export async function runLanternAgent(
       });
       continue;
     }
-    const result = await executeTool(
-      name as ToolName,
-      call.args || {},
-      { confirmed: false },
-    );
+    const result = await executeTool(name as ToolName, call.args || {}, {
+      confirmed: false,
+    });
     toolResults.push(result);
     if (
       !result.ok &&
       "needsConfirmation" in result &&
       result.needsConfirmation
     ) {
+      const args =
+        (result.proposed as Record<string, unknown>) || call.args || {};
+      const id = Number(args.animeId);
+      let message =
+        name === "addToWatchlist"
+          ? "Lantern wants to add a title to your watchlist."
+          : "Lantern wants to change your watchlist.";
+      if (Number.isFinite(id)) {
+        const title = await titleForAnimeId(id);
+        if (title) {
+          message =
+            name === "addToWatchlist"
+              ? `Add “${title}” to your watchlist?`
+              : `Remove “${title}” from your watchlist?`;
+        }
+      }
       pendingActions.push({
         tool: name as ToolName,
-        args: (result.proposed as Record<string, unknown>) || call.args || {},
-        message:
-          name === "addToWatchlist"
-            ? "Lantern wants to add a title to your watchlist."
-            : "Lantern wants to change your watchlist.",
+        args,
+        message,
       });
     }
   }
