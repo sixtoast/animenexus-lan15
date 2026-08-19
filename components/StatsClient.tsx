@@ -1,13 +1,23 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { computeWatchlistStats } from "@/lib/stats";
+import {
+  describeUserResonance,
+  resonanceLabel,
+  topResonanceDims,
+  userResonance,
+} from "@/lib/resonance";
+import { emitNexus } from "@/lib/nexus";
 
 export function StatsClient() {
   const { entries, ready } = useWatchlist();
   const s = useMemo(() => computeWatchlistStats(entries), [entries]);
+  const user = useMemo(() => userResonance(entries), [entries]);
+  const dims = useMemo(() => topResonanceDims(user, 6), [user]);
+  const maxDim = Math.max(...dims.map((d) => d.value), 0.01);
   const maxGenre = Math.max(...s.topGenres.map(([, n]) => n), 1);
   const topGenre = s.topGenres[0]?.[0];
   const watching = s.byStatus.watching;
@@ -19,6 +29,10 @@ export function StatsClient() {
   ]
     .filter(Boolean)
     .join(" · ");
+
+  useEffect(() => {
+    emitNexus({ type: "tool_opened", tool: "stats" });
+  }, []);
 
   if (!ready) {
     return (
@@ -49,6 +63,11 @@ export function StatsClient() {
           {s.meanRating ? ` · mean score ${s.meanRating.toFixed(1)}` : ""}
           {topGenre ? ` · strongest genre ${topGenre}` : ""}
         </p>
+        {entries.length >= 2 ? (
+          <p className="taste-portrait-body" style={{ marginTop: 8 }}>
+            {describeUserResonance(user)}
+          </p>
+        ) : null}
       </div>
 
       <div className="stats-grid">
@@ -79,6 +98,32 @@ export function StatsClient() {
           <div className="stat-label">Planning</div>
         </div>
       </div>
+
+      {dims.length > 0 ? (
+        <section className="taste-section" style={{ marginTop: 28 }}>
+          <h2>Resonance dimensions</h2>
+          <p className="tools-hint" role="status" aria-live="polite">
+            Soft profile from sealed titles — relative bars, not percentages of
+            truth.
+          </p>
+          <div className="stats-bar-container">
+            {dims.map(({ dim, value }) => (
+              <div key={dim} className="stats-bar-row">
+                <div className="bar-label">{resonanceLabel(dim)}</div>
+                <div className="bar-track">
+                  <div
+                    className="bar-fill"
+                    style={{ width: `${(value / maxDim) * 100}%` }}
+                  />
+                </div>
+                <div className="bar-value" aria-hidden>
+                  ·
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="taste-section" style={{ marginTop: 28 }}>
         <h2>Score distribution</h2>
