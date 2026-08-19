@@ -1,0 +1,70 @@
+/* View Transitions polish (master plan · Sprint 18) */
+
+@supports (view-transition-name: none) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--dur);
+    animation-timing-function: var(--ease-out-expo);
+  }
+
+  ::view-transition-old(root) {
+    animation-name: vtRootOut;
+  }
+
+  ::view-transition-new(root) {
+    animation-name: vtRootIn;
+  }
+
+  @keyframes vtRootOut {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes vtRootIn {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* Named cover morph — card poster → detail cover */
+  ::view-transition-group(*) {
+    animation-duration: var(--dur-slow);
+    animation-timing-function: var(--ease-out-expo);
+  }
+
+  ::view-transition-old(cover-*),
+  ::view-transition-new(cover-*) {
+    animation-duration: var(--dur-slow);
+    animation-timing-function: var(--ease-out-expo);
+    mix-blend-mode: normal;
+    height: 100%;
+    overflow: clip;
+  }
+
+  .detail-cover {
+    view-transition-name: var(--vt-detail-cover, none);
+  }
+
+  /* Avoid double enter when VT is handling the route */
+  .room-enter-vt {
+    animation: none !important;
+  }
+}
+
+/* Reduced motion: kill view-transition animations */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) {
+    view-transition-name: none;
+  }
+}
+
+html[data-reduce-motion="true"] {
+  view-transition-name: none;
+}
+
+html[data-reduce-motion="true"]::view-transition-group(*),
+html[data-reduce-motion="true"]::view-transition-old(*),
+html[data-reduce-motion="true"]::view-transition-new(*) {
+  animation: none !important;
+}
