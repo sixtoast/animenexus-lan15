@@ -16,15 +16,65 @@ export type VibecastPick = {
   why: string;
 };
 
-export const ORACLE_MODES: { id: OracleMode; label: string; blurb: string }[] =
-  [
-    { id: "pick", label: "Pick", blurb: "What should I watch tonight?" },
-    { id: "whatif", label: "What if", blurb: "Hypothetical rewatch path" },
-    { id: "letter", label: "Letter", blurb: "A short letter from the desk" },
-    { id: "taste", label: "Taste", blurb: "Read of your list personality" },
-    { id: "marathon", label: "Marathon", blurb: "Weekend binge plan" },
-    { id: "vibecast", label: "Vibe cast", blurb: "Three concrete title picks" },
-  ];
+/** Radio-band identity per mode (Sprint 23 — Oracle elevation). */
+export type OracleBand = {
+  id: OracleMode;
+  label: string;
+  blurb: string;
+  /** Short on-air name */
+  frequency: string;
+  /** Atmosphere tag for CSS data-band */
+  band: "tonight" | "hypothetical" | "letter" | "mirror" | "marathon" | "cast";
+};
+
+export const ORACLE_MODES: OracleBand[] = [
+  {
+    id: "pick",
+    label: "Tonight's Pick",
+    blurb: "What should I watch tonight?",
+    frequency: "98.1 · Tonight",
+    band: "tonight",
+  },
+  {
+    id: "whatif",
+    label: "What-If",
+    blurb: "Hypothetical rewatch path",
+    frequency: "101.4 · What-If",
+    band: "hypothetical",
+  },
+  {
+    id: "letter",
+    label: "Character Note",
+    blurb: "A short letter from the desk",
+    frequency: "88.7 · Letter",
+    band: "letter",
+  },
+  {
+    id: "taste",
+    label: "Taste Mirror",
+    blurb: "Read of your list personality",
+    frequency: "104.2 · Mirror",
+    band: "mirror",
+  },
+  {
+    id: "marathon",
+    label: "Marathon Plan",
+    blurb: "Weekend binge plan",
+    frequency: "96.6 · Marathon",
+    band: "marathon",
+  },
+  {
+    id: "vibecast",
+    label: "Vibe Cast",
+    blurb: "Three concrete title picks",
+    frequency: "102.9 · Cast",
+    band: "cast",
+  },
+];
+
+export function oracleBand(mode: OracleMode): OracleBand {
+  return ORACLE_MODES.find((m) => m.id === mode) || ORACLE_MODES[0];
+}
 
 function listDigest(entries: WatchlistEntry[]): string {
   return entries
