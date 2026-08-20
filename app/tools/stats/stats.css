@@ -1,4 +1,81 @@
-/* stats + radar shared motifs */
+/* Editorial year-in-anime (Sprint 21) + stats cards */
+
+.editorial-report {
+  margin-bottom: 28px;
+  padding: 22px 20px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(240, 160, 144, 0.22);
+  background:
+    radial-gradient(
+      ellipse 70% 60% at 0% 0%,
+      rgba(239, 192, 122, 0.1),
+      transparent 55%
+    ),
+    rgba(22, 18, 16, 0.75);
+}
+
+.editorial-beats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.editorial-beat {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: rgba(12, 10, 9, 0.4);
+}
+
+.editorial-beat-label {
+  margin: 0 0 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.editorial-beat-value {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 750;
+  color: var(--color-accent);
+  line-height: 1.2;
+}
+
+.editorial-beat-detail {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--color-text-muted);
+}
+
+.editorial-highlights {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.editorial-highlights a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+/* radar motifs kept for shared tools.css consumers */
 .radar-prefs {
   position: relative;
 }
@@ -47,82 +124,8 @@
   }
 }
 
-.radar-upcoming-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 12px;
-}
-
-.radar-item {
-  display: block;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  background: var(--color-secondary);
-  color: inherit;
-  transition: border-color 0.25s ease, transform 0.25s ease;
-}
-
-.radar-item:hover {
-  border-color: var(--color-accent);
-  transform: translateY(-3px);
-  color: inherit;
-}
-
-.radar-item img {
-  width: 100%;
-  aspect-ratio: 2/3;
-  object-fit: cover;
-  display: block;
-}
-
-.radar-title {
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 8px 8px 2px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.radar-air {
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
-  padding: 0 8px 10px;
-}
-
-.radar-item.radar-ping {
-  animation: radarPing 0.55s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) both;
-  animation-delay: calc(var(--i, 0) * 40ms);
-}
-
-@keyframes radarPing {
-  from {
-    opacity: 0;
-    transform: scale(0.94);
-    box-shadow: 0 0 0 0 rgba(240, 160, 144, 0.4);
-  }
-  60% {
-    box-shadow: 0 0 0 6px rgba(240, 160, 144, 0);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-    box-shadow: 0 0 0 0 transparent;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .radar-dish.scanning .radar-sweep,
-  .radar-item.radar-ping {
+  .radar-dish.scanning .radar-sweep {
     animation: none;
   }
-}
-
-/* stats cards */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
 }
