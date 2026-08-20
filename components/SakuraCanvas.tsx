@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  applySakuraToDocument,
+  readSakuraPref,
+  type SakuraPref,
+} from "@/lib/sakura-pref";
 
 type Petal = {
   x: number;
@@ -15,6 +20,32 @@ type Petal = {
 
 export function SakuraCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
+  const [pref, setPref] = useState<SakuraPref>("on");
+
+  useEffect(() => {
+    const p = readSakuraPref();
+    setPref(p);
+    applySakuraToDocument(p);
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "anime_nexus_sakura") {
+        const next = readSakuraPref();
+        setPref(next);
+        applySakuraToDocument(next);
+      }
+    };
+    const onCustom = () => {
+      const next = readSakuraPref();
+      setPref(next);
+      applySakuraToDocument(next);
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("animenexus:sakura", onCustom);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("animenexus:sakura", onCustom);
+    };
+  }, []);
 
   useEffect(() => {
     const canvas = ref.current;
@@ -22,7 +53,12 @@ export function SakuraCanvas() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const reduced =
+      document.documentElement.getAttribute("data-reduce-motion") === "true" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (pref === "off" || reduced) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       return;
     }
 
@@ -31,7 +67,9 @@ export function SakuraCanvas() {
     let raf = 0;
     const petals: Petal[] = [];
     const baseN =
-      typeof navigator !== "undefined" && navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4
+      typeof navigator !== "undefined" &&
+      navigator.hardwareConcurrency &&
+      navigator.hardwareConcurrency <= 4
         ? 16
         : 28;
 
@@ -103,8 +141,9 @@ export function SakuraCanvas() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
-  }, []);
+  }, [pref]);
 
   return (
     <canvas
@@ -116,7 +155,7 @@ export function SakuraCanvas() {
         inset: 0,
         zIndex: 0,
         pointerEvents: "none",
-        opacity: 0.85,
+        opacity: pref === "off" ? 0 : 0.85,
       }}
     />
   );
