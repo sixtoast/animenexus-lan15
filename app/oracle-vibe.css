@@ -1,3 +1,113 @@
+/* Oracle / Night Desk — radio elevation (Sprint 23) */
+
+.oracle-tuner {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(240, 160, 144, 0.2);
+  background:
+    radial-gradient(
+      ellipse 80% 70% at 0% 50%,
+      rgba(240, 160, 144, 0.08),
+      transparent 55%
+    ),
+    rgba(16, 12, 11, 0.7);
+}
+
+.oracle-tuner-dial {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid rgba(240, 160, 144, 0.35);
+  position: relative;
+  flex-shrink: 0;
+  background:
+    conic-gradient(
+      from 200deg,
+      rgba(240, 160, 144, 0.15),
+      transparent 40%,
+      rgba(239, 192, 122, 0.2) 70%,
+      transparent
+    ),
+    #1a1512;
+}
+
+.oracle-tuner-needle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: 18px;
+  margin-left: -1px;
+  margin-top: -18px;
+  background: var(--color-accent);
+  border-radius: 1px;
+  transform-origin: bottom center;
+  transform: rotate(-25deg);
+  transition: transform 0.45s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+.oracle.is-tuning .oracle-tuner-needle {
+  animation: oracleNeedle 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes oracleNeedle {
+  from {
+    transform: rotate(-40deg);
+  }
+  to {
+    transform: rotate(35deg);
+  }
+}
+
+.oracle-freq {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-accent);
+}
+
+.oracle-freq-blurb {
+  margin: 2px 0 6px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.oracle-host-line,
+.oracle-tuning-line {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Per-band tint */
+.oracle[data-oracle-band="tonight"] .oracle-tuner {
+  border-color: rgba(240, 160, 144, 0.35);
+}
+.oracle[data-oracle-band="hypothetical"] .oracle-tuner {
+  border-color: rgba(160, 180, 240, 0.35);
+}
+.oracle[data-oracle-band="letter"] .oracle-tuner {
+  border-color: rgba(239, 192, 122, 0.4);
+}
+.oracle[data-oracle-band="mirror"] .oracle-tuner {
+  border-color: rgba(180, 220, 200, 0.35);
+}
+.oracle[data-oracle-band="marathon"] .oracle-tuner {
+  border-color: rgba(240, 120, 100, 0.4);
+}
+.oracle[data-oracle-band="cast"] .oracle-tuner {
+  border-color: rgba(200, 160, 240, 0.4);
+}
+
 .vibe-cards {
   display: flex;
   flex-direction: column;
@@ -61,15 +171,14 @@
   padding: 4px 6px;
 }
 
-/* Band switch flash */
 .oracle.band-flash .oracle-bands {
   box-shadow: 0 0 0 1px rgba(240, 160, 144, 0.35);
   border-radius: 50px;
 }
 
-/* Card deal stagger */
 .vibe-card.vibe-deal {
-  animation: cardDeal 0.55s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) both;
+  animation: cardDeal 0.55s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1))
+    both;
   animation-delay: calc(var(--i, 0) * 90ms);
 }
 
@@ -85,12 +194,14 @@
 }
 
 .oracle-in {
-  animation: cardRise 0.45s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)) both;
+  animation: cardRise 0.45s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1))
+    both;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .vibe-card.vibe-deal,
-  .oracle-in {
+  .oracle-in,
+  .oracle.is-tuning .oracle-tuner-needle {
     animation: none;
   }
 }
