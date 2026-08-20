@@ -1,14 +1,25 @@
 "use client";
 
+/**
+ * Radar elevation (Sprint 22).
+ * Interaction follows the instrument metaphor:
+ * scan → signal → identification → result
+ * (not click → cards instantly).
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Anime } from "@/lib/types";
 import { loadingStart, loadingStop } from "@/components/LoadingTheater";
 import { useWatchlist } from "@/components/WatchlistProvider";
-import { rankRecommendations } from "@/lib/recommend-rank";
+import {
+  rankRecommendations,
+  type RankedRecommendation,
+} from "@/lib/recommend-rank";
 import { rejectedAnimeIds } from "@/lib/recommend-feedback";
 import { emitNexus } from "@/lib/nexus";
 import { SignalError, signalErrorBody } from "@/components/SignalError";
+import { WhyThisIsHere } from "@/components/WhyThisIsHere";
 
 const PREFS_KEY = "anime_nexus_radar_prefs";
 const ALERTS_KEY = "anime_nexus_radar_alerts";
@@ -31,14 +42,41 @@ const GENRES = [
 
 type Prefs = { genre: string; studio: string };
 
+type Phase = "idle" | "scanning" | "signal" | "identify" | "result" | "error";
+
+const PHASE_COPY: Record<
+  Exclude<Phase, "error">,
+  { step: string; line: string }
+> = {
+  idle: {
+    step: "Standby",
+    line: "Set frequency, then scan the horizon.",
+  },
+  scanning: {
+    step: "Scan",
+    line: "Sweeping upcoming releases…",
+  },
+  signal: {
+    step: "Signal",
+    line: "Contact — locking the band…",
+  },
+  identify: {
+    step: "Identify",
+    line: "Resolving titles against your shelf…",
+  },
+  result: {
+    step: "Result",
+    line: "Contacts identified.",
+  },
+};
+
 export function RadarClient() {
   const { entries, ready } = useWatchlist();
   const [prefs, setPrefs] = useState<Prefs>({ genre: "", studio: "" });
   const [alerts, setAlerts] = useState(false);
   const [raw, setRaw] = useState<Anime[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState<Phase>("idle");
   const [err, setErr] = useState<string | null>(null);
-  const [scanned, setScanned] = useState(false);
   const [prefsHydrated, setPrefsHydrated] = useState(false);
 
   useEffect(() => {
@@ -77,38 +115,59 @@ export function RadarClient() {
     }
   }, [prefsHydrated, ready, entries, prefs.genre]);
 
-  const items = useMemo(() => {
-    if (!raw.length) return [] as Anime[];
-    if (!ready || entries.length < 2) return raw;
+  const ranked: RankedRecommendation[] = useMemo(() => {
+    if (!raw.length) return [];
+    if (!ready || entries.length < 2) {
+      return raw.map((anime) => ({
+        anime,
+        score: 0.4,
+        confidence: "exploratory" as const,
+        resonanceSim: 0,
+        reasons: ["Upcoming on the dial — no shelf lock yet"],
+      }));
+    }
     const exclude = new Set<number>([
       ...entries.map((e) => e.id),
       ...rejectedAnimeIds(),
     ]);
-    const ranked = rankRecommendations(raw, entries, {
+    return rankRecommendations(raw, entries, {
       excludeIds: exclude,
       resonanceWeight: 0.5,
     });
-    if (!ranked.length) return raw;
-    const ids = new Set(ranked.map((r) => r.anime.id));
-    const tail = raw.filter((a) => !ids.has(a.id));
-    return [...ranked.map((r) => r.anime), ...tail];
   }, [raw, ready, entries]);
 
-  const shelfTuned = ready && entries.length >= 2 && items.length > 0;
+  const shelfTuned = ready && entries.length >= 2 && ranked.length > 0;
+  const scanning = phase === "scanning" || phase === "signal" || phase === "identify";
+  const phaseMeta =
+    phase === "error"
+      ? { step: "Lost", line: "The sweep dropped." }
+      : PHASE_COPY[phase];
 
   async function scan() {
-    setLoading(true);
-    loadingStart("radar");
     setErr(null);
-    setScanned(false);
+    setRaw([]);
+    setPhase("scanning");
+    loadingStart("radar");
     try {
       localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+
+      // Brief phase beats so the metaphor is felt (skipped if reduced motion)
+      const reduced =
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const beat = (ms: number) =>
+        reduced ? Promise.resolve() : new Promise((r) => setTimeout(r, ms));
+
+      await beat(320);
+      setPhase("signal");
+
       const q = prefs.genre
         ? `?genre=${encodeURIComponent(prefs.genre)}`
         : "";
       const res = await fetch(`/api/upcoming${q}`);
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || "Scan failed");
+
       let list = (j.data || []) as Anime[];
       if (prefs.studio.trim()) {
         const s = prefs.studio.trim().toLowerCase();
@@ -116,13 +175,16 @@ export function RadarClient() {
           (a.studios || []).some((x) => x.toLowerCase().includes(s)),
         );
       }
+
+      setPhase("identify");
+      await beat(280);
       setRaw(list);
-      setScanned(true);
+      setPhase("result");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Scan failed");
       setRaw([]);
+      setPhase("error");
     } finally {
-      setLoading(false);
       loadingStop();
     }
   }
@@ -134,9 +196,44 @@ export function RadarClient() {
   }
 
   return (
-    <div>
+    <div className="radar-instrument">
+      <div className="radar-phase" role="status" aria-live="polite">
+        <ol className="radar-phase-steps" aria-label="Radar sequence">
+          {(["scanning", "signal", "identify", "result"] as const).map(
+            (key) => {
+              const order = ["scanning", "signal", "identify", "result"];
+              const activeIdx = order.indexOf(
+                phase === "idle" || phase === "error" ? "" : phase,
+              );
+              const i = order.indexOf(key);
+              const done =
+                phase === "result"
+                  ? true
+                  : activeIdx >= 0 && i < activeIdx;
+              const active = phase === key;
+              return (
+                <li
+                  key={key}
+                  className={
+                    "radar-phase-step" +
+                    (active ? " is-active" : "") +
+                    (done ? " is-done" : "")
+                  }
+                >
+                  {PHASE_COPY[key].step}
+                </li>
+              );
+            },
+          )}
+        </ol>
+        <p className="radar-phase-line">{phaseMeta.line}</p>
+      </div>
+
       <div className="radar-prefs">
-        <div className={"radar-dish" + (loading ? " scanning" : "")} aria-hidden>
+        <div
+          className={"radar-dish" + (scanning ? " scanning" : "")}
+          aria-hidden
+        >
           <div className="radar-sweep" />
           <div className="radar-core" />
         </div>
@@ -145,6 +242,7 @@ export function RadarClient() {
           className="filter-input"
           value={prefs.genre}
           onChange={(e) => setPrefs((p) => ({ ...p, genre: e.target.value }))}
+          disabled={scanning}
         >
           {GENRES.map((g) => (
             <option key={g || "any"} value={g}>
@@ -158,20 +256,22 @@ export function RadarClient() {
           value={prefs.studio}
           onChange={(e) => setPrefs((p) => ({ ...p, studio: e.target.value }))}
           placeholder="e.g. Kyoto"
+          disabled={scanning}
         />
         <div className="daily-actions" style={{ marginTop: 12 }}>
           <button
             type="button"
             className="btn btn-accent btn-sm"
             onClick={scan}
-            disabled={loading}
+            disabled={scanning}
           >
-            {loading ? "Scanning…" : "Scan upcoming"}
+            {scanning ? "Sweep in progress…" : "Scan horizon"}
           </button>
           <button
             type="button"
             className="btn btn-outline btn-sm"
             onClick={toggleAlerts}
+            disabled={scanning}
           >
             Alerts: {alerts ? "on" : "off"}
           </button>
@@ -182,7 +282,7 @@ export function RadarClient() {
         </p>
       </div>
 
-      {err ? (
+      {phase === "error" && err ? (
         <SignalError
           title="The signal went quiet."
           body={signalErrorBody(err)}
@@ -192,7 +292,7 @@ export function RadarClient() {
         />
       ) : null}
 
-      {items.length > 0 ? (
+      {phase === "result" && ranked.length > 0 ? (
         <>
           {shelfTuned ? (
             <p
@@ -201,33 +301,46 @@ export function RadarClient() {
               role="status"
               aria-live="polite"
             >
-              Upcoming soft-ranked for your shelf — still a radar, not a
+              Contacts soft-ranked for your shelf — still a radar, not a
               scoreboard.
             </p>
           ) : null}
           <div className="radar-upcoming-grid" style={{ marginTop: 12 }}>
-            {items.map((a, i) => (
-              <Link
-                key={a.id}
-                href={`/anime/${a.id}`}
-                className={"radar-item" + (scanned ? " radar-ping" : "")}
+            {ranked.map((r, i) => (
+              <div
+                key={r.anime.id}
+                className="radar-item-wrap"
                 style={{ "--i": i } as React.CSSProperties}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={a.image} alt="" />
-                <div className="radar-title">{a.title}</div>
-                <div className="radar-air">
-                  {[a.format, a.season, a.seasonYear || a.year]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </div>
-              </Link>
+                <Link
+                  href={`/anime/${r.anime.id}`}
+                  className="radar-item radar-ping"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={r.anime.image} alt="" />
+                  <div className="radar-title">{r.anime.title}</div>
+                  <div className="radar-air">
+                    {[r.anime.format, r.anime.season, r.anime.seasonYear || r.anime.year]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </div>
+                </Link>
+                {shelfTuned ? (
+                  <WhyThisIsHere ranked={r} className="why-here why-here--rail" />
+                ) : null}
+              </div>
             ))}
           </div>
         </>
-      ) : !loading ? (
+      ) : phase === "result" && !scanning ? (
         <p className="tools-hint" style={{ marginTop: 16 }}>
-          Scan to load not-yet-released titles from AniList.
+          No contacts on this frequency. Try another genre or clear the studio
+          filter.
+        </p>
+      ) : phase === "idle" ? (
+        <p className="tools-hint" style={{ marginTop: 16 }}>
+          Scan to load not-yet-released titles from AniList — results appear
+          after identification, not mid-sweep.
         </p>
       ) : null}
     </div>
