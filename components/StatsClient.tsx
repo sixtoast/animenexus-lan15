@@ -3,7 +3,10 @@
 import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
-import { computeWatchlistStats } from "@/lib/stats";
+import {
+  buildEditorialReport,
+  computeWatchlistStats,
+} from "@/lib/stats";
 import {
   describeUserResonance,
   resonanceLabel,
@@ -15,6 +18,7 @@ import { emitNexus } from "@/lib/nexus";
 export function StatsClient() {
   const { entries, ready } = useWatchlist();
   const s = useMemo(() => computeWatchlistStats(entries), [entries]);
+  const editorial = useMemo(() => buildEditorialReport(entries), [entries]);
   const user = useMemo(() => userResonance(entries), [entries]);
   const dims = useMemo(() => topResonanceDims(user, 6), [user]);
   const maxDim = Math.max(...dims.map((d) => d.value), 0.01);
@@ -45,7 +49,7 @@ export function StatsClient() {
   if (s.total === 0) {
     return (
       <div className="state-box">
-        <p>No list data yet.</p>
+        <p>No list data yet — seal a few titles to write this year’s report.</p>
         <Link href="/browse" className="btn btn-accent btn-sm">
           Browse →
         </Link>
@@ -55,6 +59,57 @@ export function StatsClient() {
 
   return (
     <div>
+      <section className="editorial-report" aria-labelledby="editorial-heading">
+        <p className="taste-portrait-kicker">Your year in anime · {editorial.yearLabel}</p>
+        <h2 id="editorial-heading" className="taste-portrait-title">
+          {editorial.headline}
+        </h2>
+
+        <div className="editorial-beats">
+          {editorial.beats.map((b) => (
+            <article key={b.id} className="editorial-beat">
+              <p className="editorial-beat-label">{b.label}</p>
+              <p className="editorial-beat-value">{b.value}</p>
+              {b.detail ? (
+                <p className="editorial-beat-detail">{b.detail}</p>
+              ) : null}
+            </article>
+          ))}
+        </div>
+
+        <div className="editorial-highlights">
+          {editorial.longest ? (
+            <p>
+              <strong>Longest journey:</strong>{" "}
+              <Link href={`/anime/${editorial.longest.id}`}>
+                {editorial.longest.title}
+              </Link>{" "}
+              <span className="meta">
+                ({editorial.longest.episodes} eps tracked)
+              </span>
+            </p>
+          ) : null}
+          {editorial.peak ? (
+            <p>
+              <strong>Peak score:</strong>{" "}
+              <Link href={`/anime/${editorial.peak.id}`}>
+                {editorial.peak.title}
+              </Link>{" "}
+              <span className="meta">({editorial.peak.rating})</span>
+            </p>
+          ) : null}
+          {editorial.surprise ? (
+            <p>
+              <strong>Biggest surprise:</strong>{" "}
+              <Link href={`/anime/${editorial.surprise.id}`}>
+                {editorial.surprise.title}
+              </Link>
+              <span className="meta"> — {editorial.surprise.reason}</span>
+            </p>
+          ) : null}
+        </div>
+      </section>
+
       <div className="taste-portrait stats-portrait">
         <p className="taste-portrait-kicker">Stats portrait</p>
         <h2 className="taste-portrait-title">{portraitLine}</h2>
