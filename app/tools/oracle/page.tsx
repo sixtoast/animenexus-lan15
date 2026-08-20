@@ -5,7 +5,8 @@ import "../../oracle-vibe.css";
 
 export const metadata = {
   title: "Night Desk · AnimeNexus",
-  description: "Lantern’s local + cloud readings — what to watch, why, and how.",
+  description:
+    "Lantern’s Night Desk — Tonight’s Pick, What-If, Letter, Taste Mirror, Marathon, Vibe Cast.",
 };
 
 export default function OraclePage() {
@@ -13,13 +14,14 @@ export default function OraclePage() {
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">Lantern · Night Desk</div>
+          <div className="hero-badge">Lantern · broadcast</div>
           <h1>
             Night <span>Desk</span>
           </h1>
           <p>
-            Ask Lantern for a pick, a letter, a marathon — or a local reading
-            that never leaves this browser.
+            Tune a frequency — Tonight’s Pick, What-If, Character Note, Taste
+            Mirror, Marathon Plan, or Vibe Cast. Local readings stay on-device;
+            cloud needs your key.
           </p>
         </div>
       </section>
