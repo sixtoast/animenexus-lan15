@@ -7,7 +7,6 @@
 
 import { useState } from "react";
 import {
-  markRecAccepted,
   markRecRejected,
   REJECT_REASON_LABELS,
   type RejectReason,
@@ -45,20 +44,12 @@ export function RecFeedbackControls({ anime, onDismiss }: Props) {
   }
 
   function accept() {
-    markRecAccepted(anime.id);
-    add({
-      id: anime.id,
-      title: anime.title,
-      image: anime.image,
-      genres: anime.tags || [],
-      format: anime.format,
-      year: String(anime.year || ""),
-      score: anime.score || 0,
-      episodes: anime.episodes,
-      duration: anime.duration,
-    });
-    setDone("accepted");
-    onDismiss?.();
+    // WatchlistProvider.add already markRecAccepted + seal on success
+    const ok = add(anime, "planning");
+    if (ok) {
+      setDone("accepted");
+      onDismiss?.();
+    }
   }
 
   function reject(reason?: RejectReason) {
