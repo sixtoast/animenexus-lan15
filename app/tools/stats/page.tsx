@@ -25,7 +25,7 @@ export default function Page() {
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
-        <DeskShell title="Stats">
+        <DeskShell title="Stats" personality="stats">
           <StatsClient />
         </DeskShell>
       </section>
