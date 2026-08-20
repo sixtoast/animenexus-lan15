@@ -16,14 +16,12 @@ import {
 import * as THREE from "three";
 import {
   buildTerrain,
-  getHomePlatform,
+  nearestPlatform,
   screenToWorld,
   type TerrainPlatform,
 } from "@/lib/mascot/page-terrain";
 import {
-  clampToViewport,
   jumpToward,
-  snapToPlatform,
   type TerrainBody,
 } from "@/lib/mascot/terrain-physics";
 import { useMascotStore } from "@/lib/mascot/store";
@@ -212,10 +210,25 @@ export function LiveTerrain({ reducedMotion, lowPower = false }: Props) {
       setDragWorld(null);
       if (!dragMoved.current && bodyRef.current) {
         const world = screenToWorld(e.clientX, e.clientY);
-        jumpToward(bodyRef.current, world.x, world.y);
+        // jumpToward expects a TerrainPlatform, not raw x/y
+        const nearest = nearestPlatform(platforms, world.x, world.y);
+        const target: TerrainPlatform =
+          nearest ??
+          ({
+            id: "click-target",
+            type: "generic",
+            x: world.x,
+            y: world.y - 0.05,
+            hw: 0.1,
+            hh: 0.05,
+            priority: 1,
+            clientX: e.clientX,
+            clientY: e.clientY,
+          } satisfies TerrainPlatform);
+        bodyRef.current = jumpToward(bodyRef.current, target, true);
       }
     },
-    [dragging],
+    [dragging, platforms],
   );
 
   // Reduced motion: keep companion with demand frameloop (plan 16)
