@@ -6,10 +6,9 @@
 
 | Plan sprint | Status |
 |-------------|--------|
-| 0–18 | Through view transitions |
-| **19 Empty states** | `SignalEmpty` + Browse empty/error polish; CTAs for reset / trending |
+| 0–19 | Through empty states |
+| **20 Cohesion + Sakura** | Optional sakura toggle (navbar); token bridges; `data-sakura`; full removal still Sprint 35 |
 
 ## Next
 
-1. Design cohesion / optional Sakura control  
-2. Remaining backlog (Sakura removal is inventory Sprint 35)  
+Remaining backlog / QA pass / inventory items as needed.
