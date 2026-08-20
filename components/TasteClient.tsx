@@ -7,6 +7,7 @@ import { TasteExtras } from "@/components/TasteExtras";
 import { SignalBars } from "@/components/ui/SignalBars";
 import { computeTaste, statusLabel } from "@/lib/taste";
 import { readMemory } from "@/lib/lantern-memory";
+import { buildTasteStory } from "@/lib/taste-story";
 import {
   userResonance,
   describeUserResonance,
@@ -98,6 +99,11 @@ export function TasteClient() {
     });
   }, [ready, entries]);
 
+  const story = useMemo(() => {
+    if (!ready) return null;
+    return buildTasteStory(entries);
+  }, [ready, entries]);
+
   if (!ready) {
     return (
       <div className="state-box">
@@ -153,6 +159,56 @@ export function TasteClient() {
 
   return (
     <div className="taste">
+      {story ? (
+        <section className="taste-story" aria-labelledby="taste-story-heading">
+          <p className="taste-growth-kicker">Your taste story</p>
+          <h2 id="taste-story-heading" className="taste-portrait-title">
+            {story.headline}
+          </h2>
+          <div className="taste-story-chapters">
+            {story.chapters.map((ch) => (
+              <article key={ch.id} className="taste-story-chapter">
+                <h3>{ch.title}</h3>
+                <p>{ch.summary}</p>
+                {ch.genres.length ? (
+                  <div className="taste-chips" style={{ marginTop: 8 }}>
+                    {ch.genres.map((g) => (
+                      <span key={g} className="taste-chip">
+                        {g}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+                {ch.evidence.length ? (
+                  <details style={{ marginTop: 10 }}>
+                    <summary className="meta" style={{ cursor: "pointer" }}>
+                      View evidence · conf {ch.confidence.toFixed(2)}
+                    </summary>
+                    <ul
+                      style={{
+                        margin: "8px 0 0",
+                        paddingLeft: 18,
+                        fontSize: "0.85rem",
+                        opacity: 0.9,
+                      }}
+                    >
+                      {ch.evidence.map((e) => (
+                        <li key={e}>{e}</li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
+              </article>
+            ))}
+          </div>
+          {!story.hasEnoughSignal ? (
+            <p className="meta" style={{ marginTop: 10 }}>
+              Seal and finish more titles for a sharper story.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
       {memNotes.length > 0 ? (
         <div className="taste-growth">
           <p className="taste-growth-kicker">Lantern observes</p>
@@ -224,7 +280,10 @@ export function TasteClient() {
                     }}
                   />
                 </span>
-                <span className="meta" style={{ minWidth: 36, textAlign: "right" }}>
+                <span
+                  className="meta"
+                  style={{ minWidth: 36, textAlign: "right" }}
+                >
                   {Math.round(value * 100)}
                 </span>
               </li>
