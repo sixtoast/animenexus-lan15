@@ -48,7 +48,7 @@ const MascotDebugPanel = dynamic(
 export function MascotHost() {
   const enabled = useMascotStore((s) => s.enabled);
   const setEnabled = useMascotStore((s) => s.setEnabled);
-  const { reducedMotion, toggleMotion, setPref } = useMotion();
+  const { reducedMotion } = useMotion();
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
   const [hiddenTab, setHiddenTab] = useState(false);
@@ -127,33 +127,6 @@ export function MascotHost() {
     }
   }, [pathname, enabled]);
 
-  useEffect(() => {
-    if (!enabled) return;
-    return bindMascotKeyboard({
-      onToggleAudio: () => {
-        const next = !isAudioEnabled();
-        setAudioEnabled(next);
-        setAudioOn(next);
-        setStatusMsg(next ? "Companion sound on" : "Companion sound off");
-      },
-      onToggleInteractions: () => {
-        const next = !areInteractionsEnabled();
-        setInteractionsEnabled(next);
-        setInteractOn(next);
-        setStatusMsg(next ? "Companion interactions on" : "Companion interactions off");
-      },
-    });
-  }, [enabled]);
-
-  useEffect(() => {
-    try {
-      (window as unknown as { __mascotInteract?: boolean }).__mascotInteract =
-        interactOn;
-    } catch {
-      /* */
-    }
-  }, [interactOn]);
-
   function hideCompanion() {
     setEnabled(false);
     try {
@@ -178,13 +151,43 @@ export function MascotHost() {
     const next = !isAudioEnabled();
     setAudioEnabled(next);
     setAudioOn(next);
+    setStatusMsg(next ? "Companion sound on" : "Companion sound off");
   }
 
   function toggleInteract() {
     const next = !areInteractionsEnabled();
     setInteractionsEnabled(next);
     setInteractOn(next);
+    setStatusMsg(
+      next ? "Companion interactions on" : "Companion interactions off",
+    );
   }
+
+  useEffect(() => {
+    if (!enabled) return;
+    return bindMascotKeyboard({
+      toggleHide: () => {
+        hideCompanion();
+      },
+      toggleMute: () => {
+        toggleAudio();
+      },
+      toggleInteractions: () => {
+        toggleInteract();
+      },
+    });
+    // handlers close over stable setters
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled]);
+
+  useEffect(() => {
+    try {
+      (window as unknown as { __mascotInteract?: boolean }).__mascotInteract =
+        interactOn;
+    } catch {
+      /* */
+    }
+  }, [interactOn]);
 
   if (!ready) return null;
 
@@ -290,7 +293,7 @@ export function MascotHost() {
           type="button"
           className="mascot-hide"
           onClick={toggleInteract}
-          title="Toggle companion interactions"
+          title="Toggle companion interactions (Alt+Shift+I)"
           aria-pressed={interactOn}
         >
           {interactOn ? "✋" : "🚫"}
@@ -299,7 +302,7 @@ export function MascotHost() {
           type="button"
           className="mascot-hide"
           onClick={hideCompanion}
-          title="Hide companion"
+          title="Hide companion (Alt+Shift+H)"
         >
           Hide
         </button>
