@@ -42,6 +42,7 @@ import "./session-tools.css";
 import "./oracle-vibe.css";
 import "./motion.css";
 import "./view-transitions.css";
+import "./token-cohesion.css";
 import "./desk.css";
 import "./ui-lift.css";
 import "./first-visit.css";
@@ -89,7 +90,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon.svg" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('anime_nexus_theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');var v=localStorage.getItem('anime_nexus_view_mode');if(v)document.documentElement.dataset.viewMode=v;var h=new Date().getHours();var tod=h<5||h>=21?'late-night':h<12?'morning':h<17?'afternoon':'evening';document.documentElement.dataset.tod=tod;var m=localStorage.getItem('anime_nexus_motion');var sys=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;var reduced=m==='reduced'||(m!=='full'&&sys);document.documentElement.dataset.motion=m||'system';if(reduced)document.documentElement.setAttribute('data-reduce-motion','true');else document.documentElement.removeAttribute('data-reduce-motion');}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('anime_nexus_theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');var v=localStorage.getItem('anime_nexus_view_mode');if(v)document.documentElement.dataset.viewMode=v;var h=new Date().getHours();var tod=h<5||h>=21?'late-night':h<12?'morning':h<17?'afternoon':'evening';document.documentElement.dataset.tod=tod;var m=localStorage.getItem('anime_nexus_motion');var sys=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;var reduced=m==='reduced'||(m!=='full'&&sys);document.documentElement.dataset.motion=m||'system';if(reduced)document.documentElement.setAttribute('data-reduce-motion','true');else document.documentElement.removeAttribute('data-reduce-motion');var sk=localStorage.getItem('anime_nexus_sakura');if(sk==='off')document.documentElement.setAttribute('data-sakura','off');}catch(e){}})();`,
           }}
         />
       </head>
