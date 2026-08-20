@@ -18,10 +18,9 @@
 
 | Sprint | Status |
 |--------|--------|
-| 20–25 | Taste, Stats, Why, Radar, Oracle, personality |
-| **26 Rec feedback UI** | Seal / Not now / Less like this on For you |
+| 20–26 | Taste · Stats · Why · Radar · Oracle · Personality · Rec feedback |
+| **35 Sakura removal** | Unmounted · default off · no-op stub |
 
 ## Next
 
-1. **35** Sakura removal  
-2. **36** Final cohesion pass  
+1. **36** Final cohesion pass  
