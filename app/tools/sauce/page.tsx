@@ -13,13 +13,13 @@ export default function Page() {
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">Night Desk · Sauce</div>
+          <div className="hero-badge">Night Desk · investigation</div>
           <h1>Sauce</h1>
           <p>Drop, paste, or URL — trace the frame.</p>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
-        <DeskShell title="Sauce">
+        <DeskShell title="Sauce" personality="sauce">
           <SauceClient />
         </DeskShell>
       </section>
