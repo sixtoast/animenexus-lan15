@@ -9,13 +9,13 @@ export default function ChallengePage() {
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">Night Desk · Challenge</div>
+          <div className="hero-badge">Night Desk · game</div>
           <h1>Challenge</h1>
           <p>Silhouette daily — art dissolves when you lock in.</p>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
-        <DeskShell title="Challenge">
+        <DeskShell title="Challenge" personality="challenge">
           <ChallengeClient />
         </DeskShell>
       </section>
