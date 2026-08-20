@@ -21,11 +21,12 @@
 | 20 Taste as story | ✓ |
 | 21 Editorial Stats | ✓ |
 | 25 Why this is here | ✓ |
-| **22 Radar elevation** | scan → signal → identify → result |
+| 22 Radar elevation | ✓ |
+| **23 Oracle elevation** | radio bands · all modes preserved |
 
 ## Next
 
-1. **23** Oracle elevation  
+1. **24** Tool personality (DeskShell identities)  
 2. **26** Rec feedback UI  
 3. **35** Sakura removal  
 4. **36** Final cohesion  
