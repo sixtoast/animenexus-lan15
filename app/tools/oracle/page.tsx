@@ -26,7 +26,7 @@ export default function OraclePage() {
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
-        <DeskShell title="Oracle">
+        <DeskShell title="Oracle" personality="oracle">
           <OracleClient />
         </DeskShell>
       </section>
