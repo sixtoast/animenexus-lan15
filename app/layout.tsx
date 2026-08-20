@@ -8,7 +8,6 @@ import { ToastProvider } from "@/components/ToastProvider";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { AIPanel } from "@/components/AIPanel";
 import { CommandPalette } from "@/components/CommandPalette";
-import { SakuraCanvas } from "@/components/SakuraCanvas";
 import { PwaRegister } from "@/components/PwaRegister";
 import { SessionTools } from "@/components/SessionTools";
 import { ConfettiHost } from "@/components/ConfettiBurst";
@@ -48,6 +47,7 @@ import "./ui-lift.css";
 import "./first-visit.css";
 import "./signal-error.css";
 import "./signal-empty.css";
+import "./home-dash.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
@@ -90,7 +90,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon.svg" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('anime_nexus_theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');var v=localStorage.getItem('anime_nexus_view_mode');if(v)document.documentElement.dataset.viewMode=v;var h=new Date().getHours();var tod=h<5||h>=21?'late-night':h<12?'morning':h<17?'afternoon':'evening';document.documentElement.dataset.tod=tod;var m=localStorage.getItem('anime_nexus_motion');var sys=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;var reduced=m==='reduced'||(m!=='full'&&sys);document.documentElement.dataset.motion=m||'system';if(reduced)document.documentElement.setAttribute('data-reduce-motion','true');else document.documentElement.removeAttribute('data-reduce-motion');var sk=localStorage.getItem('anime_nexus_sakura');if(sk==='off')document.documentElement.setAttribute('data-sakura','off');}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('anime_nexus_theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');var v=localStorage.getItem('anime_nexus_view_mode');if(v)document.documentElement.dataset.viewMode=v;var h=new Date().getHours();var tod=h<5||h>=21?'late-night':h<12?'morning':h<17?'afternoon':'evening';document.documentElement.dataset.tod=tod;var m=localStorage.getItem('anime_nexus_motion');var sys=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;var reduced=m==='reduced'||(m!=='full'&&sys);document.documentElement.dataset.motion=m||'system';if(reduced)document.documentElement.setAttribute('data-reduce-motion','true');else document.documentElement.removeAttribute('data-reduce-motion');document.documentElement.setAttribute('data-sakura','off');}catch(e){}})();`,
           }}
         />
       </head>
@@ -104,7 +104,6 @@ export default function RootLayout({
                   <NexusRouteBeacon />
                   <EnvironmentController />
                   <ScrollProgress />
-                  <SakuraCanvas />
                   <PwaRegister />
                   <RouteTune />
                   <Navbar />
