@@ -2,35 +2,28 @@
 
 **Rule:** dependency order; preserve Confessions, Oracle, AniList, real AI, mascot. No Sakura expansion (removal = Sprint 35).
 
-## Foundation (already in repo)
+## Foundation (in repo)
 
 | Sprint | Status |
 |--------|--------|
-| 0 Inventory | `docs/FEATURE_INVENTORY.md` |
-| 1 Behaviour events | `lib/nexus/*` event bus + vocabulary + hover dwell |
-| 2 Memory 2.0 | `lantern-memory` confidence, decay, rec/watch signals |
-| 3 Resonance | `lib/resonance.ts` + rank surfaces |
-| 4 Rec learning | `recommend-feedback`, lifecycle marks |
-| 5 AI agent | `lib/lantern-agent/*` |
-| 6 Environment | `nexus-environment.ts` |
-| 7 Lantern attention | mascot bridges + director |
+| 0–7 | Events, memory, resonance, rec learning, agent, environment, attention |
 
-## Interaction polish (recent)
+## Interaction polish
 
 | Sprint | Status |
 |--------|--------|
-| 11–19 | Stateful cards, seal authenticity, first visit, loading, errors, adaptive mascot, motion tokens, view transitions, empty states |
-| 20 (cohesion) | Token bridge + optional sakura *pref* (full removal still 35) |
+| 11–19 | Cards, seal, first visit, loading, errors, adaptive mascot, motion, VT, empty states |
 
-## Storytelling track (this pass)
+## Storytelling
 
 | Sprint | Status |
 |--------|--------|
-| **20 Taste as story** | `lib/taste-story.ts` + Taste UI: Earlier / Current / Emerging + evidence |
+| **20 Taste as story** | Earlier / Current / Emerging + evidence |
+| **21 Editorial Stats** | Year-in-anime report on `/tools/stats` |
 
 ## Next
 
-1. **21** Editorial Stats  
-2. **25** Why this is here (on rec surfaces)  
-3. **35** Sakura removal (clean delete)  
-4. **36** Final cohesion pass  
+1. **25** Why this is here (rec surfaces)  
+2. **22–24** Radar / Oracle / tool personality elevation  
+3. **35** Sakura removal  
+4. **36** Final cohesion  
