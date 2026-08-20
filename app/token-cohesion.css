@@ -1,0 +1,15 @@
+/* Design cohesion (master plan · Sprint 20)
+ * Bridge legacy duration names ↔ motion choreography tokens */
+
+:root {
+  /* Alias legacy globals → motion language */
+  --duration-fast: var(--dur-fast, 180ms);
+  --duration-med: var(--dur, 420ms);
+  --duration-slow: var(--dur-slow, 720ms);
+  --transition: var(--dur, 0.4s) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+}
+
+/* Hide sakura canvas when user opted out (belt + suspenders with component) */
+html[data-sakura="off"] #sakuraCanvas {
+  display: none !important;
+}
