@@ -2,9 +2,9 @@
 
 | Plan sprint | Deliverable |
 |-------------|-------------|
-| 0–18 | Through view transitions |
-| **19** | **SignalEmpty** — human empty states + CTAs on Browse |
+| 0–19 | Through SignalEmpty |
+| **20** | **Design cohesion + Sakura preference** — navbar toggle, token bridge |
 
 ## Next
 
-Design cohesion / remaining master-plan polish.
+QA pass or remaining master-plan backlog items.
