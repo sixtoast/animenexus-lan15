@@ -1,4 +1,4 @@
-/* Home dashboard rails + why-this-is-here + rec feedback */
+/* Home dashboard + insights + rec feedback */
 
 .home-dash {
   display: flex;
@@ -50,12 +50,6 @@
 
 .home-chip.accent strong {
   color: var(--color-accent);
-}
-
-.home-cta-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 .home-rail-section {
@@ -221,7 +215,6 @@
   opacity: 0.8;
 }
 
-/* Rec feedback (Sprint 26) */
 .rec-fb {
   padding: 0 2px 4px;
 }
@@ -289,6 +282,71 @@
   margin: 0;
   font-size: 0.65rem;
   color: var(--color-text-muted);
+}
+
+/* Lantern Insights (Sprint 27) */
+.lantern-insights {
+  min-width: 0;
+}
+
+.insight-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.insight-card {
+  position: relative;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(240, 160, 144, 0.18);
+  background: rgba(16, 12, 11, 0.55);
+}
+
+.insight-text {
+  margin: 0 36px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.insight-evidence {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+}
+
+.insight-evidence summary {
+  cursor: pointer;
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.insight-evidence ul {
+  margin: 6px 0 0;
+  padding-left: 16px;
+}
+
+.insight-dismiss {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.insight-dismiss:hover {
+  color: var(--color-accent);
 }
 
 @media (prefers-reduced-motion: reduce) {
