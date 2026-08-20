@@ -1,39 +1,33 @@
 "use client";
 
+/**
+ * Daily Ritual surface (Sprint 28).
+ * One soft observation per day — no streak guilt, no nagging.
+ */
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ritualLine, readMemory } from "@/lib/lantern-memory";
+import { getDailyRitual, type DailyRitual } from "@/lib/daily-ritual";
 import { useWatchlist } from "@/components/WatchlistProvider";
 
 export function RitualLine() {
   const { entries, ready } = useWatchlist();
-  const [line, setLine] = useState<string | null>(null);
-  const [recentHref, setRecentHref] = useState<string | null>(null);
+  const [ritual, setRitual] = useState<DailyRitual | null>(null);
 
   useEffect(() => {
     if (!ready) return;
-    const watching = entries
-      .filter((e) => e.watchStatus === "watching")
-      .map((e) => e.title);
-    const planningCount = entries.filter(
-      (e) => e.watchStatus === "planning",
-    ).length;
-    setLine(ritualLine({ watchingTitles: watching, planningCount }));
-    const m = readMemory();
-    if (m.recentViews[0]) {
-      setRecentHref(`/anime/${m.recentViews[0].id}`);
-    }
+    setRitual(getDailyRitual(entries));
   }, [ready, entries]);
 
-  if (!line) return null;
+  if (!ritual) return null;
 
   return (
     <div className="ritual-line" role="status">
-      <span className="ritual-kicker">Lantern</span>
-      <p className="ritual-text">{line}</p>
-      {recentHref ? (
-        <Link href={recentHref} className="ritual-link">
-          Resume last signal →
+      <span className="ritual-kicker">Today</span>
+      <p className="ritual-text">{ritual.text}</p>
+      {ritual.href ? (
+        <Link href={ritual.href} className="ritual-link">
+          {ritual.label || "Open"} →
         </Link>
       ) : null}
     </div>
