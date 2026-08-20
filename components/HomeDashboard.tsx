@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
+import { WhyThisIsHere } from "@/components/WhyThisIsHere";
 import { touchStreak, readStreak } from "@/lib/streak";
 import { readMemory, type RecentView } from "@/lib/lantern-memory";
 import { useToast } from "@/components/ToastProvider";
 import type { Anime } from "@/lib/types";
 import {
   rankRecommendations,
-  confidenceCopy,
   type RankedRecommendation,
 } from "@/lib/recommend-rank";
 import { markRecShown, markRecOpened, rejectedAnimeIds } from "@/lib/recommend-feedback";
@@ -138,29 +138,30 @@ export function HomeDashboard({ trending = [] }: Props) {
       ) : null}
 
       {forYou.length > 0 ? (
-        <section className="home-rail-section">
+        <section className="home-rail-section home-for-you">
           <div className="home-rail-head">
             <h2>For you</h2>
-            <span className="home-rail-note">Resonance · soft ranks</span>
+            <span className="home-rail-note">Why this is here · evidence</span>
           </div>
-          <div className="home-rail">
+          <div className="home-rail home-rail--for-you">
             {forYou.map((r) => (
-              <Link
-                key={r.anime.id}
-                href={`/anime/${r.anime.id}`}
-                className="home-rail-card"
-                onClick={() => markRecOpened(r.anime.id)}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={r.anime.image} alt="" />
-                <div className="hrc-body">
-                  <div className="hrc-title">{r.anime.title}</div>
-                  <div className="hrc-meta">
-                    {confidenceCopy(r.confidence)}
-                    {r.reasons[0] ? ` · ${r.reasons[0]}` : ""}
+              <div key={r.anime.id} className="home-rail-card-wrap">
+                <Link
+                  href={`/anime/${r.anime.id}`}
+                  className="home-rail-card"
+                  onClick={() => markRecOpened(r.anime.id)}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={r.anime.image} alt="" />
+                  <div className="hrc-body">
+                    <div className="hrc-title">{r.anime.title}</div>
+                    <div className="hrc-meta">
+                      <WhyThisIsHere ranked={r} compact />
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+                <WhyThisIsHere ranked={r} className="why-here why-here--rail" />
+              </div>
             ))}
           </div>
         </section>
