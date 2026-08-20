@@ -26,7 +26,7 @@ export default function Page() {
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
-        <DeskShell title="Radar">
+        <DeskShell title="Radar" personality="radar">
           <RadarClient />
         </DeskShell>
       </section>
