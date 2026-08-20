@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { WhyThisIsHere } from "@/components/WhyThisIsHere";
 import { RecFeedbackControls } from "@/components/RecFeedbackControls";
+import { LanternInsights } from "@/components/LanternInsights";
 import { touchStreak, readStreak } from "@/lib/streak";
 import { readMemory, type RecentView } from "@/lib/lantern-memory";
 import { useToast } from "@/components/ToastProvider";
@@ -113,6 +114,8 @@ export function HomeDashboard({ trending = [] }: Props) {
           <span>Streak</span>
         </div>
       </div>
+
+      <LanternInsights />
 
       {continueList.length > 0 ? (
         <section className="home-rail-section">
