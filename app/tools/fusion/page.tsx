@@ -9,13 +9,13 @@ export default function Page() {
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">Night Desk · Fusion</div>
+          <div className="hero-badge">Night Desk · laboratory</div>
           <h1>Fusion</h1>
           <p>Blend two signals into catalog children.</p>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
-        <DeskShell title="Fusion">
+        <DeskShell title="Fusion" personality="fusion">
           <FusionClient />
         </DeskShell>
       </section>
