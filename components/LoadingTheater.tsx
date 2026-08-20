@@ -10,7 +10,8 @@ import {
 
 export function LoadingTheater() {
   const [on, setOn] = useState(false);
-  const [label, setLabel] = useState(LOADING_COPY.default);
+  // Explicit string — LOADING_COPY is `as const` and would narrow setLabel otherwise
+  const [label, setLabel] = useState<string>(LOADING_COPY.default);
 
   useEffect(() => {
     const start = (e: Event) => {
