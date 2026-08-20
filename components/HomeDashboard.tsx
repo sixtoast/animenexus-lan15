@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { WhyThisIsHere } from "@/components/WhyThisIsHere";
+import { RecFeedbackControls } from "@/components/RecFeedbackControls";
 import { touchStreak, readStreak } from "@/lib/streak";
 import { readMemory, type RecentView } from "@/lib/lantern-memory";
 import { useToast } from "@/components/ToastProvider";
@@ -15,7 +16,6 @@ import {
 import { markRecShown, markRecOpened, rejectedAnimeIds } from "@/lib/recommend-feedback";
 
 type Props = {
-  /** Optional; home page uses the full trending grid instead */
   trending?: Anime[];
 };
 
@@ -24,6 +24,7 @@ export function HomeDashboard({ trending = [] }: Props) {
   const { showToast } = useToast();
   const [streak, setStreak] = useState(0);
   const [recent, setRecent] = useState<RecentView[]>([]);
+  const [hiddenIds, setHiddenIds] = useState<Set<number>>(() => new Set());
   const shownRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
@@ -67,18 +68,18 @@ export function HomeDashboard({ trending = [] }: Props) {
   );
   const signalRecent = recent.filter((r) => !continueIds.has(r.id));
 
-  /** Resonance-ranked subset of trending when shelf has signal. */
   const forYou: RankedRecommendation[] = useMemo(() => {
     if (!ready || entries.length < 2 || trending.length === 0) return [];
     const exclude = new Set<number>([
       ...entries.map((e) => e.id),
       ...rejectedAnimeIds(),
+      ...hiddenIds,
     ]);
     return rankRecommendations(trending, entries, {
       excludeIds: exclude,
       resonanceWeight: 0.7,
     }).slice(0, 8);
-  }, [ready, entries, trending]);
+  }, [ready, entries, trending, hiddenIds]);
 
   useEffect(() => {
     for (const r of forYou) {
@@ -87,6 +88,10 @@ export function HomeDashboard({ trending = [] }: Props) {
       markRecShown(r.anime.id);
     }
   }, [forYou]);
+
+  function dismiss(id: number) {
+    setHiddenIds((prev) => new Set(prev).add(id));
+  }
 
   return (
     <div className="home-dash">
@@ -141,7 +146,7 @@ export function HomeDashboard({ trending = [] }: Props) {
         <section className="home-rail-section home-for-you">
           <div className="home-rail-head">
             <h2>For you</h2>
-            <span className="home-rail-note">Why this is here · evidence</span>
+            <span className="home-rail-note">Teach the desk · feedback</span>
           </div>
           <div className="home-rail home-rail--for-you">
             {forYou.map((r) => (
@@ -161,6 +166,10 @@ export function HomeDashboard({ trending = [] }: Props) {
                   </div>
                 </Link>
                 <WhyThisIsHere ranked={r} className="why-here why-here--rail" />
+                <RecFeedbackControls
+                  anime={r.anime}
+                  onDismiss={() => dismiss(r.anime.id)}
+                />
               </div>
             ))}
           </div>
