@@ -9,13 +9,13 @@ export default function Page() {
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">Night Desk · Compare</div>
+          <div className="hero-badge">Night Desk · balance</div>
           <h1>Compare</h1>
           <p>Two titles side by side.</p>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
-        <DeskShell title="Compare">
+        <DeskShell title="Compare" personality="compare">
           <CompareClient />
         </DeskShell>
       </section>
