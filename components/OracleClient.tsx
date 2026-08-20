@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * Oracle / Night Desk elevation (Sprint 23).
+ * All modes preserved; each has its own broadcast frequency + atmosphere.
+ * Real AI via consultOracleCloud — never simulated success.
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
@@ -7,6 +13,7 @@ import { consultOracle } from "@/lib/oracle";
 import {
   consultOracleCloud,
   ORACLE_MODES,
+  oracleBand,
   parseVibecastPicks,
   type OracleMode,
   type VibecastPick,
@@ -17,6 +24,7 @@ import { Button } from "@/components/ui/Button";
 import { SignalBars } from "@/components/ui/SignalBars";
 import type { Anime } from "@/lib/types";
 import { emitNexus } from "@/lib/nexus";
+import { loadingStart, loadingStop } from "@/components/LoadingTheater";
 
 type ResolvedPick = VibecastPick & {
   anime?: Anime | null;
@@ -33,6 +41,9 @@ export function OracleClient() {
   const [busy, setBusy] = useState(false);
   const [useCloud, setUseCloud] = useState(false);
   const [bandFlash, setBandFlash] = useState(false);
+  const [tuning, setTuning] = useState(false);
+
+  const band = oracleBand(mode);
 
   useEffect(() => {
     emitNexus({ type: "tool_opened", tool: "oracle" });
@@ -46,6 +57,9 @@ export function OracleClient() {
   function switchMode(id: OracleMode) {
     setMode(id);
     setBandFlash(true);
+    setUseCloud(false);
+    setCloudText(null);
+    setVibeCards([]);
     window.setTimeout(() => setBandFlash(false), 420);
   }
 
@@ -92,8 +106,10 @@ export function OracleClient() {
       return;
     }
     setBusy(true);
+    setTuning(true);
     setCloudText(null);
     setVibeCards([]);
+    loadingStart("oracle");
     try {
       const text = await consultOracleCloud(mode, entries, note || undefined);
       setUseCloud(true);
@@ -111,8 +127,11 @@ export function OracleClient() {
       }
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Oracle failed", "😅");
+      setUseCloud(false);
     } finally {
       setBusy(false);
+      setTuning(false);
+      loadingStop();
     }
   }
 
@@ -126,24 +145,50 @@ export function OracleClient() {
   }
 
   return (
-    <div className={"oracle" + (bandFlash ? " band-flash" : "")}>
-      <p className="oracle-host-line">
-        Lantern is listening — local reading uses your shelf and memory; cloud
-        bands need a key.
-      </p>
+    <div
+      className={
+        "oracle" +
+        (bandFlash ? " band-flash" : "") +
+        (tuning ? " is-tuning" : "")
+      }
+      data-oracle-band={band.band}
+    >
+      <div className="oracle-tuner" aria-live="polite">
+        <div className="oracle-tuner-dial" aria-hidden>
+          <span className="oracle-tuner-needle" />
+        </div>
+        <div className="oracle-tuner-meta">
+          <p className="oracle-freq">{band.frequency}</p>
+          <p className="oracle-freq-blurb">{band.blurb}</p>
+          {tuning ? (
+            <p className="oracle-tuning-line">
+              <SignalBars level={4} animated label="Tuning" /> Tuning the
+              desk…
+            </p>
+          ) : (
+            <p className="oracle-host-line">
+              Lantern is listening — local reading stays on-device; cloud bands
+              need a key.
+            </p>
+          )}
+        </div>
+      </div>
 
       <div
         className="feed-tabs oracle-bands"
         role="tablist"
-        aria-label="Oracle modes"
+        aria-label="Oracle broadcast modes"
       >
         {ORACLE_MODES.map((m) => (
           <button
             key={m.id}
             type="button"
+            role="tab"
+            aria-selected={mode === m.id}
             className={"feed-tab" + (mode === m.id ? " active" : "")}
             onClick={() => switchMode(m.id)}
             title={m.blurb}
+            disabled={busy}
           >
             {m.label}
           </button>
@@ -160,6 +205,7 @@ export function OracleClient() {
         value={note}
         onChange={(e) => setNote(e.target.value)}
         placeholder="e.g. only 45 minutes free"
+        disabled={busy}
       />
 
       <div className="daily-actions" style={{ marginBottom: 16 }}>
@@ -170,11 +216,12 @@ export function OracleClient() {
           disabled={busy}
           onClick={runCloud}
         >
-          {busy ? "Consulting…" : "Ask Lantern (cloud)"}
+          {busy ? "On air…" : "Broadcast (cloud)"}
         </Button>
         <Button
           variant="outline"
           size="sm"
+          disabled={busy}
           onClick={() => {
             setUseCloud(false);
             setVibeCards([]);
@@ -188,7 +235,7 @@ export function OracleClient() {
 
       {useCloud && vibeCards.length > 0 ? (
         <div className="vibe-cards">
-          <p className="detail-kicker">Lantern · vibecast</p>
+          <p className="detail-kicker">On air · {band.frequency}</p>
           {vibeCards.map((c, i) => {
             const href = c.anime?.id
               ? `/anime/${c.anime.id}`
@@ -216,14 +263,14 @@ export function OracleClient() {
         </div>
       ) : useCloud && cloudText ? (
         <article className="oracle-card oracle-in">
-          <p className="detail-kicker">Lantern · {mode}</p>
+          <p className="detail-kicker">On air · {band.frequency}</p>
           <div className="oracle-body" style={{ whiteSpace: "pre-wrap" }}>
             {cloudText}
           </div>
         </article>
       ) : (
         <article className="oracle-card oracle-in">
-          <p className="detail-kicker">Lantern · on-device</p>
+          <p className="detail-kicker">Local desk · {band.frequency}</p>
           <h2 className="oracle-headline">{local.headline}</h2>
           <p className="oracle-body">{local.body}</p>
           {local.moodSlug ? (
@@ -240,8 +287,8 @@ export function OracleClient() {
       )}
 
       <p className="taste-footnote" style={{ marginTop: 20 }}>
-        Cloud modes need a key in the 🤖 AI panel. Local readings always work
-        from your shelf and Lantern memory.
+        Cloud bands need a key in the 🤖 AI panel. Local readings always work
+        from your shelf and Lantern memory. Failures are not reported as success.
       </p>
     </div>
   );
