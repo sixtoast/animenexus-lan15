@@ -1,4 +1,4 @@
-/* Shared Night Desk chrome for tools */
+/* Shared Night Desk chrome + tool personalities (Sprint 24) */
 .desk {
   max-width: 900px;
   margin: 0 auto;
@@ -11,13 +11,20 @@
   gap: 12px;
   flex-wrap: wrap;
   padding: 10px 14px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   background: var(--surface-glass);
   backdrop-filter: blur(12px);
   font-size: 0.8rem;
   color: var(--color-text-muted);
+}
+
+.desk-band-left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
 
 .desk-band a {
@@ -30,6 +37,27 @@
   font-weight: 600;
 }
 
+.desk-role {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 2px 8px;
+  border-radius: 50px;
+  border: 1px solid rgba(240, 160, 144, 0.25);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.desk-atmosphere {
+  margin: 0 0 14px;
+  padding: 0 4px;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
 .desk-panel {
   background: linear-gradient(
     165deg,
@@ -40,6 +68,38 @@
   border-radius: var(--radius);
   padding: clamp(16px, 3vw, 28px);
   box-shadow: var(--shadow-soft);
+}
+
+/* Personality border tints */
+.desk[data-desk-personality="instrument"] .desk-panel {
+  border-color: rgba(160, 200, 240, 0.28);
+}
+.desk[data-desk-personality="broadcast"] .desk-panel {
+  border-color: rgba(240, 160, 144, 0.35);
+}
+.desk[data-desk-personality="game"] .desk-panel {
+  border-color: rgba(240, 120, 100, 0.35);
+}
+.desk[data-desk-personality="archive"] .desk-panel {
+  border-color: rgba(239, 192, 122, 0.3);
+}
+.desk[data-desk-personality="investigate"] .desk-panel {
+  border-color: rgba(180, 220, 160, 0.28);
+}
+.desk[data-desk-personality="studio"] .desk-panel {
+  border-color: rgba(200, 160, 240, 0.3);
+}
+.desk[data-desk-personality="editorial"] .desk-panel {
+  border-color: rgba(180, 200, 220, 0.3);
+}
+.desk[data-desk-personality="lab"] .desk-panel {
+  border-color: rgba(160, 240, 200, 0.28);
+}
+.desk[data-desk-personality="balance"] .desk-panel {
+  border-color: rgba(220, 200, 160, 0.3);
+}
+.desk[data-desk-personality="lounge"] .desk-panel {
+  border-color: rgba(240, 160, 200, 0.3);
 }
 
 .tools-hub {
@@ -87,7 +147,17 @@
   line-height: 1.4;
 }
 
-/* Challenge silhouette dissolve */
+.tools-hub-role {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  opacity: 0.85;
+}
+
 .challenge-hero img {
   transition: filter 0.65s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)),
     transform 0.65s var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1)),
