@@ -18,15 +18,10 @@
 
 | Sprint | Status |
 |--------|--------|
-| 20 Taste as story | ✓ |
-| 21 Editorial Stats | ✓ |
-| 25 Why this is here | ✓ |
-| 22 Radar elevation | ✓ |
-| 23 Oracle elevation | ✓ |
-| **24 Tool personality** | DeskShell identities + hub roles |
+| 20–25 | Taste, Stats, Why, Radar, Oracle, personality |
+| **26 Rec feedback UI** | Seal / Not now / Less like this on For you |
 
 ## Next
 
-1. **26** Rec feedback UI  
-2. **35** Sakura removal  
-3. **36** Final cohesion  
+1. **35** Sakura removal  
+2. **36** Final cohesion pass  
