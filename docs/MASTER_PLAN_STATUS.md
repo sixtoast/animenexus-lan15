@@ -2,25 +2,25 @@
 
 **Rule:** dependency order; preserve Confessions, Oracle, AniList, real AI, mascot.
 
-## Foundation
+## Done (selected)
 
 | Sprint | Status |
 |--------|--------|
-| 0–7 | Events, memory, resonance, rec learning, agent, environment, attention |
+| 0–7 foundation | Events, memory, resonance, agent, environment, attention |
+| 11–19 | Cards, seal, visit, loading, errors, adaptive, motion, VT, empty |
+| 20–26 | Taste story, Stats, Why, Radar, Oracle, personality, rec feedback |
+| **27 Insights** | Evidence + confidence + dismiss on Home |
+| **35 Sakura** | Removed from product surface |
 
-## Interaction polish
+## Queue (in order — no more skipping)
 
-| Sprint | Status |
+| Sprint | Focus |
 |--------|--------|
-| 11–19 | Cards through empty states |
-
-## Storytelling / tools
-
-| Sprint | Status |
-|--------|--------|
-| 20–26 | Taste · Stats · Why · Radar · Oracle · Personality · Rec feedback |
-| **35 Sakura removal** | Unmounted · default off · no-op stub |
-
-## Next
-
-1. **36** Final cohesion pass  
+| **28** | Daily Ritual |
+| **29** | Contextual Lantern reactions |
+| **30** | Timeline + Insights integration |
+| **31** | AnimeImage architecture |
+| **32** | Client boundary optimisation |
+| **33** | Mobile experience |
+| **34** | A11y + reduced motion audit |
+| **36** | Final cohesion |
