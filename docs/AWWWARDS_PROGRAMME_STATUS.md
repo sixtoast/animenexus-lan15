@@ -4,16 +4,15 @@
 |--------|------|--------|
 | 0 | Baseline + contracts | Done |
 | 1 | Cinematography Director | Done |
-| **2** | Anime Material / Resonance visual | **Done** |
-| 3 | Persistent anime object identity | Next |
-| 4–7 | Living Shelf | Queued |
+| 2 | Anime Material / Resonance visual | Done |
+| **3** | Persistent anime object identity | **Done** |
+| 4 | Living Shelf data architecture | Next |
+| 5–7 | Living Shelf spatial + interaction + a11y | Queued |
 | 8+ | Memory Room → final QA | Queued |
 
-## Sprint 2
+## Sprint 3
 
-- `lib/anime-material.ts` — Resonance → material profile + CSS vars
-- `AnimeCard` sets `--anime-*` + `data-anime-object-id`
-- `card-polish.css` drives hover/shadow/radius from material
-- `DetailCoverMaterial` on detail hero
-
-Material is presentation-only; usability unchanged under reduced motion.
+- `getAnimeViewTransitionName(id)` → `cover-${id}`
+- `getAnimeObjectId(id)` for DOM / cinema / shelf hooks
+- Wired: AnimeCard, DetailCoverMaterial, Watchlist thumbs (+ VT navigation)
+- Progressive enhancement; reduced-motion still skips VT
