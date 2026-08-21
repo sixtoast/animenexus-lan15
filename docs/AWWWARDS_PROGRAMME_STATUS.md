@@ -2,15 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–15 | Baseline → performance | Done |
-| **16** | Mobile QA | **Done** |
-| 17 | Honesty / model framing | Next |
-| 18+ | Final QA → ship checklist | Queued |
+| 0–16 | Baseline → mobile QA | Done |
+| **17** | Honesty / model framing | **Done** |
+| 18 | Final QA / ship checklist | Next |
 
-## Sprint 16
+## Sprint 17
 
-- Touch ≥44px: Frequency items, Manage|Shelf, shelf actions, memory nodes
-- Safe-area aware nav / footer / mascot dock / AI fab
-- Shelf stage height tuned for phone + landscape
-- iOS 16px form controls (no zoom-on-focus)
-- Mobile prefers 2D shelf (Sprint 15) still applies
+- `ModelDisclosure` component — full + compact
+- Taste + Journey heroes carry disclosure
+- Shelf resonance: Metadata vs AnimeNexus reading headers + compact tag
+- Copy: heuristics from shelf/local activity — not AniList facts or life claims
