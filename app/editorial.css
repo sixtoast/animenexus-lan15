@@ -1,0 +1,160 @@
+/**
+ * Editorial layouts (Awwwards Sprint 12).
+ * Stronger hierarchy + light asymmetry — still scannable.
+ */
+
+/* Page title blocks */
+.page-head {
+  margin-bottom: 28px;
+  max-width: 40rem;
+}
+
+.page-head .nx-kicker,
+.page-kicker {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin: 0 0 8px;
+}
+
+.page-head h1,
+.page-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.85rem, 4vw, 2.65rem);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+}
+
+.page-head .lead,
+.page-lead {
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+  margin: 0;
+  max-width: 36ch;
+}
+
+/* Home hero — editorial offset */
+.home-hero-inner {
+  display: grid;
+  gap: 8px;
+}
+
+@media (min-width: 900px) {
+  .home-hero-inner {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    grid-template-areas:
+      "badge badge"
+      "title actions"
+      "lead actions"
+      "ritual ritual"
+      "mood mood";
+    column-gap: 40px;
+    align-items: end;
+  }
+
+  .home-hero-inner .hero-badge {
+    grid-area: badge;
+  }
+
+  .home-hero-inner h1 {
+    grid-area: title;
+    font-size: clamp(2.4rem, 5vw, 3.4rem);
+    max-width: 12ch;
+  }
+
+  .home-hero-inner .home-lead {
+    grid-area: lead;
+    max-width: 38ch;
+  }
+
+  .home-hero-inner .home-hero-actions {
+    grid-area: actions;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-end;
+    padding-bottom: 4px;
+  }
+
+  .home-hero-inner .home-hero-actions .btn {
+    justify-content: center;
+  }
+
+  .home-hero-inner .ritual-line,
+  .home-hero-inner [class*="ritual"] {
+    grid-area: ritual;
+  }
+
+  .home-hero-inner .home-mood {
+    grid-area: mood;
+  }
+}
+
+/* Section heads — display weight */
+.section-head h2,
+.home-rail-head h2 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.section-head .meta {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
+/* Asymmetric content + side note pattern */
+.editorial-split {
+  display: grid;
+  gap: 24px;
+}
+
+@media (min-width: 800px) {
+  .editorial-split {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.7fr);
+    gap: 36px;
+    align-items: start;
+  }
+
+  .editorial-split > :last-child {
+    position: sticky;
+    top: 88px;
+  }
+}
+
+/* Pull-quote style for journey / taste headlines */
+.journey-headline,
+.taste-headline {
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 2.5vw, 1.45rem);
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.4;
+  max-width: 42ch;
+  border-left: 2px solid rgba(240, 160, 144, 0.45);
+  padding-left: 16px;
+  margin-bottom: 24px;
+}
+
+/* Dense tools list remains grid — only type lifts */
+.tools-grid h2,
+.tool-card h3 {
+  font-family: var(--font-display);
+}
+
+/* Mobile: stack cleanly — no forced asymmetry */
+@media (max-width: 640px) {
+  .page-head h1,
+  .page-title {
+    font-size: 1.75rem;
+  }
+
+  .home-hero-inner h1 {
+    max-width: none;
+  }
+}
