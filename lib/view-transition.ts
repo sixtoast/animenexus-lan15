@@ -1,6 +1,10 @@
 /**
- * View Transitions + persistent anime object identity (Awwwards Sprint 3).
- * Progressive enhancement — never required for navigation.
+ * View Transitions + persistent anime object identity (Awwwards Sprints 3 + 14).
+ *
+ * Contract:
+ * - Progressive enhancement only — navigation never requires VT
+ * - Shared name: cover-{animeId} on card, shelf, detail hero
+ * - Reduced motion / missing API → immediate update, no mid-state lock
  */
 
 export function prefersReducedMotion(): boolean {
@@ -28,7 +32,7 @@ export function canViewTransition(): boolean {
 
 /**
  * Canonical shared-element name for an anime poster across surfaces.
- * Browse card → Detail → Watchlist → Oracle / Compare when wired.
+ * Browse card → Detail → Watchlist shelf → Memory (when image present).
  */
 export function getAnimeViewTransitionName(
   animeId: string | number,
@@ -60,4 +64,13 @@ export function withViewTransition(update: () => void): void {
   } catch {
     update();
   }
+}
+
+/** Optional: mark document for CSS that skips competing room-enter. */
+export function markViewTransitionRoute(): void {
+  if (typeof document === "undefined") return;
+  document.documentElement.classList.add("room-enter-vt");
+  window.setTimeout(() => {
+    document.documentElement.classList.remove("room-enter-vt");
+  }, 600);
 }
