@@ -15,7 +15,9 @@ const ShelfScene = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="shelf-canvas-loading">Staging shelf…</div>
+      <div className="shelf-canvas-loading" role="status">
+        Staging shelf…
+      </div>
     ),
   },
 );
@@ -41,8 +43,21 @@ function reducedMotionNow(): boolean {
   }
 }
 
+/** Stable flat order for keyboard navigation. */
+function orderedIds(objects: ShelfObject[]): number[] {
+  const order = ["watching", "planning", "paused", "completed", "dropped"] as const;
+  const ids: number[] = [];
+  for (const c of order) {
+    for (const o of objects) {
+      if (o.cluster === c) ids.push(o.animeId);
+    }
+  }
+  return ids;
+}
+
 export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
   const objects = useMemo(() => projectShelfObjects(entries), [entries]);
+  const ids = useMemo(() => orderedIds(objects), [objects]);
   const byId = useMemo(() => {
     const m = new Map<number, WatchlistEntry>();
     for (const e of entries) m.set(e.id, e);
@@ -54,6 +69,7 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
   const [compareArmed, setCompareArmed] = useState(false);
   const [gl, setGl] = useState(true);
   const [camKey, setCamKey] = useState(0);
+  const [announce, setAnnounce] = useState("");
 
   useEffect(() => {
     setGl(webglOk());
@@ -78,6 +94,13 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
       if (compareArmed && selectedId != null && id !== selectedId) {
         setCompareId(id);
         setCompareArmed(false);
+        const a = byId.get(selectedId);
+        const b = byId.get(id);
+        setAnnounce(
+          a && b
+            ? `Compared ${a.title} with ${b.title}.`
+            : "Resonance pair set.",
+        );
         getCinematography().pulse(
           {
             focus: "recommendation",
@@ -92,6 +115,8 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
       }
       setSelectedId(id);
       setCompareId(null);
+      const e = byId.get(id);
+      setAnnounce(e ? `Selected ${e.title}.` : "Selected.");
       getCinematography().pulse(
         {
           focus: "anime",
@@ -104,7 +129,20 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
         1800,
       );
     },
-    [compareArmed, selectedId],
+    [compareArmed, selectedId, byId],
+  );
+
+  const moveFocus = useCallback(
+    (delta: number) => {
+      if (!ids.length) return;
+      const cur =
+        selectedId != null ? ids.indexOf(selectedId) : -1;
+      let next = cur + delta;
+      if (next < 0) next = ids.length - 1;
+      if (next >= ids.length) next = 0;
+      onSelect(ids[next]);
+    },
+    [ids, selectedId, onSelect],
   );
 
   const onResetCamera = useCallback(() => {
@@ -112,30 +150,51 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
     setSelectedId(null);
     setCompareId(null);
     setCompareArmed(false);
+    setAnnounce("View reset.");
   }, []);
 
   const clearPair = useCallback(() => {
     setCompareId(null);
     setCompareArmed(false);
+    setAnnounce("Compare cleared.");
   }, []);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+
       if (e.key === "Escape") {
         if (compareId != null || compareArmed) {
           clearPair();
           return;
         }
         setSelectedId(null);
+        setAnnounce("Selection cleared.");
+        return;
       }
-      // C = arm compare when something is selected
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        moveFocus(1);
+        return;
+      }
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        moveFocus(-1);
+        return;
+      }
       if ((e.key === "c" || e.key === "C") && selectedId != null) {
         setCompareArmed(true);
+        setAnnounce("Compare armed. Select a second title.");
+        return;
+      }
+      if (e.key === "Enter" && selectedId != null && !compareArmed) {
+        window.location.href = `/anime/${selectedId}`;
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedId, compareId, compareArmed, clearPair]);
+  }, [selectedId, compareId, compareArmed, clearPair, moveFocus]);
 
   if (!objects.length) {
     return (
@@ -146,20 +205,37 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
     );
   }
 
+  const a11yHelp =
+    "Keyboard: arrows move selection, C compares, Enter opens detail, Escape clears.";
+
   if (!gl) {
     return (
       <div>
+        <p className="sr-only" role="status">
+          {a11yHelp}
+        </p>
         <ShelfFallback objects={objects} onSelect={onSelect} />
         {relationship ? (
           <ShelfResonancePanel rel={relationship} onClear={clearPair} />
         ) : null}
+        <div className="sr-only" aria-live="polite">
+          {announce}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="living-shelf" data-shelf-objects={objects.length}>
-      <div className="living-shelf-stage">
+    <div
+      className="living-shelf"
+      data-shelf-objects={objects.length}
+      role="application"
+      aria-label="Living Shelf spatial collection"
+    >
+      <p className="tools-hint shelf-a11y-hint" id="shelf-kbd-help">
+        {a11yHelp} Prefer the list? Switch to <strong>Manage</strong>.
+      </p>
+      <div className="living-shelf-stage" aria-describedby="shelf-kbd-help">
         <ShelfScene
           key={camKey}
           objects={objects}
@@ -178,7 +254,10 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
           clearPair();
         }}
         onResetCamera={onResetCamera}
-        onArmCompare={() => setCompareArmed(true)}
+        onArmCompare={() => {
+          setCompareArmed(true);
+          setAnnounce("Compare armed. Select a second title.");
+        }}
         onClearPair={clearPair}
       />
       {relationship ? (
@@ -186,9 +265,12 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
       ) : null}
       {compareArmed && !relationship ? (
         <p className="tools-hint" role="status">
-          Compare armed — click a second poster (or press Escape to cancel).
+          Compare armed — click or arrow to a second title (Escape cancels).
         </p>
       ) : null}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {announce}
+      </div>
     </div>
   );
 }
