@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import type { WatchlistEntry } from "@/lib/types";
 import { projectShelfObjects, type ShelfObject } from "@/lib/living-shelf";
 import { describeShelfPair, type ShelfRelationship } from "@/lib/shelf-resonance";
+import { detectSitePerfTier, siteBudgetFor } from "@/lib/perf-budgets";
 import { getCinematography } from "@/lib/cinematography-store";
 import { ShelfFallback } from "./ShelfFallback";
 import { ShelfHUD } from "./ShelfHUD";
@@ -43,7 +44,6 @@ function reducedMotionNow(): boolean {
   }
 }
 
-/** Stable flat order for keyboard navigation. */
 function orderedIds(objects: ShelfObject[]): number[] {
   const order = ["watching", "planning", "paused", "completed", "dropped"] as const;
   const ids: number[] = [];
@@ -56,7 +56,22 @@ function orderedIds(objects: ShelfObject[]): number[] {
 }
 
 export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
-  const objects = useMemo(() => projectShelfObjects(entries), [entries]);
+  const allObjects = useMemo(() => projectShelfObjects(entries), [entries]);
+  const [budget, setBudget] = useState(() => siteBudgetFor("balanced"));
+
+  useEffect(() => {
+    const b = siteBudgetFor(detectSitePerfTier());
+    setBudget(b);
+    setGl(webglOk() && !b.shelfPreferFallback);
+    getCinematography().setFocus("watchlist");
+  }, []);
+
+  // Cap 3D textured objects; remainder still selectable via fallback note
+  const objects = useMemo(() => {
+    if (allObjects.length <= budget.shelfMaxTextures) return allObjects;
+    return allObjects.slice(0, budget.shelfMaxTextures);
+  }, [allObjects, budget.shelfMaxTextures]);
+
   const ids = useMemo(() => orderedIds(objects), [objects]);
   const byId = useMemo(() => {
     const m = new Map<number, WatchlistEntry>();
@@ -70,11 +85,6 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
   const [gl, setGl] = useState(true);
   const [camKey, setCamKey] = useState(0);
   const [announce, setAnnounce] = useState("");
-
-  useEffect(() => {
-    setGl(webglOk());
-    getCinematography().setFocus("watchlist");
-  }, []);
 
   const selected: ShelfObject | null = useMemo(
     () => objects.find((o) => o.animeId === selectedId) ?? null,
@@ -196,7 +206,7 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [selectedId, compareId, compareArmed, clearPair, moveFocus]);
 
-  if (!objects.length) {
+  if (!allObjects.length) {
     return (
       <div className="state-box lantern-empty">
         <h3>Empty archive</h3>
@@ -207,6 +217,7 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
 
   const a11yHelp =
     "Keyboard: arrows move selection, C compares, Enter opens detail, Escape clears.";
+  const capped = allObjects.length > objects.length;
 
   if (!gl) {
     return (
@@ -214,7 +225,7 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
         <p className="sr-only" role="status">
           {a11yHelp}
         </p>
-        <ShelfFallback objects={objects} onSelect={onSelect} />
+        <ShelfFallback objects={allObjects} onSelect={onSelect} />
         {relationship ? (
           <ShelfResonancePanel rel={relationship} onClear={clearPair} />
         ) : null}
@@ -229,11 +240,15 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
     <div
       className="living-shelf"
       data-shelf-objects={objects.length}
+      data-perf-tier={budget.tier}
       role="application"
       aria-label="Living Shelf spatial collection"
     >
       <p className="tools-hint shelf-a11y-hint" id="shelf-kbd-help">
         {a11yHelp} Prefer the list? Switch to <strong>Manage</strong>.
+        {capped
+          ? ` Showing ${objects.length} of ${allObjects.length} in 3D (perf budget).`
+          : ""}
       </p>
       <div className="living-shelf-stage" aria-describedby="shelf-kbd-help">
         <ShelfScene
@@ -243,6 +258,8 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
           compareId={compareId}
           onSelect={onSelect}
           reducedMotion={reducedMotionNow()}
+          dprMax={budget.shelfDprMax}
+          antialias={budget.shelfAntialias}
         />
       </div>
       <ShelfHUD
