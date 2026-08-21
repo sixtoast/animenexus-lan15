@@ -1,17 +1,17 @@
-# Master evolution plan — status map
+# Master evolution plan — COMPLETE
 
-**Rule:** no skipping; preserve Confessions, Oracle, AniList, real AI, mascot.
+All sequenced sprints through **36 Final cohesion** are implemented on `main`.
 
-## Recently done
+| Band | Sprints |
+|------|---------|
+| Core behaviour / ranking | 0–10 |
+| Product surfaces | 11–21 |
+| Radar · Oracle · Desk · Evidence · Feedback | 22–26 |
+| Insights · Ritual · Reactions · Journey | 27–30 |
+| AnimeImage · Boundaries · Mobile · A11y | 31–34 |
+| Sakura removed | 35 |
+| **Token / surface cohesion** | **36** |
 
-| Sprint | Status |
-|--------|--------|
-| 27–33 | Insights → Mobile |
-| **34 A11y + reduced motion** | Skip link · focus rings · motion toggle · global reduce |
-| 35 Sakura | Removed |
+See `docs/MASTER_PLAN_COMPLETE.md` for the preservation checklist and QA notes.
 
-## Queue
-
-| Sprint | Focus |
-|--------|--------|
-| **36** | Final cohesion pass |
+**Rule still stands for future work:** no skipping layers; preserve Confessions, Oracle, AniList, real AI, mascot.
