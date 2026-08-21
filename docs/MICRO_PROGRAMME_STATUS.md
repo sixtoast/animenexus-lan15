@@ -2,17 +2,16 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–1 | Interaction language + Sound Engine | Done |
-| **2** | Physical Button | **Done** |
-| 3 | AnimeCard micro | Next |
-| 4–10 | Nav → Oracle | Queued |
+| 0–2 | Language · Sound · Button | Done |
+| **3** | AnimeCard micro | **Done** |
+| 4 | Navbar continuous state | Next |
+| 5–10 | Filters → Oracle | Queued |
 
-## Sprint 2
+## Sprint 3
 
-- Shared `Button`: press 1px / scale ~0.985, soft settle
-- Accent: restrained hover + optional highlight sweep
-- Danger: no playful motion; no `ui_tap`
-- `silent` prop for seal/error/radar owners
-- `success` prop → brief pulse
-- Loading keeps min-width so label doesn’t jump
-- `ui_tap` only on confirmed click when sound enabled
+- Desktop: throttled pointer → `--ptr-x/y` lighting + 1–2px image shift
+- Press compress before shared-element navigation
+- Score more legible on hover/focus; status ring brightens
+- Watching progress soft glow on focus
+- Recommended: single breathe animation on insert
+- Touch: no pointer lighting; no hover SFX (never was)
