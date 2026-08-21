@@ -1,9 +1,7 @@
 /**
- * Mobile experience (Sprint 33).
- * Safe areas · min touch targets · sticky action bars · readable type.
+ * Mobile experience (Sprint 33 + Awwwards Sprint 16).
+ * Safe areas · min touch targets · sticky CTAs · Shelf / Frequency.
  */
-
-/* ── Safe areas ─────────────────────────────────────────── */
 
 body {
   padding-left: env(safe-area-inset-left);
@@ -23,8 +21,6 @@ body {
 .site-footer {
   padding-bottom: max(24px, env(safe-area-inset-bottom));
 }
-
-/* ── Touch targets (≥44px where interactive) ────────────── */
 
 @media (max-width: 899px) {
   .nav-toggle,
@@ -49,7 +45,59 @@ body {
     min-width: 4.5rem;
   }
 
-  /* Horizontal mood rail */
+  /* Manage | Shelf presentation */
+  .wl-presentation-toggle {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .wl-presentation-toggle .btn {
+    min-height: 44px;
+    min-width: 5.5rem;
+  }
+
+  /* Living Shelf on phone */
+  .living-shelf-stage {
+    height: min(48vh, 360px);
+    min-height: 240px;
+  }
+
+  .shelf-hud-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .shelf-hud-bar .btn {
+    min-height: 44px;
+  }
+
+  .shelf-inspect {
+    flex-direction: column;
+  }
+
+  .shelf-inspect-actions .btn {
+    min-height: 44px;
+    flex: 1 1 auto;
+  }
+
+  .shelf-resonance-panel .btn {
+    min-height: 44px;
+  }
+
+  /* Journey modes */
+  .journey-mode-toggle .btn {
+    min-height: 44px;
+  }
+
+  .memory-node {
+    min-height: 56px;
+  }
+
+  .memory-focus-actions .btn {
+    min-height: 44px;
+  }
+
   .mood-chips,
   .mood-home-block .mood-chips {
     display: flex;
@@ -69,13 +117,11 @@ body {
     flex: 0 0 auto;
   }
 
-  /* Grid: comfortable two-up on phones */
   .anime-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
 
-  /* Detail: stack hero, sticky seal bar */
   .detail-hero {
     flex-direction: column;
     align-items: stretch;
@@ -97,15 +143,13 @@ body {
     min-height: 44px;
   }
 
-  /* Sticky mobile CTA strip for primary desk actions */
   .mobile-sticky-cta {
     position: sticky;
     bottom: 0;
     z-index: 40;
     display: flex;
     gap: 8px;
-    padding: 10px 12px
-      max(10px, env(safe-area-inset-bottom));
+    padding: 10px 12px max(10px, env(safe-area-inset-bottom));
     margin: 0 -12px;
     background: linear-gradient(
       180deg,
@@ -121,7 +165,6 @@ body {
     min-height: 46px;
   }
 
-  /* Home hero CTAs — wrap cleanly */
   .home-hero-actions {
     display: flex;
     flex-wrap: wrap;
@@ -132,7 +175,6 @@ body {
     min-height: 42px;
   }
 
-  /* Journey / taste lists — larger hit area */
   .taste-list-link,
   .journey-event-title {
     min-height: 40px;
@@ -140,26 +182,37 @@ body {
     align-items: center;
   }
 
-  /* Forms */
   input,
   select,
   textarea,
   .btn {
-    font-size: 16px; /* avoid iOS zoom on focus */
+    font-size: 16px;
   }
 
   .btn-sm {
     font-size: 0.875rem;
   }
 
-  /* Reduce chrome under fixed overlays */
   .ai-fab {
     bottom: max(16px, env(safe-area-inset-bottom));
     right: max(16px, env(safe-area-inset-right));
   }
+
+  /* Mascot dock — clear thumb zone */
+  .mascot-dock {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    right: max(8px, env(safe-area-inset-right));
+    max-width: calc(100vw - 24px);
+    flex-wrap: wrap;
+  }
+
+  .mascot-hide,
+  .mascot-enable {
+    min-height: 40px;
+    min-width: 40px;
+  }
 }
 
-/* Very small phones */
 @media (max-width: 380px) {
   .logo {
     font-size: 1.15rem;
@@ -174,7 +227,6 @@ body {
   }
 }
 
-/* Landscape phone: don’t crush hero */
 @media (max-width: 899px) and (orientation: landscape) {
   .hero {
     padding-top: 16px;
@@ -183,5 +235,9 @@ body {
 
   .nav-mobile {
     max-height: min(70vh, 420px);
+  }
+
+  .living-shelf-stage {
+    height: min(40vh, 280px);
   }
 }
