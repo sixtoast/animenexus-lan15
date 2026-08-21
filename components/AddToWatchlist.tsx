@@ -34,7 +34,7 @@ export function AddToWatchlist({ anime }: Props) {
 
   if (!entry) {
     return (
-      <div className="wl-actions">
+      <div className="wl-actions mobile-sticky-cta">
         <Button
           variant="accent"
           size="sm"
@@ -62,7 +62,7 @@ export function AddToWatchlist({ anime }: Props) {
   }
 
   return (
-    <div className="wl-actions">
+    <div className="wl-actions mobile-sticky-cta">
       <label className="wl-status-label">
         <span className="filter-label">List status</span>
         <select
