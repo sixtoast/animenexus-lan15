@@ -8,12 +8,20 @@ import { getAnimeViewTransitionName } from "@/lib/view-transition";
 
 export function ShelfHUD({
   selected,
+  compareArmed,
+  hasPair,
   onClose,
   onResetCamera,
+  onArmCompare,
+  onClearPair,
 }: {
   selected: ShelfObject | null;
+  compareArmed?: boolean;
+  hasPair?: boolean;
   onClose: () => void;
   onResetCamera: () => void;
+  onArmCompare?: () => void;
+  onClearPair?: () => void;
 }) {
   return (
     <div className="shelf-hud">
@@ -22,7 +30,7 @@ export function ShelfHUD({
           Reset view
         </button>
         <span className="tools-hint" style={{ margin: 0 }}>
-          Drag to orbit · scroll to zoom · click a poster to inspect
+          Drag to orbit · scroll to zoom · click to inspect · C or button to compare
         </span>
       </div>
 
@@ -67,6 +75,28 @@ export function ShelfHUD({
               >
                 Open detail
               </Link>
+              {onArmCompare ? (
+                <button
+                  type="button"
+                  className={
+                    "btn btn-sm " +
+                    (compareArmed ? "btn-accent" : "btn-outline")
+                  }
+                  aria-pressed={!!compareArmed}
+                  onClick={onArmCompare}
+                >
+                  {compareArmed ? "Pick second title…" : "Compare resonance"}
+                </button>
+              ) : null}
+              {hasPair && onClearPair ? (
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={onClearPair}
+                >
+                  Clear pair
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="btn btn-outline btn-sm"
