@@ -1,0 +1,92 @@
+/* Living Shelf spatial (Awwwards Sprint 5) */
+
+.living-shelf {
+  position: relative;
+  margin-bottom: 32px;
+}
+
+.living-shelf-stage {
+  position: relative;
+  height: min(62vh, 520px);
+  min-height: 320px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 30%, rgba(40, 32, 28, 0.9), transparent 70%),
+    linear-gradient(180deg, #120e0c 0%, #0a0807 100%);
+  overflow: hidden;
+}
+
+.shelf-canvas,
+.shelf-canvas canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  touch-action: none;
+}
+
+.shelf-canvas-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.shelf-hud-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.shelf-inspect {
+  position: relative;
+  margin-top: 16px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(240, 160, 144, 0.28);
+  background: var(--surface-glass, rgba(22, 18, 16, 0.72));
+  backdrop-filter: blur(12px);
+}
+
+.shelf-inspect-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.shelf-inspect-body h3 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  margin: 4px 0 8px;
+}
+
+.shelf-inspect-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .living-shelf-stage {
+    height: min(52vh, 400px);
+    min-height: 280px;
+  }
+}
+
+html[data-reduce-motion="true"] .living-shelf-stage {
+  /* scene still interactive; damping off in controls */
+}
