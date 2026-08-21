@@ -6,13 +6,12 @@
 
 | Sprint | Status |
 |--------|--------|
-| 27–32 | Insights → client boundaries |
-| **33 Mobile** | Safe areas · 44px targets · sticky seal CTAs · mood rail |
+| 27–33 | Insights → Mobile |
+| **34 A11y + reduced motion** | Skip link · focus rings · motion toggle · global reduce |
 | 35 Sakura | Removed |
 
 ## Queue
 
 | Sprint | Focus |
 |--------|--------|
-| **34** | A11y + reduced motion |
-| **36** | Final cohesion |
+| **36** | Final cohesion pass |
