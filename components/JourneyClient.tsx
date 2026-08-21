@@ -1,11 +1,10 @@
 "use client";
 
 /**
- * Journey / Archive (Sprint 30 + Awwwards Memory Room data).
- * Timeline remains the default; chapters + importance prepare spatial mode.
+ * Journey / Archive — Memory Room + Timeline (Awwwards Sprint 9).
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { journeyInsights } from "@/lib/journey";
@@ -13,6 +12,8 @@ import { dismissInsight } from "@/lib/lantern-insights";
 import { readMemory } from "@/lib/lantern-memory";
 import { buildTasteStory } from "@/lib/taste-story";
 import { buildMemoryRoom } from "@/lib/memory-room";
+import { MemoryRoom } from "@/components/MemoryRoom";
+import { getCinematography } from "@/lib/cinematography-store";
 
 const KIND_LABEL: Record<string, string> = {
   first_seen: "Origin",
@@ -27,9 +28,32 @@ const KIND_LABEL: Record<string, string> = {
   observation: "Note",
 };
 
+type JourneyMode = "room" | "timeline";
+const MODE_KEY = "anime_nexus_journey_mode";
+
 export function JourneyClient() {
   const { entries, ready } = useWatchlist();
   const [tick, setTick] = useState(0);
+  const [mode, setMode] = useState<JourneyMode>("room");
+
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem(MODE_KEY);
+      if (v === "timeline" || v === "room") setMode(v);
+    } catch {
+      /* ignore */
+    }
+    getCinematography().setFocus("memory");
+  }, []);
+
+  function selectMode(next: JourneyMode) {
+    setMode(next);
+    try {
+      localStorage.setItem(MODE_KEY, next);
+    } catch {
+      /* ignore */
+    }
+  }
 
   const { events, chapters, insights, storyHeadline } = useMemo(() => {
     if (!ready || typeof window === "undefined") {
@@ -68,6 +92,33 @@ export function JourneyClient() {
           <Link href="/taste">Taste story →</Link>
         </p>
       ) : null}
+
+      <div
+        className="journey-mode-toggle"
+        role="group"
+        aria-label="Journey presentation"
+      >
+        <button
+          type="button"
+          className={
+            "btn btn-sm " + (mode === "room" ? "btn-accent" : "btn-outline")
+          }
+          aria-pressed={mode === "room"}
+          onClick={() => selectMode("room")}
+        >
+          Memory Room
+        </button>
+        <button
+          type="button"
+          className={
+            "btn btn-sm " + (mode === "timeline" ? "btn-accent" : "btn-outline")
+          }
+          aria-pressed={mode === "timeline"}
+          onClick={() => selectMode("timeline")}
+        >
+          Timeline
+        </button>
+      </div>
 
       <section className="journey-section">
         <div className="home-rail-head">
@@ -113,84 +164,98 @@ export function JourneyClient() {
         )}
       </section>
 
-      {chapters.length > 0 ? (
-        <section className="journey-section" aria-label="Memory chapters">
+      {mode === "room" ? (
+        <section className="journey-section">
           <div className="home-rail-head">
-            <h2>Archive chapters</h2>
-            <span className="home-rail-note">From your history</span>
+            <h2>Memory Room</h2>
+            <span className="home-rail-note">Archive</span>
           </div>
           <p className="tools-hint">
             Significance within your AnimeNexus history — not a claim about life
             importance.
           </p>
-          <ul className="memory-chapters">
-            {chapters.map((ch) => (
-              <li key={ch.id} className="memory-chapter-card">
-                <h3 className="nx-kicker">{ch.title}</h3>
-                <p>{ch.summary}</p>
-                <span className="home-rail-note">
-                  {ch.eventIds.length} moment
-                  {ch.eventIds.length === 1 ? "" : "s"}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <MemoryRoom events={events} chapters={chapters} />
         </section>
-      ) : null}
+      ) : (
+        <>
+          {chapters.length > 0 ? (
+            <section className="journey-section" aria-label="Memory chapters">
+              <div className="home-rail-head">
+                <h2>Archive chapters</h2>
+                <span className="home-rail-note">From your history</span>
+              </div>
+              <ul className="memory-chapters">
+                {chapters.map((ch) => (
+                  <li key={ch.id} className="memory-chapter-card">
+                    <h3 className="nx-kicker">{ch.title}</h3>
+                    <p>{ch.summary}</p>
+                    <span className="home-rail-note">
+                      {ch.eventIds.length} moment
+                      {ch.eventIds.length === 1 ? "" : "s"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
-      <section className="journey-section">
-        <div className="home-rail-head">
-          <h2>Timeline</h2>
-          <span className="home-rail-note">Meaningful moments</span>
-        </div>
-        <p className="tools-hint">
-          First light, seals, completions, taste chapters, rec learning — not
-          every click.
-        </p>
-        {events.length === 0 ? (
-          <div className="state-box">
-            <p>No milestones yet. Browse, seal, and complete to fill this path.</p>
-            <Link href="/browse" className="btn btn-accent btn-sm">
-              Browse →
-            </Link>
-          </div>
-        ) : (
-          <ol className="journey-timeline">
-            {events.map((e) => (
-              <li
-                key={e.id}
-                className="journey-event"
-                data-kind={e.kind}
-                data-importance={e.importance.toFixed(2)}
-                data-chapter={e.chapter}
-                style={{
-                  opacity: 0.55 + e.importance * 0.45,
-                }}
-              >
-                <span className="journey-kind">
-                  {KIND_LABEL[e.kind] || e.kind}
-                </span>
-                <div className="journey-event-body">
-                  {e.href ? (
-                    <Link href={e.href} className="journey-event-title">
-                      {e.title}
-                    </Link>
-                  ) : (
-                    <span className="journey-event-title">{e.title}</span>
-                  )}
-                  <time className="journey-event-date" dateTime={e.at}>
-                    {e.at.slice(0, 10)}
-                  </time>
-                  <p className="journey-event-text">{e.body}</p>
-                  {e.resonanceNote ? (
-                    <p className="tools-hint">{e.resonanceNote}</p>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
+          <section className="journey-section">
+            <div className="home-rail-head">
+              <h2>Timeline</h2>
+              <span className="home-rail-note">Meaningful moments</span>
+            </div>
+            <p className="tools-hint">
+              First light, seals, completions, taste chapters, rec learning — not
+              every click.
+            </p>
+            {events.length === 0 ? (
+              <div className="state-box">
+                <p>
+                  No milestones yet. Browse, seal, and complete to fill this path.
+                </p>
+                <Link href="/browse" className="btn btn-accent btn-sm">
+                  Browse →
+                </Link>
+              </div>
+            ) : (
+              <ol className="journey-timeline">
+                {events.map((e) => (
+                  <li
+                    key={e.id}
+                    className="journey-event"
+                    data-kind={e.kind}
+                    data-importance={e.importance.toFixed(2)}
+                    data-chapter={e.chapter}
+                    style={{
+                      opacity: 0.55 + e.importance * 0.45,
+                    }}
+                  >
+                    <span className="journey-kind">
+                      {KIND_LABEL[e.kind] || e.kind}
+                    </span>
+                    <div className="journey-event-body">
+                      {e.href ? (
+                        <Link href={e.href} className="journey-event-title">
+                          {e.title}
+                        </Link>
+                      ) : (
+                        <span className="journey-event-title">{e.title}</span>
+                      )}
+                      <time className="journey-event-date" dateTime={e.at}>
+                        {e.at.slice(0, 10)}
+                      </time>
+                      <p className="journey-event-text">{e.body}</p>
+                      {e.resonanceNote ? (
+                        <p className="tools-hint">{e.resonanceNote}</p>
+                      ) : null}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        </>
+      )}
     </div>
   );
 }
