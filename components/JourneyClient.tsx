@@ -1,17 +1,18 @@
 "use client";
 
 /**
- * Journey page client (Sprint 30).
- * Timeline + Lantern Insights from the same memory/shelf/taste stack.
+ * Journey / Archive (Sprint 30 + Awwwards Memory Room data).
+ * Timeline remains the default; chapters + importance prepare spatial mode.
  */
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
-import { buildJourney, journeyInsights } from "@/lib/journey";
+import { journeyInsights } from "@/lib/journey";
 import { dismissInsight } from "@/lib/lantern-insights";
 import { readMemory } from "@/lib/lantern-memory";
 import { buildTasteStory } from "@/lib/taste-story";
+import { buildMemoryRoom } from "@/lib/memory-room";
 
 const KIND_LABEL: Record<string, string> = {
   first_seen: "Origin",
@@ -30,14 +31,21 @@ export function JourneyClient() {
   const { entries, ready } = useWatchlist();
   const [tick, setTick] = useState(0);
 
-  const { events, insights, storyHeadline } = useMemo(() => {
+  const { events, chapters, insights, storyHeadline } = useMemo(() => {
     if (!ready || typeof window === "undefined") {
-      return { events: [], insights: [], storyHeadline: "" };
+      return {
+        events: [],
+        chapters: [],
+        insights: [],
+        storyHeadline: "",
+      };
     }
     const m = readMemory();
     void tick;
+    const room = buildMemoryRoom(entries, m);
     return {
-      events: buildJourney(entries, m),
+      events: room.events,
+      chapters: room.chapters,
       insights: journeyInsights(entries, m),
       storyHeadline: buildTasteStory(entries, m).headline,
     };
@@ -105,6 +113,31 @@ export function JourneyClient() {
         )}
       </section>
 
+      {chapters.length > 0 ? (
+        <section className="journey-section" aria-label="Memory chapters">
+          <div className="home-rail-head">
+            <h2>Archive chapters</h2>
+            <span className="home-rail-note">From your history</span>
+          </div>
+          <p className="tools-hint">
+            Significance within your AnimeNexus history — not a claim about life
+            importance.
+          </p>
+          <ul className="memory-chapters">
+            {chapters.map((ch) => (
+              <li key={ch.id} className="memory-chapter-card">
+                <h3 className="nx-kicker">{ch.title}</h3>
+                <p>{ch.summary}</p>
+                <span className="home-rail-note">
+                  {ch.eventIds.length} moment
+                  {ch.eventIds.length === 1 ? "" : "s"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <section className="journey-section">
         <div className="home-rail-head">
           <h2>Timeline</h2>
@@ -124,7 +157,16 @@ export function JourneyClient() {
         ) : (
           <ol className="journey-timeline">
             {events.map((e) => (
-              <li key={e.id} className="journey-event" data-kind={e.kind}>
+              <li
+                key={e.id}
+                className="journey-event"
+                data-kind={e.kind}
+                data-importance={e.importance.toFixed(2)}
+                data-chapter={e.chapter}
+                style={{
+                  opacity: 0.55 + e.importance * 0.45,
+                }}
+              >
                 <span className="journey-kind">
                   {KIND_LABEL[e.kind] || e.kind}
                 </span>
@@ -140,6 +182,9 @@ export function JourneyClient() {
                     {e.at.slice(0, 10)}
                   </time>
                   <p className="journey-event-text">{e.body}</p>
+                  {e.resonanceNote ? (
+                    <p className="tools-hint">{e.resonanceNote}</p>
+                  ) : null}
                 </div>
               </li>
             ))}
