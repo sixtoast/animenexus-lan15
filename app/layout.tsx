@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Navbar } from "@/components/Navbar";
+import { SkipToContent } from "@/components/SkipToContent";
 import { WatchlistProvider } from "@/components/WatchlistProvider";
 import { SessionProvider } from "@/components/SessionProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -49,6 +50,7 @@ import "./signal-error.css";
 import "./signal-empty.css";
 import "./home-dash.css";
 import "./mobile.css";
+import "./a11y.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
@@ -101,6 +103,7 @@ export default function RootLayout({
             <ToastProvider>
               <WatchlistProvider>
                 <SessionProvider>
+                  <SkipToContent />
                   <LanternMemoryBoot />
                   <NexusRouteBeacon />
                   <EnvironmentController />
@@ -108,7 +111,7 @@ export default function RootLayout({
                   <PwaRegister />
                   <RouteTune />
                   <Navbar />
-                  <div className="app-shell">
+                  <div className="app-shell" id="main-content" tabIndex={-1}>
                     <RoomEnter>{children}</RoomEnter>
                   </div>
                   <MascotErrorBoundary>
