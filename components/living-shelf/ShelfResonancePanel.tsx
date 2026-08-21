@@ -2,6 +2,7 @@
 
 import type { ShelfRelationship } from "@/lib/shelf-resonance";
 import { proximityBand } from "@/lib/shelf-resonance";
+import { ModelDisclosure } from "@/components/ModelDisclosure";
 
 export function ShelfResonancePanel({
   rel,
@@ -38,7 +39,7 @@ export function ShelfResonancePanel({
 
       <div className="shelf-res-cols">
         <div>
-          <h4>Metadata</h4>
+          <h4>Metadata (facts from shelf)</h4>
           <ul>
             {rel.factLines.map((line) => (
               <li key={line}>{line}</li>
@@ -46,7 +47,7 @@ export function ShelfResonancePanel({
           </ul>
         </div>
         <div>
-          <h4>AnimeNexus reading</h4>
+          <h4>AnimeNexus reading (model)</h4>
           <ul>
             {rel.modelLines.map((line) => (
               <li key={line}>{line}</li>
@@ -54,6 +55,7 @@ export function ShelfResonancePanel({
           </ul>
         </div>
       </div>
+      <ModelDisclosure compact />
     </aside>
   );
 }
