@@ -6,15 +6,14 @@
 
 | Sprint | Status |
 |--------|--------|
-| 27–30 | Insights · Ritual · Reactions · Journey |
-| **31 AnimeImage** | Shared cover component · cards + detail |
+| 27–31 | Insights → AnimeImage |
+| **32 Client boundaries** | MoodChips + OnAir → server; rules doc |
 | 35 Sakura | Removed |
 
 ## Queue
 
 | Sprint | Focus |
 |--------|--------|
-| **32** | Client boundary optimisation |
 | **33** | Mobile experience |
 | **34** | A11y + reduced motion |
 | **36** | Final cohesion |
