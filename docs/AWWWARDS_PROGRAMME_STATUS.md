@@ -2,15 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–9 | Baseline → Memory Room | Done |
-| **10** | Lantern cinematic staging | **Done** |
-| 11 | Diegetic navigation | Next |
-| 12+ | Editorial layouts → final QA | Queued |
+| 0–10 | Baseline → Lantern staging | Done |
+| **11** | Diegetic navigation | **Done** |
+| 12 | Editorial layouts | Next |
+| 13+ | Loading theatre → final QA | Queued |
 
-## Sprint 10
+## Sprint 11
 
-- `lib/mascot/cinematography-bridge.ts` — subscribes to cinema focus
-- Memory: quieter (think only, long think cooldown, clear speech)
-- Oracle/Radar: soft point + attention
-- Watchlist / anime subject: emotion bias, no centre-screen walk
-- Installed from `MascotHost`; existing Nexus cooldowns still apply
+- Functional labels kept (Home, Browse, Watchlist…)
+- Poetic secondary: Signal · Catalog · Shelf · Archive… (desktop ≥1100px)
+- Mobile button **Frequency** with dual-line items + ≥48px targets
+- Theme still “Light/Dark frequency” in sheet footer
