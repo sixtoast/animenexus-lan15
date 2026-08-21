@@ -6,15 +6,14 @@
 
 | Sprint | Status |
 |--------|--------|
-| 27–29 | Insights · Ritual · Reactions |
-| **30 Timeline + Insights** | `/journey` shares insight engine + enriched timeline |
-| 35 Sakura | Removed (nav toggle gone too) |
+| 27–30 | Insights · Ritual · Reactions · Journey |
+| **31 AnimeImage** | Shared cover component · cards + detail |
+| 35 Sakura | Removed |
 
 ## Queue
 
 | Sprint | Focus |
 |--------|--------|
-| **31** | AnimeImage architecture |
 | **32** | Client boundary optimisation |
 | **33** | Mobile experience |
 | **34** | A11y + reduced motion |
