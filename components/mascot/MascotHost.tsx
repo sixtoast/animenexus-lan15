@@ -17,6 +17,7 @@ import {
   loadA11yPrefs,
   setInteractionsEnabled,
 } from "@/lib/mascot/a11y";
+import { installCinematographyBridge } from "@/lib/mascot/cinematography-bridge";
 import { UiAwareness } from "./UiAwareness";
 import { ContextBridge } from "./ContextBridge";
 import { ThoughtBubble } from "./ThoughtBubble";
@@ -96,6 +97,8 @@ export function MascotHost() {
         e instanceof Error ? e.message : "WebGL context could not be created.",
       );
     }
+
+    installCinematographyBridge();
   }, [setEnabled]);
 
   useEffect(() => {
@@ -176,7 +179,6 @@ export function MascotHost() {
         toggleInteract();
       },
     });
-    // handlers close over stable setters
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 
