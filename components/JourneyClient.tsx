@@ -1,24 +1,47 @@
 "use client";
 
-import { useMemo } from "react";
+/**
+ * Journey page client (Sprint 30).
+ * Timeline + Lantern Insights from the same memory/shelf/taste stack.
+ */
+
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
-import { buildInsights, buildJourney } from "@/lib/journey";
+import { buildJourney, journeyInsights } from "@/lib/journey";
+import { dismissInsight } from "@/lib/lantern-insights";
 import { readMemory } from "@/lib/lantern-memory";
+import { buildTasteStory } from "@/lib/taste-story";
+
+const KIND_LABEL: Record<string, string> = {
+  first_seen: "Origin",
+  first_seal: "Seal",
+  completion: "Close",
+  genre_shift: "Genre",
+  rec_accept: "Rec",
+  tool: "Tool",
+  visit_streak: "Visits",
+  taste_chapter: "Taste",
+  session: "Session",
+  observation: "Note",
+};
 
 export function JourneyClient() {
   const { entries, ready } = useWatchlist();
+  const [tick, setTick] = useState(0);
 
-  const { events, insights } = useMemo(() => {
+  const { events, insights, storyHeadline } = useMemo(() => {
     if (!ready || typeof window === "undefined") {
-      return { events: [], insights: [] };
+      return { events: [], insights: [], storyHeadline: "" };
     }
     const m = readMemory();
+    void tick;
     return {
       events: buildJourney(entries, m),
-      insights: buildInsights(entries, m),
+      insights: journeyInsights(entries, m),
+      storyHeadline: buildTasteStory(entries, m).headline,
     };
-  }, [entries, ready]);
+  }, [entries, ready, tick]);
 
   if (!ready) {
     return (
@@ -30,40 +53,66 @@ export function JourneyClient() {
   }
 
   return (
-    <div>
-      <section className="taste-section">
-        <h2>Lantern insights</h2>
-        <p className="tools-hint" role="status" aria-live="polite">
-          Soft observations from on-device memory — dismiss by exploring elsewhere;
-          nothing is sent off-browser.
+    <div className="journey">
+      {storyHeadline ? (
+        <p className="journey-headline" role="status">
+          {storyHeadline}{" "}
+          <Link href="/taste">Taste story →</Link>
+        </p>
+      ) : null}
+
+      <section className="journey-section">
+        <div className="home-rail-head">
+          <h2>Lantern insights</h2>
+          <span className="home-rail-note">Shared · local</span>
+        </div>
+        <p className="tools-hint">
+          Same evidence engine as Home — dismissible, never sent off-browser.
         </p>
         {insights.length === 0 ? (
-          <p className="tools-hint">No insights yet.</p>
+          <p className="tools-hint">
+            No insights yet. Seal and finish a few titles to give Lantern
+            evidence.
+          </p>
         ) : (
-          <ul className="taste-list">
-            {insights.map((i) => (
-              <li key={i.id}>
-                {i.href ? (
-                  <Link href={i.href} className="taste-list-link">
-                    <span className="taste-list-title">{i.text}</span>
-                    <span className="taste-list-meta">{i.confidence}</span>
-                  </Link>
-                ) : (
-                  <div className="taste-list-link">
-                    <span className="taste-list-title">{i.text}</span>
-                    <span className="taste-list-meta">{i.confidence}</span>
-                  </div>
-                )}
+          <ul className="insight-list">
+            {insights.map((ins) => (
+              <li key={ins.id} className="insight-card">
+                <p className="insight-text">{ins.text}</p>
+                <details className="insight-evidence">
+                  <summary>
+                    Evidence · {ins.confidenceLabel} confidence
+                  </summary>
+                  <ul>
+                    {ins.evidence.map((e) => (
+                      <li key={e}>{e}</li>
+                    ))}
+                  </ul>
+                </details>
+                <button
+                  type="button"
+                  className="insight-dismiss"
+                  onClick={() => {
+                    dismissInsight(ins.id);
+                    setTick((t) => t + 1);
+                  }}
+                >
+                  Dismiss
+                </button>
               </li>
             ))}
           </ul>
         )}
       </section>
 
-      <section className="taste-section">
-        <h2>Timeline</h2>
+      <section className="journey-section">
+        <div className="home-rail-head">
+          <h2>Timeline</h2>
+          <span className="home-rail-note">Meaningful moments</span>
+        </div>
         <p className="tools-hint">
-          Meaningful moments only — first light, seals, completions, signals.
+          First light, seals, completions, taste chapters, rec learning — not
+          every click.
         </p>
         {events.length === 0 ? (
           <div className="state-box">
@@ -73,27 +122,25 @@ export function JourneyClient() {
             </Link>
           </div>
         ) : (
-          <ol className="taste-list" style={{ listStyle: "none", padding: 0 }}>
+          <ol className="journey-timeline">
             {events.map((e) => (
-              <li key={e.id} style={{ marginBottom: 14 }}>
-                {e.href ? (
-                  <Link href={e.href} className="taste-list-link">
-                    <span className="taste-list-title">{e.title}</span>
-                    <span className="taste-list-meta">
-                      {e.at.slice(0, 10)}
-                    </span>
-                  </Link>
-                ) : (
-                  <div className="taste-list-link">
-                    <span className="taste-list-title">{e.title}</span>
-                    <span className="taste-list-meta">
-                      {e.at.slice(0, 10)}
-                    </span>
-                  </div>
-                )}
-                <p className="tools-hint" style={{ marginTop: 4, marginLeft: 4 }}>
-                  {e.body}
-                </p>
+              <li key={e.id} className="journey-event" data-kind={e.kind}>
+                <span className="journey-kind">
+                  {KIND_LABEL[e.kind] || e.kind}
+                </span>
+                <div className="journey-event-body">
+                  {e.href ? (
+                    <Link href={e.href} className="journey-event-title">
+                      {e.title}
+                    </Link>
+                  ) : (
+                    <span className="journey-event-title">{e.title}</span>
+                  )}
+                  <time className="journey-event-date" dateTime={e.at}>
+                    {e.at.slice(0, 10)}
+                  </time>
+                  <p className="journey-event-text">{e.body}</p>
+                </div>
               </li>
             ))}
           </ol>
