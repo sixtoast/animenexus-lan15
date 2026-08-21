@@ -1,6 +1,6 @@
 /**
- * View Transitions helper (master plan · Sprint 18).
- * Respects reduced motion / data-reduce-motion; falls back to plain navigate.
+ * View Transitions + persistent anime object identity (Awwwards Sprint 3).
+ * Progressive enhancement — never required for navigation.
  */
 
 export function prefersReducedMotion(): boolean {
@@ -24,6 +24,21 @@ export function canViewTransition(): boolean {
   return typeof (
     document as Document & { startViewTransition?: unknown }
   ).startViewTransition === "function";
+}
+
+/**
+ * Canonical shared-element name for an anime poster across surfaces.
+ * Browse card → Detail → Watchlist → Oracle / Compare when wired.
+ */
+export function getAnimeViewTransitionName(
+  animeId: string | number,
+): string {
+  return `cover-${animeId}`;
+}
+
+/** Semantic object id for cinematography / mascot / shelf mapping. */
+export function getAnimeObjectId(animeId: string | number): string {
+  return String(animeId);
 }
 
 /**
