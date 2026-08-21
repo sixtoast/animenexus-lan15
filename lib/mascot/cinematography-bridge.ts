@@ -45,11 +45,9 @@ function onFocusChange(focus: CinematicFocus, subjectId?: string | number) {
     store.bumpEmotion("energy", -0.04);
     store.bumpEmotion("sleepiness", 0.03);
     store.dispatch({ type: "context", context: "idle" });
-    // Soft think at most — no wave/jump
     if (!reduced() && Math.random() < 0.35) {
       store.requestAnim({ anim: "think", holdMs: 1800 });
     }
-    store.setState?.;
     useMascotStore.setState({
       nextThinkAt: Date.now() + 12_000,
       lastDirectorReason: "cinema:memory-quiet",
@@ -85,7 +83,6 @@ function onFocusChange(focus: CinematicFocus, subjectId?: string | number) {
   if (focus === "anime" && subjectId != null) {
     store.bumpEmotion("curiosity", 0.05);
     store.bumpEmotion("attention", 0.06);
-    // Look bias nudge only — no centre-screen walk
     useMascotStore.setState({
       lastDirectorReason: `cinema:anime:${subjectId}`,
       nextThinkAt: Math.max(store.nextThinkAt, Date.now() + 4_000),
@@ -94,7 +91,6 @@ function onFocusChange(focus: CinematicFocus, subjectId?: string | number) {
   }
 
   if (focus === "celebration") {
-    // Seal/complete already fire strong anims via Nexus — only mild bias here
     store.bumpEmotion("happiness", 0.04);
     return;
   }
@@ -106,7 +102,6 @@ function onFocusChange(focus: CinematicFocus, subjectId?: string | number) {
   }
 }
 
-/** Subscribe to cinematography store + soft occasional focus reads. */
 export function installCinematographyBridge(): void {
   if (typeof window === "undefined") return;
   if (unsubCinema) return;
@@ -115,7 +110,6 @@ export function installCinematographyBridge(): void {
     onFocusChange(state.focus, state.subjectId);
   });
 
-  // Shelf compare / memory focus reinforcement without spam
   unsubNexus = subscribeNexus((ev) => {
     if (ev.type === "page_viewed" && ev.path?.includes("/journey")) {
       onFocusChange("memory");
