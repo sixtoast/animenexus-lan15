@@ -1,0 +1,81 @@
+/* Journey timeline (Sprint 30) */
+
+.journey {
+  max-width: 720px;
+}
+
+.journey-headline {
+  margin: 0 0 20px;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.journey-headline a {
+  color: var(--color-accent);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.journey-section {
+  margin-bottom: 32px;
+}
+
+.journey-timeline {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0 0 0 14px;
+  border-left: 2px solid rgba(240, 160, 144, 0.25);
+}
+
+.journey-event {
+  position: relative;
+  padding: 0 0 18px 16px;
+}
+
+.journey-event::before {
+  content: "";
+  position: absolute;
+  left: -19px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(240, 160, 144, 0.15);
+}
+
+.journey-kind {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 4px;
+}
+
+.journey-event-title {
+  display: block;
+  font-weight: 650;
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+a.journey-event-title:hover {
+  color: var(--color-accent);
+}
+
+.journey-event-date {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.journey-event-text {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
