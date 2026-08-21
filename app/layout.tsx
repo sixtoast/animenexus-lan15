@@ -56,6 +56,7 @@ import "./cinematography.css";
 import "./shelf-preview.css";
 import "./living-shelf.css";
 import "./memory-chapters.css";
+import "./editorial.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
