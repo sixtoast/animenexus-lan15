@@ -1,4 +1,4 @@
-/* Navbar — Phase 1c console chrome */
+/* Navbar — console chrome + diegetic Frequency (Sprint 11) */
 
 .navbar {
   position: sticky;
@@ -54,18 +54,41 @@
 
 .nav-link {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
-  padding: 7px 12px;
+  justify-content: center;
+  gap: 1px;
+  padding: 6px 11px;
   border-radius: 50px;
   color: var(--color-text-muted);
   font-weight: 550;
   font-size: 0.78rem;
   letter-spacing: 0.01em;
   border: 1px solid transparent;
+  line-height: 1.15;
   transition:
     color var(--duration-fast, 0.18s) var(--ease-out, ease),
     background var(--duration-fast, 0.18s) var(--ease-out, ease),
     border-color var(--duration-fast, 0.18s) var(--ease-out, ease);
+}
+
+.nav-link-label {
+  display: block;
+}
+
+.nav-link-poetic {
+  display: none;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+@media (min-width: 1100px) {
+  .nav-link-poetic {
+    display: block;
+  }
 }
 
 .nav-link:hover {
@@ -79,6 +102,11 @@
   border-color: transparent;
   font-weight: 700;
   box-shadow: 0 2px 12px rgba(240, 160, 144, 0.28);
+}
+
+.nav-link.active .nav-link-poetic {
+  opacity: 0.75;
+  color: inherit;
 }
 
 .nav-link.active:hover {
@@ -131,11 +159,7 @@
   }
 }
 
-.nav-toggle {
-  /* Button component; keep visible only on small screens */
-}
-
-/* Mobile sheet */
+/* Mobile Frequency sheet */
 .nav-scrim {
   position: fixed;
   inset: 0;
@@ -185,13 +209,26 @@
   }
 }
 
+.nav-mobile-head {
+  padding: 0 10px 12px;
+  border-bottom: 1px solid rgba(240, 160, 144, 0.1);
+  margin-bottom: 8px;
+}
+
 .nav-mobile-kicker {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-accent);
-  padding: 0 10px 8px;
+  margin: 0 0 4px;
+}
+
+.nav-mobile-sub {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.35;
 }
 
 .nav-mobile ul {
@@ -215,6 +252,30 @@
   font-size: 0.95rem;
   border: 1px solid transparent;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  min-height: 48px;
+}
+
+.nav-mobile-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-mobile-label {
+  font-weight: 600;
+  color: inherit;
+}
+
+.nav-mobile-poetic {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.nav-mobile-chev {
+  opacity: 0.35;
+  font-size: 0.9rem;
 }
 
 .nav-mobile-link:hover {
