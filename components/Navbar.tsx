@@ -8,16 +8,17 @@ import { MotionToggle } from "@/components/MotionToggle";
 import { Button } from "@/components/ui/Button";
 import { OnAir } from "@/components/ui/OnAir";
 
+/** Functional label + optional diegetic secondary (Awwwards Sprint 11). */
 const LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/browse", label: "Browse" },
-  { href: "/seasonal", label: "Seasonal" },
-  { href: "/daily", label: "Daily" },
-  { href: "/tools", label: "Tools" },
-  { href: "/watchlist", label: "Watchlist" },
-  { href: "/taste", label: "Taste" },
-  { href: "/journey", label: "Journey" },
-  { href: "/account", label: "Account" },
+  { href: "/", label: "Home", poetic: "Signal" },
+  { href: "/browse", label: "Browse", poetic: "Catalog" },
+  { href: "/seasonal", label: "Seasonal", poetic: "Season" },
+  { href: "/daily", label: "Daily", poetic: "Ritual" },
+  { href: "/tools", label: "Tools", poetic: "Desk" },
+  { href: "/watchlist", label: "Watchlist", poetic: "Shelf" },
+  { href: "/taste", label: "Taste", poetic: "Profile" },
+  { href: "/journey", label: "Journey", poetic: "Archive" },
+  { href: "/account", label: "Account", poetic: "Identity" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -67,8 +68,14 @@ export function Navbar() {
                     href={l.href}
                     className={"nav-link" + (active ? " active" : "")}
                     aria-current={active ? "page" : undefined}
+                    title={l.poetic ? `${l.label} · ${l.poetic}` : l.label}
                   >
-                    {l.label}
+                    <span className="nav-link-label">{l.label}</span>
+                    {l.poetic ? (
+                      <span className="nav-link-poetic" aria-hidden>
+                        {l.poetic}
+                      </span>
+                    ) : null}
                   </Link>
                 </li>
               );
@@ -97,7 +104,7 @@ export function Navbar() {
             aria-controls="mobile-nav"
             onClick={() => setOpen((v) => !v)}
           >
-            {open ? "Close" : "Menu"}
+            {open ? "Close" : "Frequency"}
           </Button>
         </div>
       </div>
@@ -112,10 +119,13 @@ export function Navbar() {
           />
           <nav
             id="mobile-nav"
-            className="nav-mobile"
-            aria-label="Mobile primary"
+            className="nav-mobile nav-mobile--frequency"
+            aria-label="Frequency menu"
           >
-            <p className="nav-mobile-kicker">Frequency</p>
+            <div className="nav-mobile-head">
+              <p className="nav-mobile-kicker">Frequency</p>
+              <p className="nav-mobile-sub">Choose a channel · same site, clearer mood</p>
+            </div>
             <ul>
               {LINKS.map((l) => {
                 const active = isActive(pathname, l.href);
@@ -129,10 +139,19 @@ export function Navbar() {
                       aria-current={active ? "page" : undefined}
                       onClick={() => setOpen(false)}
                     >
-                      <span>{l.label}</span>
+                      <span className="nav-mobile-main">
+                        <span className="nav-mobile-label">{l.label}</span>
+                        {l.poetic ? (
+                          <span className="nav-mobile-poetic">{l.poetic}</span>
+                        ) : null}
+                      </span>
                       {active ? (
                         <span className="nav-mobile-here">Here</span>
-                      ) : null}
+                      ) : (
+                        <span className="nav-mobile-chev" aria-hidden>
+                          →
+                        </span>
+                      )}
                     </Link>
                   </li>
                 );
