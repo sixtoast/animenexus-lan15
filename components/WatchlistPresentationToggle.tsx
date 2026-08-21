@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * Watchlist presentation: Manage (list) | Shelf (spatial — Sprint 5+).
- * Preference persists locally; manage is always available.
- */
-
 import { useEffect, useState } from "react";
 import {
   readWatchlistPresentation,
@@ -37,7 +32,7 @@ export function WatchlistPresentationToggle({
     <div
       className="wl-presentation-toggle"
       role="group"
-      aria-label="Watchlist presentation"
+      aria-label="Watchlist presentation mode"
     >
       <button
         type="button"
@@ -45,6 +40,7 @@ export function WatchlistPresentationToggle({
           "btn btn-sm " + (current === "manage" ? "btn-accent" : "btn-outline")
         }
         aria-pressed={current === "manage"}
+        aria-label="Manage list — edit status, progress, and ratings"
         onClick={() => select("manage")}
       >
         Manage
@@ -55,8 +51,8 @@ export function WatchlistPresentationToggle({
           "btn btn-sm " + (current === "shelf" ? "btn-accent" : "btn-outline")
         }
         aria-pressed={current === "shelf"}
+        aria-label="Shelf — spatial collection view"
         onClick={() => select("shelf")}
-        title="Spatial shelf — available after spatial sprint"
       >
         Shelf
       </button>
