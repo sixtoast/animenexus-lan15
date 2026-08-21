@@ -1,10 +1,12 @@
-/* View Transitions polish (master plan · Sprint 18) */
+/* Shared-element choreography (Awwwards Sprint 14)
+ * Progressive enhancement — navigation never depends on VT.
+ */
 
 @supports (view-transition-name: none) {
   ::view-transition-old(root),
   ::view-transition-new(root) {
-    animation-duration: var(--dur);
-    animation-timing-function: var(--ease-out-expo);
+    animation-duration: 0.32s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   ::view-transition-old(root) {
@@ -18,32 +20,46 @@
   @keyframes vtRootOut {
     to {
       opacity: 0;
+      filter: brightness(0.92);
     }
   }
 
   @keyframes vtRootIn {
     from {
       opacity: 0;
+      filter: brightness(1.04);
     }
   }
 
-  /* Named cover morph — card poster → detail cover */
+  /* Named cover morph — card / shelf poster → detail cover */
   ::view-transition-group(*) {
-    animation-duration: var(--dur-slow);
-    animation-timing-function: var(--ease-out-expo);
+    animation-duration: 0.48s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   ::view-transition-old(cover-*),
   ::view-transition-new(cover-*) {
-    animation-duration: var(--dur-slow);
-    animation-timing-function: var(--ease-out-expo);
+    animation-duration: 0.48s;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
     mix-blend-mode: normal;
     height: 100%;
     overflow: clip;
+    object-fit: cover;
+  }
+
+  /* Contain layout shift during morph */
+  ::view-transition-image-pair(cover-*) {
+    isolation: isolate;
   }
 
   .detail-cover {
     view-transition-name: var(--vt-detail-cover, none);
+  }
+
+  /* AnimeImage / card covers already set view-transition-name: cover-{id} */
+  .anime-card img,
+  .anime-card .anime-image {
+    contain: paint;
   }
 
   /* Avoid double enter when VT is handling the route */
@@ -52,7 +68,7 @@
   }
 }
 
-/* Reduced motion: kill view-transition animations */
+/* Unsupported browsers / reduced motion: instant, no broken mid-state */
 @media (prefers-reduced-motion: reduce) {
   :root:not([data-motion="full"]) {
     view-transition-name: none;
