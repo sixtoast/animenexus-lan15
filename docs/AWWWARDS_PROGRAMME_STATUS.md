@@ -2,14 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–10 | Baseline → Lantern staging | Done |
-| **11** | Diegetic navigation | **Done** |
-| 12 | Editorial layouts | Next |
-| 13+ | Loading theatre → final QA | Queued |
+| 0–11 | Baseline → diegetic nav | Done |
+| **12** | Editorial layouts | **Done** |
+| 13 | Loading theatre upgrade | Next |
+| 14+ | Shared elements → final QA | Queued |
 
-## Sprint 11
+## Sprint 12
 
-- Functional labels kept (Home, Browse, Watchlist…)
-- Poetic secondary: Signal · Catalog · Shelf · Archive… (desktop ≥1100px)
-- Mobile button **Frequency** with dual-line items + ≥48px targets
-- Theme still “Light/Dark frequency” in sheet footer
+- `app/editorial.css` — page-head hierarchy, home hero 2-col offset (≥900px)
+- Display font on section titles; journey/taste italic pull-quotes
+- `.editorial-split` utility for content + sticky side note
+- Mobile stacks cleanly — no forced asymmetry on small screens
