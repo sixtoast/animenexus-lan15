@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { JourneyClient } from "@/components/JourneyClient";
+import "../home-dash.css";
+import "./journey.css";
 
 export const metadata: Metadata = {
   title: "Journey · AnimeNexus",
@@ -16,8 +18,8 @@ export default function JourneyPage() {
             Your <span>path</span>
           </h1>
           <p>
-            Milestones and soft insights from this browser’s shelf and Lantern
-            memory — private, local, evidence-based.
+            Timeline and insights from this browser’s shelf, memory, taste, and
+            recommendation learning — private and evidence-based.
           </p>
         </div>
       </section>
