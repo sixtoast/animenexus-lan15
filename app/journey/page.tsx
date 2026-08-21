@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { JourneyClient } from "@/components/JourneyClient";
+import { ModelDisclosure } from "@/components/ModelDisclosure";
 import "../home-dash.css";
 import "./journey.css";
 
@@ -21,6 +22,7 @@ export default function JourneyPage() {
             Timeline and insights from this browser’s shelf, memory, taste, and
             recommendation learning — private and evidence-based.
           </p>
+          <ModelDisclosure />
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
