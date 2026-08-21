@@ -2,14 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–13 | Baseline → loading theatre | Done |
-| **14** | Shared-element choreography | **Done** |
-| 15 | Performance pass | Next |
-| 16+ | Mobile QA → final | Queued |
+| 0–14 | Baseline → shared elements | Done |
+| **15** | Performance pass | **Done** |
+| 16 | Mobile QA | Next |
+| 17+ | Honesty copy → final QA | Queued |
 
-## Sprint 14
+## Sprint 15
 
-- Cover name `cover-{id}` already on cards / shelf / detail via `AnimeImage`
-- `withViewTransition` never blocks navigation if API missing
-- CSS: 0.48s ease-out-expo morph; root fade; reduced-motion kills groups
-- Contract documented in `lib/view-transition.ts`
+- `lib/perf-budgets.ts` — site tiers for shelf textures / DPR / mobile 2D preference
+- Living Shelf respects caps; Mascot keeps existing adaptive budgets
+- Lazy R3F shelf unchanged; Manage never depends on WebGL
