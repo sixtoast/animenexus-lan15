@@ -1,0 +1,187 @@
+/**
+ * Mobile experience (Sprint 33).
+ * Safe areas · min touch targets · sticky action bars · readable type.
+ */
+
+/* ── Safe areas ─────────────────────────────────────────── */
+
+body {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.navbar {
+  padding-top: max(10px, env(safe-area-inset-top));
+}
+
+.nav-mobile {
+  top: max(64px, calc(52px + env(safe-area-inset-top)));
+  max-height: min(78vh, calc(100dvh - 88px - env(safe-area-inset-top)));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.site-footer {
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+
+/* ── Touch targets (≥44px where interactive) ────────────── */
+
+@media (max-width: 899px) {
+  .nav-toggle,
+  .theme-toggle-btn,
+  .btn-icon {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .nav-mobile-link {
+    min-height: 48px;
+    padding: 14px 16px;
+  }
+
+  .mood-chip {
+    min-height: 40px;
+    padding: 8px 14px;
+  }
+
+  .view-toggle-bar button {
+    min-height: 40px;
+    min-width: 4.5rem;
+  }
+
+  /* Horizontal mood rail */
+  .mood-chips,
+  .mood-home-block .mood-chips {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+  }
+
+  .mood-chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mood-chip {
+    flex: 0 0 auto;
+  }
+
+  /* Grid: comfortable two-up on phones */
+  .anime-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  /* Detail: stack hero, sticky seal bar */
+  .detail-hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .detail-cover {
+    max-width: 180px;
+    margin: 0 auto;
+  }
+
+  .detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .detail-actions .btn,
+  .detail-info .btn {
+    min-height: 44px;
+  }
+
+  /* Sticky mobile CTA strip for primary desk actions */
+  .mobile-sticky-cta {
+    position: sticky;
+    bottom: 0;
+    z-index: 40;
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px
+      max(10px, env(safe-area-inset-bottom));
+    margin: 0 -12px;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(12, 10, 9, 0.92) 28%
+    );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .mobile-sticky-cta .btn {
+    flex: 1;
+    min-height: 46px;
+  }
+
+  /* Home hero CTAs — wrap cleanly */
+  .home-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .home-hero-actions .btn {
+    min-height: 42px;
+  }
+
+  /* Journey / taste lists — larger hit area */
+  .taste-list-link,
+  .journey-event-title {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Forms */
+  input,
+  select,
+  textarea,
+  .btn {
+    font-size: 16px; /* avoid iOS zoom on focus */
+  }
+
+  .btn-sm {
+    font-size: 0.875rem;
+  }
+
+  /* Reduce chrome under fixed overlays */
+  .ai-fab {
+    bottom: max(16px, env(safe-area-inset-bottom));
+    right: max(16px, env(safe-area-inset-right));
+  }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+  .logo {
+    font-size: 1.15rem;
+  }
+
+  .anime-grid {
+    gap: 8px;
+  }
+
+  .card-title {
+    font-size: 0.78rem;
+  }
+}
+
+/* Landscape phone: don’t crush hero */
+@media (max-width: 899px) and (orientation: landscape) {
+  .hero {
+    padding-top: 16px;
+    padding-bottom: 12px;
+  }
+
+  .nav-mobile {
+    max-height: min(70vh, 420px);
+  }
+}
