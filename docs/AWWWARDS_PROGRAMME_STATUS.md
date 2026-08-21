@@ -2,14 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–6 | Baseline → resonance compare | Done |
-| **7** | Living Shelf a11y / fallback | **Done** |
-| 8 | Memory Room data architecture | Next |
-| 9+ | Memory Room experience → final QA | Queued |
+| 0–7 | Baseline → Living Shelf a11y | Done |
+| **8** | Memory Room data architecture | **Done** |
+| 9 | Memory Room experience | Next |
+| 10+ | Lantern staging → final QA | Queued |
 
-## Sprint 7
+## Sprint 8
 
-- Keyboard: ←→↑↓ move selection, **C** compare, **Enter** detail, **Escape** clear
-- `aria-live` announcements; visible kbd help; Manage always one click away
-- WebGL fail → editorial fallback with Select buttons for compare
-- `sr-only` utility; reduced-motion still disables control damping
+- `lib/memory-room.ts` — `MemoryEvent` (importance, chapter, animeIds), chapters
+- Chapters: First Light · Exploration · Focus · Slower Turn · Current Signal
+- Journey page shows archive chapters + importance-weighted timeline opacity
+- Honesty copy: significance within AnimeNexus history only
