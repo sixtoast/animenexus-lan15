@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { WatchlistToolbar } from "@/components/WatchlistToolbar";
+import { AnimeImage } from "@/components/AnimeImage";
 import { SignalBars } from "@/components/ui/SignalBars";
 import type { WatchStatus, WatchlistEntry } from "@/lib/types";
 import { WATCH_STATUS_TABS } from "@/lib/watchlist-storage";
@@ -13,6 +15,11 @@ import {
   resonanceFromGenres,
   userResonance,
 } from "@/lib/resonance";
+import {
+  getAnimeObjectId,
+  getAnimeViewTransitionName,
+  withViewTransition,
+} from "@/lib/view-transition";
 
 type SortMode = "recent" | "signal" | "progress";
 
@@ -25,6 +32,7 @@ function episodeCount(e: WatchlistEntry): number {
 }
 
 export function WatchlistClient() {
+  const router = useRouter();
   const {
     entries,
     ready,
@@ -44,7 +52,6 @@ export function WatchlistClient() {
       tab === "all" ? [...entries] : entries.filter((e) => e.watchStatus === tab);
 
     if (sort === "recent") {
-      // Preserve storage order (typically last-touched first)
       return base;
     }
 
@@ -56,7 +63,6 @@ export function WatchlistClient() {
       });
     }
 
-    // signal: engagement + resonance vs whole shelf
     return base
       .map((e) => {
         const w = interactionWeight(e);
@@ -174,14 +180,43 @@ export function WatchlistClient() {
             {filtered.map((e) => {
               const maxEp =
                 typeof e.episodes === "number" ? e.episodes : undefined;
+              const vt = getAnimeViewTransitionName(e.id);
+              const href = `/anime/${e.id}`;
               return (
-                <li key={e.id} className="wl-row">
-                  <Link href={`/anime/${e.id}`} className="wl-thumb">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={e.image} alt="" />
+                <li
+                  key={e.id}
+                  className="wl-row"
+                  data-anime-object-id={getAnimeObjectId(e.id)}
+                >
+                  <Link
+                    href={href}
+                    className="wl-thumb"
+                    onClick={(ev) => {
+                      if (
+                        ev.metaKey ||
+                        ev.ctrlKey ||
+                        ev.shiftKey ||
+                        ev.altKey ||
+                        ev.button !== 0
+                      ) {
+                        return;
+                      }
+                      ev.preventDefault();
+                      withViewTransition(() => router.push(href));
+                    }}
+                  >
+                    <AnimeImage
+                      src={e.image}
+                      title={e.title}
+                      decorative
+                      width={72}
+                      height={108}
+                      sizes="72px"
+                      viewTransitionName={vt}
+                    />
                   </Link>
                   <div className="wl-body">
-                    <Link href={`/anime/${e.id}`} className="wl-title">
+                    <Link href={href} className="wl-title">
                       {e.title}
                     </Link>
                     <div className="wl-meta">
