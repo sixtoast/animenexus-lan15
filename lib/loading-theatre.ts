@@ -1,6 +1,6 @@
 /**
- * Loading Theatre — one vocabulary for contextual waits (master plan · Sprint 14).
- * UI components share this copy; the global overlay uses the same strings.
+ * Loading Theatre — honest, route-aware waits (Awwwards Sprint 13).
+ * No fake progress percentages. Calm vocabulary only.
  */
 
 export const LOADING_COPY = {
@@ -16,6 +16,13 @@ export const LOADING_COPY = {
   fusion: "Weaving the signal…",
   browse: "Scanning the catalogue…",
   detail: "Opening the dossier…",
+  watchlist: "Staging the shelf…",
+  journey: "Opening the archive…",
+  taste: "Reading the profile…",
+  seasonal: "Checking the season…",
+  daily: "Preparing today’s signal…",
+  tools: "Clearing the desk…",
+  home: "Warming the signal…",
 } as const;
 
 export type LoadingContext = keyof typeof LOADING_COPY;
@@ -28,4 +35,24 @@ export function loadingLabel(
     return LOADING_COPY[context as LoadingContext];
   }
   return context;
+}
+
+/** Map pathname → theatre context (best-effort). */
+export function contextFromPath(pathname: string | null | undefined): LoadingContext {
+  if (!pathname) return "default";
+  if (pathname === "/") return "home";
+  if (pathname.startsWith("/browse")) return "browse";
+  if (pathname.startsWith("/anime/")) return "detail";
+  if (pathname.startsWith("/watchlist")) return "watchlist";
+  if (pathname.startsWith("/journey")) return "journey";
+  if (pathname.startsWith("/taste")) return "taste";
+  if (pathname.startsWith("/seasonal")) return "seasonal";
+  if (pathname.startsWith("/daily")) return "daily";
+  if (pathname.startsWith("/tools/oracle")) return "oracle";
+  if (pathname.startsWith("/tools/radar")) return "radar";
+  if (pathname.startsWith("/tools/ai") || pathname.startsWith("/tools/chat"))
+    return "ai";
+  if (pathname.startsWith("/tools/ancestry")) return "ancestry";
+  if (pathname.startsWith("/tools")) return "tools";
+  return "default";
 }
