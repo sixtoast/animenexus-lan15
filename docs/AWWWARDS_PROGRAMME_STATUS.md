@@ -2,15 +2,16 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–3 | Baseline → object identity | Done |
-| **4** | Living Shelf data architecture | **Done** |
-| 5 | Living Shelf spatial experience | Next |
-| 6–7 | Resonance interaction + a11y | Queued |
+| 0–4 | Baseline → shelf data | Done |
+| **5** | Living Shelf spatial experience | **Done** |
+| 6 | Living Shelf resonance interaction | Next |
+| 7 | Living Shelf a11y / fallback polish | Queued |
 | 8+ | Memory Room → final QA | Queued |
 
-## Sprint 4
+## Sprint 5
 
-- `lib/living-shelf.ts` — `ShelfObject` projection, clusters, local presentation mode
-- **No XYZ in watchlist storage** — depth/scale/importance derived
-- Manage | Shelf toggle (persisted); Manage keeps full list controls
-- Shelf mode: 2D cluster preview until R3F spatial (Sprint 5)
+- `components/living-shelf/*` — LivingShelf, ShelfScene, ShelfObjectMesh, ShelfHUD, ShelfFallback
+- R3F poster field by status clusters; bounded OrbitControls (no free-flight)
+- Select → inspect panel → Detail; Escape closes; Reset view
+- WebGL fail → editorial 2D fallback; Manage mode untouched
+- Cinematography pulse on select
