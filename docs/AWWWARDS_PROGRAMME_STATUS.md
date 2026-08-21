@@ -2,14 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–12 | Baseline → editorial | Done |
-| **13** | Loading theatre upgrade | **Done** |
-| 14 | Shared-element choreography | Next |
-| 15+ | Polish → final QA | Queued |
+| 0–13 | Baseline → loading theatre | Done |
+| **14** | Shared-element choreography | **Done** |
+| 15 | Performance pass | Next |
+| 16+ | Mobile QA → final | Queued |
 
-## Sprint 13
+## Sprint 14
 
-- Route-aware copy (`contextFromPath`) for home/browse/detail/shelf/archive…
-- 180ms show delay — no flash on fast responses
-- Explicit honesty: “No estimated progress — waiting on the network”
-- Calmer panel styling; still no fake % bar
+- Cover name `cover-{id}` already on cards / shelf / detail via `AnimeImage`
+- `withViewTransition` never blocks navigation if API missing
+- CSS: 0.48s ease-out-expo morph; root fade; reduced-motion kills groups
+- Contract documented in `lib/view-transition.ts`
