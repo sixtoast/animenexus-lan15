@@ -6,11 +6,6 @@ import { useEffect, useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import { Button } from "@/components/ui/Button";
 import { OnAir } from "@/components/ui/OnAir";
-import {
-  readSakuraPref,
-  toggleSakuraPref,
-  type SakuraPref,
-} from "@/lib/sakura-pref";
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -33,11 +28,6 @@ export function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
-  const [sakura, setSakura] = useState<SakuraPref>("on");
-
-  useEffect(() => {
-    setSakura(readSakuraPref());
-  }, []);
 
   useEffect(() => {
     setOpen(false);
@@ -58,16 +48,6 @@ export function Navbar() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
-
-  function onToggleSakura() {
-    const next = toggleSakuraPref();
-    setSakura(next);
-    try {
-      window.dispatchEvent(new Event("animenexus:sakura"));
-    } catch {
-      /* */
-    }
-  }
 
   return (
     <header className="navbar">
@@ -97,25 +77,6 @@ export function Navbar() {
 
         <div className="nav-right">
           <OnAir className="nav-on-air" />
-          <Button
-            variant="icon"
-            size="sm"
-            onClick={onToggleSakura}
-            title={
-              sakura === "on"
-                ? "Hide sakura petals"
-                : "Show sakura petals"
-            }
-            aria-label={
-              sakura === "on"
-                ? "Hide sakura ambience"
-                : "Show sakura ambience"
-            }
-            aria-pressed={sakura === "on"}
-            className="sakura-toggle-btn"
-          >
-            {sakura === "on" ? "🌸" : "🍃"}
-          </Button>
           <Button
             variant="icon"
             size="sm"
@@ -176,15 +137,6 @@ export function Navbar() {
               })}
             </ul>
             <div className="nav-mobile-foot">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onToggleSakura}
-              >
-                {sakura === "on"
-                  ? "🌸 Sakura on"
-                  : "🍃 Sakura off"}
-              </Button>
               <Button
                 variant="ghost"
                 size="sm"
