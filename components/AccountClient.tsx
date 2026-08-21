@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/components/SessionProvider";
 import { useWatchlist } from "@/components/WatchlistProvider";
+import { SoundSettings } from "@/components/SoundSettings";
 import type { WatchlistEntry } from "@/lib/types";
 
 export function AccountClient() {
@@ -221,6 +222,18 @@ export function AccountClient() {
           </button>
         </div>
       </form>
+
+      <hr style={{ margin: "28px 0", borderColor: "var(--color-border)" }} />
+
+      <section aria-labelledby="sound-settings-heading">
+        <h2 id="sound-settings-heading" className="nx-kicker">
+          Sound
+        </h2>
+        <p className="account-note">
+          Short original UI cues — opt-in, no music, no card-hover spam.
+        </p>
+        <SoundSettings />
+      </section>
     </div>
   );
 }
