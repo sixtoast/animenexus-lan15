@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
+import { MotionToggle } from "@/components/MotionToggle";
 import { Button } from "@/components/ui/Button";
 import { OnAir } from "@/components/ui/OnAir";
 
@@ -77,6 +78,7 @@ export function Navbar() {
 
         <div className="nav-right">
           <OnAir className="nav-on-air" />
+          <MotionToggle />
           <Button
             variant="icon"
             size="sm"
