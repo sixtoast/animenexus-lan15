@@ -2,16 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–4 | Baseline → shelf data | Done |
-| **5** | Living Shelf spatial experience | **Done** |
-| 6 | Living Shelf resonance interaction | Next |
-| 7 | Living Shelf a11y / fallback polish | Queued |
+| 0–5 | Baseline → spatial shelf | Done |
+| **6** | Living Shelf resonance interaction | **Done** |
+| 7 | Living Shelf a11y / fallback | Next |
 | 8+ | Memory Room → final QA | Queued |
 
-## Sprint 5
+## Sprint 6
 
-- `components/living-shelf/*` — LivingShelf, ShelfScene, ShelfObjectMesh, ShelfHUD, ShelfFallback
-- R3F poster field by status clusters; bounded OrbitControls (no free-flight)
-- Select → inspect panel → Detail; Escape closes; Reset view
-- WebGL fail → editorial 2D fallback; Manage mode untouched
-- Cinematography pulse on select
+- Select title → **Compare resonance** (or **C**) → second click
+- `lib/shelf-resonance.ts` — real cosine overlap + shared genres; facts vs model lines
+- `ShelfResonancePanel` — % meter, proximity band, dual columns
+- Pair highlight in scene; Escape clears pair; layout not permanently mutated
