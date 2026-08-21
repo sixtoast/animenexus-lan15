@@ -1,4 +1,4 @@
-/* ---- Detail page (Sprint 3) ---- */
+/* ---- Detail page (Sprint 3 + Awwwards material) ---- */
 .detail-banner {
   height: clamp(120px, 22vw, 220px);
   background-size: cover;
@@ -38,11 +38,31 @@
   margin-bottom: 32px;
 }
 
+.detail-cover-material {
+  --anime-softness: 0.45;
+  --anime-energy: 0.4;
+  --anime-warmth: 0.4;
+  --anime-reflect: 0.35;
+  --anime-weight: 0.45;
+  --anime-mystery: 0.3;
+  flex-shrink: 0;
+}
+
 .detail-cover {
   width: min(200px, 42vw);
-  border-radius: 14px;
-  box-shadow: var(--shadow-soft);
-  border: 1px solid var(--color-border);
+  border-radius: calc(12px + var(--anime-softness, 0.45) * 6px);
+  box-shadow:
+    0 calc(10px + var(--anime-weight, 0.45) * 14px)
+      calc(28px + var(--anime-weight, 0.45) * 20px) rgba(0, 0, 0, 0.4),
+    0 0 calc(16px + var(--anime-reflect, 0.35) * 32px)
+      rgba(232, 165, 152, calc(var(--anime-reflect, 0.35) * 0.18));
+  border: 1px solid
+    rgba(
+      232,
+      165,
+      152,
+      calc(0.12 + var(--anime-warmth, 0.4) * 0.15)
+    );
   flex-shrink: 0;
 }
 
