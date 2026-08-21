@@ -1,4 +1,4 @@
-"use client";
+/** Shared “on air / live signal” chip — pure presentation (Sprint 32). */
 
 type Props = {
   label?: string;
@@ -6,7 +6,6 @@ type Props = {
   className?: string;
 };
 
-/** Shared “on air / live signal” chip */
 export function OnAir({
   label = "On air",
   tone = "live",
