@@ -46,19 +46,27 @@ export function ShelfScene({
   compareId = null,
   onSelect,
   reducedMotion,
+  dprMax = 1.5,
+  antialias = true,
 }: {
   objects: ShelfObject[];
   selectedId: number | null;
   compareId?: number | null;
   onSelect: (id: number) => void;
   reducedMotion: boolean;
+  dprMax?: number;
+  antialias?: boolean;
 }) {
   return (
     <Canvas
       className="shelf-canvas"
-      dpr={[1, 1.5]}
+      dpr={[1, dprMax]}
       camera={{ position: [0.2, 0.4, 5.2], fov: 42, near: 0.1, far: 40 }}
-      gl={{ antialias: true, alpha: true, powerPreference: "default" }}
+      gl={{
+        antialias,
+        alpha: true,
+        powerPreference: "default",
+      }}
       onCreated={({ gl }) => {
         gl.setClearColor("#0c0a09", 0);
       }}
@@ -76,7 +84,11 @@ export function ShelfScene({
         />
       </Suspense>
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.5, -1.6, -1]} receiveShadow>
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[0.5, -1.6, -1]}
+        receiveShadow
+      >
         <circleGeometry args={[8, 48]} />
         <meshStandardMaterial
           color="#14100e"
