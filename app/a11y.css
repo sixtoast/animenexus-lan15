@@ -1,0 +1,98 @@
+/**
+ * Accessibility + reduced motion (Sprint 34).
+ */
+
+/* Skip link — first focusable in document order */
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  z-index: 10000;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--color-accent, #e8a598);
+  color: #1a0f0d;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transform: translateY(-120%);
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+/* Visible keyboard focus (never remove without replacement) */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent, #e8a598);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.btn:focus-visible,
+.nav-link:focus-visible,
+.mood-chip:focus-visible,
+.anime-card:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--color-accent, #e8a598);
+  outline-offset: 3px;
+}
+
+/* High-contrast support */
+@media (prefers-contrast: more) {
+  :focus-visible {
+    outline-width: 3px;
+  }
+
+  .anime-card {
+    border-width: 2px;
+  }
+}
+
+/* Screen-reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Expanded reduced-motion kill-switch */
+html[data-reduce-motion="true"] *,
+html[data-reduce-motion="true"] *::before,
+html[data-reduce-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+html[data-reduce-motion="true"] .nav-signal-dot,
+html[data-reduce-motion="true"] .nx-on-air-dot,
+html[data-reduce-motion="true"] .quote-live-dot {
+  animation: none !important;
+}
+
+/* Keep view transitions off under reduced motion */
+html[data-reduce-motion="true"]::view-transition-group(*),
+html[data-reduce-motion="true"]::view-transition-old(*),
+html[data-reduce-motion="true"]::view-transition-new(*) {
+  animation: none !important;
+}
+
+/* Live regions should not force visual motion */
+[aria-live] {
+  /* content updates only — no decorative animation required */
+}
