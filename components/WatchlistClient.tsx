@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { WatchlistToolbar } from "@/components/WatchlistToolbar";
 import { WatchlistPresentationToggle } from "@/components/WatchlistPresentationToggle";
+import { LivingShelf } from "@/components/living-shelf/LivingShelf";
 import { AnimeImage } from "@/components/AnimeImage";
 import { SignalBars } from "@/components/ui/SignalBars";
 import type { WatchStatus, WatchlistEntry } from "@/lib/types";
@@ -17,10 +18,7 @@ import {
   userResonance,
 } from "@/lib/resonance";
 import {
-  groupShelfByCluster,
-  projectShelfObjects,
   readWatchlistPresentation,
-  SHELF_CLUSTER_LABELS,
   type WatchlistPresentation,
 } from "@/lib/living-shelf";
 import {
@@ -60,15 +58,6 @@ export function WatchlistClient() {
   }, []);
 
   const user = useMemo(() => userResonance(entries), [entries]);
-
-  const shelfObjects = useMemo(
-    () => projectShelfObjects(entries),
-    [entries],
-  );
-  const shelfGroups = useMemo(
-    () => groupShelfByCluster(shelfObjects),
-    [shelfObjects],
-  );
 
   const filtered = useMemo(() => {
     const base =
@@ -132,67 +121,12 @@ export function WatchlistClient() {
         />
         {presentation === "shelf" ? (
           <p className="tools-hint" style={{ margin: 0 }}>
-            Shelf projection active — spatial canvas arrives next. Clusters use
-            your real shelf data.
+            Spatial shelf — orbit, zoom, inspect. Switch to Manage anytime.
           </p>
         ) : null}
       </div>
 
-      {presentation === "shelf" && entries.length > 0 ? (
-        <div className="shelf-projection" aria-label="Shelf clusters preview">
-          {(
-            [
-              "watching",
-              "planning",
-              "paused",
-              "completed",
-              "dropped",
-            ] as const
-          ).map((cluster) => {
-            const list = shelfGroups[cluster];
-            if (!list.length) return null;
-            return (
-              <section key={cluster} className="shelf-cluster-preview">
-                <h3 className="nx-kicker" style={{ marginBottom: 10 }}>
-                  {SHELF_CLUSTER_LABELS[cluster]}
-                  <span className="wl-count" style={{ marginLeft: 8 }}>
-                    {list.length}
-                  </span>
-                </h3>
-                <ul className="shelf-cluster-grid">
-                  {list.map((o) => (
-                    <li
-                      key={o.animeId}
-                      data-anime-object-id={getAnimeObjectId(o.animeId)}
-                      data-shelf-depth={o.depth.toFixed(2)}
-                      data-shelf-importance={o.importance.toFixed(2)}
-                      style={{
-                        opacity: 0.55 + (1 - o.depth) * 0.45,
-                        transform: `scale(${0.85 + o.scale * 0.12})`,
-                      }}
-                    >
-                      <Link href={`/anime/${o.animeId}`} className="shelf-obj-link">
-                        <AnimeImage
-                          src={o.image}
-                          title={o.title}
-                          decorative
-                          width={96}
-                          height={144}
-                          sizes="96px"
-                          viewTransitionName={getAnimeViewTransitionName(
-                            o.animeId,
-                          )}
-                        />
-                        <span className="shelf-obj-title">{o.title}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            );
-          })}
-        </div>
-      ) : null}
+      {presentation === "shelf" ? <LivingShelf entries={entries} /> : null}
 
       {presentation === "manage" ? (
         <>
@@ -417,21 +351,6 @@ export function WatchlistClient() {
             </div>
           ) : null}
         </>
-      ) : null}
-
-      {presentation === "shelf" && entries.length === 0 ? (
-        <div className="state-box lantern-empty">
-          <h3>Empty archive</h3>
-          <p>Seal titles in Manage mode first — the shelf projects from your list.</p>
-          <button
-            type="button"
-            className="btn btn-accent btn-sm"
-            style={{ marginTop: 12 }}
-            onClick={() => setPresentation("manage")}
-          >
-            Open Manage
-          </button>
-        </div>
       ) : null}
     </div>
   );
