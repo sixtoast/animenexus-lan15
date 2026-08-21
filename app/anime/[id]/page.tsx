@@ -6,6 +6,7 @@ import { fetchAnimeDetail } from "@/lib/anilist-detail";
 import { fetchThemesFromJikan, youtubeSearchUrl } from "@/lib/jikan-themes";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
 import { AnimeImage } from "@/components/AnimeImage";
+import { DetailCoverMaterial } from "@/components/DetailCoverMaterial";
 import { BingeCalculator } from "@/components/BingeCalculator";
 import { AnimeNotes } from "@/components/AnimeNotes";
 import { DetailAI } from "@/components/DetailAI";
@@ -114,17 +115,7 @@ export default async function AnimeDetailPage({ params }: Props) {
         </Link>
 
         <div className="detail-hero">
-          <AnimeImage
-            className="detail-cover"
-            src={anime.image}
-            title={anime.title}
-            decorative
-            width={280}
-            height={400}
-            sizes="(max-width: 640px) 40vw, 220px"
-            priority
-            viewTransitionName={vtCover}
-          />
+          <DetailCoverMaterial anime={anime} viewTransitionName={vtCover} />
 
           <div className="detail-info">
             <p className="detail-kicker">Lantern · detail</p>
