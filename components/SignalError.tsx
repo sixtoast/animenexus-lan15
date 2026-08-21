@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { lanternReactConcern } from "@/lib/mascot/nexus-attention-bridge";
 
 type Props = {
   /** Soft, human-facing line */
@@ -17,7 +18,7 @@ type Props = {
 
 /**
  * Intelligent error state (master plan · Sprint 15).
- * Always: human message + optional technical detail + optional retry.
+ * Sprint 29: notifies Lantern once (concern) — ambient, not needy.
  */
 export function SignalError({
   title = "The signal went quiet.",
@@ -29,6 +30,10 @@ export function SignalError({
 }: Props) {
   const [open, setOpen] = useState(false);
   const tech = (detail || "").trim();
+
+  useEffect(() => {
+    lanternReactConcern("signal-error");
+  }, []);
 
   return (
     <div
