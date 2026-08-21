@@ -13,12 +13,15 @@ import {
 import { readMemory } from "@/lib/lantern-memory";
 import { emitAnimeHoverStart, emitAnimeHoverEnd } from "@/lib/nexus";
 import { markRecOpened } from "@/lib/recommend-feedback";
-import { withViewTransition } from "@/lib/view-transition";
+import {
+  getAnimeObjectId,
+  getAnimeViewTransitionName,
+  withViewTransition,
+} from "@/lib/view-transition";
 
 type Props = {
   anime: Anime;
   index?: number;
-  /** Soft recommendation treatment (e.g. Home For you). */
   recommended?: boolean;
 };
 
@@ -29,9 +32,6 @@ function episodeCap(anime: Anime, entryEpisodes?: number | string): number {
   return Number.isFinite(n) && n > 0 ? n : 12;
 }
 
-/**
- * Stateful catalog card + resonance material (Awwwards Sprint 2).
- */
 export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
   const router = useRouter();
   const { getEntry, ready } = useWatchlist();
@@ -39,7 +39,7 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
   const status = entry?.watchStatus;
   const [recent, setRecent] = useState(false);
   const score = anime.score > 0 ? anime.score.toFixed(1) : "—";
-  const vt = `cover-${anime.id}`;
+  const vt = getAnimeViewTransitionName(anime.id);
   const href = `/anime/${anime.id}`;
 
   const materialVars = useMemo(
@@ -114,7 +114,7 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
       title={anime.title}
       aria-label={ariaState ? `${anime.title}. ${ariaState}` : anime.title}
       data-on-list={entry ? "true" : "false"}
-      data-anime-object-id={String(anime.id)}
+      data-anime-object-id={getAnimeObjectId(anime.id)}
       data-status={
         status || (recent ? "recent" : recommended ? "recommended" : "default")
       }
