@@ -2,16 +2,25 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| **0** | Interaction language | **Done** |
-| 1 | Sound Engine (real assets) | Next |
-| 2–10 | Button → Oracle micro-theatre | Queued |
-| 11–19 | Radar → QA tooling | Queued |
-| 20–29 | API enrichment → final mix | Queued |
+| 0 | Interaction language | Done |
+| **1** | Sound Engine (real assets) | **Done** |
+| 2 | Physical Button | Next |
+| 3–10 | Cards → Oracle | Queued |
+| 11–29 | Radar → APIs | Queued |
 
-## Sprint 0
+## Sprint 1
 
-- `lib/interaction-language.ts` — semantic states, timing bands, amplitude caps
-- `app/micro-interactions.css` — `--ix-fast|standard|deliberate`, easings, utility classes
-- Reduced-motion collapses all ix tokens
-- Legacy `--dur-fast` aligned to `--ix-fast`
-- No full-site rewrite; migrate components gradually
+- `lib/sound-manifest.ts` — semantic cues + categories + prefs
+- `lib/sound-engine.ts` — Web Audio graph, sample buffers, cooldowns, concurrency
+- `SoundProvider` — first-gesture unlock; **opt-in** (default muted)
+- `SoundSettings` on Account (master + UI + tools)
+- `scripts/generate-ui-sfx.mjs` — offline original WAVs → `public/audio/ui/`
+- Mascot `lib/mascot/audio.ts` left as procedural fallback only
+
+### Local setup
+
+```bash
+node scripts/generate-ui-sfx.mjs
+```
+
+Commit generated WAVs when ready. Engine stays silent if files missing / sound off.
