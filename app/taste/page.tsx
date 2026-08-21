@@ -1,4 +1,5 @@
 import { TasteClient } from "@/components/TasteClient";
+import { ModelDisclosure } from "@/components/ModelDisclosure";
 import "./taste.css";
 
 export const metadata = {
@@ -21,6 +22,7 @@ export default function TastePage() {
             finish, and wander. Built from this browser’s watchlist and what
             Lantern remembers.
           </p>
+          <ModelDisclosure />
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
