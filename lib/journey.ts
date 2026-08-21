@@ -1,12 +1,14 @@
 /**
- * Personal AnimeNexus journey (master plan · Timeline layer).
- * Only meaningful moments — no raw event spam.
+ * Personal AnimeNexus journey (Sprint 9 + Sprint 30 integration).
+ * Meaningful moments only — Memory · Taste · Watchlist · Recs · Sessions.
  * On-device only; never invents events without evidence.
  */
 
 import type { WatchlistEntry } from "./types";
 import { readMemory, type LanternMemory } from "./lantern-memory";
 import { describeUserResonance, userResonance } from "./resonance";
+import { buildTasteStory } from "./taste-story";
+import { buildLanternInsights, type LanternInsight } from "./lantern-insights";
 
 export type JourneyEvent = {
   id: string;
@@ -19,15 +21,13 @@ export type JourneyEvent = {
     | "rec_accept"
     | "tool"
     | "visit_streak"
+    | "taste_chapter"
+    | "session"
     | "observation";
   title: string;
   body: string;
   href?: string;
 };
-
-function dayKey(iso: string): string {
-  return iso.slice(0, 10);
-}
 
 /** Build chronological journey (newest first). */
 export function buildJourney(
@@ -38,6 +38,7 @@ export function buildJourney(
   if (!m) return [];
 
   const events: JourneyEvent[] = [];
+  const nowIso = m.lastVisitAt || new Date().toISOString();
 
   if (m.firstSeenAt) {
     events.push({
@@ -50,12 +51,16 @@ export function buildJourney(
   }
 
   if (entries.length > 0) {
-    // Approximate first seal: oldest entry without a better timestamp
-    const sorted = [...entries].sort((a, b) => a.id - b.id);
-    const first = sorted[0];
+    const byAdded = [...entries].sort((a, b) => {
+      const ta = new Date(a.addedAt || 0).getTime();
+      const tb = new Date(b.addedAt || 0).getTime();
+      if (ta && tb) return ta - tb;
+      return a.id - b.id;
+    });
+    const first = byAdded[0];
     events.push({
       id: `seal-${first.id}`,
-      at: m.firstSeenAt || new Date().toISOString(),
+      at: first.addedAt || m.firstSeenAt || nowIso,
       kind: "first_seal",
       title: "First seal",
       body: `“${first.title}” joined the shelf — the collection began.`,
@@ -63,7 +68,7 @@ export function buildJourney(
     });
   }
 
-  for (const c of m.completedLog.slice(0, 12)) {
+  for (const c of m.completedLog.slice(0, 16)) {
     events.push({
       id: `done-${c.id}-${c.at}`,
       at: c.at,
@@ -74,11 +79,25 @@ export function buildJourney(
     });
   }
 
+  // Taste chapters as journey moments
+  const story = buildTasteStory(entries, m);
+  for (const ch of story.chapters) {
+    if (!ch.genres.length && !ch.evidence.length) continue;
+    events.push({
+      id: `taste-${ch.id}`,
+      at: nowIso,
+      kind: "taste_chapter",
+      title: `Taste · ${ch.title}`,
+      body: ch.summary,
+      href: "/taste",
+    });
+  }
+
   const topGenre = Object.entries(m.genreCounts).sort((a, b) => b[1] - a[1])[0];
   if (topGenre && topGenre[1] >= 3) {
     events.push({
       id: `genre-${topGenre[0]}`,
-      at: m.lastVisitAt || new Date().toISOString(),
+      at: nowIso,
       kind: "genre_shift",
       title: "Genre signal",
       body: `${topGenre[0]} has shown up often in what you’ve opened (${topGenre[1]} times).`,
@@ -89,20 +108,40 @@ export function buildJourney(
   if (m.recStats && m.recStats.accepted >= 1) {
     events.push({
       id: "rec-accept",
-      at: m.lastVisitAt || new Date().toISOString(),
+      at: nowIso,
       kind: "rec_accept",
       title: "Recommendation accepted",
-      body: `You’ve accepted ${m.recStats.accepted} recommendation signal${m.recStats.accepted === 1 ? "" : "s"}.`,
+      body: `You’ve sealed ${m.recStats.accepted} recommendation signal${m.recStats.accepted === 1 ? "" : "s"} (shown ${m.recStats.shown}).`,
+    });
+  }
+
+  if (m.recStats && m.recStats.rejected >= 2) {
+    events.push({
+      id: "rec-reject-learn",
+      at: nowIso,
+      kind: "observation",
+      title: "Teaching the desk",
+      body: `${m.recStats.rejected} recommendations marked less like this — ranking steers away.`,
     });
   }
 
   if (m.visitDays.length >= 3) {
     events.push({
       id: "visits",
-      at: m.lastVisitAt || new Date().toISOString(),
+      at: nowIso,
       kind: "visit_streak",
       title: "Return visits",
-      body: `${m.visitDays.length} distinct days with the desk open — memory is accumulating.`,
+      body: `${m.visitDays.length} distinct days with the desk open · ${m.sessionOpens} session opens.`,
+    });
+  }
+
+  if (m.sessionOpens >= 1) {
+    events.push({
+      id: "sessions",
+      at: nowIso,
+      kind: "session",
+      title: "Sessions",
+      body: `${m.sessionOpens} time${m.sessionOpens === 1 ? "" : "s"} the desk was opened on this browser.`,
     });
   }
 
@@ -114,7 +153,9 @@ export function buildJourney(
       kind: "tool",
       title: "Tool opened",
       body: `Visited ${lastTool.tool}.`,
-      href: lastTool.tool.startsWith("/") ? lastTool.tool : `/tools/${lastTool.tool}`,
+      href: lastTool.tool.startsWith("/")
+        ? lastTool.tool
+        : `/tools/${lastTool.tool}`,
     });
   }
 
@@ -122,7 +163,7 @@ export function buildJourney(
     const line = describeUserResonance(userResonance(entries));
     events.push({
       id: "resonance-now",
-      at: m.lastVisitAt || new Date().toISOString(),
+      at: nowIso,
       kind: "observation",
       title: "Current resonance",
       body: line,
@@ -130,7 +171,6 @@ export function buildJourney(
     });
   }
 
-  // Sort newest first; stable id dedupe
   const seen = new Set<string>();
   return events
     .sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0))
@@ -141,68 +181,22 @@ export function buildJourney(
     });
 }
 
-/** Soft insights from memory + shelf (master plan · Insights). */
+/** Prefer shared Lantern Insights module (Sprint 27) when available. */
+export function journeyInsights(
+  entries: WatchlistEntry[],
+  memory?: LanternMemory,
+): LanternInsight[] {
+  return buildLanternInsights(entries, { memory, limit: 5 });
+}
+
+/** @deprecated use journeyInsights — kept for older call sites */
 export function buildInsights(
   entries: WatchlistEntry[],
   memory?: LanternMemory,
 ): { id: string; text: string; confidence: "strong" | "soft"; href?: string }[] {
-  const m = memory ?? (typeof window !== "undefined" ? readMemory() : null);
-  if (!m) return [];
-  const out: { id: string; text: string; confidence: "strong" | "soft"; href?: string }[] = [];
-
-  const watching = entries.filter((e) => e.watchStatus === "watching");
-  if (watching.length === 1) {
-    const e = watching[0];
-    out.push({
-      id: "one-watching",
-      text: `You’re mid-signal on “${e.title}” — episode ${e.progress || 0}.`,
-      confidence: "strong",
-      href: `/anime/${e.id}`,
-    });
-  } else if (watching.length > 1) {
-    out.push({
-      id: "multi-watching",
-      text: `${watching.length} titles in Watching — Completionist can soft-rank what to finish first.`,
-      confidence: "soft",
-      href: "/tools/completionist",
-    });
-  }
-
-  if (m.recStats && m.recStats.rejected > m.recStats.accepted && m.recStats.rejected >= 2) {
-    out.push({
-      id: "rec-reject",
-      text: "You’ve been declining recommendations lately — the ranking layer will steer wider.",
-      confidence: "soft",
-    });
-  }
-
-  const top = Object.entries(m.genreCounts).sort((a, b) => b[1] - a[1])[0];
-  if (top && top[1] >= 4) {
-    out.push({
-      id: "genre-lean",
-      text: `${top[0]} keeps showing up in what you open (${top[1]} views logged).`,
-      confidence: top[1] >= 8 ? "strong" : "soft",
-      href: `/browse?genre=${encodeURIComponent(top[0])}`,
-    });
-  }
-
-  if (entries.length >= 2) {
-    out.push({
-      id: "resonance",
-      text: describeUserResonance(userResonance(entries)),
-      confidence: "soft",
-      href: "/tools/stats",
-    });
-  }
-
-  if (!out.length && entries.length === 0) {
-    out.push({
-      id: "empty",
-      text: "Seal a few titles — insights appear once the shelf has signal.",
-      confidence: "soft",
-      href: "/browse",
-    });
-  }
-
-  return out.slice(0, 6);
+  return journeyInsights(entries, memory).map((i) => ({
+    id: i.id,
+    text: i.text,
+    confidence: i.confidenceLabel === "strong" ? "strong" : "soft",
+  }));
 }
