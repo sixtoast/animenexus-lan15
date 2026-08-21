@@ -1,25 +1,47 @@
 /**
- * Sprint 7 — Lantern agency / attention bridge
- * Sprint 16 — respect prefers-reduced-motion for anim requests
+ * Lantern contextual reactions (Sprint 7 + Sprint 29).
  *
- * Maps Nexus app events → mascot store (emotions + light intentions).
- * Soft bias from html[data-nx-lantern] (environment engine).
- * Cooldowns keep behavior ambient, not needy.
+ * Map Nexus events → restrained reactions:
+ *   search → curious
+ *   seal / accept → pleased
+ *   completion → celebration
+ *   reject / drop → soft concern
+ *   tool/challenge → excitement
+ *   idle drift stays ambient (no spam)
+ *
+ * Cooldowns keep Lantern ambient, not needy.
+ * Respects prefers-reduced-motion for animation requests.
  */
 
-import { subscribeNexus } from "@/lib/nexus";
+import { emitNexus, subscribeNexus } from "@/lib/nexus";
 import type { NexusEvent } from "@/lib/nexus/events";
 import { useMascotStore } from "./store";
 import type { MascotEmotions } from "./types";
 import type { MascotAnim } from "./types";
 
 let unsub: (() => void) | null = null;
-let lastFire = 0;
-const GLOBAL_COOLDOWN_MS = 2_200;
+
+/** Global minimum gap between any two reaction animations. */
+const GLOBAL_COOLDOWN_MS = 2_400;
+
+/** Per-reaction-kind cooldown (ms). */
+const KIND_COOLDOWN_MS: Record<string, number> = {
+  curious: 8_000,
+  pleased: 6_000,
+  celebrate: 12_000,
+  concern: 10_000,
+  excite: 9_000,
+  think: 7_000,
+};
+
+let lastGlobalFire = 0;
+const lastKindFire = new Map<string, number>();
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined") return false;
   if (document.documentElement.dataset.nxMotion === "reduced") return true;
+  if (document.documentElement.getAttribute("data-reduce-motion") === "true")
+    return true;
   try {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   } catch {
@@ -27,9 +49,26 @@ function prefersReducedMotion(): boolean {
   }
 }
 
-function softAnim(anim: MascotAnim, holdMs: number) {
+function canFire(kind: string, force = false): boolean {
+  const now = Date.now();
+  if (!force && now - lastGlobalFire < GLOBAL_COOLDOWN_MS) return false;
+  const kindCd = KIND_COOLDOWN_MS[kind] ?? 6_000;
+  const last = lastKindFire.get(kind) ?? 0;
+  if (!force && now - last < kindCd) return false;
+  lastGlobalFire = now;
+  lastKindFire.set(kind, now);
+  return true;
+}
+
+function softAnim(anim: MascotAnim, holdMs: number, kind: string, force = false) {
   if (prefersReducedMotion()) return;
+  if (!canFire(kind, force)) return;
   useMascotStore.getState().requestAnim({ anim, holdMs });
+  try {
+    emitNexus({ type: "lantern_reaction", reaction: kind });
+  } catch {
+    /* bus optional */
+  }
 }
 
 function lanternMoodBias(): Partial<Record<keyof MascotEmotions, number>> {
@@ -60,99 +99,128 @@ function applyBias() {
 }
 
 function onEvent(ev: NexusEvent): void {
-  const now = Date.now();
-  if (now - lastFire < GLOBAL_COOLDOWN_MS) {
-    if (
-      ev.type !== "anime_added" &&
-      ev.type !== "anime_completed" &&
-      ev.type !== "recommendation_rejected" &&
-      ev.type !== "recommendation_accepted"
-    ) {
-      return;
-    }
-  }
-  lastFire = now;
-
   const store = useMascotStore.getState();
   applyBias();
 
   switch (ev.type) {
+    case "search_performed":
+      store.bumpEmotion("curiosity", 0.08);
+      store.bumpEmotion("attention", 0.06);
+      store.dispatch({ type: "context", context: "browsing" });
+      softAnim("point", 1100, "curious");
+      break;
+
     case "anime_viewed":
       store.bumpEmotion("curiosity", 0.06);
       store.bumpEmotion("attention", 0.08);
       store.bumpEmotion("boredom", -0.04);
       store.dispatch({ type: "context", context: "browsing" });
+      softAnim("point", 900, "curious");
       break;
 
     case "anime_hovered":
+      // Emotion only — no anim (avoids spam)
       store.bumpEmotion("attention", 0.03);
       store.bumpEmotion("curiosity", 0.02);
       break;
 
     case "anime_added":
       store.dispatch({ type: "seal" });
-      store.bumpEmotion("happiness", 0.1);
-      store.bumpEmotion("attention", 0.05);
-      break;
-
-    case "anime_completed":
-      store.dispatch({ type: "complete" });
       store.bumpEmotion("happiness", 0.12);
-      store.bumpEmotion("confidence", 0.06);
-      break;
-
-    case "anime_removed":
-    case "anime_dropped":
-      store.bumpEmotion("curiosity", 0.04);
-      store.bumpEmotion("happiness", -0.03);
-      break;
-
-    case "search_performed":
-      store.bumpEmotion("curiosity", 0.07);
       store.bumpEmotion("attention", 0.05);
-      store.dispatch({ type: "context", context: "browsing" });
-      break;
-
-    case "filter_used":
-      store.bumpEmotion("curiosity", 0.04);
-      break;
-
-    case "tool_opened":
-      store.bumpEmotion("attention", 0.07);
-      store.bumpEmotion("energy", 0.03);
-      store.dispatch({ type: "context", context: "browsing" });
-      break;
-
-    case "page_viewed":
-      store.bumpEmotion("attention", 0.03);
-      break;
-
-    case "recommendation_shown":
-      store.bumpEmotion("curiosity", 0.05);
-      store.bumpEmotion("attention", 0.04);
-      break;
-
-    case "recommendation_opened":
-      store.bumpEmotion("curiosity", 0.08);
-      store.bumpEmotion("attention", 0.1);
-      store.bumpEmotion("happiness", 0.04);
+      softAnim("happy", 1400, "pleased", true);
       break;
 
     case "recommendation_accepted":
       store.bumpEmotion("happiness", 0.12);
       store.bumpEmotion("confidence", 0.06);
       store.bumpEmotion("energy", 0.05);
-      softAnim("celebrate", 2200);
+      softAnim("happy", 1600, "pleased", true);
+      break;
+
+    case "anime_completed":
+      store.dispatch({ type: "complete" });
+      store.bumpEmotion("happiness", 0.14);
+      store.bumpEmotion("confidence", 0.08);
+      store.bumpEmotion("energy", 0.06);
+      softAnim("celebrate", 2200, "celebrate", true);
+      break;
+
+    case "anime_removed":
+    case "anime_dropped":
+      store.bumpEmotion("curiosity", 0.04);
+      store.bumpEmotion("happiness", -0.03);
+      softAnim("think", 1200, "think");
       break;
 
     case "recommendation_rejected":
       store.bumpEmotion("curiosity", 0.05);
       store.bumpEmotion("happiness", -0.02);
-      softAnim("think", 1600);
+      softAnim("think", 1400, "concern");
+      break;
+
+    case "filter_used":
+      store.bumpEmotion("curiosity", 0.04);
+      break;
+
+    case "tool_opened": {
+      store.bumpEmotion("attention", 0.07);
+      store.bumpEmotion("energy", 0.04);
+      store.dispatch({ type: "context", context: "browsing" });
+      const tool = (ev.tool || "").toLowerCase();
+      if (tool.includes("challenge")) {
+        softAnim("jump", 700, "excite");
+      } else if (tool.includes("oracle") || tool.includes("radar")) {
+        softAnim("point", 1000, "curious");
+      } else {
+        softAnim("wave", 800, "pleased");
+      }
+      break;
+    }
+
+    case "page_viewed":
+      store.bumpEmotion("attention", 0.03);
+      break;
+
+    case "recommendation_shown":
+      store.bumpEmotion("curiosity", 0.04);
+      store.bumpEmotion("attention", 0.03);
+      break;
+
+    case "recommendation_opened":
+      store.bumpEmotion("curiosity", 0.08);
+      store.bumpEmotion("attention", 0.1);
+      store.bumpEmotion("happiness", 0.04);
+      softAnim("point", 1000, "curious");
+      break;
+
+    case "session_started":
+      store.bumpEmotion("energy", 0.04);
+      break;
+
+    case "session_ended":
+      store.bumpEmotion("sleepiness", 0.04);
+      store.bumpEmotion("energy", -0.03);
       break;
 
     default:
       break;
+  }
+}
+
+/**
+ * Signal failure → restrained concern (Sprint 29).
+ * Call from SignalError mount / retry failure paths.
+ */
+export function lanternReactConcern(source = "error"): void {
+  const store = useMascotStore.getState();
+  store.bumpEmotion("stress", 0.08);
+  store.bumpEmotion("confidence", -0.04);
+  softAnim("surprised", 900, "concern");
+  try {
+    emitNexus({ type: "lantern_reaction", reaction: `concern:${source}` });
+  } catch {
+    /* */
   }
 }
 
