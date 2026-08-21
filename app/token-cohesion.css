@@ -1,15 +1,114 @@
-/* Design cohesion (master plan · Sprint 20)
- * Bridge legacy duration names ↔ motion choreography tokens */
+/**
+ * Final cohesion (Sprint 36).
+ * One surface language · spacing scale · type rhythm · motion aliases.
+ */
 
 :root {
-  /* Alias legacy globals → motion language */
+  /* Motion aliases (legacy ↔ choreography) */
   --duration-fast: var(--dur-fast, 180ms);
   --duration-med: var(--dur, 420ms);
   --duration-slow: var(--dur-slow, 720ms);
   --transition: var(--dur, 0.4s) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Surface stack */
+  --surface-0: var(--color-primary);
+  --surface-1: var(--color-secondary);
+  --surface-2: var(--color-tertiary);
+  --surface-glass: rgba(22, 18, 16, 0.72);
+  --surface-elevated: linear-gradient(
+    165deg,
+    rgba(34, 28, 24, 0.95),
+    rgba(12, 10, 9, 0.98)
+  );
+
+  /* Hairlines */
+  --border-soft: rgba(240, 160, 144, 0.12);
+  --border-strong: rgba(240, 160, 144, 0.28);
+
+  /* Type rhythm */
+  --text-xs: 0.72rem;
+  --text-sm: 0.85rem;
+  --text-md: 0.95rem;
+  --text-lg: 1.15rem;
+  --leading-tight: 1.25;
+  --leading-body: 1.55;
 }
 
-/* Hide sakura canvas when user opted out (belt + suspenders with component) */
+/* Unified panel / card language */
+.nx-panel,
+.desk-panel,
+.filter-panel,
+.home-panel {
+  border-color: var(--border-soft);
+  border-radius: var(--radius);
+}
+
+.nx-kicker,
+.hero-badge,
+.ritual-kicker,
+.detail-kicker,
+.nav-mobile-kicker {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: var(--text-xs);
+  color: var(--color-accent);
+}
+
+.nx-muted,
+.tools-hint,
+.home-rail-note,
+.section-head .meta {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+/* Shared empty / error chrome already themed — reinforce radius */
+.state-box {
+  border-radius: var(--radius);
+}
+
+/* Sakura permanently off */
 html[data-sakura="off"] #sakuraCanvas {
   display: none !important;
+}
+
+/* Cohesive sticky header + content gap */
+.app-shell {
+  padding-top: 0;
+}
+
+/* Footer sits in the same frequency */
+.site-footer {
+  border-top-color: var(--border-soft);
+  color: var(--color-text-muted);
+}
+
+/* Prefer accent hairlines on interactive chips site-wide */
+.mood-chip,
+.feed-tab,
+.view-toggle-bar button {
+  border-radius: var(--radius-pill);
+}
+
+/* Light theme — keep cohesion when inverted */
+html[data-theme="light"] {
+  --surface-glass: rgba(255, 250, 246, 0.82);
+  --surface-elevated: linear-gradient(
+    165deg,
+    rgba(255, 252, 248, 0.98),
+    rgba(250, 244, 238, 0.96)
+  );
+  --border-soft: rgba(120, 70, 55, 0.14);
+  --border-strong: rgba(120, 70, 55, 0.28);
 }
