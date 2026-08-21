@@ -1,29 +1,31 @@
 "use client";
 
-/**
- * Applies resonance material CSS variables on the detail hero cover.
- */
-
 import type { Anime } from "@/lib/types";
 import { AnimeImage } from "@/components/AnimeImage";
 import {
   materialCssVars,
   materialFromAnimeEntity,
 } from "@/lib/anime-material";
+import {
+  getAnimeObjectId,
+  getAnimeViewTransitionName,
+} from "@/lib/view-transition";
 
 export function DetailCoverMaterial({
   anime,
   viewTransitionName,
 }: {
   anime: Anime;
-  viewTransitionName: string;
+  /** Optional override; defaults to canonical cover name */
+  viewTransitionName?: string;
 }) {
   const vars = materialCssVars(materialFromAnimeEntity(anime));
+  const vt = viewTransitionName ?? getAnimeViewTransitionName(anime.id);
 
   return (
     <div
       className="detail-cover-material"
-      data-anime-object-id={String(anime.id)}
+      data-anime-object-id={getAnimeObjectId(anime.id)}
       style={vars as React.CSSProperties}
     >
       <AnimeImage
@@ -35,7 +37,7 @@ export function DetailCoverMaterial({
         height={400}
         sizes="(max-width: 640px) 40vw, 220px"
         priority
-        viewTransitionName={viewTransitionName}
+        viewTransitionName={vt}
       />
     </div>
   );
