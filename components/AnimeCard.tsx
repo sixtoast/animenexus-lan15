@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Anime } from "@/lib/types";
 import { useWatchlist } from "@/components/WatchlistProvider";
+import { AnimeImage } from "@/components/AnimeImage";
 import { readMemory } from "@/lib/lantern-memory";
 import { emitAnimeHoverStart, emitAnimeHoverEnd } from "@/lib/nexus";
 import { markRecOpened } from "@/lib/recommend-feedback";
@@ -38,11 +38,6 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
   const score = anime.score > 0 ? anime.score.toFixed(1) : "—";
   const vt = `cover-${anime.id}`;
   const href = `/anime/${anime.id}`;
-  const src = anime.image || "https://placehold.co/300x450/1a1a1a/555?text=?";
-  const canOptimize =
-    src.includes("anilist.co") ||
-    src.includes("myanimelist.net") ||
-    src.includes("placehold.co");
 
   const progressPct = useMemo(() => {
     if (!entry || entry.watchStatus !== "watching") return 0;
@@ -127,24 +122,15 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
     >
       <span className="card-status-ring" aria-hidden />
 
-      {canOptimize ? (
-        <Image
-          src={src}
-          alt=""
-          width={300}
-          height={450}
-          sizes="(max-width: 640px) 45vw, 160px"
-          style={{ viewTransitionName: vt } as React.CSSProperties}
-        />
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt=""
-          loading="lazy"
-          style={{ viewTransitionName: vt } as React.CSSProperties}
-        />
-      )}
+      <AnimeImage
+        src={anime.image}
+        title={anime.title}
+        decorative
+        width={300}
+        height={450}
+        sizes="(max-width: 640px) 45vw, 160px"
+        viewTransitionName={vt}
+      />
 
       {status === "watching" && progressPct > 0 ? (
         <span
