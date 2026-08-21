@@ -1,4 +1,11 @@
-/* Memory Room chapters (data sprint — spatial comes next) */
+/* Memory Room chapters + spatial field (Sprints 8–9) */
+
+.journey-mode-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
 
 .memory-chapters {
   list-style: none;
@@ -29,4 +36,133 @@
 
 .journey-event[data-importance] {
   transition: opacity 0.2s ease;
+}
+
+/* Editorial spatial field */
+.memory-room-chapters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.memory-room-chapter-chip {
+  font-family: var(--font);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 50px;
+  border: 1px solid var(--color-border);
+  background: var(--color-tertiary);
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.memory-room-chapter-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.memory-room-field {
+  position: relative;
+  min-height: 320px;
+  max-height: 480px;
+  overflow: auto;
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 40%, rgba(40, 28, 24, 0.5), transparent 70%),
+    linear-gradient(180deg, #14100e 0%, #0c0a09 100%);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  align-content: start;
+  perspective: 600px;
+}
+
+.memory-node {
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(240, 160, 144, 0.15);
+  background: rgba(22, 18, 16, 0.85);
+  transition:
+    transform 0.25s var(--ease-out, ease),
+    opacity 0.25s ease,
+    border-color 0.2s ease,
+    box-shadow 0.25s ease;
+}
+
+.memory-node:hover,
+.memory-node.is-focus {
+  border-color: rgba(240, 160, 144, 0.45);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35), 0 0 24px rgba(240, 160, 144, 0.1);
+}
+
+.memory-node.is-dim {
+  opacity: 0.28 !important;
+  transform: scale(0.92);
+}
+
+.memory-node-kind {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: 4px;
+}
+
+.memory-node-title {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.memory-focus-panel {
+  margin-top: 16px;
+  padding: 18px 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(240, 160, 144, 0.28);
+  background: var(--surface-glass, rgba(22, 18, 16, 0.75));
+  backdrop-filter: blur(12px);
+}
+
+.memory-focus-panel h3 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  margin: 6px 0 10px;
+}
+
+.memory-focus-panel > p {
+  color: var(--color-text-muted);
+  line-height: 1.55;
+  max-width: 52ch;
+}
+
+.memory-focus-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.memory-room-hint {
+  margin-top: 12px;
+}
+
+html[data-reduce-motion="true"] .memory-node {
+  transition: none;
+}
+
+html[data-reduce-motion="true"] .memory-room-field {
+  perspective: none;
 }
