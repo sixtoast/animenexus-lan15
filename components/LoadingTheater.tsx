@@ -1,48 +1,79 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { SignalBars } from "@/components/ui/SignalBars";
 import {
   loadingLabel,
+  contextFromPath,
   type LoadingContext,
   LOADING_COPY,
 } from "@/lib/loading-theatre";
 
+/** Don't flash for sub-threshold waits. */
+const SHOW_DELAY_MS = 180;
+
 export function LoadingTheater() {
-  const [on, setOn] = useState(false);
-  // Explicit string — LOADING_COPY is `as const` and would narrow setLabel otherwise
+  const pathname = usePathname();
+  const [visible, setVisible] = useState(false);
   const [label, setLabel] = useState<string>(LOADING_COPY.default);
+  const showTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pending = useRef(false);
 
   useEffect(() => {
+    const clearShowTimer = () => {
+      if (showTimer.current) {
+        clearTimeout(showTimer.current);
+        showTimer.current = null;
+      }
+    };
+
     const start = (e: Event) => {
       const d = (e as CustomEvent).detail as
         | { label?: string; context?: LoadingContext | string }
         | undefined;
-      setLabel(
-        d?.label || loadingLabel(d?.context) || LOADING_COPY.default,
-      );
-      setOn(true);
+      const next =
+        d?.label ||
+        loadingLabel(d?.context) ||
+        loadingLabel(contextFromPath(pathname)) ||
+        LOADING_COPY.default;
+      setLabel(next);
+      pending.current = true;
+      clearShowTimer();
+      showTimer.current = setTimeout(() => {
+        if (pending.current) setVisible(true);
+      }, SHOW_DELAY_MS);
     };
-    const stop = () => setOn(false);
+
+    const stop = () => {
+      pending.current = false;
+      clearShowTimer();
+      setVisible(false);
+    };
+
     window.addEventListener("animenexus:loading-start", start);
     window.addEventListener("animenexus:loading-stop", stop);
     return () => {
+      clearShowTimer();
       window.removeEventListener("animenexus:loading-start", start);
       window.removeEventListener("animenexus:loading-stop", stop);
     };
-  }, []);
+  }, [pathname]);
 
-  if (!on) return null;
+  if (!visible) return null;
 
   return (
     <div
-      className="loading-theater nx-loading-signal"
+      className="loading-theater nx-loading-signal loading-theater--calm"
       role="status"
       aria-live="polite"
       aria-busy="true"
     >
-      <SignalBars level={4} animated label="Receiving signal" />
-      <p>{label}</p>
+      <SignalBars level={3} animated label="Receiving signal" />
+      <p className="loading-theater-label">{label}</p>
+      <p className="loading-theater-hint">
+        No estimated progress — waiting on the network.
+      </p>
     </div>
   );
 }
