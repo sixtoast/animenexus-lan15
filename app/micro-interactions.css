@@ -1,0 +1,207 @@
+/**
+ * Micro-interaction language (Sprint 0).
+ * Semantic tokens — migrate components toward these gradually.
+ */
+
+:root {
+  /* Timing bands */
+  --ix-fast: 90ms;
+  --ix-standard: 200ms;
+  --ix-deliberate: 420ms;
+
+  /* Easings */
+  --ix-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ix-ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ix-ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Amplitude caps */
+  --ix-press-y: 1px;
+  --ix-press-scale: 0.985;
+  --ix-hover-y: -2px;
+  --ix-hover-scale: 1.02;
+  --ix-select-scale: 1.015;
+  --ix-max-shift: 8px;
+
+  /* Composed transitions */
+  --ix-trans-fast: var(--ix-fast) var(--ix-ease-soft);
+  --ix-trans-standard: var(--ix-standard) var(--ix-ease-expo);
+  --ix-trans-deliberate: var(--ix-deliberate) var(--ix-ease-expo);
+  --ix-trans-spring: var(--ix-deliberate) var(--ix-ease-spring);
+}
+
+/* Align legacy motion tokens toward interaction language */
+:root {
+  --dur-fast: var(--ix-fast);
+  --duration-fast: var(--ix-fast);
+}
+
+/* ── Semantic utility states ─────────────────────────────── */
+
+.ix-press:active:not(:disabled),
+.ix-press[data-pressed="true"] {
+  transform: translateY(var(--ix-press-y)) scale(var(--ix-press-scale));
+  transition: transform var(--ix-trans-fast);
+}
+
+.ix-hover {
+  transition:
+    transform var(--ix-trans-standard),
+    opacity var(--ix-trans-standard),
+    border-color var(--ix-trans-fast),
+    box-shadow var(--ix-trans-standard);
+}
+
+.ix-hover:hover:not(:disabled),
+.ix-hover:focus-visible:not(:disabled) {
+  transform: translateY(var(--ix-hover-y)) scale(var(--ix-hover-scale));
+}
+
+.ix-select[aria-selected="true"],
+.ix-select[aria-pressed="true"],
+.ix-select.is-selected {
+  transform: scale(var(--ix-select-scale));
+  transition: transform var(--ix-trans-standard);
+}
+
+.ix-settle {
+  transition:
+    transform var(--ix-trans-standard),
+    opacity var(--ix-trans-standard);
+}
+
+.ix-reveal {
+  animation: ixReveal var(--ix-trans-deliberate) both;
+}
+
+@keyframes ixReveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ix-success {
+  animation: ixSuccessPulse var(--ix-trans-spring) both;
+}
+
+@keyframes ixSuccessPulse {
+  0% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  40% {
+    box-shadow: 0 0 0 4px rgba(143, 212, 160, 0.25);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.ix-error {
+  animation: ixErrorTension var(--ix-trans-fast) both;
+}
+
+@keyframes ixErrorTension {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+
+.ix-focus:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  transition: box-shadow var(--ix-trans-fast);
+}
+
+.ix-nav {
+  transition:
+    color var(--ix-trans-fast),
+    opacity var(--ix-trans-fast),
+    background var(--ix-trans-standard);
+}
+
+.ix-progress {
+  transition: width var(--ix-trans-deliberate), background var(--ix-trans-standard);
+}
+
+.ix-complete {
+  animation: ixCompleteGlint var(--ix-trans-deliberate) both;
+}
+
+@keyframes ixCompleteGlint {
+  0% {
+    filter: brightness(1);
+  }
+  40% {
+    filter: brightness(1.12);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+/* Soft highlight sweep for primary surfaces (optional) */
+.ix-highlight {
+  position: relative;
+  overflow: hidden;
+}
+
+.ix-highlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 60%
+  );
+  transform: translateX(-120%);
+  pointer-events: none;
+  transition: transform var(--ix-deliberate) var(--ix-ease-soft);
+}
+
+.ix-highlight:hover::before,
+.ix-highlight:focus-visible::before {
+  transform: translateX(120%);
+}
+
+/* Reduced motion — kill micro motion */
+html[data-reduce-motion="true"] {
+  --ix-fast: 1ms;
+  --ix-standard: 1ms;
+  --ix-deliberate: 1ms;
+  --ix-press-y: 0px;
+  --ix-hover-y: 0px;
+  --ix-press-scale: 1;
+  --ix-hover-scale: 1;
+  --ix-select-scale: 1;
+}
+
+html[data-reduce-motion="true"] .ix-reveal,
+html[data-reduce-motion="true"] .ix-success,
+html[data-reduce-motion="true"] .ix-error,
+html[data-reduce-motion="true"] .ix-complete,
+html[data-reduce-motion="true"] .ix-highlight::before {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) {
+    --ix-fast: 1ms;
+    --ix-standard: 1ms;
+    --ix-deliberate: 1ms;
+  }
+}
