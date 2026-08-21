@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import type { Anime } from "@/lib/types";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { AnimeImage } from "@/components/AnimeImage";
+import {
+  materialCssVars,
+  materialFromAnimeEntity,
+} from "@/lib/anime-material";
 import { readMemory } from "@/lib/lantern-memory";
 import { emitAnimeHoverStart, emitAnimeHoverEnd } from "@/lib/nexus";
 import { markRecOpened } from "@/lib/recommend-feedback";
@@ -26,8 +30,7 @@ function episodeCap(anime: Anime, entryEpisodes?: number | string): number {
 }
 
 /**
- * Stateful catalog card (master plan · Sprint 11).
- * States communicate via border, ring, progress bar — not label spam.
+ * Stateful catalog card + resonance material (Awwwards Sprint 2).
  */
 export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
   const router = useRouter();
@@ -38,6 +41,11 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
   const score = anime.score > 0 ? anime.score.toFixed(1) : "—";
   const vt = `cover-${anime.id}`;
   const href = `/anime/${anime.id}`;
+
+  const materialVars = useMemo(
+    () => materialCssVars(materialFromAnimeEntity(anime)),
+    [anime],
+  );
 
   const progressPct = useMemo(() => {
     if (!entry || entry.watchStatus !== "watching") return 0;
@@ -106,6 +114,7 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
       title={anime.title}
       aria-label={ariaState ? `${anime.title}. ${ariaState}` : anime.title}
       data-on-list={entry ? "true" : "false"}
+      data-anime-object-id={String(anime.id)}
       data-status={
         status || (recent ? "recent" : recommended ? "recommended" : "default")
       }
@@ -117,6 +126,7 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
           "--i": index,
           "--vt-cover": vt,
           "--progress": `${progressPct}%`,
+          ...materialVars,
         } as React.CSSProperties
       }
     >
