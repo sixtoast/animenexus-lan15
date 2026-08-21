@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { fetchAnimeDetail } from "@/lib/anilist-detail";
 import { fetchThemesFromJikan, youtubeSearchUrl } from "@/lib/jikan-themes";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
+import { AnimeImage } from "@/components/AnimeImage";
 import { BingeCalculator } from "@/components/BingeCalculator";
 import { AnimeNotes } from "@/components/AnimeNotes";
 import { DetailAI } from "@/components/DetailAI";
@@ -113,12 +114,16 @@ export default async function AnimeDetailPage({ params }: Props) {
         </Link>
 
         <div className="detail-hero">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <AnimeImage
             className="detail-cover"
             src={anime.image}
-            alt=""
-            style={{ viewTransitionName: vtCover } as React.CSSProperties}
+            title={anime.title}
+            decorative
+            width={280}
+            height={400}
+            sizes="(max-width: 640px) 40vw, 220px"
+            priority
+            viewTransitionName={vtCover}
           />
 
           <div className="detail-info">
@@ -289,13 +294,14 @@ export default async function AnimeDetailPage({ params }: Props) {
             <div className="char-grid">
               {anime.characters.map((c) => (
                 <div key={c.id} className="char-card">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={
-                      c.image ||
-                      "https://placehold.co/120x120/1a1a1a/555?text=?"
-                    }
-                    alt=""
+                  <AnimeImage
+                    src={c.image}
+                    title={c.name}
+                    decorative
+                    width={120}
+                    height={120}
+                    aspect="1 / 1"
+                    sizes="80px"
                   />
                   <div className="char-name">{c.name}</div>
                   <div className="char-role">{c.role.replace(/_/g, " ")}</div>
