@@ -3,23 +3,17 @@
 | Sprint | Name | Status |
 |--------|------|--------|
 | 0 | Baseline + contracts | Done |
-| **1** | Cinematography Director | **Done** |
-| 2 | Anime Material / Resonance visual | Next |
-| 3 | Persistent anime object identity | Queued |
+| 1 | Cinematography Director | Done |
+| **2** | Anime Material / Resonance visual | **Done** |
+| 3 | Persistent anime object identity | Next |
 | 4–7 | Living Shelf | Queued |
-| 8–9 | Memory Room | Queued |
-| 10+ | Staging → final QA | Queued |
+| 8+ | Memory Room → final QA | Queued |
 
-## Sprint 1 files
+## Sprint 2
 
-- `lib/cinematography.ts` — types, route focus, document apply
-- `lib/cinematography-store.ts` — Zustand store + pulse/route
-- `components/CinematographyController.tsx` — route + Nexus
-- `app/cinematography.css` — vignette / focus treatments
-- Root layout mounts controller (alongside EnvironmentController)
+- `lib/anime-material.ts` — Resonance → material profile + CSS vars
+- `AnimeCard` sets `--anime-*` + `data-anime-object-id`
+- `card-polish.css` drives hover/shadow/radius from material
+- `DetailCoverMaterial` on detail hero
 
-## Verify
-
-- Inspect `html[data-cinema-focus]` while navigating Home → Detail → Watchlist → Oracle → Journey
-- Seal triggers short `celebration` pulse
-- Reduced motion zeroes motion weight / softens vignette
+Material is presentation-only; usability unchanged under reduced motion.
