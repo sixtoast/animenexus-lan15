@@ -1,0 +1,100 @@
+/**
+ * Cinematography Director visuals (Awwwards Sprint 1).
+ * Driven by html[data-cinema-*] and --cinema-* variables.
+ * Restrained: no heavy blur on text, no continuous filter animation.
+ */
+
+:root {
+  --cinema-bg: 0;
+  --cinema-fg: 0.15;
+  --cinema-vignette: 0;
+  --cinema-contrast: 0.1;
+  --cinema-lantern: 0.2;
+  --cinema-motion: 1;
+}
+
+/* Soft vignette via fixed overlay — pointer-events none */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  opacity: calc(var(--cinema-vignette) * 0.85);
+  background: radial-gradient(
+    ellipse 75% 65% at 50% 45%,
+    transparent 40%,
+    rgba(8, 6, 5, 0.55) 100%
+  );
+  transition: opacity var(--duration-med, 0.28s) var(--ease-out, ease);
+}
+
+/* Depth: layered — slight ambient shift on shell */
+html[data-cinema-depth="layered"] .app-shell {
+  transition:
+    filter var(--duration-med, 0.28s) var(--ease-out, ease),
+    opacity var(--duration-med, 0.28s) var(--ease-out, ease);
+}
+
+/* Focus: anime detail — lift main content contrast slightly */
+html[data-cinema-focus="anime"] .detail-hero,
+html[data-cinema-focus="anime"] .detail-info {
+  position: relative;
+  z-index: 1;
+}
+
+html[data-cinema-focus="anime"] .detail-cover {
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(240, 160, 144, calc(0.15 + var(--cinema-fg) * 0.25));
+  transition: box-shadow var(--duration-med, 0.28s) var(--ease-out, ease);
+}
+
+/* Recommendation / celebration — subtle accent on cards */
+html[data-cinema-focus="recommendation"] .anime-card.is-recommended,
+html[data-cinema-focus="celebration"] .anime-card.is-sealed {
+  border-color: rgba(240, 160, 144, 0.45);
+}
+
+html[data-cinema-focus="celebration"] body {
+  /* warm lift without crushing text contrast */
+  --color-accent-glow: rgba(240, 160, 144, 0.5);
+}
+
+/* Oracle / Radar — desk panel presence */
+html[data-cinema-focus="oracle"] .desk-panel,
+html[data-cinema-focus="radar"] .desk-panel {
+  box-shadow:
+    var(--shadow-soft),
+    0 0 40px rgba(240, 160, 144, calc(0.06 + var(--cinema-fg) * 0.12));
+}
+
+/* Memory / journey */
+html[data-cinema-focus="memory"] .journey-timeline {
+  border-left-color: rgba(240, 160, 144, 0.4);
+}
+
+html[data-cinema-depth="immersive"] .journey {
+  max-width: 760px;
+}
+
+/* Watchlist */
+html[data-cinema-focus="watchlist"] .wl-actions,
+html[data-cinema-focus="watchlist"] .watchlist-toolbar {
+  /* hooks for future shelf; harmless if absent */
+}
+
+/* Reduced motion — strip transitions on cinema overlays */
+html[data-reduce-motion="true"] body::after,
+html[data-cinema-motion="still"] body::after {
+  transition: none;
+}
+
+html[data-reduce-motion="true"] .detail-cover {
+  transition: none;
+}
+
+/* Never dim body text globally via opacity — contrast safety */
+html[data-cinema-focus] body {
+  color: var(--color-text);
+}
