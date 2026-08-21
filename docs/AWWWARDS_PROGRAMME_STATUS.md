@@ -2,13 +2,15 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–14 | Baseline → shared elements | Done |
-| **15** | Performance pass | **Done** |
-| 16 | Mobile QA | Next |
-| 17+ | Honesty copy → final QA | Queued |
+| 0–15 | Baseline → performance | Done |
+| **16** | Mobile QA | **Done** |
+| 17 | Honesty / model framing | Next |
+| 18+ | Final QA → ship checklist | Queued |
 
-## Sprint 15
+## Sprint 16
 
-- `lib/perf-budgets.ts` — site tiers for shelf textures / DPR / mobile 2D preference
-- Living Shelf respects caps; Mascot keeps existing adaptive budgets
-- Lazy R3F shelf unchanged; Manage never depends on WebGL
+- Touch ≥44px: Frequency items, Manage|Shelf, shelf actions, memory nodes
+- Safe-area aware nav / footer / mascot dock / AI fab
+- Shelf stage height tuned for phone + landscape
+- iOS 16px form controls (no zoom-on-focus)
+- Mobile prefers 2D shelf (Sprint 15) still applies
