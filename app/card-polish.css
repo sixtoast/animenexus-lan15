@@ -1,22 +1,41 @@
-/* Catalog cards — stateful presence (master plan · Sprint 11)
-   Visual state only — no multi-badge dashboard labels. */
+/* Catalog cards — stateful presence + resonance material (Awwwards Sprint 2) */
 
 .anime-card {
+  --anime-softness: 0.45;
+  --anime-energy: 0.4;
+  --anime-warmth: 0.4;
+  --anime-reflect: 0.35;
+  --anime-weight: 0.45;
+  --anime-mystery: 0.3;
+  --anime-grain: 0.2;
+  --anime-sharp: 0.45;
+
   background: linear-gradient(
     165deg,
     rgba(34, 28, 24, 0.95),
     rgba(12, 10, 9, 0.98)
   );
-  border-radius: 14px;
+  border-radius: calc(12px + var(--anime-softness) * 6px);
   overflow: hidden;
-  border: 1px solid rgba(232, 165, 152, 0.1);
+  border: 1px solid
+    rgba(
+      232,
+      calc(165 - var(--anime-mystery) * 40),
+      calc(152 - var(--anime-weight) * 30),
+      calc(0.1 + var(--anime-warmth) * 0.08)
+    );
   transition:
-    transform 0.28s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+    transform calc(0.22s + (1 - var(--anime-sharp)) * 0.18s)
+      var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
     border-color 0.25s ease,
-    box-shadow 0.28s ease;
+    box-shadow calc(0.24s + (1 - var(--anime-sharp)) * 0.12s) ease;
   cursor: pointer;
   position: relative;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 calc(6px + var(--anime-weight) * 10px)
+      calc(20px + var(--anime-weight) * 16px) rgba(0, 0, 0, 0.28),
+    0 0 calc(12px + var(--anime-reflect) * 28px)
+      rgba(232, 165, 152, calc(var(--anime-reflect) * 0.12));
   text-align: left;
   color: inherit;
   font: inherit;
@@ -27,20 +46,31 @@
 
 .anime-card img,
 .anime-card span img {
-  transition: transform 0.4s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  transition: transform
+    calc(0.32s + (1 - var(--anime-sharp)) * 0.2s)
+    var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+  filter: contrast(calc(0.92 + (1 - var(--anime-softness)) * 0.12))
+    saturate(calc(0.9 + var(--anime-warmth) * 0.12));
 }
 
 .anime-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(232, 165, 152, 0.45);
+  transform: translateY(calc(-4px - var(--anime-energy) * 4px));
+  border-color: rgba(
+    232,
+    165,
+    152,
+    calc(0.35 + var(--anime-warmth) * 0.2)
+  );
   box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.42),
-    0 0 36px rgba(232, 165, 152, 0.14);
+    0 calc(18px + var(--anime-weight) * 12px)
+      calc(40px + var(--anime-weight) * 16px) rgba(0, 0, 0, 0.42),
+    0 0 calc(24px + var(--anime-reflect) * 36px)
+      rgba(232, 165, 152, calc(0.1 + var(--anime-reflect) * 0.14));
   color: inherit;
 }
 
 .anime-card:hover img {
-  transform: scale(1.04);
+  transform: scale(calc(1.02 + var(--anime-energy) * 0.03));
 }
 
 /* Subtle corner ring — colour driven by state */
@@ -127,7 +157,6 @@
   box-shadow: 0 0 12px rgba(232, 165, 152, 0.5);
 }
 
-/* Watching progress — thin bar at bottom of poster */
 .card-progress {
   position: absolute;
   left: 0;
@@ -142,7 +171,6 @@
   pointer-events: none;
 }
 
-/* Hide legacy text badges if any remain in markup */
 .card-badge {
   display: none;
 }
@@ -155,6 +183,7 @@
   top: 10px;
   right: 10px;
   left: auto;
+  opacity: calc(0.75 + (1 - var(--anime-mystery)) * 0.25);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -169,4 +198,11 @@
   .anime-card:hover img {
     transform: none;
   }
+}
+
+html[data-reduce-motion="true"] .anime-card:hover {
+  transform: none;
+}
+html[data-reduce-motion="true"] .anime-card:hover img {
+  transform: none;
 }
