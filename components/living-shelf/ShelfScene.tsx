@@ -10,10 +10,12 @@ import { ShelfObjectMesh } from "./ShelfObjectMesh";
 function ClusterObjects({
   objects,
   selectedId,
+  compareId,
   onSelect,
 }: {
   objects: ShelfObject[];
   selectedId: number | null;
+  compareId: number | null;
   onSelect: (id: number) => void;
 }) {
   const groups = useMemo(() => groupShelfByCluster(objects), [objects]);
@@ -27,7 +29,9 @@ function ClusterObjects({
               key={o.animeId}
               object={o}
               indexInCluster={i}
-              selected={selectedId === o.animeId}
+              selected={
+                selectedId === o.animeId || compareId === o.animeId
+              }
               onSelect={onSelect}
             />
           )),
@@ -39,11 +43,13 @@ function ClusterObjects({
 export function ShelfScene({
   objects,
   selectedId,
+  compareId = null,
   onSelect,
   reducedMotion,
 }: {
   objects: ShelfObject[];
   selectedId: number | null;
+  compareId?: number | null;
   onSelect: (id: number) => void;
   reducedMotion: boolean;
 }) {
@@ -65,11 +71,11 @@ export function ShelfScene({
         <ClusterObjects
           objects={objects}
           selectedId={selectedId}
+          compareId={compareId}
           onSelect={onSelect}
         />
       </Suspense>
 
-      {/* Soft ground plane — archive, not furniture */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.5, -1.6, -1]} receiveShadow>
         <circleGeometry args={[8, 48]} />
         <meshStandardMaterial
