@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Anime } from "@/lib/types";
 import { useWatchlist } from "@/components/WatchlistProvider";
@@ -32,12 +32,23 @@ function episodeCap(anime: Anime, entryEpisodes?: number | string): number {
   return Number.isFinite(n) && n > 0 ? n : 12;
 }
 
+function isFinePointer(): boolean {
+  try {
+    return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  } catch {
+    return false;
+  }
+}
+
 export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
   const router = useRouter();
   const { getEntry, ready } = useWatchlist();
   const entry = ready ? getEntry(anime.id) : undefined;
   const status = entry?.watchStatus;
   const [recent, setRecent] = useState(false);
+  const [pressed, setPressed] = useState(false);
+  const cardRef = useRef<HTMLAnchorElement>(null);
+  const rafRef = useRef(0);
   const score = anime.score > 0 ? anime.score.toFixed(1) : "—";
   const vt = getAnimeViewTransitionName(anime.id);
   const href = `/anime/${anime.id}`;
@@ -74,6 +85,7 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
               : "",
     recent && !entry ? "is-recent" : "",
     recommended && !entry ? "is-recommended" : "",
+    pressed ? "is-pressed" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -96,6 +108,33 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
         ? "Recommended for your shelf"
         : undefined;
 
+  function onPointerMove(e: React.PointerEvent) {
+    if (!isFinePointer()) return;
+    const el = cardRef.current;
+    if (!el) return;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      const r = el.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width;
+      const y = (e.clientY - r.top) / r.height;
+      el.style.setProperty("--ptr-x", `${(x * 100).toFixed(1)}%`);
+      el.style.setProperty("--ptr-y", `${(y * 100).toFixed(1)}%`);
+      el.style.setProperty("--ptr-nx", (x - 0.5).toFixed(3));
+      el.style.setProperty("--ptr-ny", (y - 0.5).toFixed(3));
+    });
+  }
+
+  function onPointerLeave() {
+    const el = cardRef.current;
+    if (!el) return;
+    el.style.setProperty("--ptr-x", "50%");
+    el.style.setProperty("--ptr-y", "40%");
+    el.style.setProperty("--ptr-nx", "0");
+    el.style.setProperty("--ptr-ny", "0");
+    setPressed(false);
+    emitAnimeHoverEnd(anime.id);
+  }
+
   function navigate(e: React.MouseEvent) {
     markRecOpened(anime.id);
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
@@ -109,6 +148,7 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
 
   return (
     <Link
+      ref={cardRef}
       href={href}
       className={stateClass}
       title={anime.title}
@@ -119,18 +159,26 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
         status || (recent ? "recent" : recommended ? "recommended" : "default")
       }
       onClick={navigate}
+      onPointerMove={onPointerMove}
+      onPointerDown={() => setPressed(true)}
+      onPointerUp={() => setPressed(false)}
+      onPointerLeave={onPointerLeave}
       onMouseEnter={() => emitAnimeHoverStart(anime.id)}
-      onMouseLeave={() => emitAnimeHoverEnd(anime.id)}
       style={
         {
           "--i": index,
           "--vt-cover": vt,
           "--progress": `${progressPct}%`,
+          "--ptr-x": "50%",
+          "--ptr-y": "40%",
+          "--ptr-nx": 0,
+          "--ptr-ny": 0,
           ...materialVars,
         } as React.CSSProperties
       }
     >
       <span className="card-status-ring" aria-hidden />
+      <span className="card-ptr-light" aria-hidden />
 
       <AnimeImage
         src={anime.image}
@@ -140,6 +188,7 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
         height={450}
         sizes="(max-width: 640px) 45vw, 160px"
         viewTransitionName={vt}
+        className="card-poster"
       />
 
       {status === "watching" && progressPct > 0 ? (
