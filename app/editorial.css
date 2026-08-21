@@ -1,9 +1,7 @@
 /**
- * Editorial layouts (Awwwards Sprint 12).
- * Stronger hierarchy + light asymmetry — still scannable.
+ * Editorial layouts + honesty framing (Sprints 12 + 17).
  */
 
-/* Page title blocks */
 .page-head {
   margin-bottom: 28px;
   max-width: 40rem;
@@ -38,7 +36,6 @@
   max-width: 36ch;
 }
 
-/* Home hero — editorial offset */
 .home-hero-inner {
   display: grid;
   gap: 8px;
@@ -94,7 +91,6 @@
   }
 }
 
-/* Section heads — display weight */
 .section-head h2,
 .home-rail-head h2 {
   font-family: var(--font-display);
@@ -108,7 +104,6 @@
   letter-spacing: 0.04em;
 }
 
-/* Asymmetric content + side note pattern */
 .editorial-split {
   display: grid;
   gap: 24px;
@@ -127,7 +122,6 @@
   }
 }
 
-/* Pull-quote style for journey / taste headlines */
 .journey-headline,
 .taste-headline {
   font-family: var(--font-display);
@@ -141,13 +135,41 @@
   margin-bottom: 24px;
 }
 
-/* Dense tools list remains grid — only type lifts */
 .tools-grid h2,
 .tool-card h3 {
   font-family: var(--font-display);
 }
 
-/* Mobile: stack cleanly — no forced asymmetry */
+/* Model honesty */
+.model-disclosure {
+  margin: 12px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+  max-width: 48ch;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px dashed rgba(240, 160, 144, 0.22);
+  background: rgba(12, 10, 9, 0.35);
+}
+
+.model-disclosure strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.model-disclosure--compact {
+  margin-top: 12px;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 650;
+  color: var(--color-text-muted);
+}
+
 @media (max-width: 640px) {
   .page-head h1,
   .page-title {
