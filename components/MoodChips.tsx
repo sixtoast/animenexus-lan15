@@ -1,7 +1,9 @@
-"use client";
+/**
+ * Mood chips — pure presentation (Sprint 32 server boundary).
+ * Pass `active` from the page (route param); no pathname client hook.
+ */
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { MOODS } from "@/lib/moods";
 
 type Props = {
@@ -10,21 +12,17 @@ type Props = {
 };
 
 export function MoodChips({ active, className }: Props) {
-  const pathname = usePathname();
-  const current =
-    active ||
-    (pathname.startsWith("/mood/") ? pathname.split("/")[2] : undefined);
-
   return (
     <div className={"mood-chips" + (className ? ` ${className}` : "")}>
       {MOODS.map((m) => {
-        const isActive = current === m.slug;
+        const isActive = active === m.slug;
         return (
           <Link
             key={m.slug}
             href={`/mood/${m.slug}`}
             className={"mood-chip" + (isActive ? " active" : "")}
             title={m.blurb}
+            aria-current={isActive ? "page" : undefined}
           >
             <span className="mood-emoji" aria-hidden>
               {m.emoji}
