@@ -1,4 +1,4 @@
-/* Catalog cards — stateful presence + resonance material (Awwwards Sprint 2) */
+/* Catalog cards — material + micro-interactions (Sprint 3) */
 
 .anime-card {
   --anime-softness: 0.45;
@@ -9,6 +9,10 @@
   --anime-mystery: 0.3;
   --anime-grain: 0.2;
   --anime-sharp: 0.45;
+  --ptr-x: 50%;
+  --ptr-y: 40%;
+  --ptr-nx: 0;
+  --ptr-ny: 0;
 
   background: linear-gradient(
     165deg,
@@ -25,10 +29,10 @@
       calc(0.1 + var(--anime-warmth) * 0.08)
     );
   transition:
-    transform calc(0.22s + (1 - var(--anime-sharp)) * 0.18s)
-      var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
-    border-color 0.25s ease,
-    box-shadow calc(0.24s + (1 - var(--anime-sharp)) * 0.12s) ease;
+    transform var(--ix-trans-standard, 200ms ease),
+    border-color var(--ix-trans-fast, 90ms ease),
+    box-shadow var(--ix-trans-standard, 200ms ease),
+    opacity var(--ix-trans-standard, 200ms ease);
   cursor: pointer;
   position: relative;
   box-shadow:
@@ -44,17 +48,38 @@
   display: block;
 }
 
-.anime-card img,
-.anime-card span img {
-  transition: transform
-    calc(0.32s + (1 - var(--anime-sharp)) * 0.2s)
-    var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
-  filter: contrast(calc(0.92 + (1 - var(--anime-softness)) * 0.12))
-    saturate(calc(0.9 + var(--anime-warmth) * 0.12));
+/* Pointer-relative lighting (desktop fine pointer only via JS vars) */
+.card-ptr-light {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle 70% at var(--ptr-x) var(--ptr-y),
+    rgba(255, 240, 230, 0.14),
+    transparent 55%
+  );
+  transition: opacity var(--ix-trans-standard, 200ms ease);
 }
 
+.anime-card:hover .card-ptr-light,
+.anime-card:focus-visible .card-ptr-light {
+  opacity: 1;
+}
+
+.anime-card img,
+.anime-card .card-poster,
+.anime-card span img {
+  transition: transform var(--ix-trans-standard, 200ms var(--ix-ease-soft, ease));
+  filter: contrast(calc(0.92 + (1 - var(--anime-softness)) * 0.12))
+    saturate(calc(0.9 + var(--anime-warmth) * 0.12));
+  will-change: transform;
+}
+
+/* Hover: small lift (≤4px energy-scaled) + 1–2px image parallax */
 .anime-card:hover {
-  transform: translateY(calc(-4px - var(--anime-energy) * 4px));
+  transform: translateY(calc(-3px - var(--anime-energy) * 2px));
   border-color: rgba(
     232,
     165,
@@ -62,18 +87,47 @@
     calc(0.35 + var(--anime-warmth) * 0.2)
   );
   box-shadow:
-    0 calc(18px + var(--anime-weight) * 12px)
-      calc(40px + var(--anime-weight) * 16px) rgba(0, 0, 0, 0.42),
-    0 0 calc(24px + var(--anime-reflect) * 36px)
-      rgba(232, 165, 152, calc(0.1 + var(--anime-reflect) * 0.14));
+    0 calc(14px + var(--anime-weight) * 10px)
+      calc(36px + var(--anime-weight) * 12px) rgba(0, 0, 0, 0.4),
+    0 0 calc(20px + var(--anime-reflect) * 28px)
+      rgba(232, 165, 152, calc(0.08 + var(--anime-reflect) * 0.12));
   color: inherit;
 }
 
-.anime-card:hover img {
-  transform: scale(calc(1.02 + var(--anime-energy) * 0.03));
+.anime-card:hover img,
+.anime-card:hover .card-poster {
+  transform: translate(
+      calc(var(--ptr-nx) * -2px),
+      calc(var(--ptr-ny) * -1.5px)
+    )
+    scale(1.015);
 }
 
-/* Subtle corner ring — colour driven by state */
+.anime-card:hover .card-score,
+.anime-card:focus-visible .card-score {
+  color: var(--color-accent-hover, #f8c4b8);
+  opacity: 1;
+}
+
+/* Press before navigation — compress for shared-element origin */
+.anime-card.is-pressed {
+  transform: translateY(1px) scale(0.985);
+  transition-duration: var(--ix-fast, 90ms);
+}
+
+.anime-card.is-pressed img,
+.anime-card.is-pressed .card-poster {
+  transform: scale(0.99);
+}
+
+.anime-card:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-primary),
+    0 0 0 4px var(--color-accent),
+    0 12px 28px rgba(0, 0, 0, 0.35);
+}
+
 .card-status-ring {
   position: absolute;
   top: 10px;
@@ -86,7 +140,11 @@
   background: transparent;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    opacity var(--ix-trans-fast, 90ms ease),
+    border-color var(--ix-trans-fast, 90ms ease),
+    box-shadow var(--ix-trans-standard, 200ms ease),
+    transform var(--ix-trans-standard, 200ms ease);
 }
 
 .anime-card.is-sealed .card-status-ring,
@@ -97,6 +155,12 @@
 .anime-card.is-recent .card-status-ring,
 .anime-card.is-recommended .card-status-ring {
   opacity: 1;
+}
+
+.anime-card:hover .card-status-ring,
+.anime-card:focus-visible .card-status-ring {
+  transform: scale(1.15);
+  box-shadow: 0 0 14px rgba(240, 160, 144, 0.4);
 }
 
 .anime-card.is-sealed {
@@ -115,12 +179,22 @@
   box-shadow: 0 0 12px rgba(120, 180, 255, 0.5);
 }
 
+.anime-card.is-watching:hover .card-progress,
+.anime-card.is-watching:focus-visible .card-progress {
+  box-shadow: 0 0 10px rgba(140, 190, 255, 0.55);
+  height: 3px;
+}
+
 .anime-card.is-completed {
   border-color: rgba(180, 160, 220, 0.35);
 }
 .anime-card.is-completed .card-status-ring {
   border-color: rgba(200, 180, 240, 0.9);
   background: rgba(180, 160, 220, 0.35);
+}
+
+.anime-card.is-completed.grid-enter {
+  animation-name: cardRise, ixCompleteGlint;
 }
 
 .anime-card.is-paused {
@@ -140,6 +214,7 @@
 
 .anime-card.is-recent:not(.is-sealed):not(.is-watching):not(.is-completed) {
   border-color: rgba(109, 206, 138, 0.28);
+  transition: border-color 2.5s ease, opacity 2.5s ease;
 }
 .anime-card.is-recent .card-status-ring {
   border-color: rgba(109, 206, 138, 0.9);
@@ -151,10 +226,23 @@
   box-shadow:
     0 8px 24px rgba(0, 0, 0, 0.25),
     0 0 28px rgba(232, 165, 152, 0.12);
+  animation: recBreathe 2.8s var(--ix-ease-soft, ease) 1;
 }
 .anime-card.is-recommended .card-status-ring {
   border-color: rgba(232, 165, 152, 0.95);
   box-shadow: 0 0 12px rgba(232, 165, 152, 0.5);
+}
+
+@keyframes recBreathe {
+  0% {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 0 12px rgba(232, 165, 152, 0.08);
+  }
+  45% {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 0 32px rgba(232, 165, 152, 0.22);
+  }
+  100% {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 0 28px rgba(232, 165, 152, 0.12);
+  }
 }
 
 .card-progress {
@@ -169,12 +257,10 @@
     rgba(232, 165, 152, 0.85)
   );
   pointer-events: none;
+  transition: box-shadow var(--ix-trans-standard, 200ms ease);
 }
 
-.card-badge {
-  display: none;
-}
-
+.card-badge,
 .card-flame {
   display: none;
 }
@@ -186,23 +272,43 @@
   opacity: calc(0.75 + (1 - var(--anime-mystery)) * 0.25);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .anime-card,
-  .anime-card img,
-  .card-status-ring {
-    transition: none;
+@media (hover: none) {
+  .card-ptr-light {
+    display: none;
   }
-  .anime-card:hover {
-    transform: none;
-  }
-  .anime-card:hover img {
+  .anime-card:hover img,
+  .anime-card:hover .card-poster {
     transform: none;
   }
 }
 
-html[data-reduce-motion="true"] .anime-card:hover {
+@media (prefers-reduced-motion: reduce) {
+  .anime-card,
+  .anime-card img,
+  .card-status-ring,
+  .card-ptr-light {
+    transition: none;
+  }
+  .anime-card:hover,
+  .anime-card.is-pressed {
+    transform: none;
+  }
+  .anime-card:hover img,
+  .anime-card:hover .card-poster {
+    transform: none;
+  }
+  .anime-card.is-recommended {
+    animation: none;
+  }
+}
+
+html[data-reduce-motion="true"] .anime-card:hover,
+html[data-reduce-motion="true"] .anime-card.is-pressed {
   transform: none;
 }
 html[data-reduce-motion="true"] .anime-card:hover img {
   transform: none;
+}
+html[data-reduce-motion="true"] .anime-card.is-recommended {
+  animation: none;
 }
