@@ -65,6 +65,7 @@ import "./load-choreography.css";
 import "./watchlist-micro.css";
 import "./detail-micro.css";
 import "./oracle-micro.css";
+import "./radar-micro.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
