@@ -236,3 +236,47 @@ a.anime-card {
   text-decoration: none;
   color: inherit;
 }
+
+/* Sprint 9 — episodes */
+.episode-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 720px;
+}
+
+.episode-row {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr auto auto;
+  gap: 10px 14px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.88rem;
+}
+
+.episode-num {
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.episode-title {
+  color: var(--color-text);
+  min-width: 0;
+}
+
+.episode-meta {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .episode-row {
+    grid-template-columns: 3.5rem 1fr;
+  }
+  .episode-meta {
+    grid-column: 2;
+  }
+}
