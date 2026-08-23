@@ -2,7 +2,8 @@
  * Rich single-title fetch (studios, trailer, characters, relations + recommendations).
  */
 import { mapAniListMedia, ANILIST_ENDPOINT } from "./anilist";
-import { cacheKey, cachedFetch } from "./api-cache";
+import { CACHE_TTL, cacheKey, dedupedFetch } from "./api-cache";
+import { withProviderLimit } from "./provider-rate-limit";
 import type { Anime, AnimeRelation, GraphEdge, GraphNode } from "./types";
 
 type GqlResponse<T> = {
@@ -14,7 +15,7 @@ async function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function gql<T>(
+async function gqlRaw<T>(
   query: string,
   variables: Record<string, unknown> = {},
   attempt = 0,
@@ -36,7 +37,7 @@ async function gql<T>(
     const ra = res.headers.get("Retry-After");
     const wait = ra ? Math.min(5000, parseInt(ra, 10) * 1000 || 1200) : 1200;
     await sleep(wait);
-    return gql(query, variables, attempt + 1);
+    return gqlRaw(query, variables, attempt + 1);
   }
 
   if (!res.ok) throw new Error(`AniList HTTP ${res.status}`);
@@ -46,6 +47,13 @@ async function gql<T>(
   }
   if (!json.data) throw new Error("AniList returned empty data");
   return json.data;
+}
+
+async function gql<T>(
+  query: string,
+  variables: Record<string, unknown> = {},
+): Promise<T> {
+  return withProviderLimit("anilist", () => gqlRaw<T>(query, variables));
 }
 
 const RELATION_NODE = `
@@ -257,7 +265,7 @@ async function fetchAnimeDetailUncached(id: number): Promise<Anime | null> {
 
 export async function fetchAnimeDetail(id: number): Promise<Anime | null> {
   const key = cacheKey(["detail", id]);
-  return cachedFetch(key, () => fetchAnimeDetailUncached(id), 120_000);
+  return dedupedFetch(key, () => fetchAnimeDetailUncached(id), CACHE_TTL.medium);
 }
 
 async function fetchMediaLinks(id: number): Promise<{
