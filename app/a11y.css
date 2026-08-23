@@ -1,4 +1,4 @@
-/* Accessibility (Sprint 34 + Awwwards shelf) */
+/* Accessibility (Sprint 34 + Awwwards + Micro 17) */
 
 .skip-link {
   position: absolute;
@@ -29,7 +29,6 @@ a:focus:not(:focus-visible) {
   outline: none;
 }
 
-/* Screen-reader only */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -46,6 +45,34 @@ html[data-reduce-motion="true"] *,
 html[data-reduce-motion="true"] *::before,
 html[data-reduce-motion="true"] *::after {
   scroll-behavior: auto !important;
+}
+
+/* Hard stop micro ceremony when reduced */
+html[data-reduce-motion="true"] .seal-moment,
+html[data-reduce-motion="true"] .seal-card,
+html[data-reduce-motion="true"] .seal-wax,
+html[data-reduce-motion="true"] .seal-ring,
+html[data-reduce-motion="true"] .anime-img--wait,
+html[data-reduce-motion="true"] .anime-img--in,
+html[data-reduce-motion="true"] .vibe-deal,
+html[data-reduce-motion="true"] .radar-item.radar-ping,
+html[data-reduce-motion="true"] .radar-dish.scanning .radar-sweep,
+html[data-reduce-motion="true"] .challenge-medal-badge,
+html[data-reduce-motion="true"] .taste-story-chapter,
+html[data-reduce-motion="true"] .oracle.band-flash .oracle-tuner-needle,
+html[data-reduce-motion="true"] .wl-row--out {
+  animation: none !important;
+  transition: none !important;
+}
+
+html[data-reduce-motion="true"] .anime-img--wait {
+  opacity: 1;
+  filter: none;
+}
+
+html[data-reduce-motion="true"] .wl-row--out {
+  opacity: 0;
+  transform: none;
 }
 
 @media (prefers-contrast: more) {
