@@ -13,8 +13,15 @@ import {
   shikiSearch,
   SHIKI_ID_OFFSET,
 } from "./providers/shikimori";
+import { cacheKey, cachedFetch } from "./api-cache";
 
 export const ANILIST_ENDPOINT = "https://graphql.anilist.co";
+
+/** Last successful provider label for observability (server logs / debug). */
+let lastSource: "anilist" | "kitsu" | "shikimori" = "anilist";
+export function getLastCatalogSource() {
+  return lastSource;
+}
 
 const FEED_SORT: Record<DiscoverFeed, string> = {
   trending: "TRENDING_DESC",
@@ -81,9 +88,14 @@ type GqlResponse<T> = {
   errors?: { message: string }[];
 };
 
+async function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 async function anilistFetch<T>(
   query: string,
   variables: Record<string, unknown> = {},
+  attempt = 0,
 ): Promise<T> {
   const init: RequestInit & { next?: { revalidate: number } } = {
     method: "POST",
@@ -97,6 +109,14 @@ async function anilistFetch<T>(
     init.next = { revalidate: 300 };
   }
   const res = await fetch(ANILIST_ENDPOINT, init);
+
+  // Gentle single retry on rate limit
+  if (res.status === 429 && attempt < 1) {
+    const ra = res.headers.get("Retry-After");
+    const wait = ra ? Math.min(5000, parseInt(ra, 10) * 1000 || 1200) : 1200;
+    await sleep(wait);
+    return anilistFetch(query, variables, attempt + 1);
+  }
 
   if (!res.ok) {
     throw new Error(`AniList HTTP ${res.status}`);
@@ -119,7 +139,9 @@ async function withFallbacks<T>(
   fallbacks: { name: string; run: () => Promise<T> }[],
 ): Promise<T> {
   try {
-    return await primary();
+    const result = await primary();
+    lastSource = "anilist";
+    return result;
   } catch (primaryErr) {
     const msg =
       primaryErr instanceof Error ? primaryErr.message : String(primaryErr);
@@ -129,6 +151,12 @@ async function withFallbacks<T>(
     for (const fb of fallbacks) {
       try {
         const result = await fb.run();
+        lastSource =
+          fb.name === "Kitsu"
+            ? "kitsu"
+            : fb.name === "Shikimori"
+              ? "shikimori"
+              : lastSource;
         console.warn(`[anime-api] ${label} served via ${fb.name}`);
         return result;
       } catch (e) {
@@ -216,13 +244,16 @@ export async function fetchDiscover(
   perPage = 24,
   adultFilter: AnimeFilters["adultFilter"] = "exclude",
 ): Promise<AnimePage> {
-  return withFallbacks(
-    "discover",
-    () => anilistDiscover(feed, page, perPage, adultFilter),
-    [
-      { name: "Kitsu", run: () => kitsuDiscover(feed, page, perPage) },
-      { name: "Shikimori", run: () => shikiDiscover(feed, page, perPage) },
-    ],
+  const key = cacheKey(["discover", feed, page, perPage, adultFilter]);
+  return cachedFetch(key, () =>
+    withFallbacks(
+      "discover",
+      () => anilistDiscover(feed, page, perPage, adultFilter),
+      [
+        { name: "Kitsu", run: () => kitsuDiscover(feed, page, perPage) },
+        { name: "Shikimori", run: () => shikiDiscover(feed, page, perPage) },
+      ],
+    ),
   );
 }
 
@@ -270,13 +301,12 @@ export async function searchAnime(
   page = 1,
   perPage = 24,
 ): Promise<AnimePage> {
-  return withFallbacks(
-    "search",
-    () => anilistSearch(search, page, perPage),
-    [
+  const key = cacheKey(["search", search.trim().toLowerCase(), page, perPage]);
+  return cachedFetch(key, () =>
+    withFallbacks("search", () => anilistSearch(search, page, perPage), [
       { name: "Kitsu", run: () => kitsuSearch(search, page, perPage) },
       { name: "Shikimori", run: () => shikiSearch(search, page, perPage) },
-    ],
+    ]),
   );
 }
 
@@ -297,35 +327,44 @@ async function anilistById(id: number): Promise<Anime | null> {
 }
 
 export async function fetchAnimeById(id: number): Promise<Anime | null> {
-  // Routed ids from fallback providers
   if (id >= SHIKI_ID_OFFSET) {
+    lastSource = "shikimori";
     return shikiById(id - SHIKI_ID_OFFSET);
   }
   if (id >= KITSU_ID_OFFSET) {
+    lastSource = "kitsu";
     return kitsuById(id - KITSU_ID_OFFSET);
   }
 
-  return withFallbacks(
-    "byId",
-    async () => {
-      const a = await anilistById(id);
-      if (!a) throw new Error("AniList media not found");
-      return a;
-    },
-    [
-      // Best-effort: treat raw id as Kitsu / Shikimori native id
-      { name: "Kitsu", run: async () => {
-        const a = await kitsuById(id);
-        if (!a) throw new Error("Kitsu not found");
+  const key = cacheKey(["byId", id]);
+  return cachedFetch(key, () =>
+    withFallbacks(
+      "byId",
+      async () => {
+        const a = await anilistById(id);
+        if (!a) throw new Error("AniList media not found");
         return a;
-      }},
-      { name: "Shikimori", run: async () => {
-        const a = await shikiById(id);
-        if (!a) throw new Error("Shikimori not found");
-        return a;
-      }},
-    ],
-  ).catch(() => null);
+      },
+      [
+        {
+          name: "Kitsu",
+          run: async () => {
+            const a = await kitsuById(id);
+            if (!a) throw new Error("Kitsu not found");
+            return a;
+          },
+        },
+        {
+          name: "Shikimori",
+          run: async () => {
+            const a = await shikiById(id);
+            if (!a) throw new Error("Shikimori not found");
+            return a;
+          },
+        },
+      ],
+    ).catch(() => null),
+  );
 }
 
 async function anilistFiltered(
@@ -425,12 +464,22 @@ export async function fetchFiltered(
   page = 1,
   perPage = 24,
 ): Promise<AnimePage> {
-  return withFallbacks(
+  const key = cacheKey([
     "filtered",
-    () => anilistFiltered(filters, page, perPage),
-    [
+    filters.genre,
+    filters.status,
+    filters.format,
+    filters.year,
+    filters.sort,
+    filters.search,
+    filters.adultFilter,
+    page,
+    perPage,
+  ]);
+  return cachedFetch(key, () =>
+    withFallbacks("filtered", () => anilistFiltered(filters, page, perPage), [
       { name: "Kitsu", run: () => kitsuFiltered(filters, page, perPage) },
       { name: "Shikimori", run: () => shikiFiltered(filters, page, perPage) },
-    ],
+    ]),
   );
 }
