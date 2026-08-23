@@ -2,14 +2,15 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–14 | Language → Account | Done |
-| **15** | Consistency audit | **Done** |
-| 16–19 | Sound polish / mobile | Optional |
+| 0–15 | Language → Consistency | Done |
+| **16** | Sound polish | **Done** |
+| 17–19 | Mobile / a11y pass | Optional |
 | 20+ | API enrichment | Queued |
 
-## Sprint 15
+## Sprint 16
 
-- Global `.btn` press/transition baseline via ix tokens
-- Inputs/focus share `--ix-trans-*`
-- Legacy `--ease-out` / `--ease-soft` aliased to ix easings
-- Audit notes: `docs/INTERACTION_CONSISTENCY.md`
+- Retuned gains (quieter taps/nav; seal/complete still present)
+- Stricter cooldowns; max concurrent 5
+- Soft duck UI/nav under celebration
+- Broader preload set after unlock
+- Account preview buttons for key cues
