@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { fetchAnimeDetail } from "@/lib/anilist-detail";
 import { fetchAnimeById } from "@/lib/anilist";
 import { enrichThemes } from "@/lib/themes-enrich";
+import { enrichFromJikan } from "@/lib/providers/jikan";
 import { buildExternalLinks } from "@/lib/external-links";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
 import { AnimeImage } from "@/components/AnimeImage";
@@ -80,11 +81,14 @@ export default async function AnimeDetailPage({ params }: Props) {
       ? anime.episodes
       : parseInt(String(anime.episodes), 10) || 0;
 
-  const themes = await enrichThemes({
-    anilistId: anime.anilist_id || anime.id,
-    idMal: anime.idMal,
-    title: anime.title,
-  });
+  const [themes, jikan] = await Promise.all([
+    enrichThemes({
+      anilistId: anime.anilist_id || anime.id,
+      idMal: anime.idMal,
+      title: anime.title,
+    }),
+    enrichFromJikan(anime.idMal),
+  ]);
 
   const external = buildExternalLinks(anime);
   const relations = anime.relations || [];
@@ -93,6 +97,9 @@ export default async function AnimeDetailPage({ params }: Props) {
     .join("\n");
 
   const vtCover = `cover-${anime.id}`;
+  const showJikanChars =
+    (!anime.characters || anime.characters.length === 0) &&
+    jikan.characters.length > 0;
 
   return (
     <main>
@@ -207,6 +214,46 @@ export default async function AnimeDetailPage({ params }: Props) {
                 </a>
               ))}
             </div>
+          </section>
+        ) : null}
+
+        {jikan.episodes.length > 0 ? (
+          <section className="detail-section" id="episodes">
+            <h2>Episodes</h2>
+            <p className="tools-hint" style={{ marginBottom: 10 }}>
+              Source: Jikan / MAL — titles only when provided (no invented names).
+            </p>
+            <ul className="theme-ul">
+              {jikan.episodes.slice(0, 40).map((ep) => (
+                <li key={ep.number}>
+                  <strong>Episode {ep.number}</strong>
+                  {ep.title ? ` · ${ep.title}` : null}
+                  {ep.airedAt ? (
+                    <span className="tools-hint"> · {ep.airedAt.slice(0, 10)}</span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+            {jikan.episodes.length > 40 ? (
+              <p className="tools-hint">Showing first 40 of {jikan.episodes.length}.</p>
+            ) : null}
+          </section>
+        ) : null}
+
+        {jikan.staff.length > 0 ? (
+          <section className="detail-section">
+            <h2>Staff</h2>
+            <p className="tools-hint" style={{ marginBottom: 10 }}>
+              Source: Jikan / MAL
+            </p>
+            <ul className="theme-ul">
+              {jikan.staff.slice(0, 16).map((s) => (
+                <li key={s.malId}>
+                  <strong>{s.name}</strong>
+                  {s.roles.length ? ` · ${s.roles.slice(0, 3).join(", ")}` : null}
+                </li>
+              ))}
+            </ul>
           </section>
         ) : null}
 
@@ -338,6 +385,30 @@ export default async function AnimeDetailPage({ params }: Props) {
                   />
                   <div className="char-name">{c.name}</div>
                   <div className="char-role">{c.role.replace(/_/g, " ")}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : showJikanChars ? (
+          <section className="detail-section">
+            <h2>Characters</h2>
+            <p className="tools-hint" style={{ marginBottom: 10 }}>
+              Source: Jikan / MAL (AniList characters unavailable)
+            </p>
+            <div className="char-grid">
+              {jikan.characters.map((c) => (
+                <div key={c.malId} className="char-card">
+                  <AnimeImage
+                    src={c.image}
+                    title={c.name}
+                    decorative
+                    width={120}
+                    height={120}
+                    aspect="1 / 1"
+                    sizes="80px"
+                  />
+                  <div className="char-name">{c.name}</div>
+                  <div className="char-role">{c.role}</div>
                 </div>
               ))}
             </div>
