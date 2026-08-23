@@ -2,15 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–7 | Language → Watchlist | Done |
-| **8** | Seal Moment premium | **Done** |
-| 9 | Detail tactile | Next |
-| 10 | Oracle micro-theatre | Queued |
+| 0–8 | Language → Seal | Done |
+| **9** | Detail tactile | **Done** |
+| **10** | Oracle micro-theatre | Next |
 
-## Sprint 8
+## Sprint 9
 
-- Card lift → wax compress → ring expand → title settle
-- Warm ambient `data-seal-ambient` (~200ms)
-- `seal` / `complete` cues (post-persist callers)
-- Rapid seals within 2.8s → **mini** ceremony (shorter, no subcopy)
-- Copy preserved: Sealed by Lantern / Channel locked / Story closed
+- Cover + metadata staggered settle after shared-element arrival
+- Genre tags: light flow on hover/focus (not generic pills only)
+- Binge: hours figure eases; pace timeline bar
+- Notes: local “Ink set” confirm + `success` cue (no toast spam)
