@@ -8,13 +8,13 @@ See [`MICRO_SHIP_CHECKLIST.md`](./MICRO_SHIP_CHECKLIST.md).
 
 | Sprint | Focus | Status |
 |--------|--------|--------|
-| **20** | Cache + 429 retry + source tracking | **Done** |
-| 21+ | Detail/enrichment APIs (themes, trailers, etc.) | Queued |
+| 20 | Cache + failover | Done |
+| **21** | Themes enrichment | **Done** |
+| 22+ | More secondary (TMDB optional, etc.) | Queued |
 
-### Sprint 20
+### Sprint 21
 
-- `lib/api-cache.ts` — short TTL process cache
-- Discover / search / filtered / byId wrapped
-- AniList 429 → one gentle retry
-- `getLastCatalogSource()` for observability
-- Strategy: [`API_STRATEGY.md`](./API_STRATEGY.md)
+- `lib/providers/animethemes.ts` — soft-fail OP/ED from AnimeThemes.moe
+- `lib/themes-enrich.ts` — merge AnimeThemes + Jikan; honest source note
+- Detail: detail-query fails → basic `fetchAnimeById`
+- Theme rows: AnimeThemes link when known + YouTube search
