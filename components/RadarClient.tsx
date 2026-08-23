@@ -1,10 +1,8 @@
 "use client";
 
 /**
- * Radar elevation (Sprint 22).
- * Interaction follows the instrument metaphor:
- * scan → signal → identification → result
- * (not click → cards instantly).
+ * Radar instrument micro (Sprint 11).
+ * scan → signal → identify → result
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -20,9 +18,11 @@ import { rejectedAnimeIds } from "@/lib/recommend-feedback";
 import { emitNexus } from "@/lib/nexus";
 import { SignalError, signalErrorBody } from "@/components/SignalError";
 import { WhyThisIsHere } from "@/components/WhyThisIsHere";
+import { playCue } from "@/lib/sound-engine";
 
 const PREFS_KEY = "anime_nexus_radar_prefs";
 const ALERTS_KEY = "anime_nexus_radar_alerts";
+const MAX_PING_SFX = 4;
 
 const GENRES = [
   "",
@@ -78,6 +78,8 @@ export function RadarClient() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [err, setErr] = useState<string | null>(null);
   const [prefsHydrated, setPrefsHydrated] = useState(false);
+  const [calibNudge, setCalibNudge] = useState(false);
+  const [hoverId, setHoverId] = useState<number | null>(null);
 
   useEffect(() => {
     emitNexus({ type: "tool_opened", tool: "radar" });
@@ -137,7 +139,8 @@ export function RadarClient() {
   }, [raw, ready, entries]);
 
   const shelfTuned = ready && entries.length >= 2 && ranked.length > 0;
-  const scanning = phase === "scanning" || phase === "signal" || phase === "identify";
+  const scanning =
+    phase === "scanning" || phase === "signal" || phase === "identify";
   const phaseMeta =
     phase === "error"
       ? { step: "Lost", line: "The sweep dropped." }
@@ -147,11 +150,11 @@ export function RadarClient() {
     setErr(null);
     setRaw([]);
     setPhase("scanning");
+    playCue("radar_ping");
     loadingStart("radar");
     try {
       localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
 
-      // Brief phase beats so the metaphor is felt (skipped if reduced motion)
       const reduced =
         typeof window !== "undefined" &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -160,6 +163,7 @@ export function RadarClient() {
 
       await beat(320);
       setPhase("signal");
+      playCue("radar_ping");
 
       const q = prefs.genre
         ? `?genre=${encodeURIComponent(prefs.genre)}`
@@ -180,10 +184,23 @@ export function RadarClient() {
       await beat(280);
       setRaw(list);
       setPhase("result");
+
+      // Limited audible pings for first contacts only
+      const n = Math.min(list.length, MAX_PING_SFX);
+      for (let i = 0; i < n; i++) {
+        window.setTimeout(() => playCue("radar_ping"), 80 + i * 110);
+      }
+      if (list.length === 0) {
+        // Sweep finishes naturally — calm, no error cheer
+        playCue("filter_select");
+      } else {
+        playCue("signal_acquired");
+      }
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Scan failed");
       setRaw([]);
       setPhase("error");
+      playCue("error");
     } finally {
       loadingStop();
     }
@@ -195,8 +212,21 @@ export function RadarClient() {
     localStorage.setItem(ALERTS_KEY, String(next));
   }
 
+  function onPrefChange(patch: Partial<Prefs>) {
+    setPrefs((p) => ({ ...p, ...patch }));
+    setCalibNudge(true);
+    playCue("filter_select");
+    window.setTimeout(() => setCalibNudge(false), 400);
+  }
+
   return (
-    <div className="radar-instrument">
+    <div
+      className={
+        "radar-instrument" +
+        (scanning ? " is-scanning" : "") +
+        (phase === "result" ? " is-settled" : "")
+      }
+    >
       <div className="radar-phase" role="status" aria-live="polite">
         <ol className="radar-phase-steps" aria-label="Radar sequence">
           {(["scanning", "signal", "identify", "result"] as const).map(
@@ -231,17 +261,25 @@ export function RadarClient() {
 
       <div className="radar-prefs">
         <div
-          className={"radar-dish" + (scanning ? " scanning" : "")}
+          className={
+            "radar-dish" +
+            (scanning ? " scanning" : "") +
+            (phase === "result" ? " settled" : "") +
+            (calibNudge ? " calib-nudge" : "")
+          }
           aria-hidden
         >
           <div className="radar-sweep" />
           <div className="radar-core" />
+          {hoverId != null ? (
+            <span className="radar-blip radar-blip--focus" />
+          ) : null}
         </div>
         <label className="filter-label">Genre filter</label>
         <select
           className="filter-input"
           value={prefs.genre}
-          onChange={(e) => setPrefs((p) => ({ ...p, genre: e.target.value }))}
+          onChange={(e) => onPrefChange({ genre: e.target.value })}
           disabled={scanning}
         >
           {GENRES.map((g) => (
@@ -254,7 +292,7 @@ export function RadarClient() {
         <input
           className="filter-input"
           value={prefs.studio}
-          onChange={(e) => setPrefs((p) => ({ ...p, studio: e.target.value }))}
+          onChange={(e) => onPrefChange({ studio: e.target.value })}
           placeholder="e.g. Kyoto"
           disabled={scanning}
         />
@@ -315,12 +353,21 @@ export function RadarClient() {
                 <Link
                   href={`/anime/${r.anime.id}`}
                   className="radar-item radar-ping"
+                  onMouseEnter={() => setHoverId(r.anime.id)}
+                  onMouseLeave={() => setHoverId(null)}
+                  onFocus={() => setHoverId(r.anime.id)}
+                  onBlur={() => setHoverId(null)}
+                  data-focused={hoverId === r.anime.id ? "true" : undefined}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={r.anime.image} alt="" />
                   <div className="radar-title">{r.anime.title}</div>
                   <div className="radar-air">
-                    {[r.anime.format, r.anime.season, r.anime.seasonYear || r.anime.year]
+                    {[
+                      r.anime.format,
+                      r.anime.season,
+                      r.anime.seasonYear || r.anime.year,
+                    ]
                       .filter(Boolean)
                       .join(" · ")}
                   </div>
