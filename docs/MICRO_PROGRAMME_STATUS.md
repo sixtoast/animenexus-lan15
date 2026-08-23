@@ -2,13 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–11 | Language → Radar | Done |
-| **12** | Taste & Stats motion | **Done** |
-| 13+ | Challenge → APIs | Queued |
+| 0–12 | Language → Taste | Done |
+| **13** | Challenge rewards | **Done** |
+| 14+ | Account → APIs | Queued |
 
-## Sprint 12
+## Sprint 13
 
-- `CountTick` — numbers ease only when value changes
-- Status/format bars use deliberate width transition
-- Story chapters staggered reveal
-- No continuous spinning counters
+- Correct → medal badge settles on art + `complete`
+- Wrong → soft `error`
+- Streak uses CountTick
+- Confetti only from streak ≥ 3 (restrained)
