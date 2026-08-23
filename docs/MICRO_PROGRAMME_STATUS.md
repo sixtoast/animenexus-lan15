@@ -2,16 +2,16 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–3 | Language · Sound · Button · Card | Done |
-| **4** | Navbar continuous state | **Done** |
-| 5 | Filters & search | Next |
-| 6–10 | Loading → Oracle | Queued |
+| 0–4 | Language → Navbar | Done |
+| **5** | Filters & search | **Done** |
+| 6 | Loading → content | Next |
+| 7–10 | Watchlist → Oracle | Queued |
 
-## Sprint 4
+## Sprint 5
 
-- Sliding `.nav-indicator` tracks active link geometry
-- Frequency: scrim precedes panel; close reverses; `menu_open` / `menu_close`
-- Route change → `nav_tick` (not hover spam)
-- Logo accent pulse on Home
-- “Here” badge fades/slides in
-- Theme: ~280ms colour-token crossfade (no global filter)
+- Search focus deepens panel; valid query arms Search button
+- Enter: input pulse → apply
+- Filter select: label flash + `filter_select` (after change, not while scrolling options)
+- Total count eases old → new
+- Feed tabs soft scale on active
+- Empty path: brief leave fade before SignalEmpty
