@@ -1,0 +1,41 @@
+/* Taste & Stats editorial motion (Sprint 12) */
+
+.taste-stat-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.taste-bar-fill {
+  transition: width var(--ix-trans-deliberate, 420ms var(--ix-ease-soft, ease));
+}
+
+.taste-story-chapter {
+  animation: tasteChapterIn 0.45s var(--ix-ease-soft, ease) both;
+  animation-delay: calc(min(var(--ch-i, 0), 4) * 60ms);
+}
+
+@keyframes tasteChapterIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.taste-stat {
+  transition: border-color var(--ix-trans-fast, 90ms ease),
+    box-shadow var(--ix-trans-standard, 200ms ease);
+}
+
+.taste-stat:hover {
+  border-color: rgba(240, 160, 144, 0.28);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+html[data-reduce-motion="true"] .taste-story-chapter,
+html[data-reduce-motion="true"] .taste-bar-fill {
+  animation: none;
+  transition: none;
+}
