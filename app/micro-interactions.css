@@ -1,6 +1,6 @@
 /**
- * Micro-interaction language (Sprint 0).
- * Semantic tokens — migrate components toward these gradually.
+ * Micro-interaction language (Sprints 0 + 15 consistency).
+ * Semantic tokens — prefer these over ad-hoc transition: 0.3s ease.
  */
 
 :root {
@@ -33,6 +33,46 @@
 :root {
   --dur-fast: var(--ix-fast);
   --duration-fast: var(--ix-fast);
+  --ease-out: var(--ix-ease-expo);
+  --ease-soft: var(--ix-ease-soft);
+}
+
+/* ── Global baseline (Sprint 15) ─────────────────────────── */
+
+.btn,
+button.btn {
+  transition:
+    transform var(--ix-trans-fast),
+    background var(--ix-trans-standard),
+    border-color var(--ix-trans-fast),
+    box-shadow var(--ix-trans-standard),
+    color var(--ix-trans-fast),
+    opacity var(--ix-trans-fast);
+}
+
+.btn:active:not(:disabled),
+button.btn:active:not(:disabled) {
+  transform: translateY(var(--ix-press-y)) scale(var(--ix-press-scale));
+}
+
+a:not(.btn):not(.anime-card):not(.nav-link):not(.feed-tab) {
+  transition: color var(--ix-trans-fast), opacity var(--ix-trans-fast);
+}
+
+.filter-input,
+input.filter-input,
+select.filter-input,
+textarea.notes-area {
+  transition:
+    border-color var(--ix-trans-fast),
+    box-shadow var(--ix-trans-standard),
+    background var(--ix-trans-standard);
+}
+
+.filter-input:focus-visible,
+textarea.notes-area:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, 0 0 0 2px rgba(240, 160, 144, 0.35));
 }
 
 /* ── Semantic utility states ─────────────────────────────── */
@@ -150,7 +190,6 @@
   }
 }
 
-/* Soft highlight sweep for primary surfaces (optional) */
 .ix-highlight {
   position: relative;
   overflow: hidden;
@@ -192,7 +231,9 @@ html[data-reduce-motion="true"] .ix-reveal,
 html[data-reduce-motion="true"] .ix-success,
 html[data-reduce-motion="true"] .ix-error,
 html[data-reduce-motion="true"] .ix-complete,
-html[data-reduce-motion="true"] .ix-highlight::before {
+html[data-reduce-motion="true"] .ix-highlight::before,
+html[data-reduce-motion="true"] .btn:active,
+html[data-reduce-motion="true"] button.btn:active {
   animation: none !important;
   transition: none !important;
   transform: none !important;
