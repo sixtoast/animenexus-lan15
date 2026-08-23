@@ -1,0 +1,52 @@
+/* Challenge physical rewards (Sprint 13) */
+
+.challenge-art-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.challenge-medal-badge {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  background: radial-gradient(circle at 35% 30%, #f5e0b8, #e8c07a 55%, #8a6a30);
+  box-shadow:
+    0 4px 14px rgba(232, 192, 122, 0.45),
+    inset 0 1px 2px rgba(255, 255, 255, 0.35);
+  animation: medalSettle 0.55s var(--ix-ease-spring, ease) both;
+}
+
+@keyframes medalSettle {
+  0% {
+    transform: scale(1.4) translateY(-8px);
+    opacity: 0.4;
+  }
+  55% {
+    transform: scale(0.92);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.challenge-medal .challenge-result .ok {
+  color: #e8c07a;
+}
+
+.challenge-streak {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+html[data-reduce-motion="true"] .challenge-medal-badge {
+  animation: none;
+}
