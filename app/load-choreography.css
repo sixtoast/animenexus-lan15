@@ -1,0 +1,58 @@
+/**
+ * Loading → content choreography (Micro Sprint 6).
+ */
+
+/* Poster / image resolve */
+.anime-img--wait {
+  opacity: 0.35;
+  filter: brightness(0.85);
+  transition:
+    opacity var(--ix-trans-deliberate, 420ms var(--ix-ease-soft, ease)),
+    filter var(--ix-trans-deliberate, 420ms var(--ix-ease-soft, ease));
+}
+
+.anime-img--in {
+  opacity: 1;
+  filter: brightness(1);
+}
+
+/* Grid enter: cap stagger so 30 cards don't cascade forever */
+.anime-grid > .grid-enter {
+  --motion-stagger: 28ms;
+  animation-delay: calc(min(var(--i, 0), 12) * var(--motion-stagger));
+}
+
+.poster-skel {
+  animation: skelShimmer 1.4s var(--ease-soft, ease) infinite;
+  animation-delay: calc(min(var(--i, 0), 10) * 28ms);
+}
+
+.loading-theater-phase {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--color-accent);
+  opacity: 0.85;
+  min-height: 1.2em;
+  transition: opacity var(--ix-trans-fast, 90ms ease);
+}
+
+.loading-theater-hint {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  max-width: 28ch;
+  text-align: center;
+}
+
+html[data-reduce-motion="true"] .anime-img--wait,
+html[data-reduce-motion="true"] .anime-img--in {
+  opacity: 1;
+  filter: none;
+  transition: none;
+}
+
+html[data-reduce-motion="true"] .anime-grid > .grid-enter {
+  animation: none;
+  animation-delay: 0ms;
+}
