@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { TasteExtras } from "@/components/TasteExtras";
 import { SignalBars } from "@/components/ui/SignalBars";
+import { CountTick } from "@/components/ui/CountTick";
 import { computeTaste, statusLabel } from "@/lib/taste";
 import { readMemory } from "@/lib/lantern-memory";
 import { buildTasteStory } from "@/lib/taste-story";
@@ -166,8 +167,12 @@ export function TasteClient() {
             {story.headline}
           </h2>
           <div className="taste-story-chapters">
-            {story.chapters.map((ch) => (
-              <article key={ch.id} className="taste-story-chapter">
+            {story.chapters.map((ch, i) => (
+              <article
+                key={ch.id}
+                className="taste-story-chapter"
+                style={{ "--ch-i": i } as React.CSSProperties}
+              >
                 <h3>{ch.title}</h3>
                 <p>{ch.summary}</p>
                 {ch.genres.length ? (
@@ -224,7 +229,8 @@ export function TasteClient() {
         <p className="taste-portrait-kicker">Taste portrait</p>
         <h2 className="taste-portrait-title">{portraitLine}</h2>
         <p className="taste-portrait-body">
-          {s.hoursLogged} hours on the desk · {s.episodesLogged} episodes tracked
+          <CountTick value={s.hoursLogged} /> hours on the desk ·{" "}
+          <CountTick value={s.episodesLogged} /> episodes tracked
           {s.avgUserRating != null
             ? ` · avg score ${s.avgUserRating.toFixed(1)}`
             : ""}
@@ -271,6 +277,7 @@ export function TasteClient() {
                   }}
                 >
                   <span
+                    className="taste-bar-fill"
                     style={{
                       display: "block",
                       height: "100%",
@@ -284,7 +291,7 @@ export function TasteClient() {
                   className="meta"
                   style={{ minWidth: 36, textAlign: "right" }}
                 >
-                  {Math.round(value * 100)}
+                  <CountTick value={Math.round(value * 100)} />
                 </span>
               </li>
             ))}
@@ -298,20 +305,30 @@ export function TasteClient() {
 
       <div className="taste-grid">
         <div className="taste-stat">
-          <div className="taste-stat-value">{s.total}</div>
+          <div className="taste-stat-value">
+            <CountTick value={s.total} />
+          </div>
           <div className="taste-stat-label">Titles on list</div>
         </div>
         <div className="taste-stat">
-          <div className="taste-stat-value">{s.hoursLogged}</div>
+          <div className="taste-stat-value">
+            <CountTick value={s.hoursLogged} />
+          </div>
           <div className="taste-stat-label">Hours logged (progress)</div>
         </div>
         <div className="taste-stat">
-          <div className="taste-stat-value">{s.episodesLogged}</div>
+          <div className="taste-stat-value">
+            <CountTick value={s.episodesLogged} />
+          </div>
           <div className="taste-stat-label">Episodes tracked</div>
         </div>
         <div className="taste-stat">
           <div className="taste-stat-value">
-            {s.avgUserRating != null ? s.avgUserRating.toFixed(1) : "—"}
+            {s.avgUserRating != null ? (
+              <CountTick value={s.avgUserRating} decimals={1} />
+            ) : (
+              "—"
+            )}
           </div>
           <div className="taste-stat-label">
             Avg your score{s.ratedCount ? ` (${s.ratedCount})` : ""}
@@ -319,13 +336,17 @@ export function TasteClient() {
         </div>
         <div className="taste-stat">
           <div className="taste-stat-value">
-            {s.avgCommunityScore != null ? s.avgCommunityScore.toFixed(1) : "—"}
+            {s.avgCommunityScore != null ? (
+              <CountTick value={s.avgCommunityScore} decimals={1} />
+            ) : (
+              "—"
+            )}
           </div>
           <div className="taste-stat-label">Avg community score</div>
         </div>
         <div className="taste-stat">
           <div className="taste-stat-value">
-            {Math.round(s.completionRate * 100)}%
+            <CountTick value={Math.round(s.completionRate * 100)} suffix="%" />
           </div>
           <div className="taste-stat-label">Completion rate</div>
         </div>
@@ -341,7 +362,9 @@ export function TasteClient() {
               <li key={st}>
                 <div className="taste-bar-label">
                   <span>{statusLabel(st)}</span>
-                  <span>{n}</span>
+                  <span>
+                    <CountTick value={n} />
+                  </span>
                 </div>
                 <div className="taste-bar-track">
                   <div
@@ -363,7 +386,9 @@ export function TasteClient() {
               <li key={f.format}>
                 <div className="taste-bar-label">
                   <span>{f.format}</span>
-                  <span>{f.count}</span>
+                  <span>
+                    <CountTick value={f.count} />
+                  </span>
                 </div>
                 <div className="taste-bar-track">
                   <div
