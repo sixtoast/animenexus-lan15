@@ -9,12 +9,12 @@ See [`MICRO_SHIP_CHECKLIST.md`](./MICRO_SHIP_CHECKLIST.md).
 | Sprint | Focus | Status |
 |--------|--------|--------|
 | 20 | Cache + failover | Done |
-| **21** | Themes enrichment | **Done** |
-| 22+ | More secondary (TMDB optional, etc.) | Queued |
+| 21 | Themes (AnimeThemes + Jikan) | Done |
+| **22** | External links + detail cache | **Done** |
+| 23+ | Optional extras | Queued |
 
-### Sprint 21
+### Sprint 22
 
-- `lib/providers/animethemes.ts` — soft-fail OP/ED from AnimeThemes.moe
-- `lib/themes-enrich.ts` — merge AnimeThemes + Jikan; honest source note
-- Detail: detail-query fails → basic `fetchAnimeById`
-- Theme rows: AnimeThemes link when known + YouTube search
+- `lib/external-links.ts` — AniList / MAL / Kitsu / Shikimori only when id known
+- Detail section **External catalogs**
+- `fetchAnimeDetail` process-cached (120s) + 429 retry
