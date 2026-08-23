@@ -7,6 +7,7 @@ import {
   type ReactNode,
   type MouseEvent,
 } from "react";
+import { playCue } from "@/lib/sound-engine";
 
 export type ModalVariant = "center" | "drawer" | "sheet";
 
@@ -14,18 +15,16 @@ type Props = {
   open: boolean;
   onClose: () => void;
   title?: string;
-  /** Accessible name when title is omitted or visual-only */
   label?: string;
   variant?: ModalVariant;
   children: ReactNode;
-  /** Optional header actions (settings icons, etc.) */
   headerActions?: ReactNode;
-  /** Wider center modal */
   size?: "sm" | "md" | "lg";
-  /** Hide default close button */
   hideClose?: boolean;
   className?: string;
   panelClassName?: string;
+  /** Skip modal SFX (e.g. nested) */
+  silent?: boolean;
 };
 
 function focusables(root: HTMLElement) {
@@ -48,12 +47,13 @@ export function Modal({
   hideClose,
   className,
   panelClassName,
+  silent = false,
 }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
   const prevFocus = useRef<HTMLElement | null>(null);
+  const wasOpen = useRef(false);
   const titleId = useId();
 
-  // Body scroll lock
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -63,7 +63,17 @@ export function Modal({
     };
   }, [open]);
 
-  // Focus management
+  // Open / close cues once per transition
+  useEffect(() => {
+    if (open && !wasOpen.current) {
+      if (!silent) playCue("modal_open");
+      wasOpen.current = true;
+    } else if (!open && wasOpen.current) {
+      if (!silent) playCue("modal_close");
+      wasOpen.current = false;
+    }
+  }, [open, silent]);
+
   useEffect(() => {
     if (!open) return;
     prevFocus.current = document.activeElement as HTMLElement | null;
@@ -72,8 +82,9 @@ export function Modal({
 
     const nodes = focusables(panel);
     const first = nodes[0] || panel;
-    // Prefer autofocus input
-    const auto = panel.querySelector<HTMLElement>("[data-autofocus], input, textarea");
+    const auto = panel.querySelector<HTMLElement>(
+      "[data-autofocus], input, textarea",
+    );
     (auto || first).focus();
 
     const onKey = (e: KeyboardEvent) => {
