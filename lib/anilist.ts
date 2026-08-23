@@ -13,11 +13,11 @@ import {
   shikiSearch,
   SHIKI_ID_OFFSET,
 } from "./providers/shikimori";
-import { cacheKey, cachedFetch } from "./api-cache";
+import { CACHE_TTL, cacheKey, dedupedFetch } from "./api-cache";
+import { withProviderLimit } from "./provider-rate-limit";
 
 export const ANILIST_ENDPOINT = "https://graphql.anilist.co";
 
-/** Last successful provider label for observability (server logs / debug). */
 let lastSource: "anilist" | "kitsu" | "shikimori" = "anilist";
 export function getLastCatalogSource() {
   return lastSource;
@@ -92,7 +92,7 @@ async function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function anilistFetch<T>(
+async function anilistFetchRaw<T>(
   query: string,
   variables: Record<string, unknown> = {},
   attempt = 0,
@@ -110,12 +110,11 @@ async function anilistFetch<T>(
   }
   const res = await fetch(ANILIST_ENDPOINT, init);
 
-  // Gentle single retry on rate limit
   if (res.status === 429 && attempt < 1) {
     const ra = res.headers.get("Retry-After");
     const wait = ra ? Math.min(5000, parseInt(ra, 10) * 1000 || 1200) : 1200;
     await sleep(wait);
-    return anilistFetch(query, variables, attempt + 1);
+    return anilistFetchRaw(query, variables, attempt + 1);
   }
 
   if (!res.ok) {
@@ -132,7 +131,14 @@ async function anilistFetch<T>(
   return json.data;
 }
 
-/** Run primary, then fallbacks in order. Logs once on failover. */
+/** Rate-limited AniList GraphQL */
+export async function anilistFetch<T>(
+  query: string,
+  variables: Record<string, unknown> = {},
+): Promise<T> {
+  return withProviderLimit("anilist", () => anilistFetchRaw<T>(query, variables));
+}
+
 async function withFallbacks<T>(
   label: string,
   primary: () => Promise<T>,
@@ -245,15 +251,18 @@ export async function fetchDiscover(
   adultFilter: AnimeFilters["adultFilter"] = "exclude",
 ): Promise<AnimePage> {
   const key = cacheKey(["discover", feed, page, perPage, adultFilter]);
-  return cachedFetch(key, () =>
-    withFallbacks(
-      "discover",
-      () => anilistDiscover(feed, page, perPage, adultFilter),
-      [
-        { name: "Kitsu", run: () => kitsuDiscover(feed, page, perPage) },
-        { name: "Shikimori", run: () => shikiDiscover(feed, page, perPage) },
-      ],
-    ),
+  return dedupedFetch(
+    key,
+    () =>
+      withFallbacks(
+        "discover",
+        () => anilistDiscover(feed, page, perPage, adultFilter),
+        [
+          { name: "Kitsu", run: () => kitsuDiscover(feed, page, perPage) },
+          { name: "Shikimori", run: () => shikiDiscover(feed, page, perPage) },
+        ],
+      ),
+    CACHE_TTL.catalog,
   );
 }
 
@@ -302,11 +311,14 @@ export async function searchAnime(
   perPage = 24,
 ): Promise<AnimePage> {
   const key = cacheKey(["search", search.trim().toLowerCase(), page, perPage]);
-  return cachedFetch(key, () =>
-    withFallbacks("search", () => anilistSearch(search, page, perPage), [
-      { name: "Kitsu", run: () => kitsuSearch(search, page, perPage) },
-      { name: "Shikimori", run: () => shikiSearch(search, page, perPage) },
-    ]),
+  return dedupedFetch(
+    key,
+    () =>
+      withFallbacks("search", () => anilistSearch(search, page, perPage), [
+        { name: "Kitsu", run: () => kitsuSearch(search, page, perPage) },
+        { name: "Shikimori", run: () => shikiSearch(search, page, perPage) },
+      ]),
+    CACHE_TTL.catalog,
   );
 }
 
@@ -326,6 +338,32 @@ async function anilistById(id: number): Promise<Anime | null> {
   return mapAniListMedia(data.Media);
 }
 
+/** Batch fetch by AniList ids — avoids N+1 on grids of known ids. */
+export async function fetchAnimeByIds(ids: number[]): Promise<Anime[]> {
+  const unique = [...new Set(ids.filter((id) => id > 0 && id < KITSU_ID_OFFSET))];
+  if (!unique.length) return [];
+  const key = cacheKey(["byIds", unique.slice().sort((a, b) => a - b).join(",")]);
+  return dedupedFetch(
+    key,
+    async () => {
+      const query = `
+        query ($ids: [Int]) {
+          Page(page: 1, perPage: 50) {
+            media(type: ANIME, id_in: $ids) {
+              ${MEDIA_FIELDS}
+            }
+          }
+        }
+      `;
+      const data = await anilistFetch<{
+        Page: { media: Record<string, unknown>[] };
+      }>(query, { ids: unique.slice(0, 50) });
+      return (data.Page.media || []).map(mapAniListMedia);
+    },
+    CACHE_TTL.catalog,
+  );
+}
+
 export async function fetchAnimeById(id: number): Promise<Anime | null> {
   if (id >= SHIKI_ID_OFFSET) {
     lastSource = "shikimori";
@@ -337,33 +375,36 @@ export async function fetchAnimeById(id: number): Promise<Anime | null> {
   }
 
   const key = cacheKey(["byId", id]);
-  return cachedFetch(key, () =>
-    withFallbacks(
-      "byId",
-      async () => {
-        const a = await anilistById(id);
-        if (!a) throw new Error("AniList media not found");
-        return a;
-      },
-      [
-        {
-          name: "Kitsu",
-          run: async () => {
-            const a = await kitsuById(id);
-            if (!a) throw new Error("Kitsu not found");
-            return a;
-          },
+  return dedupedFetch(
+    key,
+    () =>
+      withFallbacks(
+        "byId",
+        async () => {
+          const a = await anilistById(id);
+          if (!a) throw new Error("AniList media not found");
+          return a;
         },
-        {
-          name: "Shikimori",
-          run: async () => {
-            const a = await shikiById(id);
-            if (!a) throw new Error("Shikimori not found");
-            return a;
+        [
+          {
+            name: "Kitsu",
+            run: async () => {
+              const a = await kitsuById(id);
+              if (!a) throw new Error("Kitsu not found");
+              return a;
+            },
           },
-        },
-      ],
-    ).catch(() => null),
+          {
+            name: "Shikimori",
+            run: async () => {
+              const a = await shikiById(id);
+              if (!a) throw new Error("Shikimori not found");
+              return a;
+            },
+          },
+        ],
+      ).catch(() => null),
+    CACHE_TTL.catalog,
   );
 }
 
@@ -476,10 +517,13 @@ export async function fetchFiltered(
     page,
     perPage,
   ]);
-  return cachedFetch(key, () =>
-    withFallbacks("filtered", () => anilistFiltered(filters, page, perPage), [
-      { name: "Kitsu", run: () => kitsuFiltered(filters, page, perPage) },
-      { name: "Shikimori", run: () => shikiFiltered(filters, page, perPage) },
-    ]),
+  return dedupedFetch(
+    key,
+    () =>
+      withFallbacks("filtered", () => anilistFiltered(filters, page, perPage), [
+        { name: "Kitsu", run: () => kitsuFiltered(filters, page, perPage) },
+        { name: "Shikimori", run: () => shikiFiltered(filters, page, perPage) },
+      ]),
+    CACHE_TTL.catalog,
   );
 }
