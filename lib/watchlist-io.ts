@@ -62,29 +62,112 @@ export function parseWatchlistImport(raw: string): WatchlistEntry[] {
   return out;
 }
 
+/** How to resolve progress/status conflicts on import */
+export type ImportConflictPolicy =
+  | "keep_local" // never overwrite existing
+  | "prefer_incoming" // always take import
+  | "furthest_progress"; // max progress; status from the side with more progress
+
+export type MergeReport = {
+  added: number;
+  updated: number;
+  skipped: number;
+  conflicts: number;
+  total: number;
+};
+
+function mergeEntry(
+  prev: WatchlistEntry,
+  incoming: WatchlistEntry,
+  policy: ImportConflictPolicy,
+): { entry: WatchlistEntry; conflict: boolean; applied: boolean } {
+  const progressDiff = prev.progress !== incoming.progress;
+  const statusDiff = prev.watchStatus !== incoming.watchStatus;
+  const conflict = progressDiff || statusDiff;
+
+  if (policy === "keep_local") {
+    return { entry: prev, conflict, applied: false };
+  }
+
+  if (policy === "prefer_incoming") {
+    return {
+      entry: {
+        ...prev,
+        ...incoming,
+        addedAt: prev.addedAt,
+        updatedAt: new Date().toISOString(),
+      },
+      conflict,
+      applied: true,
+    };
+  }
+
+  // furthest_progress
+  const useIncoming = incoming.progress > prev.progress;
+  if (!conflict) {
+    return {
+      entry: {
+        ...prev,
+        ...incoming,
+        addedAt: prev.addedAt,
+        updatedAt: new Date().toISOString(),
+      },
+      conflict: false,
+      applied: true,
+    };
+  }
+  if (useIncoming) {
+    return {
+      entry: {
+        ...prev,
+        ...incoming,
+        progress: Math.max(prev.progress, incoming.progress),
+        addedAt: prev.addedAt,
+        updatedAt: new Date().toISOString(),
+      },
+      conflict: true,
+      applied: true,
+    };
+  }
+  return {
+    entry: {
+      ...prev,
+      progress: Math.max(prev.progress, incoming.progress),
+      updatedAt: new Date().toISOString(),
+    },
+    conflict: true,
+    applied: progressDiff,
+  };
+}
+
 export function mergeWatchlistImport(
   incoming: WatchlistEntry[],
-): { added: number; updated: number; total: number } {
+  policy: ImportConflictPolicy = "furthest_progress",
+): MergeReport {
   const current = readWatchlist();
   const map = new Map(current.map((e) => [e.id, e]));
   let added = 0;
   let updated = 0;
+  let skipped = 0;
+  let conflicts = 0;
+
   for (const e of incoming) {
     if (map.has(e.id)) {
       const prev = map.get(e.id)!;
-      map.set(e.id, {
-        ...prev,
-        ...e,
-        addedAt: prev.addedAt,
-        updatedAt: new Date().toISOString(),
-      });
-      updated++;
+      const { entry, conflict, applied } = mergeEntry(prev, e, policy);
+      if (conflict) conflicts += 1;
+      if (applied) {
+        map.set(e.id, entry);
+        updated += 1;
+      } else {
+        skipped += 1;
+      }
     } else {
       map.set(e.id, e);
-      added++;
+      added += 1;
     }
   }
   const next = Array.from(map.values());
   writeWatchlist(next);
-  return { added, updated, total: next.length };
+  return { added, updated, skipped, conflicts, total: next.length };
 }
