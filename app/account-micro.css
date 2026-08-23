@@ -1,0 +1,29 @@
+/* Account settings micro (Sprint 14) */
+
+.account-progress {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.account-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(240, 160, 144, 0.75),
+    rgba(232, 192, 122, 0.9)
+  );
+  transition: width 180ms linear;
+}
+
+.account-panel--ok {
+  box-shadow: 0 0 0 1px rgba(143, 212, 160, 0.2);
+}
+
+.account-sync-msg {
+  animation: ixReveal var(--ix-trans-standard, 200ms ease) both;
+}
