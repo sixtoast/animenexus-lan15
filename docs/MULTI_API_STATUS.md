@@ -2,14 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–2 | Audit → Provider interface | Done |
-| **3** | Unified result types | **Done** |
-| 4 | Cache / rate-limit architecture | Next |
-| 5+ | Hardening + features | Queued |
+| 0–3 | Audit → Unified types | Done |
+| **4** | Cache / rate-limit | **Done** |
+| 5 | AniList hardening | Next |
+| 6+ | MAL / enrichment features | Queued |
 
-## Sprint 3
+## Sprint 4
 
-- `lib/enrichment-types.ts` — domain import path + `AnimeEnrichmentBundle`
-- Themes → `AnimeTheme[]` with `source`
-- Sauce → `SceneMatch[]` with `source: "trace.moe"`
-- Partial errors model: `errors` map, not hard fail
+- `lib/api-cache.ts` — category TTLs (`identity` / `medium` / `catalog` / `short`) + `dedupedFetch`
+- `lib/provider-rate-limit.ts` — min interval, failure counting, circuit open, `withProviderLimit`
+- Rule unchanged: optional provider failure must not break AniList Detail
