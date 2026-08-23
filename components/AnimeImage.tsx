@@ -1,9 +1,7 @@
 "use client";
 
 /**
- * AnimeImage (Sprint 31).
- * Single cover abstraction: fallback, aspect, lazy, optional Next optimizer,
- * view-transition name, decorative vs content alt.
+ * AnimeImage — cover abstraction + load reveal (Micro Sprint 6).
  */
 
 import Image from "next/image";
@@ -22,17 +20,13 @@ function canOptimize(src: string): boolean {
 
 export type AnimeImageProps = {
   src?: string | null;
-  /** Visible title for accessible alt when contentful */
   title?: string;
-  /** Decorative (default) — alt=""; set contentful for meaningful alt */
   decorative?: boolean;
   width?: number;
   height?: number;
   sizes?: string;
   className?: string;
-  /** CSS aspect-ratio, e.g. "2 / 3" */
   aspect?: string;
-  /** view-transition-name for shared element morph */
   viewTransitionName?: string;
   priority?: boolean;
   fill?: boolean;
@@ -52,6 +46,7 @@ export function AnimeImage({
   fill = false,
 }: AnimeImageProps) {
   const [broken, setBroken] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const resolved =
     broken || !src || src.trim() === "" ? PLACEHOLDER : src.trim();
   const alt = decorative ? "" : title ? title : "Anime cover";
@@ -65,6 +60,11 @@ export function AnimeImage({
       : {}),
   };
 
+  const cls =
+    `${className} anime-img ${loaded ? "anime-img--in" : "anime-img--wait"}`.trim();
+
+  const onLoad = () => setLoaded(true);
+
   if (canOptimize(resolved) && !fill) {
     return (
       <Image
@@ -73,9 +73,10 @@ export function AnimeImage({
         width={width}
         height={height}
         sizes={sizes}
-        className={className}
+        className={cls}
         style={style}
         priority={priority}
+        onLoad={onLoad}
         onError={() => setBroken(true)}
       />
     );
@@ -88,9 +89,10 @@ export function AnimeImage({
         alt={alt}
         fill
         sizes={sizes}
-        className={className}
+        className={cls}
         style={{ objectFit: "cover", ...style }}
         priority={priority}
+        onLoad={onLoad}
         onError={() => setBroken(true)}
       />
     );
@@ -105,8 +107,9 @@ export function AnimeImage({
       height={fill ? undefined : height}
       loading={priority ? "eager" : "lazy"}
       decoding="async"
-      className={className}
+      className={cls}
       style={style}
+      onLoad={onLoad}
       onError={() => setBroken(true)}
     />
   );
