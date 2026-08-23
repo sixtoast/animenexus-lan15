@@ -2,16 +2,16 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–5 | Language → Filters | Done |
-| **6** | Loading → content | **Done** |
-| 7 | Watchlist editing | Next |
-| 8–10 | Seal → Oracle | Queued |
+| 0–6 | Language → Loading | Done |
+| **7** | Watchlist editing | **Done** |
+| 8 | Seal Moment premium | Next |
+| 9–10 | Detail · Oracle | Queued |
 
-## Sprint 6
+## Sprint 7
 
-- Theatre show delay 180ms (no flash on instant responses)
-- Progressive phase copy for longer waits
-- `signal_acquired` only after ≥1.2s visible wait
-- Poster images: opacity + luminance reveal on load
-- Grid enter stagger capped (max index 12)
-- No fake progress %
+- Status change: row flash + left accent by status
+- Progress bar animates width (not from zero each paint)
+- `progress_up` / `progress_down` cues
+- planning→watching → `seal`; completed → `complete`
+- Remove: fade/slide out then delete + `remove`
+- No full-screen seal on every progress tick
