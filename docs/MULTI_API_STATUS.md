@@ -2,15 +2,15 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–4 | Audit → Cache/rate-limit | Done |
-| **5** | AniList hardening | **Done** |
-| 6 | MAL identity + import | Next |
-| 7+ | Sync / enrichment features | Queued |
+| 0–5 | Foundation | Done |
+| **6** | MAL identity + import | **Done** |
+| 7 | Optional MAL sync | Queued (needs OAuth) |
+| 8+ | Jikan enrichment / schedule / … | Queued |
 
-## Sprint 5
+## Sprint 6
 
-- All catalog fetches: `dedupedFetch` + `CACHE_TTL.catalog`
-- GraphQL via `withProviderLimit("anilist")`
-- `fetchAnimeByIds` batch helper (`id_in`, max 50)
-- Detail: shared rate-limit + medium TTL dedupe
-- Still no card-level per-tile AniList fetches introduced
+- `lib/mal-resolve.ts` — `Media(idMal:)` → AniList id (confidence 1.0)
+- `fetchMalUserList` resolves ids; notes `source:mal` / `source:mal-unresolved`
+- `mergeWatchlistImport(policy)` — `keep_local` | `prefer_incoming` | `furthest_progress`
+- No silent overwrite of higher local progress under furthest_progress
+- **Not yet:** MAL OAuth continuous sync (Sprint 7)
