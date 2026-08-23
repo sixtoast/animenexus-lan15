@@ -1,5 +1,5 @@
 /**
- * Mobile experience (Sprint 33 + Awwwards Sprint 16).
+ * Mobile experience (Sprint 33 + Awwwards 16 + Micro 17).
  * Safe areas · min touch targets · sticky CTAs · Shelf / Frequency.
  */
 
@@ -45,7 +45,6 @@ body {
     min-width: 4.5rem;
   }
 
-  /* Manage | Shelf presentation */
   .wl-presentation-toggle {
     display: flex;
     gap: 8px;
@@ -57,7 +56,6 @@ body {
     min-width: 5.5rem;
   }
 
-  /* Living Shelf on phone */
   .living-shelf-stage {
     height: min(48vh, 360px);
     min-height: 240px;
@@ -85,7 +83,6 @@ body {
     min-height: 44px;
   }
 
-  /* Journey modes */
   .journey-mode-toggle .btn {
     min-height: 44px;
   }
@@ -198,7 +195,6 @@ body {
     right: max(16px, env(safe-area-inset-right));
   }
 
-  /* Mascot dock — clear thumb zone */
   .mascot-dock {
     bottom: max(12px, env(safe-area-inset-bottom));
     right: max(8px, env(safe-area-inset-right));
@@ -210,6 +206,83 @@ body {
   .mascot-enable {
     min-height: 40px;
     min-width: 40px;
+  }
+
+  /* Micro-programme surfaces (Sprint 17) */
+  .feed-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .feed-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .feed-tab {
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 8px 14px;
+  }
+
+  .filter-panel .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-field {
+    width: 100%;
+  }
+
+  .filter-actions .btn {
+    min-height: 44px;
+  }
+
+  .wl-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .wl-controls .btn,
+  .wl-controls select,
+  .wl-controls input {
+    min-height: 44px;
+  }
+
+  .challenge-options .btn {
+    min-height: 48px;
+  }
+
+  .sound-preview-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .sound-preview-row .btn {
+    min-height: 40px;
+  }
+
+  .oracle-bands .feed-tab {
+    min-height: 42px;
+  }
+
+  .radar-prefs .btn {
+    min-height: 44px;
+  }
+
+  /* Soften hover-only lifts on touch (no sticky :hover lift) */
+  .ix-hover:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .ix-hover:active:not(:disabled) {
+    transform: translateY(var(--ix-press-y)) scale(var(--ix-press-scale));
   }
 }
 
@@ -239,5 +312,17 @@ body {
 
   .living-shelf-stage {
     height: min(40vh, 280px);
+  }
+}
+
+/* Prefer reduced motion on small screens when system asks */
+@media (max-width: 899px) and (prefers-reduced-motion: reduce) {
+  .anime-img--wait,
+  .anime-img--in,
+  .vibe-deal,
+  .radar-item.radar-ping,
+  .challenge-medal-badge {
+    animation: none !important;
+    transition: none !important;
   }
 }
