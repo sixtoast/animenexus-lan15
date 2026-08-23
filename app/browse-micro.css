@@ -1,0 +1,90 @@
+/* Browse filters & search (Micro Sprint 5) */
+
+.filter-panel {
+  transition:
+    box-shadow var(--ix-trans-standard, 200ms ease),
+    border-color var(--ix-trans-fast, 90ms ease);
+}
+
+.filter-panel--search-focus {
+  border-color: rgba(240, 160, 144, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(240, 160, 144, 0.12),
+    0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.filter-search {
+  transition:
+    border-color var(--ix-trans-fast, 90ms ease),
+    box-shadow var(--ix-trans-standard, 200ms ease),
+    transform var(--ix-trans-fast, 90ms ease);
+}
+
+.filter-search--valid {
+  border-color: rgba(240, 160, 144, 0.4);
+}
+
+.filter-search--pulse {
+  transform: scale(0.995);
+  box-shadow: 0 0 0 3px rgba(240, 160, 144, 0.2);
+}
+
+.btn-search-ready {
+  box-shadow: 0 0 16px rgba(240, 160, 144, 0.28);
+}
+
+.filter-field {
+  transition:
+    opacity var(--ix-trans-standard, 200ms ease),
+    transform var(--ix-trans-standard, 200ms ease);
+}
+
+.filter-field--flash .filter-label {
+  color: var(--color-accent);
+}
+
+.filter-field--flash .filter-input {
+  border-color: rgba(240, 160, 144, 0.5);
+  box-shadow: 0 0 0 2px rgba(240, 160, 144, 0.15);
+}
+
+.feed-tabs {
+  position: relative;
+}
+
+.feed-tab {
+  transition:
+    color var(--ix-trans-fast, 90ms ease),
+    background var(--ix-trans-standard, 200ms ease),
+    border-color var(--ix-trans-fast, 90ms ease),
+    transform var(--ix-trans-fast, 90ms ease);
+}
+
+.feed-tab.active {
+  transform: scale(1.02);
+}
+
+.meta-count {
+  font-variant-numeric: tabular-nums;
+  transition: color var(--ix-trans-fast, 90ms ease);
+}
+
+.browse-leave {
+  animation: browseLeave 160ms var(--ix-ease-soft, ease) both;
+}
+
+@keyframes browseLeave {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.6;
+  }
+}
+
+html[data-reduce-motion="true"] .filter-search--pulse,
+html[data-reduce-motion="true"] .feed-tab.active,
+html[data-reduce-motion="true"] .browse-leave {
+  transform: none;
+  animation: none;
+}
