@@ -2,6 +2,7 @@
  * Rich single-title fetch (studios, trailer, characters, relations + recommendations).
  */
 import { mapAniListMedia, ANILIST_ENDPOINT } from "./anilist";
+import { cacheKey, cachedFetch } from "./api-cache";
 import type { Anime, AnimeRelation, GraphEdge, GraphNode } from "./types";
 
 type GqlResponse<T> = {
@@ -9,9 +10,14 @@ type GqlResponse<T> = {
   errors?: { message: string }[];
 };
 
+async function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 async function gql<T>(
   query: string,
   variables: Record<string, unknown> = {},
+  attempt = 0,
 ): Promise<T> {
   const init: RequestInit & { next?: { revalidate: number } } = {
     method: "POST",
@@ -25,6 +31,14 @@ async function gql<T>(
     init.next = { revalidate: 120 };
   }
   const res = await fetch(ANILIST_ENDPOINT, init);
+
+  if (res.status === 429 && attempt < 1) {
+    const ra = res.headers.get("Retry-After");
+    const wait = ra ? Math.min(5000, parseInt(ra, 10) * 1000 || 1200) : 1200;
+    await sleep(wait);
+    return gql(query, variables, attempt + 1);
+  }
+
   if (!res.ok) throw new Error(`AniList HTTP ${res.status}`);
   const json = (await res.json()) as GqlResponse<T>;
   if (json.errors?.length) {
@@ -155,7 +169,7 @@ function mapRecommendations(
   return out;
 }
 
-export async function fetchAnimeDetail(id: number): Promise<Anime | null> {
+async function fetchAnimeDetailUncached(id: number): Promise<Anime | null> {
   const query = `
     query ($id: Int) {
       Media(id: $id, type: ANIME) {
@@ -241,6 +255,11 @@ export async function fetchAnimeDetail(id: number): Promise<Anime | null> {
   return anime;
 }
 
+export async function fetchAnimeDetail(id: number): Promise<Anime | null> {
+  const key = cacheKey(["detail", id]);
+  return cachedFetch(key, () => fetchAnimeDetailUncached(id), 120_000);
+}
+
 async function fetchMediaLinks(id: number): Promise<{
   relations: AnimeRelation[];
   recommendations: AnimeRelation[];
@@ -287,17 +306,11 @@ async function fetchMediaLinks(id: number): Promise<{
   return { relations, recommendations };
 }
 
-/** Flat list (detail page / simple fallback) */
 export async function fetchRelationsOnly(id: number): Promise<AnimeRelation[]> {
   const { relations, recommendations } = await fetchMediaLinks(id);
   return [...relations, ...recommendations];
 }
 
-/**
- * Multi-hop ancestry graph:
- * - hop 0: official relations + recommendations from center
- * - hop 1+: recommendations-of-recommendations (and edges between them)
- */
 export async function fetchAncestryGraph(
   rootId: number,
   opts?: { hopRecLimit?: number; maxNodes?: number },
@@ -344,7 +357,6 @@ export async function fetchAncestryGraph(
     }
   }
 
-  // Expand recommendations of first-hop recommendations
   const hop0Recs = root.recommendations.slice(0, hopRecLimit);
   const expansions = await Promise.all(
     hop0Recs.map(async (rec) => {
@@ -358,7 +370,6 @@ export async function fetchAncestryGraph(
   );
 
   for (const { parentId, links } of expansions) {
-    // A few official links from hop-1 titles help density without noise
     for (const r of links.relations.slice(0, 2)) {
       if (r.id === rootId) continue;
       if (!nodeMap.has(r.id)) {
