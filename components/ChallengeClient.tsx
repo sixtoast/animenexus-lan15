@@ -9,6 +9,8 @@ import { fireConfetti } from "@/components/ConfettiBurst";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { rankRecommendations } from "@/lib/recommend-rank";
 import { emitNexus } from "@/lib/nexus";
+import { playCue } from "@/lib/sound-engine";
+import { CountTick } from "@/components/ui/CountTick";
 
 type Mode = "silhouette" | "hard";
 
@@ -25,13 +27,13 @@ export function ChallengeClient() {
   const [streak, setStreak] = useState(0);
   const [hardGuess, setHardGuess] = useState("");
   const [shelfTuned, setShelfTuned] = useState(false);
+  const [medal, setMedal] = useState(false);
 
   const seed = useMemo(() => dailySeed(), []);
 
   const tunedPool = useMemo(() => {
     if (!pool.length) return pool;
     if (!ready || entries.length < 2) return pool;
-    // Keep every candidate; order so familiar frequencies land more often
     const ranked = rankRecommendations(pool, entries, {
       excludeIds: [],
       resonanceWeight: 0.55,
@@ -46,7 +48,6 @@ export function ChallengeClient() {
     (list: Anime[], extraSeed = 0) => {
       if (list.length < 4) return;
       const rnd = seededRandom(seed + extraSeed + list.length);
-      // Bias toward front of tuned list (shelf-aligned) without locking the answer
       const biasSpan = Math.max(4, Math.floor(list.length * 0.55));
       const idx = Math.floor(rnd() * biasSpan);
       const correct = list[idx];
@@ -64,6 +65,7 @@ export function ChallengeClient() {
       setOptions(titles);
       setResult(null);
       setHardGuess("");
+      setMedal(false);
     },
     [seed],
   );
@@ -91,7 +93,6 @@ export function ChallengeClient() {
     emitNexus({ type: "tool_opened", tool: "challenge" });
   }, [load]);
 
-  // Build first round once pool (and optional shelf tune) is ready
   useEffect(() => {
     if (!tunedPool.length) return;
     const tuned = ready && entries.length >= 2;
@@ -99,16 +100,26 @@ export function ChallengeClient() {
     buildRound(tunedPool, 0);
   }, [tunedPool, ready, entries.length, buildRound]);
 
+  function onCorrect() {
+    setMedal(true);
+    playCue("complete");
+    // Confetti only on longer streaks — keep reward physical, not noisy
+    if (streak + 1 >= 3) fireConfetti();
+    window.dispatchEvent(new CustomEvent("animenexus:lantern-pulse"));
+  }
+
   function answer(title: string) {
     if (!anime || result) return;
     const ok = title === anime.title;
     setResult(ok ? "ok" : "no");
     setStreak((s) => (ok ? s + 1 : 0));
     if (ok) {
-      showToast("Correct frequency!", "✨", true);
-      fireConfetti();
-      window.dispatchEvent(new CustomEvent("animenexus:lantern-pulse"));
-    } else showToast(`It was ${anime.title}`, "😅");
+      onCorrect();
+      showToast("Correct frequency!", "✦");
+    } else {
+      playCue("error");
+      showToast(`It was ${anime.title}`, "😅");
+    }
   }
 
   function hardSubmit(e: React.FormEvent) {
@@ -125,9 +136,10 @@ export function ChallengeClient() {
     setResult(ok ? "ok" : "no");
     setStreak((s) => (ok ? s + 1 : 0));
     if (ok) {
-      fireConfetti();
-      showToast("Correct frequency!", "✨", true);
-      window.dispatchEvent(new CustomEvent("animenexus:lantern-pulse"));
+      onCorrect();
+      showToast("Correct frequency!", "✦");
+    } else {
+      playCue("error");
     }
   }
 
@@ -165,7 +177,7 @@ export function ChallengeClient() {
         : "";
 
   return (
-    <div className="tools-panel">
+    <div className={"tools-panel" + (medal ? " challenge-medal" : "")}>
       <div className="feed-tabs" role="tablist">
         <button
           type="button"
@@ -184,11 +196,19 @@ export function ChallengeClient() {
       </div>
 
       <div className="challenge-hero">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={anime.image} alt="" className={imgClass} />
+        <div className="challenge-art-wrap">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={anime.image} alt="" className={imgClass} />
+          {medal ? (
+            <span className="challenge-medal-badge" aria-hidden>
+              ✦
+            </span>
+          ) : null}
+        </div>
         <div>
           <p className="daily-kicker">
-            Daily seed {seed} · Streak {streak}
+            Daily seed {seed} · Streak{" "}
+            <CountTick value={streak} className="challenge-streak" />
             {shelfTuned ? " · shelf-tuned" : ""}
           </p>
           <h2 className="challenge-q">
