@@ -3,7 +3,8 @@ import "./sprint-b-detail.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchAnimeDetail } from "@/lib/anilist-detail";
-import { fetchThemesFromJikan, youtubeSearchUrl } from "@/lib/jikan-themes";
+import { fetchAnimeById } from "@/lib/anilist";
+import { enrichThemes } from "@/lib/themes-enrich";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
 import { AnimeImage } from "@/components/AnimeImage";
 import { DetailCoverMaterial } from "@/components/DetailCoverMaterial";
@@ -26,11 +27,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const num = parseInt(id, 10);
   if (isNaN(num)) return { title: "Anime · AnimeNexus" };
   try {
-    const anime = await fetchAnimeDetail(num);
+    const anime =
+      (await fetchAnimeDetail(num).catch(() => null)) ||
+      (await fetchAnimeById(num));
     if (!anime) return { title: "Not found · AnimeNexus" };
     return {
       title: `${anime.title} · AnimeNexus`,
-      description: anime.description.slice(0, 160),
+      description: (anime.description || "").slice(0, 160),
     };
   } catch {
     return { title: "Anime · AnimeNexus" };
@@ -53,12 +56,9 @@ export default async function AnimeDetailPage({ params }: Props) {
   const num = parseInt(id, 10);
   if (isNaN(num)) notFound();
 
-  let anime;
-  try {
-    anime = await fetchAnimeDetail(num);
-  } catch {
-    notFound();
-  }
+  let anime =
+    (await fetchAnimeDetail(num).catch(() => null)) ||
+    (await fetchAnimeById(num));
   if (!anime) notFound();
 
   const score = anime.score > 0 ? anime.score.toFixed(1) : "—";
@@ -79,10 +79,11 @@ export default async function AnimeDetailPage({ params }: Props) {
       ? anime.episodes
       : parseInt(String(anime.episodes), 10) || 0;
 
-  let themes: { openings: string[]; endings: string[] } | null = null;
-  if (anime.idMal) {
-    themes = await fetchThemesFromJikan(anime.idMal);
-  }
+  const themes = await enrichThemes({
+    anilistId: anime.anilist_id || anime.id,
+    idMal: anime.idMal,
+    title: anime.title,
+  });
 
   const relations = anime.relations || [];
   const relationsSummary = relations
@@ -137,6 +138,9 @@ export default async function AnimeDetailPage({ params }: Props) {
               {season ? <span>{season}</span> : null}
               {epNum > 0 ? <span>{epNum} ep</span> : null}
               {anime.duration > 0 ? <span>{anime.duration} min</span> : null}
+              {anime.source && anime.source !== "anilist" ? (
+                <span className="detail-source">via {anime.source}</span>
+              ) : null}
             </div>
 
             {anime.tags?.length ? (
@@ -229,16 +233,28 @@ export default async function AnimeDetailPage({ params }: Props) {
         (themes.openings.length > 0 || themes.endings.length > 0) ? (
           <section className="detail-section">
             <h2>Themes (OP / ED)</h2>
+            <p className="tools-hint" style={{ marginBottom: 10 }}>
+              Sources: {themes.sourceNote}. Links open external sites.
+            </p>
             <div className="theme-lists">
               {themes.openings.length > 0 ? (
                 <div>
                   <h3 className="theme-sub">Openings</h3>
                   <ul className="theme-ul">
-                    {themes.openings.slice(0, 8).map((t) => (
-                      <li key={t}>
-                        <span>{t}</span>{" "}
+                    {themes.openings.map((t) => (
+                      <li key={t.label}>
+                        <span>{t.label}</span>{" "}
+                        {t.animethemesUrl ? (
+                          <a
+                            href={t.animethemesUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            AnimeThemes
+                          </a>
+                        ) : null}{" "}
                         <a
-                          href={youtubeSearchUrl(t)}
+                          href={t.youtubeSearch}
                           target="_blank"
                           rel="noreferrer"
                         >
@@ -253,11 +269,20 @@ export default async function AnimeDetailPage({ params }: Props) {
                 <div>
                   <h3 className="theme-sub">Endings</h3>
                   <ul className="theme-ul">
-                    {themes.endings.slice(0, 8).map((t) => (
-                      <li key={`ed-${t}`}>
-                        <span>{t}</span>{" "}
+                    {themes.endings.map((t) => (
+                      <li key={`ed-${t.label}`}>
+                        <span>{t.label}</span>{" "}
+                        {t.animethemesUrl ? (
+                          <a
+                            href={t.animethemesUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            AnimeThemes
+                          </a>
+                        ) : null}{" "}
                         <a
-                          href={youtubeSearchUrl(t)}
+                          href={t.youtubeSearch}
                           target="_blank"
                           rel="noreferrer"
                         >
