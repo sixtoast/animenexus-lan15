@@ -2,16 +2,16 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–4 | Language → Navbar | Done |
-| **5** | Filters & search | **Done** |
-| 6 | Loading → content | Next |
-| 7–10 | Watchlist → Oracle | Queued |
+| 0–5 | Language → Filters | Done |
+| **6** | Loading → content | **Done** |
+| 7 | Watchlist editing | Next |
+| 8–10 | Seal → Oracle | Queued |
 
-## Sprint 5
+## Sprint 6
 
-- Search focus deepens panel; valid query arms Search button
-- Enter: input pulse → apply
-- Filter select: label flash + `filter_select` (after change, not while scrolling options)
-- Total count eases old → new
-- Feed tabs soft scale on active
-- Empty path: brief leave fade before SignalEmpty
+- Theatre show delay 180ms (no flash on instant responses)
+- Progressive phase copy for longer waits
+- `signal_acquired` only after ≥1.2s visible wait
+- Poster images: opacity + luminance reveal on load
+- Grid enter stagger capped (max index 12)
+- No fake progress %
