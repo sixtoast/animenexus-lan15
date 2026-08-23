@@ -1,4 +1,6 @@
-/** trace.moe result normalization */
+/** trace.moe result normalization (Sprint 3 provenance) */
+
+import type { SceneMatch } from "./enrichment-types";
 
 export type SauceHit = {
   anilistId: number | null;
@@ -13,6 +15,8 @@ export type SauceHit = {
 
 export type SauceResponse = {
   hits: SauceHit[];
+  /** Normalised for services */
+  matches: SceneMatch[];
   error?: string;
 };
 
@@ -31,14 +35,18 @@ export function mapTraceResults(raw: {
   result?: TraceResult[];
   error?: string;
 }): SauceResponse {
-  if (raw.error) return { hits: [], error: raw.error };
-  const hits: SauceHit[] = (raw.result || []).map((r) => {
+  if (raw.error) return { hits: [], matches: [], error: raw.error };
+
+  const hits: SauceHit[] = [];
+  const matches: SceneMatch[] = [];
+
+  for (const r of raw.result || []) {
     let anilistId: number | null = null;
     if (typeof r.anilist === "number") anilistId = r.anilist;
     else if (r.anilist && typeof r.anilist === "object" && r.anilist.id) {
       anilistId = r.anilist.id;
     }
-    return {
+    const hit: SauceHit = {
       anilistId,
       filename: r.filename || "unknown",
       episode: r.episode ?? null,
@@ -48,8 +56,21 @@ export function mapTraceResults(raw: {
       video: r.video,
       image: r.image,
     };
-  });
-  return { hits };
+    hits.push(hit);
+    matches.push({
+      anilistId: hit.anilistId,
+      episode: hit.episode,
+      from: hit.from,
+      to: hit.to,
+      similarity: hit.similarity,
+      filename: hit.filename,
+      image: hit.image,
+      video: hit.video,
+      source: "trace.moe",
+    });
+  }
+
+  return { hits, matches };
 }
 
 export function formatTime(sec: number): string {
