@@ -16,6 +16,7 @@ import { DetailAI } from "@/components/DetailAI";
 import { AncestryGraph } from "@/components/AncestryGraph";
 import { DetailRelatedClient } from "@/components/DetailRelatedClient";
 import { MemoryVisit } from "@/components/MemoryVisit";
+import { EpisodeList } from "@/components/EpisodeList";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -178,6 +179,9 @@ export default async function AnimeDetailPage({ params }: Props) {
               <Link href="/watchlist" className="btn btn-outline btn-sm">
                 Open watchlist
               </Link>
+              <a href="#episodes" className="btn btn-outline btn-sm">
+                Episodes
+              </a>
               <a href="#ancestry" className="btn btn-outline btn-sm">
                 Ancestry
               </a>
@@ -217,28 +221,10 @@ export default async function AnimeDetailPage({ params }: Props) {
           </section>
         ) : null}
 
-        {jikan.episodes.length > 0 ? (
-          <section className="detail-section" id="episodes">
-            <h2>Episodes</h2>
-            <p className="tools-hint" style={{ marginBottom: 10 }}>
-              Source: Jikan / MAL — titles only when provided (no invented names).
-            </p>
-            <ul className="theme-ul">
-              {jikan.episodes.slice(0, 40).map((ep) => (
-                <li key={ep.number}>
-                  <strong>Episode {ep.number}</strong>
-                  {ep.title ? ` · ${ep.title}` : null}
-                  {ep.airedAt ? (
-                    <span className="tools-hint"> · {ep.airedAt.slice(0, 10)}</span>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-            {jikan.episodes.length > 40 ? (
-              <p className="tools-hint">Showing first 40 of {jikan.episodes.length}.</p>
-            ) : null}
-          </section>
-        ) : null}
+        <EpisodeList
+          episodes={jikan.episodes}
+          sourceNote="Source: Jikan / MAL — titles only when provided (no invented names)."
+        />
 
         {jikan.staff.length > 0 ? (
           <section className="detail-section">
