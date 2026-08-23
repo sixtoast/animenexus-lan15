@@ -1,4 +1,4 @@
-/* Navbar — console chrome + diegetic Frequency (Sprint 11) */
+/* Navbar — continuous state + Frequency (Micro Sprint 4) */
 
 .navbar {
   position: sticky;
@@ -31,6 +31,23 @@
 
 .logo span {
   color: var(--color-accent);
+  transition: text-shadow var(--ix-trans-deliberate, 420ms ease);
+}
+
+.logo--pulse span {
+  animation: logoAccentPulse 1.1s var(--ix-ease-soft, ease) both;
+}
+
+@keyframes logoAccentPulse {
+  0% {
+    text-shadow: 0 0 0 transparent;
+  }
+  40% {
+    text-shadow: 0 0 18px rgba(240, 160, 144, 0.55);
+  }
+  100% {
+    text-shadow: 0 0 0 transparent;
+  }
 }
 
 .logo:hover {
@@ -50,9 +67,34 @@
   list-style: none;
   flex-wrap: wrap;
   justify-content: center;
+  position: relative;
+}
+
+/* Traveling active surface */
+.nav-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #e8a598, #d4847a);
+  box-shadow: 0 2px 12px rgba(240, 160, 144, 0.28);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 0;
+  transition:
+    transform var(--ix-trans-standard, 200ms var(--ix-ease-expo, ease)),
+    width var(--ix-trans-standard, 200ms var(--ix-ease-expo, ease)),
+    opacity var(--ix-trans-fast, 90ms ease);
+}
+
+.nav-indicator--on {
+  opacity: 1;
 }
 
 .nav-link {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
@@ -67,9 +109,9 @@
   border: 1px solid transparent;
   line-height: 1.15;
   transition:
-    color var(--duration-fast, 0.18s) var(--ease-out, ease),
-    background var(--duration-fast, 0.18s) var(--ease-out, ease),
-    border-color var(--duration-fast, 0.18s) var(--ease-out, ease);
+    color var(--ix-trans-fast, 90ms ease),
+    opacity var(--ix-trans-fast, 90ms ease),
+    background var(--ix-trans-fast, 90ms ease);
 }
 
 .nav-link-label {
@@ -93,15 +135,17 @@
 
 .nav-link:hover {
   color: #fff;
+  opacity: 1;
   background: rgba(255, 255, 255, 0.04);
 }
 
+/* Active text sits on sliding indicator */
 .nav-link.active {
   color: #2a1210;
-  background: linear-gradient(135deg, #e8a598, #d4847a);
+  background: transparent;
   border-color: transparent;
   font-weight: 700;
-  box-shadow: 0 2px 12px rgba(240, 160, 144, 0.28);
+  box-shadow: none;
 }
 
 .nav-link.active .nav-link-poetic {
@@ -111,6 +155,7 @@
 
 .nav-link.active:hover {
   color: #2a1210;
+  background: transparent;
 }
 
 .nav-right {
@@ -120,43 +165,16 @@
   flex-shrink: 0;
 }
 
-.nav-signal {
-  display: none;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 50px;
-  border: 1px solid rgba(109, 206, 138, 0.28);
-  background: rgba(109, 206, 138, 0.08);
+/* Theme token crossfade — avoid expensive filters */
+html {
+  transition:
+    color 280ms var(--ix-ease-soft, ease),
+    background-color 280ms var(--ix-ease-soft, ease);
 }
 
-.nav-signal-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #6dce8a;
-  box-shadow: 0 0 8px rgba(109, 206, 138, 0.7);
-  animation: nav-pulse 1.8s ease-in-out infinite;
-}
-
-.nav-signal-label {
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #9eddb0;
-}
-
-@keyframes nav-pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.55;
-    transform: scale(0.85);
-  }
+html[data-theme="light"] .navbar {
+  background: rgba(255, 250, 246, 0.82);
+  border-bottom-color: rgba(120, 70, 55, 0.12);
 }
 
 /* Mobile Frequency sheet */
@@ -170,7 +188,29 @@
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   cursor: pointer;
-  animation: nx-overlay-in var(--duration-fast, 0.18s) ease both;
+  animation: nav-scrim-in 160ms ease both;
+}
+
+.nav-scrim--out {
+  animation: nav-scrim-out 160ms ease both;
+}
+
+@keyframes nav-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nav-scrim-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 .nav-mobile {
@@ -195,7 +235,11 @@
     0 0 40px rgba(240, 160, 144, 0.06);
   max-height: min(78vh, 560px);
   overflow-y: auto;
-  animation: nav-sheet-in var(--duration-med, 0.28s) var(--ease-out, ease) both;
+  animation: nav-sheet-in 220ms var(--ix-ease-expo, ease) 40ms both;
+}
+
+.nav-mobile--out {
+  animation: nav-sheet-out 160ms ease both;
 }
 
 @keyframes nav-sheet-in {
@@ -206,6 +250,17 @@
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes nav-sheet-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
   }
 }
 
@@ -251,7 +306,10 @@
   font-weight: 550;
   font-size: 0.95rem;
   border: 1px solid transparent;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background var(--ix-trans-fast, 90ms ease),
+    color var(--ix-trans-fast, 90ms ease),
+    border-color var(--ix-trans-fast, 90ms ease);
   min-height: 48px;
 }
 
@@ -298,6 +356,18 @@
   padding: 3px 8px;
   border-radius: 50px;
   border: 1px solid rgba(240, 160, 144, 0.3);
+  animation: hereIn 200ms var(--ix-ease-soft, ease) both;
+}
+
+@keyframes hereIn {
+  from {
+    opacity: 0;
+    transform: translateX(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .nav-mobile-foot {
@@ -319,16 +389,24 @@
   .nav-scrim {
     display: none !important;
   }
+}
 
-  .nav-signal {
-    display: inline-flex;
-  }
+html[data-reduce-motion="true"] .nav-indicator,
+html[data-reduce-motion="true"] .nav-mobile,
+html[data-reduce-motion="true"] .nav-scrim,
+html[data-reduce-motion="true"] .logo--pulse span {
+  transition: none;
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nav-signal-dot,
+  .nav-indicator {
+    transition: none;
+  }
   .nav-mobile,
-  .nav-scrim {
+  .nav-scrim,
+  .nav-mobile-here,
+  .logo--pulse span {
     animation: none;
   }
 }
