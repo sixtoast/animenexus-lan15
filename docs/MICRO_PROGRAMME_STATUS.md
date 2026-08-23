@@ -2,14 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–13 | Language → Challenge | Done |
-| **14** | Account settings | **Done** |
-| 15+ | Consistency → APIs | Queued |
+| 0–14 | Language → Account | Done |
+| **15** | Consistency audit | **Done** |
+| 16–19 | Sound polish / mobile | Optional |
+| 20+ | API enrichment | Queued |
 
-## Sprint 14
+## Sprint 15
 
-- Connect / sync / MAL import: indeterminate progress bar
-- Success → panel flash + `success`
-- Failure → `error`
-- Disconnect → soft `filter_select`
-- SoundSettings remains the opt-in home
+- Global `.btn` press/transition baseline via ix tokens
+- Inputs/focus share `--ix-trans-*`
+- Legacy `--ease-out` / `--ease-soft` aliased to ix easings
+- Audit notes: `docs/INTERACTION_CONSISTENCY.md`
