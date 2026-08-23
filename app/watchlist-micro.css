@@ -1,0 +1,67 @@
+/* Watchlist manage micro (Sprint 7) */
+
+.wl-row {
+  position: relative;
+  transition:
+    opacity var(--ix-trans-standard, 200ms ease),
+    transform var(--ix-trans-standard, 200ms ease),
+    border-color var(--ix-trans-fast, 90ms ease),
+    background var(--ix-trans-standard, 200ms ease);
+}
+
+.wl-row--flash {
+  border-color: rgba(240, 160, 144, 0.4);
+  background: rgba(240, 160, 144, 0.06);
+}
+
+.wl-row--out {
+  opacity: 0;
+  transform: translateX(8px) scale(0.98);
+  pointer-events: none;
+}
+
+.wl-row--watching {
+  border-left: 2px solid rgba(140, 190, 255, 0.55);
+}
+
+.wl-row--completed {
+  border-left: 2px solid rgba(180, 160, 220, 0.5);
+}
+
+.wl-row--planning {
+  border-left: 2px solid rgba(240, 160, 144, 0.4);
+}
+
+.wl-row--paused {
+  border-left: 2px solid rgba(230, 200, 120, 0.45);
+}
+
+.wl-row--dropped {
+  border-left: 2px solid rgba(160, 140, 140, 0.4);
+  opacity: 0.92;
+}
+
+.wl-progress-track {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  margin: 8px 0 4px;
+  overflow: hidden;
+}
+
+.wl-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(140, 190, 255, 0.95),
+    rgba(232, 165, 152, 0.85)
+  );
+  transition: width var(--ix-trans-deliberate, 420ms var(--ix-ease-soft, ease));
+}
+
+html[data-reduce-motion="true"] .wl-row--out,
+html[data-reduce-motion="true"] .wl-progress-fill {
+  transition: none;
+}
