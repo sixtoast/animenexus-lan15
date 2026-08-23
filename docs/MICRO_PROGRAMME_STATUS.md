@@ -2,16 +2,16 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–2 | Language · Sound · Button | Done |
-| **3** | AnimeCard micro | **Done** |
-| 4 | Navbar continuous state | Next |
-| 5–10 | Filters → Oracle | Queued |
+| 0–3 | Language · Sound · Button · Card | Done |
+| **4** | Navbar continuous state | **Done** |
+| 5 | Filters & search | Next |
+| 6–10 | Loading → Oracle | Queued |
 
-## Sprint 3
+## Sprint 4
 
-- Desktop: throttled pointer → `--ptr-x/y` lighting + 1–2px image shift
-- Press compress before shared-element navigation
-- Score more legible on hover/focus; status ring brightens
-- Watching progress soft glow on focus
-- Recommended: single breathe animation on insert
-- Touch: no pointer lighting; no hover SFX (never was)
+- Sliding `.nav-indicator` tracks active link geometry
+- Frequency: scrim precedes panel; close reverses; `menu_open` / `menu_close`
+- Route change → `nav_tick` (not hover spam)
+- Logo accent pulse on Home
+- “Here” badge fades/slides in
+- Theme: ~280ms colour-token crossfade (no global filter)
