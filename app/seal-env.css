@@ -1,4 +1,4 @@
-/* Seal moment + time-of-day environment */
+/* Seal moment + time-of-day environment (Micro Sprint 8) */
 
 .seal-moment {
   position: fixed;
@@ -18,7 +18,13 @@
   background: rgba(6, 4, 3, 0.42);
 }
 
+.seal-moment.is-mini {
+  background: rgba(6, 4, 3, 0.2);
+  backdrop-filter: blur(2px);
+}
+
 .seal-card {
+  position: relative;
   width: min(320px, 100%);
   padding: 28px 22px 24px;
   border-radius: 18px;
@@ -34,7 +40,14 @@
   box-shadow:
     0 24px 64px rgba(0, 0, 0, 0.55),
     0 0 48px rgba(240, 160, 144, 0.12);
-  animation: seal-card-in 0.45s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+  animation: seal-card-in 0.5s var(--ix-ease-expo, cubic-bezier(0.16, 1, 0.3, 1))
+    both;
+}
+
+.seal-moment.is-mini .seal-card {
+  width: min(240px, 100%);
+  padding: 18px 16px 16px;
+  animation-duration: 0.28s;
 }
 
 .seal-moment.is-complete .seal-card {
@@ -51,7 +64,26 @@
     0 0 40px rgba(232, 192, 122, 0.12);
 }
 
+.seal-ring {
+  position: absolute;
+  left: 50%;
+  top: 42px;
+  width: 72px;
+  height: 72px;
+  margin-left: -36px;
+  border-radius: 50%;
+  border: 1px solid rgba(240, 160, 144, 0.45);
+  pointer-events: none;
+  animation: seal-ring-expand 0.7s var(--ix-ease-soft, ease) both;
+}
+
+.seal-moment.is-mini .seal-ring {
+  display: none;
+}
+
 .seal-wax {
+  position: relative;
+  z-index: 1;
   width: 56px;
   height: 56px;
   margin: 0 auto 14px;
@@ -62,7 +94,14 @@
   box-shadow:
     0 4px 16px rgba(212, 132, 122, 0.45),
     inset 0 2px 4px rgba(255, 255, 255, 0.25);
-  animation: seal-wax-press 0.55s var(--ease-out, ease) both;
+  animation: seal-wax-press 0.55s var(--ix-ease-spring, ease) both;
+}
+
+.seal-moment.is-mini .seal-wax {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 8px;
+  animation-duration: 0.32s;
 }
 
 .seal-moment.is-complete .seal-wax {
@@ -75,6 +114,10 @@
 .seal-wax-inner {
   font-size: 1.35rem;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+
+.seal-moment.is-mini .seal-wax-inner {
+  font-size: 1rem;
 }
 
 .seal-kicker {
@@ -97,6 +140,13 @@
   font-weight: 600;
   line-height: 1.25;
   color: var(--color-text);
+  animation: seal-title-settle 0.55s 0.12s var(--ix-ease-soft, ease) both;
+}
+
+.seal-moment.is-mini .seal-title {
+  font-size: 1rem;
+  margin: 4px 0 0;
+  animation-duration: 0.28s;
 }
 
 .seal-sub {
@@ -104,6 +154,12 @@
   font-size: 0.8rem;
   color: var(--color-text-muted);
   line-height: 1.4;
+}
+
+/* Warm ambient response while seal shows */
+html[data-seal-ambient="1"] body {
+  box-shadow: inset 0 0 120px rgba(240, 160, 144, 0.08);
+  transition: box-shadow 200ms ease;
 }
 
 @keyframes seal-scrim-in {
@@ -118,21 +174,25 @@
 @keyframes seal-card-in {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.94);
+    transform: translateY(10px) scale(0.94);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.02);
   }
   to {
     opacity: 1;
-    transform: none;
+    transform: translateY(0) scale(1);
   }
 }
 
 @keyframes seal-wax-press {
   0% {
-    transform: scale(1.25);
+    transform: scale(1.28);
     opacity: 0.5;
   }
-  60% {
-    transform: scale(0.92);
+  55% {
+    transform: scale(0.9);
   }
   100% {
     transform: scale(1);
@@ -140,7 +200,29 @@
   }
 }
 
-/* Time-of-day ambient (restraint: tint only) */
+@keyframes seal-ring-expand {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.65);
+    opacity: 0;
+  }
+}
+
+@keyframes seal-title-settle {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Time-of-day ambient */
 html[data-tod="morning"] body {
   background:
     radial-gradient(ellipse 90% 55% at 20% -5%, rgba(255, 210, 170, 0.12) 0%, transparent 50%),
@@ -170,7 +252,6 @@ html[data-tod="late-night"] body {
     var(--color-primary);
 }
 
-/* Sprint 6 — soft intensity / accent temperature (does not replace theme) */
 html[data-nx-intensity="low"] body {
   filter: saturate(0.92);
 }
@@ -198,11 +279,20 @@ html[data-nx-motion="still"] .nx-route-tune {
 @media (prefers-reduced-motion: reduce) {
   .seal-moment,
   .seal-card,
-  .seal-wax {
+  .seal-wax,
+  .seal-ring,
+  .seal-title {
     animation: none;
   }
 
   html body {
     filter: none;
   }
+}
+
+html[data-reduce-motion="true"] .seal-moment,
+html[data-reduce-motion="true"] .seal-card,
+html[data-reduce-motion="true"] .seal-wax,
+html[data-reduce-motion="true"] .seal-ring {
+  animation: none;
 }
