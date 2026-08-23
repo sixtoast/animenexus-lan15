@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { fetchAnimeDetail } from "@/lib/anilist-detail";
 import { fetchAnimeById } from "@/lib/anilist";
 import { enrichThemes } from "@/lib/themes-enrich";
+import { buildExternalLinks } from "@/lib/external-links";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
 import { AnimeImage } from "@/components/AnimeImage";
 import { DetailCoverMaterial } from "@/components/DetailCoverMaterial";
@@ -56,7 +57,7 @@ export default async function AnimeDetailPage({ params }: Props) {
   const num = parseInt(id, 10);
   if (isNaN(num)) notFound();
 
-  let anime =
+  const anime =
     (await fetchAnimeDetail(num).catch(() => null)) ||
     (await fetchAnimeById(num));
   if (!anime) notFound();
@@ -85,6 +86,7 @@ export default async function AnimeDetailPage({ params }: Props) {
     title: anime.title,
   });
 
+  const external = buildExternalLinks(anime);
   const relations = anime.relations || [];
   const relationsSummary = relations
     .map((r) => `${r.relationType}: ${r.title}`)
@@ -166,21 +168,14 @@ export default async function AnimeDetailPage({ params }: Props) {
 
             <AddToWatchlist anime={anime} />
             <div className="detail-actions" style={{ marginTop: 12 }}>
-              {anime.url ? (
-                <a
-                  href={anime.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn btn-outline btn-sm"
-                >
-                  Open on AniList ↗
-                </a>
-              ) : null}
               <Link href="/watchlist" className="btn btn-outline btn-sm">
                 Open watchlist
               </Link>
               <a href="#ancestry" className="btn btn-outline btn-sm">
                 Ancestry
+              </a>
+              <a href="#external-links" className="btn btn-outline btn-sm">
+                External
               </a>
             </div>
           </div>
@@ -192,6 +187,28 @@ export default async function AnimeDetailPage({ params }: Props) {
             {anime.description || "No description available."}
           </p>
         </section>
+
+        {external.length > 0 ? (
+          <section className="detail-section" id="external-links">
+            <h2>External catalogs</h2>
+            <p className="tools-hint" style={{ marginBottom: 10 }}>
+              Only links backed by known ids — no guessed pages.
+            </p>
+            <div className="detail-actions" style={{ flexWrap: "wrap", gap: 8 }}>
+              {external.map((l) => (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-outline btn-sm"
+                >
+                  {l.label} ↗
+                </a>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <DetailRelatedClient
           relations={relations}
