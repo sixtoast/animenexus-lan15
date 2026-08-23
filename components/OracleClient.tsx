@@ -1,9 +1,7 @@
 "use client";
 
 /**
- * Oracle / Night Desk elevation (Sprint 23).
- * All modes preserved; each has its own broadcast frequency + atmosphere.
- * Real AI via consultOracleCloud — never simulated success.
+ * Oracle / Night Desk + micro-theatre (Sprint 10).
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -25,6 +23,7 @@ import { SignalBars } from "@/components/ui/SignalBars";
 import type { Anime } from "@/lib/types";
 import { emitNexus } from "@/lib/nexus";
 import { loadingStart, loadingStop } from "@/components/LoadingTheater";
+import { playCue } from "@/lib/sound-engine";
 
 type ResolvedPick = VibecastPick & {
   anime?: Anime | null;
@@ -42,6 +41,7 @@ export function OracleClient() {
   const [useCloud, setUseCloud] = useState(false);
   const [bandFlash, setBandFlash] = useState(false);
   const [tuning, setTuning] = useState(false);
+  const [locked, setLocked] = useState(false);
 
   const band = oracleBand(mode);
 
@@ -55,11 +55,14 @@ export function OracleClient() {
   }, [entries, seed]);
 
   function switchMode(id: OracleMode) {
+    if (id === mode) return;
     setMode(id);
     setBandFlash(true);
     setUseCloud(false);
     setCloudText(null);
     setVibeCards([]);
+    setLocked(false);
+    playCue("oracle_tune");
     window.setTimeout(() => setBandFlash(false), 420);
   }
 
@@ -107,18 +110,24 @@ export function OracleClient() {
     }
     setBusy(true);
     setTuning(true);
+    setLocked(false);
     setCloudText(null);
     setVibeCards([]);
+    playCue("oracle_tune");
     loadingStart("oracle");
     try {
       const text = await consultOracleCloud(mode, entries, note || undefined);
       setUseCloud(true);
+      setLocked(true);
+      playCue("signal_acquired");
       if (mode === "vibecast") {
         const picks = parseVibecastPicks(text);
         if (picks.length) {
           const resolved = await Promise.all(picks.map(resolvePick));
           setVibeCards(resolved);
           setCloudText(null);
+          // One soft settle for the deal — not per card
+          playCue("shelf_settle");
         } else {
           setCloudText(text);
         }
@@ -128,6 +137,7 @@ export function OracleClient() {
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Oracle failed", "😅");
       setUseCloud(false);
+      playCue("error");
     } finally {
       setBusy(false);
       setTuning(false);
@@ -149,7 +159,8 @@ export function OracleClient() {
       className={
         "oracle" +
         (bandFlash ? " band-flash" : "") +
-        (tuning ? " is-tuning" : "")
+        (tuning ? " is-tuning" : "") +
+        (locked ? " is-locked" : "")
       }
       data-oracle-band={band.band}
     >
@@ -162,8 +173,13 @@ export function OracleClient() {
           <p className="oracle-freq-blurb">{band.blurb}</p>
           {tuning ? (
             <p className="oracle-tuning-line">
-              <SignalBars level={4} animated label="Tuning" /> Tuning the
-              desk…
+              <span className="oracle-freq-lock" aria-hidden />
+              <SignalBars level={4} animated label="Tuning" /> Frequency
+              lock…
+            </p>
+          ) : locked ? (
+            <p className="oracle-host-line oracle-locked-line">
+              Frequency locked · broadcast ready
             </p>
           ) : (
             <p className="oracle-host-line">
@@ -206,6 +222,12 @@ export function OracleClient() {
         onChange={(e) => setNote(e.target.value)}
         placeholder="e.g. only 45 minutes free"
         disabled={busy}
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+            e.preventDefault();
+            void runCloud();
+          }
+        }}
       />
 
       <div className="daily-actions" style={{ marginBottom: 16 }}>
@@ -214,6 +236,8 @@ export function OracleClient() {
           size="sm"
           loading={busy}
           disabled={busy}
+          silent
+          className={busy ? "oracle-ask-pressed" : undefined}
           onClick={runCloud}
         >
           {busy ? "On air…" : "Broadcast (cloud)"}
@@ -222,69 +246,75 @@ export function OracleClient() {
           variant="outline"
           size="sm"
           disabled={busy}
+          silent
           onClick={() => {
             setUseCloud(false);
             setVibeCards([]);
             setCloudText(null);
+            setLocked(false);
             setSeed((s) => s + 1);
+            playCue("filter_select");
           }}
         >
           Local reading
         </Button>
+        <span className="tools-hint">⌘/Ctrl+Enter to broadcast</span>
       </div>
 
-      {useCloud && vibeCards.length > 0 ? (
-        <div className="vibe-cards">
-          <p className="detail-kicker">On air · {band.frequency}</p>
-          {vibeCards.map((c, i) => {
-            const href = c.anime?.id
-              ? `/anime/${c.anime.id}`
-              : `/browse?q=${encodeURIComponent(c.title)}`;
-            return (
-              <Link
-                key={`${c.title}-${i}`}
-                href={href}
-                className="vibe-card vibe-deal"
-                style={{ "--i": i } as React.CSSProperties}
-              >
-                {c.anime?.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={c.anime.image} alt="" />
-                ) : (
-                  <div className="vibe-card-ph" />
-                )}
-                <div>
-                  <div className="vibe-card-title">{c.title}</div>
-                  <div className="vibe-card-why">{c.why}</div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      ) : useCloud && cloudText ? (
-        <article className="oracle-card oracle-in">
-          <p className="detail-kicker">On air · {band.frequency}</p>
-          <div className="oracle-body" style={{ whiteSpace: "pre-wrap" }}>
-            {cloudText}
+      <div className={"oracle-result" + (tuning ? " oracle-result--dim" : "")}>
+        {useCloud && vibeCards.length > 0 ? (
+          <div className="vibe-cards">
+            <p className="detail-kicker">On air · {band.frequency}</p>
+            {vibeCards.map((c, i) => {
+              const href = c.anime?.id
+                ? `/anime/${c.anime.id}`
+                : `/browse?q=${encodeURIComponent(c.title)}`;
+              return (
+                <Link
+                  key={`${c.title}-${i}`}
+                  href={href}
+                  className="vibe-card vibe-deal"
+                  style={{ "--i": i } as React.CSSProperties}
+                >
+                  {c.anime?.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={c.anime.image} alt="" />
+                  ) : (
+                    <div className="vibe-card-ph" />
+                  )}
+                  <div>
+                    <div className="vibe-card-title">{c.title}</div>
+                    <div className="vibe-card-why">{c.why}</div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
-        </article>
-      ) : (
-        <article className="oracle-card oracle-in">
-          <p className="detail-kicker">Local desk · {band.frequency}</p>
-          <h2 className="oracle-headline">{local.headline}</h2>
-          <p className="oracle-body">{local.body}</p>
-          {local.moodSlug ? (
-            <p style={{ marginTop: 16 }}>
-              <Link
-                href={`/mood/${local.moodSlug}`}
-                className="btn btn-outline btn-sm"
-              >
-                Mood: {local.moodLabel} →
-              </Link>
-            </p>
-          ) : null}
-        </article>
-      )}
+        ) : useCloud && cloudText ? (
+          <article className="oracle-card oracle-in">
+            <p className="detail-kicker">On air · {band.frequency}</p>
+            <div className="oracle-body" style={{ whiteSpace: "pre-wrap" }}>
+              {cloudText}
+            </div>
+          </article>
+        ) : (
+          <article className="oracle-card oracle-in">
+            <p className="detail-kicker">Local desk · {band.frequency}</p>
+            <h2 className="oracle-headline">{local.headline}</h2>
+            <p className="oracle-body">{local.body}</p>
+            {local.moodSlug ? (
+              <p style={{ marginTop: 16 }}>
+                <Link
+                  href={`/mood/${local.moodSlug}`}
+                  className="btn btn-outline btn-sm"
+                >
+                  Mood: {local.moodLabel} →
+                </Link>
+              </p>
+            ) : null}
+          </article>
+        )}
+      </div>
 
       <p className="taste-footnote" style={{ marginTop: 20 }}>
         Cloud bands need a key in the 🤖 AI panel. Local readings always work
