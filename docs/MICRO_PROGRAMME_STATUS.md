@@ -2,16 +2,15 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–6 | Language → Loading | Done |
-| **7** | Watchlist editing | **Done** |
-| 8 | Seal Moment premium | Next |
-| 9–10 | Detail · Oracle | Queued |
+| 0–7 | Language → Watchlist | Done |
+| **8** | Seal Moment premium | **Done** |
+| 9 | Detail tactile | Next |
+| 10 | Oracle micro-theatre | Queued |
 
-## Sprint 7
+## Sprint 8
 
-- Status change: row flash + left accent by status
-- Progress bar animates width (not from zero each paint)
-- `progress_up` / `progress_down` cues
-- planning→watching → `seal`; completed → `complete`
-- Remove: fade/slide out then delete + `remove`
-- No full-screen seal on every progress tick
+- Card lift → wax compress → ring expand → title settle
+- Warm ambient `data-seal-ambient` (~200ms)
+- `seal` / `complete` cues (post-persist callers)
+- Rapid seals within 2.8s → **mini** ceremony (shorter, no subcopy)
+- Copy preserved: Sealed by Lantern / Channel locked / Story closed
