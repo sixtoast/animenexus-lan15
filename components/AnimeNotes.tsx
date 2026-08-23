@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useToast } from "@/components/ToastProvider";
+import { playCue } from "@/lib/sound-engine";
 
 const NOTES_KEY = "anime_nexus_notes";
 
@@ -29,7 +29,7 @@ export function AnimeNotes({ animeId }: Props) {
   const key = String(animeId);
   const [text, setText] = useState("");
   const [ready, setReady] = useState(false);
-  const { showToast } = useToast();
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     const all = readAll();
@@ -42,7 +42,9 @@ export function AnimeNotes({ animeId }: Props) {
     if (text.trim()) all[key] = text;
     else delete all[key];
     writeAll(all);
-    showToast("Notes saved", "📝");
+    setSaved(true);
+    playCue("success");
+    window.setTimeout(() => setSaved(false), 1400);
   }
 
   if (!ready) {
@@ -55,7 +57,7 @@ export function AnimeNotes({ animeId }: Props) {
   }
 
   return (
-    <div className="notes-box">
+    <div className={"notes-box" + (saved ? " notes-box--saved" : "")}>
       <h3 className="binge-title">Journal</h3>
       <p className="binge-meta">
         Private notes for this title · stored as <code>anime_nexus_notes</code>
@@ -68,8 +70,13 @@ export function AnimeNotes({ animeId }: Props) {
         placeholder="Thoughts, episode reactions, mood diary…"
       />
       <button type="button" className="btn btn-accent btn-sm" onClick={save}>
-        Save notes
+        {saved ? "Ink set ✓" : "Save notes"}
       </button>
+      {saved ? (
+        <p className="notes-confirm" role="status">
+          Saved on this device.
+        </p>
+      ) : null}
     </div>
   );
 }
