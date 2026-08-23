@@ -6,6 +6,7 @@ import { useSession } from "@/components/SessionProvider";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { SoundSettings } from "@/components/SoundSettings";
 import type { WatchlistEntry } from "@/lib/types";
+import { playCue } from "@/lib/sound-engine";
 
 export function AccountClient() {
   const {
@@ -25,6 +26,8 @@ export function AccountClient() {
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const [malBusy, setMalBusy] = useState(false);
   const [malErr, setMalErr] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [flashOk, setFlashOk] = useState(false);
 
   if (!ready) {
     return (
@@ -35,20 +38,59 @@ export function AccountClient() {
     );
   }
 
+  function startProgress() {
+    setProgress(8);
+    const id = window.setInterval(() => {
+      setProgress((p) => (p >= 88 ? p : p + 6 + Math.random() * 4));
+    }, 180);
+    return id;
+  }
+
+  function finishProgress(ok: boolean) {
+    setProgress(100);
+    if (ok) {
+      setFlashOk(true);
+      playCue("success");
+      window.setTimeout(() => setFlashOk(false), 1200);
+    } else {
+      playCue("error");
+    }
+    window.setTimeout(() => setProgress(0), 500);
+  }
+
   async function onConnect(e: React.FormEvent) {
     e.preventDefault();
     setSyncMsg(null);
     clearError();
-    await connect(username);
+    const timer = startProgress();
+    try {
+      await connect(username);
+      finishProgress(true);
+    } catch {
+      finishProgress(false);
+    } finally {
+      window.clearInterval(timer);
+    }
   }
 
   async function onSync() {
     setSyncMsg(null);
-    const n = await syncLists();
-    if (n > 0) {
-      setSyncMsg(
-        `Imported ${n} titles from AniList into your local watchlist.`,
-      );
+    const timer = startProgress();
+    try {
+      const n = await syncLists();
+      window.clearInterval(timer);
+      if (n > 0) {
+        setSyncMsg(
+          `Imported ${n} titles from AniList into your local watchlist.`,
+        );
+        finishProgress(true);
+      } else {
+        finishProgress(true);
+        setSyncMsg("Sync finished — no new titles.");
+      }
+    } catch {
+      window.clearInterval(timer);
+      finishProgress(false);
     }
   }
 
@@ -56,6 +98,7 @@ export function AccountClient() {
     e.preventDefault();
     setMalBusy(true);
     setMalErr(null);
+    const timer = startProgress();
     try {
       const res = await fetch(
         `/api/mal-list?username=${encodeURIComponent(malUser.trim())}`,
@@ -64,20 +107,37 @@ export function AccountClient() {
       if (!res.ok) throw new Error(j.error || "MAL import failed");
       const incoming = (j.entries || []) as WatchlistEntry[];
       const byId = new Map(entries.map((x) => [x.id, x]));
-      for (const e of incoming) byId.set(e.id, e);
+      for (const entry of incoming) byId.set(entry.id, entry);
       replaceAll([...byId.values()]);
       setSyncMsg(
         `Merged ${incoming.length} MAL titles (Jikan). Rate limits apply; lists must be public.`,
       );
+      window.clearInterval(timer);
+      finishProgress(true);
     } catch (err) {
+      window.clearInterval(timer);
       setMalErr(err instanceof Error ? err.message : "MAL failed");
+      finishProgress(false);
     } finally {
       setMalBusy(false);
     }
   }
 
+  function onDisconnect() {
+    disconnect();
+    playCue("filter_select");
+  }
+
+  const busy = connecting || syncing || malBusy || progress > 0;
+
   return (
-    <div className="account-panel">
+    <div className={"account-panel" + (flashOk ? " account-panel--ok" : "")}>
+      {progress > 0 && progress < 100 ? (
+        <div className="account-progress" role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}>
+          <span className="account-progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+      ) : null}
+
       {error ? (
         <div className="state-box error" style={{ marginBottom: 16 }}>
           <p>{error}</p>
@@ -90,7 +150,7 @@ export function AccountClient() {
       ) : null}
       {syncMsg ? (
         <div
-          className="state-box"
+          className="state-box account-sync-msg"
           style={{
             marginBottom: 16,
             borderColor: "rgba(240,160,144,0.35)",
@@ -122,12 +182,12 @@ export function AccountClient() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
-              disabled={connecting}
+              disabled={busy}
             />
             <button
               type="submit"
               className="btn btn-accent btn-sm"
-              disabled={connecting}
+              disabled={busy}
             >
               {connecting ? "Connecting…" : "Connect"}
             </button>
@@ -170,7 +230,7 @@ export function AccountClient() {
               type="button"
               className="btn btn-accent btn-sm"
               onClick={onSync}
-              disabled={syncing}
+              disabled={busy}
             >
               {syncing ? "Syncing…" : "Sync AniList lists → watchlist"}
             </button>
@@ -185,7 +245,7 @@ export function AccountClient() {
             <button
               type="button"
               className="btn btn-outline btn-sm"
-              onClick={disconnect}
+              onClick={onDisconnect}
             >
               Disconnect
             </button>
@@ -211,12 +271,12 @@ export function AccountClient() {
             placeholder="MAL username"
             value={malUser}
             onChange={(e) => setMalUser(e.target.value)}
-            disabled={malBusy}
+            disabled={busy}
           />
           <button
             type="submit"
             className="btn btn-outline btn-sm"
-            disabled={malBusy || !malUser.trim()}
+            disabled={busy || !malUser.trim()}
           >
             {malBusy ? "Importing…" : "Import MAL"}
           </button>
