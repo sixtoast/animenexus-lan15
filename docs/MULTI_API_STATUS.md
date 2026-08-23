@@ -2,14 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–6 | Foundation + MAL import | Done |
-| **7** | Optional MAL sync | **Done** (queue; OAuth pending credentials) |
-| 8 | Jikan enrichment | Next |
-| 9+ | Episodes / schedule / … | Queued |
+| 0–7 | Foundation → MAL queue | Done |
+| **8** | Jikan enrichment | **Done** |
+| 9 | Real episode experience | Next |
+| 10+ | Schedule / Sauce / Themes depth | Queued |
 
-## Sprint 7
+## Sprint 8
 
-- `lib/mal-sync.ts` — local-first mutation queue + status
-- `docs/MAL_OAUTH.md` — env + route checklist for real write-back
-- Local updates never blocked or rolled back for MAL
-- Real bidirectional sync requires `MAL_CLIENT_ID` / secret (not in this build)
+- `lib/providers/jikan.ts` — episodes, staff, characters (soft-fail)
+- Detail: Episodes + Staff when MAL id known; Jikan characters only if AniList has none
+- Provenance labels on every Jikan block
+- Core AniList detail still renders if Jikan is down
