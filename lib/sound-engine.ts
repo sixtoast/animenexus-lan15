@@ -1,11 +1,11 @@
 /**
- * AnimeNexus Sound Engine (Sprint 1).
+ * AnimeNexus Sound Engine (Sprints 1 + 16).
  * Real AudioBuffer samples — not runtime oscillator beeps as primary path.
- * Mascot procedural audio remains a separate lightweight fallback.
  */
 
 import {
   DEFAULT_SOUND_PREFS,
+  PRELOAD_CUES,
   SOUND_CUES,
   SOUND_PREF_KEY,
   type SoundCategory,
@@ -13,7 +13,7 @@ import {
   type SoundPrefs,
 } from "./sound-manifest";
 
-const MAX_CONCURRENT = 6;
+const MAX_CONCURRENT = 5;
 const lastPlayed = new Map<SoundCueId, number>();
 let activeVoices = 0;
 
@@ -87,6 +87,21 @@ function applyGains() {
   }
 }
 
+/** Brief duck of UI/nav when a celebration cue fires */
+function softDuck() {
+  if (!ctx) return;
+  for (const cat of ["ui", "navigation"] as SoundCategory[]) {
+    const node = categoryGain.get(cat);
+    if (!node) continue;
+    const base = prefs[cat] ?? 1;
+    const t = ctx.currentTime;
+    node.gain.cancelScheduledValues(t);
+    node.gain.setValueAtTime(node.gain.value, t);
+    node.gain.linearRampToValueAtTime(base * 0.35, t + 0.04);
+    node.gain.linearRampToValueAtTime(base, t + 0.35);
+  }
+}
+
 /** Must run from a user gesture. */
 export async function unlockSound(): Promise<void> {
   if (!ensureGraph() || !ctx) return;
@@ -100,8 +115,7 @@ export async function unlockSound(): Promise<void> {
   unlocked = true;
   prefs = loadPrefs();
   applyGains();
-  // Preload critical UI cues only
-  void preloadCues(["ui_tap", "nav_tick", "error", "success", "seal"]);
+  void preloadCues(PRELOAD_CUES);
 }
 
 export function isSoundUnlocked(): boolean {
@@ -132,14 +146,9 @@ export async function preloadCues(ids: SoundCueId[]): Promise<void> {
 
 export type PlayOptions = {
   force?: boolean;
-  /** Extra gain multiplier */
   gain?: number;
 };
 
-/**
- * Play a semantic cue after state mutation succeeds.
- * Silent if disabled, locked, or cooldown / concurrency blocks.
- */
 export function playCue(id: SoundCueId, opts: PlayOptions = {}): void {
   if (typeof window === "undefined") return;
   if (!prefs.enabled && !opts.force) return;
@@ -155,6 +164,8 @@ export function playCue(id: SoundCueId, opts: PlayOptions = {}): void {
 
   lastPlayed.set(id, now);
 
+  if (def.category === "celebration") softDuck();
+
   const run = (buf: AudioBuffer) => {
     if (!ctx) return;
     const cat = categoryGain.get(def.category);
@@ -163,9 +174,10 @@ export function playCue(id: SoundCueId, opts: PlayOptions = {}): void {
     src.buffer = buf;
     const g = ctx.createGain();
     const level = (def.gain ?? 0.4) * (opts.gain ?? 1);
-    // Tiny randomisation for physical cues only
     const jitter =
-      def.category === "object" ? 0.92 + Math.random() * 0.16 : 1;
+      def.category === "object" || def.category === "tool"
+        ? 0.94 + Math.random() * 0.12
+        : 1;
     g.gain.value = level * jitter;
     src.connect(g);
     g.connect(cat);
@@ -190,7 +202,6 @@ export function playCue(id: SoundCueId, opts: PlayOptions = {}): void {
   });
 }
 
-/** Init prefs from storage (call on provider mount). */
 export function initSoundEngine(): void {
   prefs = loadPrefs();
 }
