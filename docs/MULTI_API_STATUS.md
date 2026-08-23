@@ -2,13 +2,15 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–3 | Audit → Unified types | Done |
-| **4** | Cache / rate-limit | **Done** |
-| 5 | AniList hardening | Next |
-| 6+ | MAL / enrichment features | Queued |
+| 0–4 | Audit → Cache/rate-limit | Done |
+| **5** | AniList hardening | **Done** |
+| 6 | MAL identity + import | Next |
+| 7+ | Sync / enrichment features | Queued |
 
-## Sprint 4
+## Sprint 5
 
-- `lib/api-cache.ts` — category TTLs (`identity` / `medium` / `catalog` / `short`) + `dedupedFetch`
-- `lib/provider-rate-limit.ts` — min interval, failure counting, circuit open, `withProviderLimit`
-- Rule unchanged: optional provider failure must not break AniList Detail
+- All catalog fetches: `dedupedFetch` + `CACHE_TTL.catalog`
+- GraphQL via `withProviderLimit("anilist")`
+- `fetchAnimeByIds` batch helper (`id_in`, max 50)
+- Detail: shared rate-limit + medium TTL dedupe
+- Still no card-level per-tile AniList fetches introduced
