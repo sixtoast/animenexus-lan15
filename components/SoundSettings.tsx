@@ -1,6 +1,16 @@
 "use client";
 
 import { useSound } from "@/components/SoundProvider";
+import type { SoundCueId } from "@/lib/sound-manifest";
+
+const PREVIEWS: { id: SoundCueId; label: string }[] = [
+  { id: "ui_tap", label: "Tap" },
+  { id: "filter_select", label: "Select" },
+  { id: "seal", label: "Seal" },
+  { id: "complete", label: "Complete" },
+  { id: "error", label: "Error" },
+  { id: "radar_ping", label: "Ping" },
+];
 
 export function SoundSettings() {
   const { prefs, setPrefs, play, unlock } = useSound();
@@ -63,10 +73,27 @@ export function SoundSettings() {
         />
       </label>
 
+      <div className="sound-preview-row" role="group" aria-label="Preview cues">
+        {PREVIEWS.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            className="btn btn-outline btn-sm"
+            disabled={!prefs.enabled}
+            onClick={() => {
+              unlock();
+              play(p.id, { force: true });
+            }}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
       <p className="tools-hint">
         Assets load from <code>/audio/ui/</code>. Run{" "}
         <code>node scripts/generate-ui-sfx.mjs</code> if files are missing.
-        Mascot beeps remain a separate optional fallback.
+        Celebration cues briefly duck UI/nav. Mascot beeps remain separate.
       </p>
     </div>
   );
