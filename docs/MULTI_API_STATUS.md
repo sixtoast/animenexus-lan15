@@ -2,15 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0 | API audit | Done |
-| 1 | Universal identity | Done |
-| **2** | Provider interface | **Done** |
-| 3 | Unified result types | Next |
-| 4+ | Cache / features | Queued |
+| 0–2 | Audit → Provider interface | Done |
+| **3** | Unified result types | **Done** |
+| 4 | Cache / rate-limit architecture | Next |
+| 5+ | Hardening + features | Queued |
 
-## Sprint 2
+## Sprint 3
 
-- `lib/providers/types.ts` — capability contracts + `ProviderResult<T>` provenance envelope
-- `lib/providers/index.ts` — stable exports + provider id list
-- Capabilities: catalogue, detail, schedule, episode, theme, scene, visual, music, list, video, skip
-- Existing kitsu/shikimori/animethemes modules remain; adapters wrap them in later sprints
+- `lib/enrichment-types.ts` — domain import path + `AnimeEnrichmentBundle`
+- Themes → `AnimeTheme[]` with `source`
+- Sauce → `SceneMatch[]` with `source: "trace.moe"`
+- Partial errors model: `errors` map, not hard fail
