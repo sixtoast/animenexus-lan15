@@ -26,6 +26,7 @@ import {
   getAnimeViewTransitionName,
   withViewTransition,
 } from "@/lib/view-transition";
+import { playCue } from "@/lib/sound-engine";
 
 type SortMode = "recent" | "signal" | "progress";
 
@@ -52,6 +53,8 @@ export function WatchlistClient() {
   const [sort, setSort] = useState<SortMode>("recent");
   const [presentation, setPresentation] =
     useState<WatchlistPresentation>("manage");
+  const [removingId, setRemovingId] = useState<number | null>(null);
+  const [flashId, setFlashId] = useState<number | null>(null);
 
   useEffect(() => {
     setPresentation(readWatchlistPresentation());
@@ -92,6 +95,38 @@ export function WatchlistClient() {
     }
     return c;
   }, [entries]);
+
+  function onStatus(id: number, next: WatchStatus, prev: WatchStatus) {
+    setStatus(id, next);
+    setFlashId(id);
+    window.setTimeout(() => setFlashId(null), 400);
+    if (prev === "planning" && next === "watching") {
+      playCue("seal");
+    } else if (next === "completed") {
+      playCue("complete");
+    } else {
+      playCue("filter_select");
+    }
+  }
+
+  function onProgress(id: number, next: number, prev: number, maxEp: number) {
+    setProgress(id, next);
+    if (next > prev) playCue("progress_up");
+    else if (next < prev) playCue("progress_down");
+    if (maxEp > 0 && next >= maxEp) {
+      // SealMoment / provider may promote to completed — soft complete cue
+      playCue("complete");
+    }
+  }
+
+  function onRemove(id: number) {
+    setRemovingId(id);
+    window.setTimeout(() => {
+      remove(id);
+      setRemovingId(null);
+      playCue("remove");
+    }, 220);
+  }
 
   if (!ready) {
     return (
@@ -215,13 +250,24 @@ export function WatchlistClient() {
                 {filtered.map((e) => {
                   const maxEp =
                     typeof e.episodes === "number" ? e.episodes : undefined;
+                  const cap = episodeCount(e);
+                  const pct = Math.min(
+                    100,
+                    Math.round(((e.progress || 0) / cap) * 100),
+                  );
                   const vt = getAnimeViewTransitionName(e.id);
                   const href = `/anime/${e.id}`;
                   return (
                     <li
                       key={e.id}
-                      className="wl-row"
+                      className={
+                        "wl-row" +
+                        (removingId === e.id ? " wl-row--out" : "") +
+                        (flashId === e.id ? " wl-row--flash" : "") +
+                        ` wl-row--${e.watchStatus}`
+                      }
                       data-anime-object-id={getAnimeObjectId(e.id)}
+                      data-status={e.watchStatus}
                     >
                       <Link
                         href={href}
@@ -263,6 +309,16 @@ export function WatchlistClient() {
                             </span>
                           ) : null}
                         </div>
+                        <div
+                          className="wl-progress-track"
+                          aria-hidden
+                          title={`${pct}%`}
+                        >
+                          <span
+                            className="wl-progress-fill"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                         <div className="wl-controls">
                           <label>
                             Status
@@ -270,7 +326,11 @@ export function WatchlistClient() {
                               className="filter-input"
                               value={e.watchStatus}
                               onChange={(ev) =>
-                                setStatus(e.id, ev.target.value as WatchStatus)
+                                onStatus(
+                                  e.id,
+                                  ev.target.value as WatchStatus,
+                                  e.watchStatus,
+                                )
                               }
                             >
                               {WATCH_STATUS_TABS.filter(
@@ -291,9 +351,11 @@ export function WatchlistClient() {
                               max={maxEp || 9999}
                               value={e.progress}
                               onChange={(ev) =>
-                                setProgress(
+                                onProgress(
                                   e.id,
                                   parseInt(ev.target.value, 10) || 0,
+                                  e.progress || 0,
+                                  maxEp || cap,
                                 )
                               }
                             />
@@ -319,7 +381,7 @@ export function WatchlistClient() {
                           <button
                             type="button"
                             className="btn btn-outline btn-sm"
-                            onClick={() => remove(e.id)}
+                            onClick={() => onRemove(e.id)}
                           >
                             Remove
                           </button>
@@ -343,6 +405,7 @@ export function WatchlistClient() {
                     window.confirm("Clear entire watchlist?")
                   ) {
                     clearAll();
+                    playCue("remove");
                   }
                 }}
               >
