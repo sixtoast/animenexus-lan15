@@ -2,9 +2,15 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| **0** | API audit | **Done** — [`API_ARCHITECTURE.md`](./API_ARCHITECTURE.md) |
-| 1 | Universal identity layer | Next |
-| 2 | Provider interface | Queued |
-| 3 | Unified result types | Queued |
-| 4 | Cache / rate-limit architecture | Queued |
-| 5+ | Hardening + provider features | Queued |
+| 0 | API audit | Done |
+| **1** | Universal identity layer | **Done** |
+| 2 | Provider interface | Next |
+| 3+ | Types / cache / features | Queued |
+
+## Sprint 1
+
+- `lib/anime-identity.ts`
+  - `AnimeIdentity` + `IdentityMapping` (source, target, confidence, method, timestamp)
+  - `identityFromAnime` / `identityFromMalImport`
+  - `preferredCatalogId`, `withMapping`, `isUnresolvedMalOnly`
+- AniList remains primary catalog id; MAL/Kitsu/Shiki are mappings only
