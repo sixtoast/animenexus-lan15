@@ -275,6 +275,7 @@ export default async function AnimeDetailPage({ params }: Props) {
             episodes={epNum}
             duration={anime.duration || 24}
             title={anime.title}
+            malId={anime.idMal}
           />
           <AnimeNotes animeId={anime.id} />
         </div>
