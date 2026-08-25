@@ -10,7 +10,6 @@ import type { CreativeDnaSlot } from "@/lib/creative-dna";
 
 type Props = {
   dna: CreativeDnaSlot[];
-  /** Current title id — excluded from “other titles” counts */
   currentId?: number;
 };
 
@@ -24,7 +23,12 @@ export function CreativeConnectionsPanel({ dna, currentId }: Props) {
       .map((e) => ({
         id: e.id,
         title: e.title,
-        score: e.score,
+        score:
+          e.userRating > 0
+            ? e.userRating
+            : typeof e.score === "number"
+              ? e.score
+              : undefined,
         studios: e.studios,
       }));
     return buildCreativeConnections({ dna, shelf });
