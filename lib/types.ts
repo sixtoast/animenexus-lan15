@@ -130,6 +130,8 @@ export type WatchlistEntry = {
   notes: string;
   tags?: string[];
   genres?: string[];
+  /** Stored when added from Detail/Browse — powers creative connections */
+  studios?: string[];
   addedAt: string;
   updatedAt: string;
 };
