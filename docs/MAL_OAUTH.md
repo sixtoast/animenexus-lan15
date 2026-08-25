@@ -1,32 +1,43 @@
-# MAL OAuth (Sprint 7)
+# MAL OAuth
 
-## Current behaviour
+## Status
 
-- **Import:** public lists via Jikan + AniList `idMal` resolution (Sprint 6).
-- **Sync queue:** `lib/mal-sync.ts` stores pending status/progress/score mutations locally.
-- Local watchlist updates **always succeed** first; MAL is best-effort.
+OAuth 2.0 + PKCE (`plain`) is implemented.
 
-Until MAL OAuth is configured, `flushMalSyncQueue()` returns `not_connected` / `oauth_not_configured` and **does not** claim remote success.
+| Route | Role |
+|-------|------|
+| `GET /api/mal/auth` | Start authorize (sets PKCE cookies, redirects to MAL) |
+| `GET /api/mal/callback` | Exchange code → httpOnly token cookies |
+| `GET /api/mal/status` | Connected? + username |
+| `DELETE /api/mal/status` | Disconnect |
+| `POST /api/mal/flush` | Push queue items with `malId` to MAL list API |
 
-## To enable real sync
+Account → **Connect MyAnimeList** / **Flush pending → MAL**.
 
-1. Register an app at [MyAnimeList API](https://myanimelist.net/apiconfig).
-2. Set env (server only):
+## Setup
+
+1. Register an app: [MyAnimeList API Config](https://myanimelist.net/apiconfig)
+2. App redirect URI must match exactly, e.g.
+   - Production: `https://your-domain.com/api/mal/callback`
+   - Local: `http://localhost:3000/api/mal/callback`
+3. Vercel env (Key / Value):
 
 ```
-MAL_CLIENT_ID=
-MAL_CLIENT_SECRET=
-MAL_REDIRECT_URI=https://<your-domain>/api/mal/callback
+MAL_CLIENT_ID=...
+MAL_CLIENT_SECRET=...          # if your app has a secret
+MAL_REDIRECT_URI=https://your-domain.com/api/mal/callback
+NEXT_PUBLIC_SITE_URL=https://your-domain.com   # optional, for redirects
 ```
 
-3. Implement routes:
-   - `GET /api/mal/auth` — start OAuth
-   - `GET /api/mal/callback` — exchange code, store refresh token (encrypted / httpOnly)
-4. Map queue mutations to MAL API v2 list endpoints.
-5. Set `setMalConnectedFlag(true)` only after a valid token exists.
+4. Redeploy. Open **Account** → Connect MyAnimeList.
 
-## Rules
+## Behaviour
 
-- Never undo AnimeNexus local state if MAL fails.
-- Show “MAL sync pending” in Account when `pendingCount > 0`.
-- Do not put client secrets in the browser bundle.
+- Tokens live in **httpOnly** cookies (not `localStorage`).
+- Access token refreshed via refresh_token when near expiry.
+- Local watchlist updates **never** roll back if MAL flush fails.
+- Flush only updates rows that already have a **MAL id**.
+
+## Public import (no OAuth)
+
+Jikan public username import still works without OAuth.
