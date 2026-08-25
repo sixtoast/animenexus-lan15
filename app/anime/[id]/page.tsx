@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { getAnimeExperience } from "@/lib/anime-experience";
 import { fetchAnimeById } from "@/lib/anilist";
 import { buildExternalLinks } from "@/lib/external-links";
+import { enrichDeepFromAniDb } from "@/lib/providers/anidb";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
 import { AnimeImage } from "@/components/AnimeImage";
 import { DetailCoverMaterial } from "@/components/DetailCoverMaterial";
@@ -15,6 +16,7 @@ import { AncestryGraph } from "@/components/AncestryGraph";
 import { DetailRelatedClient } from "@/components/DetailRelatedClient";
 import { MemoryVisit } from "@/components/MemoryVisit";
 import { EpisodeList } from "@/components/EpisodeList";
+import { DeepSignalsPanel } from "@/components/DeepSignalsPanel";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -59,7 +61,9 @@ export default async function AnimeDetailPage({ params }: Props) {
   const exp = await getAnimeExperience(num);
   if (!exp) notFound();
 
-  const { anime, themes, jikan, nextEpisode, layers } = exp;
+  const { anime, themes, jikan, nextEpisode, layers, identity } = exp;
+
+  const deep = await enrichDeepFromAniDb(identity).catch(() => null);
 
   const score = anime.score > 0 ? anime.score.toFixed(1) : "—";
   const season =
@@ -207,6 +211,12 @@ export default async function AnimeDetailPage({ params }: Props) {
             {anime.description || "No description available."}
           </p>
         </section>
+
+        <DeepSignalsPanel
+          genres={anime.tags || []}
+          deepTags={deep?.tags || []}
+          sourceNote={deep?.tags?.length ? "AniDB" : undefined}
+        />
 
         {external.length > 0 ? (
           <section className="detail-section" id="external-links">
