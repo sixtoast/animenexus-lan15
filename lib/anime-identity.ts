@@ -1,8 +1,9 @@
 /**
- * Universal anime identity (Multi-API Sprint 1).
+ * Universal anime identity (Multi-API + Expansion II Sprint 1).
  *
  * AniList id is the primary internal identifier for catalog titles.
  * External ids are mappings with provenance — never replace AniList ids.
+ * Title matching is last-resort and must not become silent authoritative mapping.
  */
 
 import type { Anime } from "./types";
@@ -15,24 +16,44 @@ export type IdentityProvider =
   | "kitsu"
   | "shikimori"
   | "tmdb"
+  | "tvdb"
+  | "imdb"
   | "anidb"
+  | "simkl"
+  | "watchmode"
   | "animethemes"
   | "wikidata"
-  | "mangadex";
+  | "mangadex"
+  | "fanart";
 
 export type MappingMethod =
   | "anilist_field" // e.g. Media.idMal
   | "provider_native" // row came from that provider
   | "offset_decode" // extracted from offset id scheme
   | "external_resource" // e.g. AnimeThemes Anilist resource
-  | "title_match"
+  | "mapping_dataset" // verified cross-id dataset
+  | "multi_id_agree" // several sources agree
+  | "title_match" // LAST RESORT — never treat as permanent authority alone
   | "manual"
   | "import";
+
+/** Preferred resolution order (high → low). Title match is always last. */
+export const IDENTITY_RESOLUTION_ORDER: MappingMethod[] = [
+  "anilist_field",
+  "provider_native",
+  "external_resource",
+  "mapping_dataset",
+  "multi_id_agree",
+  "import",
+  "manual",
+  "offset_decode",
+  "title_match",
+];
 
 export type IdentityMapping = {
   source: IdentityProvider;
   target: IdentityProvider;
-  /** String so TMDB / Wikidata / slugs stay uniform */
+  /** String so TMDB / Wikidata / IMDb / slugs stay uniform */
   targetId: string;
   confidence: number; // 0–1
   method: MappingMethod;
@@ -45,7 +66,11 @@ export type AnimeIdentity = {
 
   malId?: number;
   tmdbId?: string;
+  tvdbId?: string;
+  imdbId?: string;
   anidbId?: number;
+  simklId?: string;
+  watchmodeId?: string;
   animeThemesId?: string;
   kitsuId?: string;
   shikimoriId?: string;
@@ -89,6 +114,12 @@ function mapping(
   };
 }
 
+/** Title-match mappings must stay provisional (cap confidence). */
+export function isAuthoritativeMapping(m: IdentityMapping): boolean {
+  if (m.method === "title_match") return false;
+  return m.confidence >= 0.85;
+}
+
 /**
  * Build identity from a normalized Anime row.
  * Prefers authoritative fields (idMal, source) over title matching.
@@ -105,7 +136,6 @@ export function identityFromAnime(anime: Anime): AnimeIdentity {
     native: anime.titleNative,
   };
 
-  // Decode offset ids first
   if (anime.id >= SHIKI_ID_OFFSET) {
     const native = anime.id - SHIKI_ID_OFFSET;
     origin = "shikimori";
@@ -113,7 +143,6 @@ export function identityFromAnime(anime: Anime): AnimeIdentity {
     mappings.push(
       mapping("shikimori", "shikimori", native, 1, "offset_decode"),
     );
-    // anilist_id may still be set if ever bridged
     if (anime.anilist_id && anime.anilist_id > 0) {
       anilistId = anime.anilist_id;
       confidence.anilist = 0.7;
@@ -155,9 +184,13 @@ export function identityFromAnime(anime: Anime): AnimeIdentity {
     };
   }
 
-  // AniList-native id space
   origin = (anime.source as IdentityProvider) || "anilist";
-  if (origin !== "anilist" && origin !== "kitsu" && origin !== "shikimori") {
+  if (
+    origin !== "anilist" &&
+    origin !== "kitsu" &&
+    origin !== "shikimori" &&
+    origin !== "mal"
+  ) {
     origin = "anilist";
   }
 
@@ -179,9 +212,7 @@ export function identityFromAnime(anime: Anime): AnimeIdentity {
   if (anime.idMal && anime.idMal > 0) {
     malId = anime.idMal;
     confidence.mal = 1;
-    mappings.push(
-      mapping("anilist", "mal", malId, 1, "anilist_field"),
-    );
+    mappings.push(mapping("anilist", "mal", malId, 1, "anilist_field"));
   }
 
   return {
@@ -194,7 +225,6 @@ export function identityFromAnime(anime: Anime): AnimeIdentity {
   };
 }
 
-/** Identity for a MAL-only import row (watchlist merge helper). */
 export function identityFromMalImport(opts: {
   malId: number;
   title: string;
@@ -208,9 +238,7 @@ export function identityFromMalImport(opts: {
   if (opts.anilistId && opts.anilistId > 0) {
     anilistId = opts.anilistId;
     confidence.anilist = 0.9;
-    mappings.push(
-      mapping("mal", "anilist", anilistId, 0.9, "import"),
-    );
+    mappings.push(mapping("mal", "anilist", anilistId, 0.9, "import"));
   }
   return {
     anilistId,
@@ -222,12 +250,10 @@ export function identityFromMalImport(opts: {
   };
 }
 
-/** Preferred route / storage id: AniList when known. */
 export function preferredCatalogId(identity: AnimeIdentity): number | null {
   return identity.anilistId;
 }
 
-/** True when watchlist id is likely a raw MAL id without AniList bridge. */
 export function isUnresolvedMalOnly(identity: AnimeIdentity): boolean {
   return (
     identity.origin === "mal" &&
@@ -240,13 +266,43 @@ export function getMapping(
   identity: AnimeIdentity,
   target: IdentityProvider,
 ): IdentityMapping | undefined {
-  return identity.mappings.find((m) => m.target === target);
+  const candidates = identity.mappings.filter((m) => m.target === target);
+  if (!candidates.length) return undefined;
+  // Prefer higher confidence; break ties by resolution order
+  return candidates.sort((a, b) => {
+    if (b.confidence !== a.confidence) return b.confidence - a.confidence;
+    return (
+      IDENTITY_RESOLUTION_ORDER.indexOf(a.method) -
+      IDENTITY_RESOLUTION_ORDER.indexOf(b.method)
+    );
+  })[0];
 }
 
 export function withMapping(
   identity: AnimeIdentity,
   map: IdentityMapping,
 ): AnimeIdentity {
+  // Never promote title_match over an existing authoritative mapping for same target
+  if (map.method === "title_match") {
+    const existing = getMapping(identity, map.target);
+    if (existing && isAuthoritativeMapping(existing)) {
+      return {
+        ...identity,
+        mappings: [
+          ...identity.mappings.filter(
+            (m) =>
+              !(
+                m.target === map.target &&
+                m.source === map.source &&
+                m.method === "title_match"
+              ),
+          ),
+          map,
+        ],
+      };
+    }
+  }
+
   const next: AnimeIdentity = {
     ...identity,
     mappings: [
@@ -261,37 +317,72 @@ export function withMapping(
     },
   };
 
-  const idNum = Number(map.targetId);
-  switch (map.target) {
-    case "anilist":
-      if (!Number.isNaN(idNum)) next.anilistId = idNum;
-      break;
-    case "mal":
-      if (!Number.isNaN(idNum)) next.malId = idNum;
-      break;
-    case "kitsu":
-      next.kitsuId = map.targetId;
-      break;
-    case "shikimori":
-      next.shikimoriId = map.targetId;
-      break;
-    case "tmdb":
-      next.tmdbId = map.targetId;
-      break;
-    case "anidb":
-      if (!Number.isNaN(idNum)) next.anidbId = idNum;
-      break;
-    case "animethemes":
-      next.animeThemesId = map.targetId;
-      break;
-    case "wikidata":
-      next.wikidataId = map.targetId;
-      break;
-    case "mangadex":
-      next.mangadexId = map.targetId;
-      break;
-    default:
-      break;
+  // Only write canonical id fields for non-provisional or high-confidence maps
+  const writeField =
+    map.method !== "title_match" || map.confidence >= 0.95;
+
+  if (writeField) {
+    const idNum = Number(map.targetId);
+    switch (map.target) {
+      case "anilist":
+        if (!Number.isNaN(idNum)) next.anilistId = idNum;
+        break;
+      case "mal":
+        if (!Number.isNaN(idNum)) next.malId = idNum;
+        break;
+      case "kitsu":
+        next.kitsuId = map.targetId;
+        break;
+      case "shikimori":
+        next.shikimoriId = map.targetId;
+        break;
+      case "tmdb":
+        next.tmdbId = map.targetId;
+        break;
+      case "tvdb":
+        next.tvdbId = map.targetId;
+        break;
+      case "imdb":
+        next.imdbId = map.targetId;
+        break;
+      case "anidb":
+        if (!Number.isNaN(idNum)) next.anidbId = idNum;
+        break;
+      case "simkl":
+        next.simklId = map.targetId;
+        break;
+      case "watchmode":
+        next.watchmodeId = map.targetId;
+        break;
+      case "animethemes":
+        next.animeThemesId = map.targetId;
+        break;
+      case "wikidata":
+        next.wikidataId = map.targetId;
+        break;
+      case "mangadex":
+        next.mangadexId = map.targetId;
+        break;
+      default:
+        break;
+    }
   }
   return next;
+}
+
+/** Helper to attach a mapping with explicit method (providers should use this). */
+export function mapId(
+  identity: AnimeIdentity,
+  opts: {
+    source: IdentityProvider;
+    target: IdentityProvider;
+    targetId: string | number;
+    confidence: number;
+    method: MappingMethod;
+  },
+): AnimeIdentity {
+  return withMapping(
+    identity,
+    mapping(opts.source, opts.target, opts.targetId, opts.confidence, opts.method),
+  );
 }
