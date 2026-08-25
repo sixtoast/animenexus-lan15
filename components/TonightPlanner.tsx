@@ -5,6 +5,17 @@ import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { rankTonight } from "@/lib/tonight-planner";
 
+function toEpCount(episodes: string | number | undefined | null): number {
+  if (typeof episodes === "number" && Number.isFinite(episodes)) {
+    return Math.max(0, episodes);
+  }
+  if (typeof episodes === "string") {
+    const n = parseInt(episodes, 10);
+    return Number.isFinite(n) ? Math.max(0, n) : 0;
+  }
+  return 0;
+}
+
 export function TonightPlanner() {
   const { entries, ready } = useWatchlist();
   const [minutes, setMinutes] = useState(90);
@@ -23,7 +34,7 @@ export function TonightPlanner() {
         title: e.title,
         image: e.image,
         progress: e.progress || 0,
-        episodes: e.episodes || 0,
+        episodes: toEpCount(e.episodes),
         durationMin: e.duration || 24,
         watchStatus: e.watchStatus,
       }));
