@@ -1,12 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/components/SessionProvider";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { SoundSettings } from "@/components/SoundSettings";
 import type { WatchlistEntry } from "@/lib/types";
 import { playCue } from "@/lib/sound-engine";
+import {
+  clearMalSyncQueue,
+  readMalSyncQueue,
+  setMalConnectedFlag,
+} from "@/lib/mal-sync";
 
 export function AccountClient() {
   const {
@@ -28,6 +33,53 @@ export function AccountClient() {
   const [malErr, setMalErr] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [flashOk, setFlashOk] = useState(false);
+  const [malOauth, setMalOauth] = useState<{
+    configured: boolean;
+    connected: boolean;
+    username: string | null;
+  } | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  const refreshMalOauth = useCallback(async () => {
+    try {
+      const res = await fetch("/api/mal/status");
+      const j = await res.json();
+      setMalOauth({
+        configured: Boolean(j.configured),
+        connected: Boolean(j.connected),
+        username: j.username || null,
+      });
+      setMalConnectedFlag(Boolean(j.connected));
+    } catch {
+      setMalOauth({ configured: false, connected: false, username: null });
+    }
+    setPendingCount(readMalSyncQueue().length);
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    void refreshMalOauth();
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const mal = params.get("mal");
+      if (mal === "connected") {
+        setSyncMsg("MyAnimeList connected. Pending changes can flush when you sync.");
+        playCue("success");
+        window.history.replaceState({}, "", "/account");
+      } else if (mal === "denied") {
+        setMalErr("MAL authorization was denied.");
+        window.history.replaceState({}, "", "/account");
+      } else if (mal === "error" || mal === "not_configured") {
+        setMalErr(
+          params.get("reason") ||
+            "MAL OAuth failed or is not configured on the server.",
+        );
+        window.history.replaceState({}, "", "/account");
+      }
+    } catch {
+      /* */
+    }
+  }, [ready, refreshMalOauth]);
 
   if (!ready) {
     return (
@@ -110,7 +162,7 @@ export function AccountClient() {
       for (const entry of incoming) byId.set(entry.id, entry);
       replaceAll([...byId.values()]);
       setSyncMsg(
-        `Merged ${incoming.length} MAL titles (Jikan). Rate limits apply; lists must be public.`,
+        `Merged ${incoming.length} MAL titles (public list / Jikan).`,
       );
       window.clearInterval(timer);
       finishProgress(true);
@@ -118,6 +170,50 @@ export function AccountClient() {
       window.clearInterval(timer);
       setMalErr(err instanceof Error ? err.message : "MAL failed");
       finishProgress(false);
+    } finally {
+      setMalBusy(false);
+    }
+  }
+
+  async function onMalDisconnect() {
+    await fetch("/api/mal/status", { method: "DELETE" });
+    setMalConnectedFlag(false);
+    await refreshMalOauth();
+    playCue("filter_select");
+  }
+
+  async function onMalFlush() {
+    const q = readMalSyncQueue().filter((m) => m.malId);
+    if (!q.length) {
+      setSyncMsg("No pending MAL mutations with a MAL id.");
+      return;
+    }
+    setMalBusy(true);
+    try {
+      const res = await fetch("/api/mal/flush", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: q.map((m) => ({
+            malId: m.malId,
+            status: m.status,
+            progress: m.progress,
+            score: m.score,
+          })),
+        }),
+      });
+      const j = await res.json();
+      if (j.flushed > 0) {
+        clearMalSyncQueue();
+        setPendingCount(0);
+        setSyncMsg(`Flushed ${j.flushed} change(s) to MyAnimeList.`);
+        playCue("success");
+      } else {
+        setMalErr(j.reason || "Nothing flushed — check MAL connection and mal ids.");
+      }
+      await refreshMalOauth();
+    } catch (e) {
+      setMalErr(e instanceof Error ? e.message : "Flush failed");
     } finally {
       setMalBusy(false);
     }
@@ -133,8 +229,17 @@ export function AccountClient() {
   return (
     <div className={"account-panel" + (flashOk ? " account-panel--ok" : "")}>
       {progress > 0 && progress < 100 ? (
-        <div className="account-progress" role="progressbar" aria-valuenow={Math.round(progress)} aria-valuemin={0} aria-valuemax={100}>
-          <span className="account-progress-fill" style={{ width: `${progress}%` }} />
+        <div
+          className="account-progress"
+          role="progressbar"
+          aria-valuenow={Math.round(progress)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <span
+            className="account-progress-fill"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       ) : null}
 
@@ -255,11 +360,61 @@ export function AccountClient() {
 
       <hr style={{ margin: "28px 0", borderColor: "var(--color-border)" }} />
 
+      <section aria-labelledby="mal-oauth-heading">
+        <h2 id="mal-oauth-heading" className="nx-kicker">
+          MyAnimeList OAuth
+        </h2>
+        {!malOauth?.configured ? (
+          <p className="account-note">
+            Server needs <code>MAL_CLIENT_ID</code> and{" "}
+            <code>MAL_REDIRECT_URI</code> (see docs/MAL_OAUTH.md). Public list
+            import below still works without OAuth.
+          </p>
+        ) : malOauth.connected ? (
+          <div className="account-actions" style={{ flexWrap: "wrap", gap: 8 }}>
+            <p className="account-note" style={{ width: "100%" }}>
+              Connected as{" "}
+              <strong>{malOauth.username || "MAL user"}</strong>
+              {pendingCount > 0
+                ? ` · ${pendingCount} pending local change(s)`
+                : " · queue empty"}
+            </p>
+            <button
+              type="button"
+              className="btn btn-accent btn-sm"
+              onClick={() => void onMalFlush()}
+              disabled={busy || pendingCount === 0}
+            >
+              Flush pending → MAL
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => void onMalDisconnect()}
+              disabled={busy}
+            >
+              Disconnect MAL
+            </button>
+          </div>
+        ) : (
+          <div className="account-actions">
+            <p className="account-note" style={{ width: "100%" }}>
+              Authorize write access so status/progress can sync to your MAL
+              list. Local watchlist always wins first.
+            </p>
+            <a href="/api/mal/auth" className="btn btn-accent btn-sm">
+              Connect MyAnimeList
+            </a>
+          </div>
+        )}
+      </section>
+
+      <hr style={{ margin: "28px 0", borderColor: "var(--color-border)" }} />
+
       <form className="account-form" onSubmit={onMalImport}>
         <p className="account-note">
-          Public MAL username via Jikan. Rate-limited; private lists will fail.
-          Titles merge into local watchlist by id (MAL ids — may not match
-          AniList ids for the same show).
+          Public MAL username via Jikan (no OAuth). Titles merge into local
+          watchlist; ids are resolved to AniList when possible.
         </p>
         <label className="filter-label" htmlFor="mal-user">
           MAL username
