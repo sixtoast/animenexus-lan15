@@ -2,14 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–12 | Foundation → Home signals | Done |
-| **13** | AniSkip | **Done** |
-| 14 | Smart binge calculator | Next |
-| 15+ | Tonight / Sauce / Themes | Queued |
+| 0–13 | Foundation → AniSkip | Done |
+| **14** | Smart binge calculator | **Done** |
+| 15 | Tonight planner | Next |
+| 16+ | Sauce / Themes / identity polish | Queued |
 
-## Sprint 13
+## Sprint 14
 
-- `lib/providers/aniskip.ts` — `fetchSkipTimes` / `getSkipTimes` / `estimateAverageSkipSeconds`
-- MAL id required; soft-fail empty arrays
-- Types: op · ed · recap · mixed (normalised `SkipInterval`)
-- No UI claim of skip data until Sprint 14 binge surfaces estimates
+- `GET /api/skip-estimate` — AniSkip average OP/ED/recap per ep
+- `BingeCalculator` — toggles for OP · ED · recap; shows savings vs full runtime
+- Detail passes `malId`; without data, classic binge math still works
