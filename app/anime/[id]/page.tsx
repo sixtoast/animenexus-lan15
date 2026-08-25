@@ -6,6 +6,7 @@ import { getAnimeExperience } from "@/lib/anime-experience";
 import { fetchAnimeById } from "@/lib/anilist";
 import { buildExternalLinks } from "@/lib/external-links";
 import { enrichDeepFromAniDb } from "@/lib/providers/anidb";
+import { buildCreativeDna, fullCreditLines } from "@/lib/creative-dna";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
 import { AnimeImage } from "@/components/AnimeImage";
 import { DetailCoverMaterial } from "@/components/DetailCoverMaterial";
@@ -17,6 +18,7 @@ import { DetailRelatedClient } from "@/components/DetailRelatedClient";
 import { MemoryVisit } from "@/components/MemoryVisit";
 import { EpisodeList } from "@/components/EpisodeList";
 import { DeepSignalsPanel } from "@/components/DeepSignalsPanel";
+import { CreativeDnaPanel } from "@/components/CreativeDnaPanel";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -64,6 +66,26 @@ export default async function AnimeDetailPage({ params }: Props) {
   const { anime, themes, jikan, nextEpisode, layers, identity } = exp;
 
   const deep = await enrichDeepFromAniDb(identity).catch(() => null);
+
+  const dnaSlots = buildCreativeDna({
+    staff: jikan.staff.map((s) => ({
+      name: s.name,
+      roles: s.roles,
+      source: "jikan",
+    })),
+    production: deep?.production,
+    creators: deep?.creators,
+    studios: anime.studios,
+  });
+  const dnaFull = fullCreditLines({
+    staff: jikan.staff.map((s) => ({
+      name: s.name,
+      roles: s.roles,
+      source: "jikan",
+    })),
+    production: deep?.production,
+    creators: deep?.creators,
+  });
 
   const score = anime.score > 0 ? anime.score.toFixed(1) : "—";
   const season =
@@ -218,6 +240,8 @@ export default async function AnimeDetailPage({ params }: Props) {
           sourceNote={deep?.tags?.length ? "AniDB" : undefined}
         />
 
+        <CreativeDnaPanel slots={dnaSlots} fullCredits={dnaFull} />
+
         {external.length > 0 ? (
           <section className="detail-section" id="external-links">
             <h2>External catalogs</h2>
@@ -248,23 +272,6 @@ export default async function AnimeDetailPage({ params }: Props) {
               : undefined
           }
         />
-
-        {jikan.staff.length > 0 ? (
-          <section className="detail-section">
-            <h2>Staff</h2>
-            <p className="tools-hint" style={{ marginBottom: 10 }}>
-              Source: Jikan / MAL
-            </p>
-            <ul className="theme-ul">
-              {jikan.staff.slice(0, 16).map((s) => (
-                <li key={s.malId}>
-                  <strong>{s.name}</strong>
-                  {s.roles.length ? ` · ${s.roles.slice(0, 3).join(", ")}` : null}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
 
         <DetailRelatedClient
           relations={relations}
