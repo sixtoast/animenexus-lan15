@@ -133,7 +133,7 @@ export async function fetchAnimeThemesByAniListId(
       const json = (await getJson(url)) as { anime?: ApiAnime[] } | null;
       return bucketThemes(json?.anime?.[0] || {}, "anilist");
     },
-    CACHE_TTL.long,
+    CACHE_TTL.medium,
   ).catch(() => null);
 }
 
@@ -155,7 +155,7 @@ export async function fetchAnimeThemesByMalId(
       const json = (await getJson(url)) as { anime?: ApiAnime[] } | null;
       return bucketThemes(json?.anime?.[0] || {}, "mal");
     },
-    CACHE_TTL.long,
+    CACHE_TTL.medium,
   ).catch(() => null);
 }
 
@@ -176,6 +176,6 @@ export async function fetchAnimeThemesByTitle(
       const json = (await getJson(url)) as { anime?: ApiAnime[] } | null;
       return bucketThemes(json?.anime?.[0] || {}, "title");
     },
-    CACHE_TTL.long,
+    CACHE_TTL.medium,
   ).catch(() => null);
 }
