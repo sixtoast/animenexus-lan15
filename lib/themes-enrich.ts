@@ -1,12 +1,13 @@
 /**
- * Unified themes enrichment (Sprint 21 + Sprint 3 provenance).
- * Jikan = text OP/ED; AnimeThemes = optional video / page links.
+ * Unified themes enrichment (Multi-API Sprint 17).
+ * Jikan = text OP/ED; AnimeThemes = video / page links via AniList → MAL → title.
  * Soft-fail only.
  */
 
 import { fetchThemesFromJikan, youtubeSearchUrl } from "./jikan-themes";
 import {
   fetchAnimeThemesByAniListId,
+  fetchAnimeThemesByMalId,
   fetchAnimeThemesByTitle,
   type ThemeVideo,
 } from "./providers/animethemes";
@@ -17,16 +18,17 @@ export type EnrichedThemeLine = {
   youtubeSearch: string;
   animethemesUrl?: string;
   videoUrl?: string;
-  /** provenance for UI */
+  episodeRange?: string;
   source: string;
 };
 
 export type EnrichedThemes = {
   openings: EnrichedThemeLine[];
   endings: EnrichedThemeLine[];
-  /** Normalised list for services */
+  inserts: EnrichedThemeLine[];
   themes: AnimeTheme[];
   sourceNote: string;
+  matchedBy?: string;
 };
 
 function themeFromVideo(t: ThemeVideo): AnimeTheme {
@@ -55,7 +57,7 @@ function themeFromString(label: string, kind: "OP" | "ED"): AnimeTheme {
   };
 }
 
-function lineFromTheme(t: AnimeTheme): EnrichedThemeLine {
+function lineFromTheme(t: AnimeTheme, episodeRange?: string): EnrichedThemeLine {
   const label =
     t.sequence != null
       ? `${t.type}${t.sequence}: ${t.song}${t.artist ? ` — ${t.artist}` : ""}`
@@ -69,6 +71,7 @@ function lineFromTheme(t: AnimeTheme): EnrichedThemeLine {
     ),
     animethemesUrl: t.pageUrl,
     videoUrl: t.video,
+    episodeRange,
     source: t.source,
   };
 }
@@ -84,18 +87,23 @@ export async function enrichThemes(opts: {
   ]);
 
   let at = atById;
+  if (!at && opts.idMal) {
+    at = await fetchAnimeThemesByMalId(opts.idMal);
+  }
   if (!at) {
     at = await fetchAnimeThemesByTitle(opts.title);
   }
 
   const themes: AnimeTheme[] = [];
   const notes: string[] = [];
+  const rangeBySong = new Map<string, string>();
 
   if (at && (at.openings.length || at.endings.length || at.inserts.length)) {
     for (const t of [...at.openings, ...at.endings, ...at.inserts]) {
       themes.push(themeFromVideo(t));
+      if (t.episodeRange) rangeBySong.set(t.song, t.episodeRange);
     }
-    notes.push("AnimeThemes");
+    notes.push(`AnimeThemes (${at.matchedBy})`);
   }
 
   if (jikan) {
@@ -108,7 +116,7 @@ export async function enrichThemes(opts: {
       for (const s of jikan.endings) themes.push(themeFromString(s, "ED"));
     }
     if (jikan.openings.length || jikan.endings.length) {
-      if (!notes.includes("Jikan / MAL")) notes.push("Jikan / MAL");
+      if (!notes.some((n) => n.startsWith("Jikan"))) notes.push("Jikan / MAL");
     }
   }
 
@@ -116,17 +124,23 @@ export async function enrichThemes(opts: {
 
   const openings = themes
     .filter((t) => t.type === "OP")
-    .slice(0, 10)
-    .map(lineFromTheme);
+    .slice(0, 12)
+    .map((t) => lineFromTheme(t, rangeBySong.get(t.song)));
   const endings = themes
     .filter((t) => t.type === "ED")
-    .slice(0, 10)
-    .map(lineFromTheme);
+    .slice(0, 12)
+    .map((t) => lineFromTheme(t, rangeBySong.get(t.song)));
+  const inserts = themes
+    .filter((t) => t.type === "IN")
+    .slice(0, 8)
+    .map((t) => lineFromTheme(t, rangeBySong.get(t.song)));
 
   return {
     openings,
     endings,
-    themes: themes.slice(0, 24),
+    inserts,
+    themes: themes.slice(0, 32),
     sourceNote: notes.join(" · ") || "catalog",
+    matchedBy: at?.matchedBy,
   };
 }
