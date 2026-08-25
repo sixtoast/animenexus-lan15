@@ -24,7 +24,14 @@ type Ctx = {
   connecting: boolean;
   syncing: boolean;
   error: string | null;
-  connect: (username: string) => Promise<void>;
+  /** Public username only — no OAuth */
+  connectQuick: (username: string) => Promise<void>;
+  /** Apply profile after OAuth callback */
+  applyOAuthSession: (profile: {
+    username: string;
+    userId: number;
+    avatar?: string;
+  }) => void;
   disconnect: () => void;
   syncLists: () => Promise<number>;
   clearError: () => void;
@@ -44,7 +51,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setReady(true);
   }, []);
 
-  const connect = useCallback(async (username: string) => {
+  const connectQuick = useCallback(async (username: string) => {
     const name = username.trim().replace(/^@/, "");
     if (!name) {
       setError("Enter an AniList username.");
@@ -58,7 +65,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         setError(`No public AniList user named “${name}”.`);
         return;
       }
-      const next = profileToSession(profile);
+      const next = profileToSession(profile, null, "quick");
       writeSession(next);
       setSession(next);
     } catch (e) {
@@ -68,16 +75,34 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const applyOAuthSession = useCallback(
+    (profile: { username: string; userId: number; avatar?: string }) => {
+      const next: SessionState = {
+        username: profile.username,
+        userId: profile.userId,
+        avatar: profile.avatar,
+        connectedAt: new Date().toISOString(),
+        authMode: "oauth",
+      };
+      writeSession(next);
+      setSession(next);
+      setError(null);
+    },
+    [],
+  );
+
   const disconnect = useCallback(() => {
     writeSession(null);
     setSession(null);
     setError(null);
+    // Best-effort clear server OAuth cookie
+    void fetch("/api/anilist/status", { method: "DELETE" }).catch(() => null);
   }, []);
 
   const syncLists = useCallback(async () => {
     const current = readSession();
     if (!current?.username) {
-      setError("Connect an AniList username first.");
+      setError("Connect an AniList account first.");
       return 0;
     }
     setSyncing(true);
@@ -130,7 +155,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       connecting,
       syncing,
       error,
-      connect,
+      connectQuick,
+      applyOAuthSession,
       disconnect,
       syncLists,
       clearError,
@@ -141,7 +167,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       connecting,
       syncing,
       error,
-      connect,
+      connectQuick,
+      applyOAuthSession,
       disconnect,
       syncLists,
       clearError,
