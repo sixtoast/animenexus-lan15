@@ -10,6 +10,7 @@ export function SauceClient() {
   const [url, setUrl] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
   const [hits, setHits] = useState<SauceHit[]>([]);
+  const [providers, setProviders] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -19,6 +20,7 @@ export function SauceClient() {
     loadingStart("sauce");
     setError(null);
     setHits([]);
+    setProviders([]);
     setPreview(URL.createObjectURL(file));
     try {
       const form = new FormData();
@@ -28,6 +30,7 @@ export function SauceClient() {
       if (!res.ok) throw new Error(json.error || "Search failed");
       if (json.error) throw new Error(json.error);
       setHits(json.hits || []);
+      setProviders(json.providers || ["trace.moe"]);
       if (!(json.hits || []).length)
         setError("No matches — try a clearer frame.");
     } catch (err) {
@@ -45,6 +48,7 @@ export function SauceClient() {
     loadingStart("sauce");
     setError(null);
     setHits([]);
+    setProviders([]);
     setPreview(url.trim());
     try {
       const res = await fetch("/api/sauce", {
@@ -56,6 +60,7 @@ export function SauceClient() {
       if (!res.ok) throw new Error(json.error || "Search failed");
       if (json.error) throw new Error(json.error);
       setHits(json.hits || []);
+      setProviders(json.providers || ["trace.moe"]);
       if (!(json.hits || []).length)
         setError("No matches — try a clearer frame.");
     } catch (err) {
@@ -88,11 +93,11 @@ export function SauceClient() {
   return (
     <div className="tools-panel">
       <p className="tools-hint" style={{ marginBottom: 16 }}>
-        Drop, upload, paste (Ctrl+V), or URL. Powered by{" "}
+        Drop, upload, paste (Ctrl+V), or URL. Primary:{" "}
         <a href="https://trace.moe" target="_blank" rel="noreferrer">
           trace.moe
         </a>
-        .
+        . Optional SauceNAO when configured. Confidence is shown honestly.
       </p>
 
       <div
@@ -159,10 +164,16 @@ export function SauceClient() {
         </div>
       ) : null}
 
+      {providers.length > 0 ? (
+        <p className="tools-hint" style={{ marginTop: 12 }}>
+          Providers: {providers.join(" · ")}
+        </p>
+      ) : null}
+
       {hits.length > 0 ? (
         <ul className="sauce-hits">
           {hits.slice(0, 8).map((h, i) => (
-            <li key={`${h.anilistId}-${i}`} className="sauce-hit">
+            <li key={`${h.anilistId}-${h.source}-${i}`} className="sauce-hit">
               {h.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={h.image} alt="" />
@@ -171,12 +182,19 @@ export function SauceClient() {
               )}
               <div className="sauce-hit-body">
                 <div className="sauce-sim">
-                  {(h.similarity * 100).toFixed(1)}% match
+                  {(h.similarity * 100).toFixed(1)}% · {h.confidence}
+                  {" · "}
+                  <span className="detail-source">{h.source}</span>
                 </div>
+                {h.title ? (
+                  <div className="sauce-file">{h.title}</div>
+                ) : null}
                 <div className="sauce-file">{h.filename}</div>
                 <div className="sauce-meta">
                   {h.episode != null ? `Ep ${h.episode} · ` : ""}
-                  {formatTime(h.from)}–{formatTime(h.to)}
+                  {h.from || h.to
+                    ? `${formatTime(h.from)}–${formatTime(h.to)}`
+                    : null}
                 </div>
                 <div className="daily-actions" style={{ marginTop: 8 }}>
                   {h.anilistId ? (
@@ -186,7 +204,9 @@ export function SauceClient() {
                     >
                       Open on AnimeNexus
                     </Link>
-                  ) : null}
+                  ) : (
+                    <span className="tools-hint">No AniList id on this hit</span>
+                  )}
                   {h.video ? (
                     <a
                       href={h.video}
