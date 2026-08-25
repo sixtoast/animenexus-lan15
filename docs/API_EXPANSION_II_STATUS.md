@@ -2,12 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–6 | Audit → weighted tags | Done |
-| **7** | Deep tag explorer UI | **Done** |
-| 8 | AniDB relation graph | Next |
-| 9+ | Franchise intelligence … | Queued |
+| 0–7 | Audit → deep signals UI | Done |
+| **8** | AniDB relation graph | **Done** |
+| 9 | Franchise intelligence | Next |
+| 10+ | Production metadata … | Queued |
 
-## Sprint 7
+## Sprint 8
 
-- `components/DeepSignalsPanel.tsx` — Genres vs Deep signals · Explore deeper
-- Detail soft-loads AniDB tags when `identity.anidbId` + client configured
+- `lib/relation-merge.ts` — `mergeRelations` AniList + AniDB
+- AniList edges stay linkable; AniDB-only edges kept as external evidence
+- Never invents AniList ids from AniDB AIDs alone
