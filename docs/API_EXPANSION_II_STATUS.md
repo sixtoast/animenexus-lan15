@@ -2,13 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–7 | Audit → deep signals UI | Done |
-| **8** | AniDB relation graph | **Done** |
-| 9 | Franchise intelligence | Next |
-| 10+ | Production metadata … | Queued |
+| 0–8 | Audit → relation merge | Done |
+| **9** | Franchise intelligence | **Done** |
+| 10 | Niche production metadata | Next |
+| 11+ | Creative connections … | Queued |
 
-## Sprint 8
+## Sprint 9
 
-- `lib/relation-merge.ts` — `mergeRelations` AniList + AniDB
-- AniList edges stay linkable; AniDB-only edges kept as external evidence
-- Never invents AniList ids from AniDB AIDs alone
+- `lib/franchise-resolver.ts` — `resolveFranchise`
+- Paths: release · chronological · main story · full completion
+- Marks `uncertain` when years/edges are thin — no fake “correct” order
