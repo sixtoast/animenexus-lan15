@@ -2,13 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–8 | Audit → relation merge | Done |
-| **9** | Franchise intelligence | **Done** |
-| 10 | Niche production metadata | Next |
-| 11+ | Creative connections … | Queued |
+| 0–9 | Audit → franchise | Done |
+| **10** | Niche production metadata | **Done** |
+| 11 | Production / creative connections | Next |
+| 12+ | Watchmode … | Queued |
 
-## Sprint 9
+## Sprint 10
 
-- `lib/franchise-resolver.ts` — `resolveFranchise`
-- Paths: release · chronological · main story · full completion
-- Marks `uncertain` when years/edges are thin — no fake “correct” order
+- `lib/creative-dna.ts` — `buildCreativeDna` / `fullCreditLines`
+- `components/CreativeDnaPanel.tsx` on Detail
+- Roles: Director · Series composition · Original · Character design · Music · Animation · Producer
+- Raw staff list replaced by DNA + optional Full credits
