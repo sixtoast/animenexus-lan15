@@ -15,13 +15,35 @@ export const MAL_COOKIE_EXPIRES = "mal_token_expires";
 export const MAL_COOKIE_VERIFIER = "mal_pkce_verifier";
 export const MAL_COOKIE_STATE = "mal_oauth_state";
 
+/** Strip accidental quotes/whitespace from Vercel env values */
+export function cleanEnv(value: string | undefined): string {
+  if (!value) return "";
+  let v = value.trim();
+  if (
+    (v.startsWith('"') && v.endsWith('"')) ||
+    (v.startsWith("'") && v.endsWith("'"))
+  ) {
+    v = v.slice(1, -1).trim();
+  }
+  return v;
+}
+
 export function isMalOAuthConfigured(): boolean {
-  return Boolean(process.env.MAL_CLIENT_ID?.trim());
+  return Boolean(cleanEnv(process.env.MAL_CLIENT_ID));
+}
+
+export function malClientId(): string {
+  return cleanEnv(process.env.MAL_CLIENT_ID);
+}
+
+export function malClientSecret(): string | undefined {
+  const s = cleanEnv(process.env.MAL_CLIENT_SECRET);
+  return s || undefined;
 }
 
 export function malRedirectUri(): string {
   return (
-    process.env.MAL_REDIRECT_URI?.trim() ||
+    cleanEnv(process.env.MAL_REDIRECT_URI) ||
     "http://localhost:3000/api/mal/callback"
   );
 }
@@ -78,13 +100,13 @@ export async function exchangeMalCode(opts: {
   redirectUri: string;
 }): Promise<MalTokenResponse> {
   const body = new URLSearchParams({
-    client_id: opts.clientId,
+    client_id: opts.clientId.trim(),
     grant_type: "authorization_code",
-    code: opts.code,
-    redirect_uri: opts.redirectUri,
+    code: opts.code.trim(),
+    redirect_uri: opts.redirectUri.trim(),
     code_verifier: opts.codeVerifier,
   });
-  if (opts.clientSecret) body.set("client_secret", opts.clientSecret);
+  if (opts.clientSecret) body.set("client_secret", opts.clientSecret.trim());
 
   const res = await fetch(TOKEN_URL, {
     method: "POST",
@@ -93,7 +115,19 @@ export async function exchangeMalCode(opts: {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`MAL token exchange failed: ${res.status} ${text.slice(0, 200)}`);
+    let detail = text.slice(0, 200);
+    try {
+      const j = JSON.parse(text) as { error?: string; message?: string };
+      if (j.error === "invalid_client" || j.error === "invalid_request") {
+        detail =
+          `${j.error}: check MAL_CLIENT_ID / MAL_CLIENT_SECRET / MAL_REDIRECT_URI (must match MAL app App Redirect URL exactly). No quotes in Vercel.`;
+      } else if (j.error || j.message) {
+        detail = `${j.error || "error"}: ${j.message || detail}`;
+      }
+    } catch {
+      /* keep */
+    }
+    throw new Error(detail);
   }
   return (await res.json()) as MalTokenResponse;
 }
@@ -160,7 +194,6 @@ export async function clearMalTokenCookies() {
   }
 }
 
-/** Valid access token, refreshing if needed. */
 export async function getMalAccessToken(): Promise<string | null> {
   if (!isMalOAuthConfigured()) return null;
   const jar = await cookies();
@@ -171,12 +204,10 @@ export async function getMalAccessToken(): Promise<string | null> {
   if (!refresh) return access || null;
 
   try {
-    const clientId = process.env.MAL_CLIENT_ID!.trim();
-    const clientSecret = process.env.MAL_CLIENT_SECRET?.trim();
     const tokens = await refreshMalToken({
       refreshToken: refresh,
-      clientId,
-      clientSecret,
+      clientId: malClientId(),
+      clientSecret: malClientSecret(),
     });
     await setMalTokenCookies(tokens);
     return tokens.access_token;
@@ -199,10 +230,7 @@ export async function malApiGet<T>(path: string): Promise<T | null> {
   return (await res.json()) as T;
 }
 
-/** Map AnimeNexus status → MAL list status string */
-export function toMalListStatus(
-  status?: string,
-): string | undefined {
+export function toMalListStatus(status?: string): string | undefined {
   if (!status) return undefined;
   const map: Record<string, string> = {
     watching: "watching",
@@ -226,8 +254,10 @@ export async function malUpdateAnimeList(opts: {
   const body = new URLSearchParams();
   const st = toMalListStatus(opts.status);
   if (st) body.set("status", st);
-  if (opts.progress != null) body.set("num_watched_episodes", String(opts.progress));
-  if (opts.score != null && opts.score > 0) body.set("score", String(Math.round(opts.score)));
+  if (opts.progress != null)
+    body.set("num_watched_episodes", String(opts.progress));
+  if (opts.score != null && opts.score > 0)
+    body.set("score", String(Math.round(opts.score)));
 
   if (![...body.keys()].length) return true;
 
