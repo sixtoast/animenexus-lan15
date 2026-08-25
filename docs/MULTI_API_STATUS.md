@@ -2,14 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–15 | Foundation → Tonight | Done |
-| **16** | Sauce depth | **Done** |
-| 17 | AnimeThemes depth | Next |
-| 18+ | Unified experience / polish | Queued |
+| 0–16 | Foundation → Sauce | Done |
+| **17** | AnimeThemes depth | **Done** |
+| 18 | Unified getAnimeExperience | Next |
+| 19+ | Polish / docs / hardening | Queued |
 
-## Sprint 16
+## Sprint 17
 
-- Confidence tiers on every hit (high / medium / low / exploratory)
-- Optional SauceNAO via `SAUCENAO_API_KEY` (URL searches when trace weak)
-- `mergeSauceHits` dedupe · provider labels in UI
-- Rate-limited trace.moe path
+- AnimeThemes resolve: AniList → MAL → title
+- Episode ranges · inserts · rate-limited fetch
+- Detail shows OP / ED / IN with provenance
