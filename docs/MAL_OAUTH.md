@@ -1,43 +1,44 @@
 # MAL OAuth
 
-## Status
-
-OAuth 2.0 + PKCE (`plain`) is implemented.
+## Routes
 
 | Route | Role |
 |-------|------|
-| `GET /api/mal/auth` | Start authorize (sets PKCE cookies, redirects to MAL) |
-| `GET /api/mal/callback` | Exchange code → httpOnly token cookies |
-| `GET /api/mal/status` | Connected? + username |
+| `GET /api/mal/auth` | Start authorize (PKCE cookies + redirect) |
+| `GET /api/mal/callback` | Exchange code → httpOnly tokens |
+| `GET /api/mal/status` | Connected? |
 | `DELETE /api/mal/status` | Disconnect |
-| `POST /api/mal/flush` | Push queue items with `malId` to MAL list API |
-
-Account → **Connect MyAnimeList** / **Flush pending → MAL**.
+| `POST /api/mal/flush` | Push queue → MAL |
 
 ## Setup
 
-1. Register an app: [MyAnimeList API Config](https://myanimelist.net/apiconfig)
-2. App redirect URI must match exactly, e.g.
-   - Production: `https://your-domain.com/api/mal/callback`
-   - Local: `http://localhost:3000/api/mal/callback`
-3. Vercel env (Key / Value):
+1. Create app: [myanimelist.net/apiconfig](https://myanimelist.net/apiconfig)
+2. **App Redirect URL** must match **exactly**:
+
+```
+https://YOUR-DOMAIN/api/mal/callback
+```
+
+3. Vercel env (no quotes around values):
 
 ```
 MAL_CLIENT_ID=...
-MAL_CLIENT_SECRET=...          # if your app has a secret
-MAL_REDIRECT_URI=https://your-domain.com/api/mal/callback
-NEXT_PUBLIC_SITE_URL=https://your-domain.com   # optional, for redirects
+MAL_CLIENT_SECRET=...          # only if MAL shows a secret
+MAL_REDIRECT_URI=https://YOUR-DOMAIN/api/mal/callback
+NEXT_PUBLIC_SITE_URL=https://YOUR-DOMAIN
 ```
 
-4. Redeploy. Open **Account** → Connect MyAnimeList.
+4. Redeploy → Account → **Connect MyAnimeList**
 
-## Behaviour
+## Troubleshooting
 
-- Tokens live in **httpOnly** cookies (not `localStorage`).
-- Access token refreshed via refresh_token when near expiry.
-- Local watchlist updates **never** roll back if MAL flush fails.
-- Flush only updates rows that already have a **MAL id**.
+| Symptom | Fix |
+|---------|-----|
+| `invalid_client` / `invalid_request` | Wrong ID/secret, or redirect URI ≠ MAL app setting |
+| `state_mismatch` | Start Connect again in the **same** browser; don’t open auth in a second tab |
+| `missing_pkce` | Cookies blocked; allow cookies for your domain |
+| Connect button does nothing useful | `MAL_CLIENT_ID` missing → redeploy after setting |
 
-## Public import (no OAuth)
+MAL uses **PKCE plain** (code_challenge = code_verifier). Do not change that.
 
-Jikan public username import still works without OAuth.
+Public list import (username via Jikan) still works **without** OAuth.
