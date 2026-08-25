@@ -2,15 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0 | Audit | Done |
-| **1** | Extend identity graph | **Done** |
-| 2 | Niche metadata model | Next |
-| 3–46 | … | Queued |
+| 0–1 | Audit + identity | Done |
+| **2** | Niche metadata model | **Done** |
+| 3 | Metadata provenance / conflicts | Next |
+| 4+ | AniDB provider … | Queued |
 
-## Sprint 1
+## Sprint 2
 
-- Added providers: `tvdb`, `imdb`, `simkl`, `watchmode`, `fanart`
-- Fields: `tvdbId`, `imdbId`, `simklId`, `watchmodeId`
-- Methods: `mapping_dataset`, `multi_id_agree`
-- Title-match cannot overwrite authoritative mappings; field write gated for provisional maps
-- `mapId()` / `isAuthoritativeMapping()` / `IDENTITY_RESOLUTION_ORDER`
+- `lib/deep-metadata.ts` — `AnimeDeepMetadata` and related types
+- Core `Anime` remains separate; deep layer is additive
+- Helpers: `emptyDeepMetadata`, `topDeepTags`, `mergeDeepMetadata`, `nowProvenance`
