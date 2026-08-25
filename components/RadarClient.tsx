@@ -1,11 +1,12 @@
 "use client";
 
 /**
- * Radar instrument micro (Sprint 11).
+ * Radar instrument (Sprint 11 + schedule bands).
  * scan → signal → identify → result
+ * Shelf airing: RAW / SUB / DUB · TODAY / TOMORROW / WEEK
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { Anime } from "@/lib/types";
 import { loadingStart, loadingStop } from "@/components/LoadingTheater";
@@ -19,6 +20,12 @@ import { emitNexus } from "@/lib/nexus";
 import { SignalError, signalErrorBody } from "@/components/SignalError";
 import { WhyThisIsHere } from "@/components/WhyThisIsHere";
 import { playCue } from "@/lib/sound-engine";
+import {
+  formatAirTime,
+  groupContactsByWindow,
+  type RadarContact,
+  type TimeWindow,
+} from "@/lib/radar-schedule";
 
 const PREFS_KEY = "anime_nexus_radar_prefs";
 const ALERTS_KEY = "anime_nexus_radar_alerts";
@@ -70,6 +77,15 @@ const PHASE_COPY: Record<
   },
 };
 
+const WINDOW_LABEL: Record<TimeWindow, string> = {
+  today: "Today",
+  tomorrow: "Tomorrow",
+  week: "This week",
+  later: "Later",
+};
+
+const BAND_LABEL = { raw: "RAW", sub: "SUB", dub: "DUB" } as const;
+
 export function RadarClient() {
   const { entries, ready } = useWatchlist();
   const [prefs, setPrefs] = useState<Prefs>({ genre: "", studio: "" });
@@ -80,6 +96,12 @@ export function RadarClient() {
   const [prefsHydrated, setPrefsHydrated] = useState(false);
   const [calibNudge, setCalibNudge] = useState(false);
   const [hoverId, setHoverId] = useState<number | null>(null);
+  const [contacts, setContacts] = useState<RadarContact[]>([]);
+  const [scheduleNote, setScheduleNote] = useState<string | null>(null);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [bandFilter, setBandFilter] = useState<"all" | "raw" | "sub" | "dub">(
+    "all",
+  );
 
   useEffect(() => {
     emitNexus({ type: "tool_opened", tool: "radar" });
@@ -116,6 +138,63 @@ export function RadarClient() {
       setPrefs((p) => ({ ...p, genre: top }));
     }
   }, [prefsHydrated, ready, entries, prefs.genre]);
+
+  const shelfItems = useMemo(() => {
+    return entries
+      .filter((e) => e.watchStatus === "watching" || e.watchStatus === "planning")
+      .slice(0, 12)
+      .map((e) => ({ id: e.id, title: e.title, image: e.image }));
+  }, [entries]);
+
+  const loadShelfSchedule = useCallback(async () => {
+    if (!shelfItems.length) {
+      setContacts([]);
+      setScheduleNote("Add watching/planning titles to your shelf for air signals.");
+      return;
+    }
+    setScheduleLoading(true);
+    setScheduleNote(null);
+    try {
+      const res = await fetch("/api/radar-schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: shelfItems }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || "Schedule fetch failed");
+      setContacts((j.contacts || []) as RadarContact[]);
+      if (!j.configured) {
+        setScheduleNote(
+          j.note ||
+            "AnimeSchedule not configured — set ANIMESCHEDULE_API_KEY for air times.",
+        );
+      } else if (!(j.contacts || []).length) {
+        setScheduleNote("No upcoming air times found for shelf titles.");
+      }
+    } catch (e) {
+      setContacts([]);
+      setScheduleNote(
+        e instanceof Error ? e.message : "Could not load shelf schedule",
+      );
+    } finally {
+      setScheduleLoading(false);
+    }
+  }, [shelfItems]);
+
+  useEffect(() => {
+    if (!ready || !prefsHydrated) return;
+    void loadShelfSchedule();
+  }, [ready, prefsHydrated, loadShelfSchedule]);
+
+  const filteredContacts = useMemo(() => {
+    if (bandFilter === "all") return contacts;
+    return contacts.filter((c) => c.band === bandFilter);
+  }, [contacts, bandFilter]);
+
+  const grouped = useMemo(
+    () => groupContactsByWindow(filteredContacts),
+    [filteredContacts],
+  );
 
   const ranked: RankedRecommendation[] = useMemo(() => {
     if (!raw.length) return [];
@@ -185,13 +264,11 @@ export function RadarClient() {
       setRaw(list);
       setPhase("result");
 
-      // Limited audible pings for first contacts only
       const n = Math.min(list.length, MAX_PING_SFX);
       for (let i = 0; i < n; i++) {
         window.setTimeout(() => playCue("radar_ping"), 80 + i * 110);
       }
       if (list.length === 0) {
-        // Sweep finishes naturally — calm, no error cheer
         playCue("filter_select");
       } else {
         playCue("signal_acquired");
@@ -259,6 +336,87 @@ export function RadarClient() {
         <p className="radar-phase-line">{phaseMeta.line}</p>
       </div>
 
+      {/* Shelf airing instrument */}
+      <section className="radar-shelf-signals" style={{ marginBottom: 20 }}>
+        <h3 className="tools-section-title" style={{ marginBottom: 8 }}>
+          Your shelf signals
+        </h3>
+        <p className="tools-hint" style={{ marginBottom: 10 }}>
+          Watching + planning only. Bands: RAW / SUB / DUB when AnimeSchedule
+          provides times.
+        </p>
+        <div className="detail-actions" style={{ marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+          {(["all", "sub", "raw", "dub"] as const).map((b) => (
+            <button
+              key={b}
+              type="button"
+              className={
+                "btn btn-sm " +
+                (bandFilter === b ? "btn-accent" : "btn-outline")
+              }
+              onClick={() => {
+                setBandFilter(b);
+                playCue("filter_select");
+              }}
+            >
+              {b === "all" ? "All bands" : BAND_LABEL[b]}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={() => void loadShelfSchedule()}
+            disabled={scheduleLoading}
+          >
+            {scheduleLoading ? "Tuning…" : "Refresh air times"}
+          </button>
+        </div>
+        {scheduleNote ? (
+          <p className="tools-hint" role="status">
+            {scheduleNote}
+          </p>
+        ) : null}
+        {(["today", "tomorrow", "week", "later"] as TimeWindow[]).map((w) => {
+          const list = grouped[w];
+          if (!list.length) return null;
+          return (
+            <div key={w} style={{ marginTop: 12 }}>
+              <h4
+                style={{
+                  fontSize: "0.8rem",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "var(--color-text-muted)",
+                  marginBottom: 6,
+                }}
+              >
+                {WINDOW_LABEL[w]}
+              </h4>
+              <ul className="theme-ul">
+                {list.map((c) => (
+                  <li key={`${c.anilistId}-${c.band}-${c.at}`}>
+                    <Link href={`/anime/${c.anilistId}`}>
+                      <strong>{c.title}</strong>
+                    </Link>
+                    {" · "}
+                    <span className="detail-source">
+                      {BAND_LABEL[c.band]}
+                    </span>
+                    {c.episode != null ? ` · Ep ${c.episode}` : null}
+                    {" · "}
+                    {formatAirTime(c.at)}
+                    {c.delayed ? " · delayed" : null}
+                    {c.platforms?.length
+                      ? ` · ${c.platforms.slice(0, 2).join(", ")}`
+                      : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </section>
+
       <div className="radar-prefs">
         <div
           className={
@@ -315,8 +473,8 @@ export function RadarClient() {
           </button>
         </div>
         <p className="tools-hint" style={{ marginTop: 8 }}>
-          Prefs saved locally. Empty genre can soft-fill from your top shelf
-          genre. Alerts flag is local-only (no push).
+          Horizon scan uses AniList upcoming. Shelf signals use AnimeSchedule
+          when configured. Alerts flag is local-only.
         </p>
       </div>
 
@@ -386,8 +544,8 @@ export function RadarClient() {
         </p>
       ) : phase === "idle" ? (
         <p className="tools-hint" style={{ marginTop: 16 }}>
-          Scan to load not-yet-released titles from AniList — results appear
-          after identification, not mid-sweep.
+          Scan horizon for not-yet-released titles, or rely on shelf signals
+          above when AnimeSchedule is configured.
         </p>
       ) : null}
     </div>
