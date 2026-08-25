@@ -2,14 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–9 | Foundation → episodes | Done |
-| **10** | AnimeSchedule.net | **Done** (adapter; needs API key) |
-| 11 | Radar + schedule | Next |
-| 12+ | Home signals / AniSkip / Sauce / … | Queued |
+| 0–10 | Foundation → AnimeSchedule adapter | Done |
+| **11** | Radar + schedule | **Done** |
+| 12 | Home airing signal | Next |
+| 13+ | AniSkip / Sauce / Themes depth | Queued |
 
-## Sprint 10
+## Sprint 11
 
-- `lib/providers/anime-schedule.ts` — soft-fail without `ANIMESCHEDULE_API_KEY`
-- `getAnimeSchedule` / `getNextEpisode` → `AnimeBroadcast[]`
-- `docs/ANIMESCHEDULE.md` setup notes
-- No claim of live data until key is configured and a real request succeeds
+- `lib/radar-schedule.ts` — RAW/SUB/DUB bands + TODAY/TOMORROW/WEEK windows
+- `POST /api/radar-schedule` — shelf watching/planning → next air contacts
+- Radar UI: band filters, grouped windows, soft note when key missing
+- Horizon scan still AniList; shelf times need `ANIMESCHEDULE_API_KEY`
