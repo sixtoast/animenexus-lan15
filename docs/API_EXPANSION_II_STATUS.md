@@ -2,14 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–9 | Audit → franchise | Done |
-| **10** | Niche production metadata | **Done** |
-| 11 | Production / creative connections | Next |
-| 12+ | Watchmode … | Queued |
+| 0–10 | Audit → creative DNA | Done |
+| **11** | Production / creative connections | **Done** |
+| 12 | Watchmode provider | Next |
+| 13+ | My Services / Where to Watch … | Queued |
 
-## Sprint 10
+## Sprint 11
 
-- `lib/creative-dna.ts` — `buildCreativeDna` / `fullCreditLines`
-- `components/CreativeDnaPanel.tsx` on Detail
-- Roles: Director · Series composition · Original · Character design · Music · Animation · Producer
-- Raw staff list replaced by DNA + optional Full credits
+- `lib/creative-connections.ts` — factual shelf overlaps
+- `CreativeConnectionsPanel` on Detail
+- Watchlist now stores `studios` when adding titles
+- Lines like: "Studio X appears in N of your highest-rated titles" — no causation claims
