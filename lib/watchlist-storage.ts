@@ -33,9 +33,8 @@ export function normalizeEntry(
     userRating: typeof entry.userRating === "number" ? entry.userRating : 0,
     notes: typeof entry.notes === "string" ? entry.notes : "",
     tags: Array.isArray(entry.tags) ? entry.tags.map(String) : undefined,
-    genres: Array.isArray((entry as { genres?: string[] }).genres)
-      ? (entry as { genres?: string[] }).genres
-      : undefined,
+    genres: Array.isArray(entry.genres) ? entry.genres : undefined,
+    studios: Array.isArray(entry.studios) ? entry.studios.map(String) : undefined,
     addedAt: entry.addedAt || now(),
     updatedAt: entry.updatedAt || now(),
   };
@@ -56,10 +55,6 @@ export function readWatchlist(): WatchlistEntry[] {
   }
 }
 
-/**
- * Persist shelf. Returns false if storage failed (quota, private mode, etc.).
- * Callers must not fire seal / success UX when this returns false.
- */
 export function writeWatchlist(entries: WatchlistEntry[]): boolean {
   if (typeof window === "undefined") return false;
   try {
@@ -82,6 +77,7 @@ export function animeToEntry(
     | "duration"
     | "score"
     | "tags"
+    | "studios"
   >,
   status: WatchStatus = "planning",
 ): WatchlistEntry {
@@ -99,5 +95,6 @@ export function animeToEntry(
     userRating: 0,
     notes: "",
     genres: anime.tags?.length ? [...anime.tags] : undefined,
+    studios: anime.studios?.length ? [...anime.studios] : undefined,
   });
 }
