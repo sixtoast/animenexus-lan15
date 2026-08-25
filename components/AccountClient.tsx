@@ -20,7 +20,8 @@ export function AccountClient() {
     connecting,
     syncing,
     error,
-    connect,
+    connectQuick,
+    applyOAuthSession,
     disconnect,
     syncLists,
     clearError,
@@ -38,6 +39,7 @@ export function AccountClient() {
     connected: boolean;
     username: string | null;
   } | null>(null);
+  const [alOauthConfigured, setAlOauthConfigured] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
   const refreshMalOauth = useCallback(async () => {
@@ -59,11 +61,43 @@ export function AccountClient() {
   useEffect(() => {
     if (!ready) return;
     void refreshMalOauth();
+    void fetch("/api/anilist/status")
+      .then((r) => r.json())
+      .then((j) => setAlOauthConfigured(Boolean(j.configured)))
+      .catch(() => setAlOauthConfigured(false));
+
     try {
       const params = new URLSearchParams(window.location.search);
       const mal = params.get("mal");
+      const anilist = params.get("anilist");
+
+      if (anilist === "connected") {
+        const user = params.get("user") || "";
+        const uid = parseInt(params.get("uid") || "0", 10);
+        const avatar = params.get("avatar") || undefined;
+        if (user && uid) {
+          applyOAuthSession({ username: user, userId: uid, avatar });
+          setSyncMsg(
+            `AniList OAuth connected as ${user}. You can sync public lists into your local watchlist.`,
+          );
+          playCue("success");
+        }
+        window.history.replaceState({}, "", "/account");
+      } else if (anilist === "denied") {
+        setMalErr("AniList authorization was denied.");
+        window.history.replaceState({}, "", "/account");
+      } else if (anilist === "error" || anilist === "not_configured") {
+        setMalErr(
+          params.get("reason") ||
+            "AniList OAuth failed or is not configured on the server.",
+        );
+        window.history.replaceState({}, "", "/account");
+      }
+
       if (mal === "connected") {
-        setSyncMsg("MyAnimeList connected. Pending changes can flush when you sync.");
+        setSyncMsg(
+          "MyAnimeList connected. Pending changes can flush when you sync.",
+        );
         playCue("success");
         window.history.replaceState({}, "", "/account");
       } else if (mal === "denied") {
@@ -79,7 +113,7 @@ export function AccountClient() {
     } catch {
       /* */
     }
-  }, [ready, refreshMalOauth]);
+  }, [ready, refreshMalOauth, applyOAuthSession]);
 
   if (!ready) {
     return (
@@ -110,13 +144,13 @@ export function AccountClient() {
     window.setTimeout(() => setProgress(0), 500);
   }
 
-  async function onConnect(e: React.FormEvent) {
+  async function onQuickLogin(e: React.FormEvent) {
     e.preventDefault();
     setSyncMsg(null);
     clearError();
     const timer = startProgress();
     try {
-      await connect(username);
+      await connectQuick(username);
       finishProgress(true);
     } catch {
       finishProgress(false);
@@ -161,9 +195,7 @@ export function AccountClient() {
       const byId = new Map(entries.map((x) => [x.id, x]));
       for (const entry of incoming) byId.set(entry.id, entry);
       replaceAll([...byId.values()]);
-      setSyncMsg(
-        `Merged ${incoming.length} MAL titles (public list / Jikan).`,
-      );
+      setSyncMsg(`Merged ${incoming.length} MAL titles (public list / Jikan).`);
       window.clearInterval(timer);
       finishProgress(true);
     } catch (err) {
@@ -209,7 +241,9 @@ export function AccountClient() {
         setSyncMsg(`Flushed ${j.flushed} change(s) to MyAnimeList.`);
         playCue("success");
       } else {
-        setMalErr(j.reason || "Nothing flushed — check MAL connection and mal ids.");
+        setMalErr(
+          j.reason || "Nothing flushed — check MAL connection and mal ids.",
+        );
       }
       await refreshMalOauth();
     } catch (e) {
@@ -225,6 +259,12 @@ export function AccountClient() {
   }
 
   const busy = connecting || syncing || malBusy || progress > 0;
+  const modeLabel =
+    session?.authMode === "oauth"
+      ? "OAuth"
+      : session
+        ? "Quick login"
+        : null;
 
   return (
     <div className={"account-panel" + (flashOk ? " account-panel--ok" : "")}>
@@ -271,33 +311,61 @@ export function AccountClient() {
       ) : null}
 
       {!session ? (
-        <form className="account-form" onSubmit={onConnect}>
-          <p className="account-note">
-            Connect with a public AniList username (no password). We only read
-            lists that are already public on AniList — nothing is written back.
-          </p>
-          <label className="filter-label" htmlFor="anilist-user">
-            AniList username
-          </label>
-          <div className="account-row">
-            <input
-              id="anilist-user"
-              className="filter-input"
-              placeholder="e.g. Josh"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
-              disabled={busy}
-            />
-            <button
-              type="submit"
-              className="btn btn-accent btn-sm"
-              disabled={busy}
-            >
-              {connecting ? "Connecting…" : "Connect"}
-            </button>
-          </div>
-        </form>
+        <>
+          <section style={{ marginBottom: 24 }}>
+            <h2 className="nx-kicker">AniList · OAuth login</h2>
+            {alOauthConfigured ? (
+              <>
+                <p className="account-note">
+                  Sign in with AniList to authorize this app. Token is stored in
+                  an httpOnly cookie on the server.
+                </p>
+                <a href="/api/anilist/auth" className="btn btn-accent btn-sm">
+                  Log in with AniList
+                </a>
+              </>
+            ) : (
+              <p className="account-note">
+                OAuth needs <code>ANILIST_CLIENT_ID</code>,{" "}
+                <code>ANILIST_CLIENT_SECRET</code>, and{" "}
+                <code>ANILIST_REDIRECT_URI</code> on the server. Use Quick login
+                below until then.
+              </p>
+            )}
+          </section>
+
+          <hr style={{ margin: "20px 0", borderColor: "var(--color-border)" }} />
+
+          <form className="account-form" onSubmit={onQuickLogin}>
+            <h2 className="nx-kicker">AniList · Quick login</h2>
+            <p className="account-note">
+              No password and no OAuth — enter a <strong>public</strong> AniList
+              username. We only read lists that are already public. Nothing is
+              written back to AniList.
+            </p>
+            <label className="filter-label" htmlFor="anilist-user">
+              AniList username
+            </label>
+            <div className="account-row">
+              <input
+                id="anilist-user"
+                className="filter-input"
+                placeholder="e.g. Josh"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                disabled={busy}
+              />
+              <button
+                type="submit"
+                className="btn btn-outline btn-sm"
+                disabled={busy}
+              >
+                {connecting ? "Connecting…" : "Quick login"}
+              </button>
+            </div>
+          </form>
+        </>
       ) : (
         <div className="account-connected">
           <div className="account-profile">
@@ -312,7 +380,7 @@ export function AccountClient() {
             <div>
               <p className="account-name">{session.username}</p>
               <p className="account-meta">
-                Connected{" "}
+                {modeLabel} · connected{" "}
                 {new Date(session.connectedAt).toLocaleDateString(undefined, {
                   year: "numeric",
                   month: "short",
