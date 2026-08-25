@@ -2,13 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–13 | Foundation → AniSkip | Done |
-| **14** | Smart binge calculator | **Done** |
-| 15 | Tonight planner | Next |
-| 16+ | Sauce / Themes / identity polish | Queued |
+| 0–14 | Foundation → smart binge | Done |
+| **15** | Tonight planner | **Done** |
+| 16 | trace.moe / SauceNAO depth | Next |
+| 17+ | Themes / identity / polish | Queued |
 
-## Sprint 14
+## Sprint 15
 
-- `GET /api/skip-estimate` — AniSkip average OP/ED/recap per ep
-- `BingeCalculator` — toggles for OP · ED · recap; shows savings vs full runtime
-- Detail passes `malId`; without data, classic binge math still works
+- `lib/tonight-planner.ts` — rank shelf by available minutes
+- `TonightPlanner` + `/tools/tonight`
+- Tools hub card · shelf-only (watching / planning / paused)
+- AniSkip per-title detail remains on Detail binge calculator
