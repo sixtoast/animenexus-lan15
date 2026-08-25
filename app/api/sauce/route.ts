@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { mapTraceResults } from "@/lib/sauce";
+import { mapTraceResults, mergeSauceHits } from "@/lib/sauce";
+import {
+  isSauceNaoConfigured,
+  searchSauceNaoByUrl,
+} from "@/lib/providers/saucenao";
+import { withProviderLimit } from "@/lib/provider-rate-limit";
 
 export const runtime = "nodejs";
 
@@ -7,6 +12,7 @@ export async function POST(req: NextRequest) {
   try {
     const contentType = req.headers.get("content-type") || "";
     let traceRes: Response;
+    let imageUrlForFallback: string | null = null;
 
     if (contentType.includes("multipart/form-data")) {
       const form = await req.formData();
@@ -19,10 +25,12 @@ export async function POST(req: NextRequest) {
       }
       const body = new FormData();
       body.append("image", file);
-      traceRes = await fetch("https://api.trace.moe/search?anilistInfo=1", {
-        method: "POST",
-        body,
-      });
+      traceRes = await withProviderLimit("tracemoe", async () =>
+        fetch("https://api.trace.moe/search?anilistInfo=1", {
+          method: "POST",
+          body,
+        }),
+      );
     } else {
       const json = (await req.json().catch(() => null)) as {
         url?: string;
@@ -34,23 +42,56 @@ export async function POST(req: NextRequest) {
           { status: 400 },
         );
       }
-      traceRes = await fetch(
-        `https://api.trace.moe/search?anilistInfo=1&url=${encodeURIComponent(url)}`,
+      imageUrlForFallback = url;
+      traceRes = await withProviderLimit("tracemoe", async () =>
+        fetch(
+          `https://api.trace.moe/search?anilistInfo=1&url=${encodeURIComponent(url)}`,
+        ),
       );
     }
 
-    if (!traceRes.ok) {
+    const providers: string[] = [];
+    let primary = mapTraceResults({ result: [] });
+
+    if (traceRes.ok) {
+      const data = await traceRes.json();
+      primary = mapTraceResults(data);
+      providers.push("trace.moe");
+    } else {
       const text = await traceRes.text();
-      return NextResponse.json(
-        {
-          error: `trace.moe HTTP ${traceRes.status}: ${text.slice(0, 200)}`,
-        },
-        { status: 502 },
-      );
+      // Soft: try SauceNAO if URL path; else surface error
+      if (!imageUrlForFallback || !isSauceNaoConfigured()) {
+        return NextResponse.json(
+          {
+            error: `trace.moe HTTP ${traceRes.status}: ${text.slice(0, 200)}`,
+            hits: [],
+            matches: [],
+            providers,
+          },
+          { status: 502 },
+        );
+      }
     }
 
-    const data = await traceRes.json();
-    return NextResponse.json(mapTraceResults(data));
+    let sauceHits = primary.hits;
+    if (
+      imageUrlForFallback &&
+      isSauceNaoConfigured() &&
+      (sauceHits.length === 0 || sauceHits[0].similarity < 0.85)
+    ) {
+      const sn = await searchSauceNaoByUrl(imageUrlForFallback);
+      if (sn.length) {
+        providers.push("saucenao");
+        sauceHits = mergeSauceHits(sauceHits, sn);
+      }
+    }
+
+    return NextResponse.json({
+      hits: sauceHits,
+      matches: primary.matches,
+      providers: providers.length ? providers : primary.providers,
+      error: primary.error,
+    });
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Sauce search failed" },
