@@ -4,6 +4,8 @@ import {
   clearMalTokenCookies,
   exchangeMalCode,
   isMalOAuthConfigured,
+  malClientId,
+  malClientSecret,
   malRedirectUri,
   MAL_COOKIE_STATE,
   MAL_COOKIE_VERIFIER,
@@ -13,9 +15,10 @@ import {
 export const runtime = "nodejs";
 
 function accountRedirect(query: Record<string, string>) {
-  const base =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    process.env.VERCEL_URL
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  const base = site
+    ? site
+    : process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : "http://localhost:3000";
   const u = new URL("/account", base);
@@ -43,20 +46,28 @@ export async function GET(req: NextRequest) {
   const savedState = jar.get(MAL_COOKIE_STATE)?.value;
   const verifier = jar.get(MAL_COOKIE_VERIFIER)?.value;
 
-  if (!verifier || !savedState || state !== savedState) {
-    return accountRedirect({ mal: "error", reason: "state_mismatch" });
+  if (!verifier) {
+    return accountRedirect({
+      mal: "error",
+      reason: "missing_pkce — try Connect again from the same browser",
+    });
+  }
+  if (!savedState || state !== savedState) {
+    return accountRedirect({
+      mal: "error",
+      reason: "state_mismatch — try Connect again (don't open auth in another tab)",
+    });
   }
 
   try {
     const tokens = await exchangeMalCode({
       code,
       codeVerifier: verifier,
-      clientId: process.env.MAL_CLIENT_ID!.trim(),
-      clientSecret: process.env.MAL_CLIENT_SECRET?.trim(),
+      clientId: malClientId(),
+      clientSecret: malClientSecret(),
       redirectUri: malRedirectUri(),
     });
     await setMalTokenCookies(tokens);
-    // Clear PKCE cookies
     jar.set(MAL_COOKIE_VERIFIER, "", { path: "/", maxAge: 0 });
     jar.set(MAL_COOKIE_STATE, "", { path: "/", maxAge: 0 });
     return accountRedirect({ mal: "connected" });
@@ -64,7 +75,7 @@ export async function GET(req: NextRequest) {
     await clearMalTokenCookies();
     return accountRedirect({
       mal: "error",
-      reason: e instanceof Error ? e.message.slice(0, 80) : "exchange_failed",
+      reason: e instanceof Error ? e.message.slice(0, 140) : "exchange_failed",
     });
   }
 }
