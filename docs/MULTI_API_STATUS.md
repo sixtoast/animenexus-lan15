@@ -2,14 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–14 | Foundation → smart binge | Done |
-| **15** | Tonight planner | **Done** |
-| 16 | trace.moe / SauceNAO depth | Next |
-| 17+ | Themes / identity / polish | Queued |
+| 0–15 | Foundation → Tonight | Done |
+| **16** | Sauce depth | **Done** |
+| 17 | AnimeThemes depth | Next |
+| 18+ | Unified experience / polish | Queued |
 
-## Sprint 15
+## Sprint 16
 
-- `lib/tonight-planner.ts` — rank shelf by available minutes
-- `TonightPlanner` + `/tools/tonight`
-- Tools hub card · shelf-only (watching / planning / paused)
-- AniSkip per-title detail remains on Detail binge calculator
+- Confidence tiers on every hit (high / medium / low / exploratory)
+- Optional SauceNAO via `SAUCENAO_API_KEY` (URL searches when trace weak)
+- `mergeSauceHits` dedupe · provider labels in UI
+- Rate-limited trace.moe path
