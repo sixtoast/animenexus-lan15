@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import {
   AL_COOKIE_STATE,
+  anilistClientId,
   anilistRedirectUri,
   buildAniListAuthorizeUrl,
   generateState,
@@ -32,7 +33,7 @@ export async function GET() {
   });
 
   const url = buildAniListAuthorizeUrl({
-    clientId: process.env.ANILIST_CLIENT_ID!.trim(),
+    clientId: anilistClientId(),
     redirectUri: anilistRedirectUri(),
     state,
   });
