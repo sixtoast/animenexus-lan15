@@ -5,6 +5,7 @@ import {
   generateOAuthState,
   generatePkceVerifier,
   isMalOAuthConfigured,
+  malClientId,
   malRedirectUri,
   MAL_COOKIE_STATE,
   MAL_COOKIE_VERIFIER,
@@ -23,7 +24,7 @@ export async function GET() {
     );
   }
 
-  const clientId = process.env.MAL_CLIENT_ID!.trim();
+  const clientId = malClientId();
   const redirectUri = malRedirectUri();
   const verifier = generatePkceVerifier();
   const state = generateOAuthState();
@@ -43,7 +44,7 @@ export async function GET() {
     clientId,
     redirectUri,
     state,
-    codeChallenge: verifier, // plain method
+    codeChallenge: verifier, // plain method — challenge === verifier
   });
 
   return NextResponse.redirect(url);
