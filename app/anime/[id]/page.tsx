@@ -19,6 +19,7 @@ import { MemoryVisit } from "@/components/MemoryVisit";
 import { EpisodeList } from "@/components/EpisodeList";
 import { DeepSignalsPanel } from "@/components/DeepSignalsPanel";
 import { CreativeDnaPanel } from "@/components/CreativeDnaPanel";
+import { CreativeConnectionsPanel } from "@/components/CreativeConnectionsPanel";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -241,6 +242,8 @@ export default async function AnimeDetailPage({ params }: Props) {
         />
 
         <CreativeDnaPanel slots={dnaSlots} fullCredits={dnaFull} />
+
+        <CreativeConnectionsPanel dna={dnaSlots} currentId={anime.id} />
 
         {external.length > 0 ? (
           <section className="detail-section" id="external-links">
