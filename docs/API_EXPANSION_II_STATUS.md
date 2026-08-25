@@ -2,15 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–3 | Audit → conflicts | Done |
-| **4** | AniDB provider | **Done** |
-| 5 | AniDB title intelligence | Next |
-| 6+ | Weighted tags UI … | Queued |
+| 0–4 | Audit → AniDB provider | Done |
+| **5** | AniDB title intelligence | **Done** |
+| 6 | AniDB weighted tags | Next |
+| 7+ | Deep tag explorer … | Queued |
 
-## Sprint 4
+## Sprint 5
 
-- `lib/providers/anidb.ts` — HTTP `request=anime` by AID
-- Parses titles, weighted tags (spoiler flags), relations, episode count
-- Maps into `AnimeDeepMetadata`
-- Soft-fail without `ANIDB_CLIENT` / `ANIDB_CLIENTVER`
-- Docs: `docs/ANIDB.md`
+- `lib/providers/anidb-titles.ts`
+- Dump `anime-titles.xml.gz` → in-memory + 7-day cache
+- `searchAniDbTitles(query)` — local alias index only
+- No per-keystroke AniDB HTTP API
