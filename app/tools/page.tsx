@@ -15,6 +15,7 @@ const TOOLS: {
   blurb: string;
   personality: ToolPersonalityId;
 }[] = [
+  { href: "/tools/tonight", emoji: "🌙", title: "Tonight", blurb: "Minutes left → shelf that fits.", personality: "generic" },
   { href: "/tools/compare", emoji: "⚖️", title: "Compare", blurb: "Two titles side by side.", personality: "compare" },
   { href: "/tools/fusion", emoji: "🧬", title: "Fusion", blurb: "Blend two signals + catalog children.", personality: "fusion" },
   { href: "/tools/dislike", emoji: "🙅", title: "Dislike reverse", blurb: "Opposite genre space.", personality: "dislike" },
