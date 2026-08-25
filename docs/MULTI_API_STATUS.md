@@ -2,14 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–11 | Foundation → Radar schedule | Done |
-| **12** | Home airing signal | **Done** |
-| 13 | AniSkip | Next |
-| 14+ | Smart binge / Sauce / Themes | Queued |
+| 0–12 | Foundation → Home signals | Done |
+| **13** | AniSkip | **Done** |
+| 14 | Smart binge calculator | Next |
+| 15+ | Tonight / Sauce / Themes | Queued |
 
-## Sprint 12
+## Sprint 13
 
-- `HomeSignalsToday` — watching/planning only
-- Windows: Today · Tomorrow · This week
-- Soft note without `ANIMESCHEDULE_API_KEY`
-- Link to Radar for full instrument
+- `lib/providers/aniskip.ts` — `fetchSkipTimes` / `getSkipTimes` / `estimateAverageSkipSeconds`
+- MAL id required; soft-fail empty arrays
+- Types: op · ed · recap · mixed (normalised `SkipInterval`)
+- No UI claim of skip data until Sprint 14 binge surfaces estimates
