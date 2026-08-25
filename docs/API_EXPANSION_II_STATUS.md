@@ -2,8 +2,15 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| **0** | Verify what already exists | **Done** |
-| 1 | Extend identity graph | Next |
-| 2–46 | Deep metadata → cross-API intelligence | Queued |
+| 0 | Audit | Done |
+| **1** | Extend identity graph | **Done** |
+| 2 | Niche metadata model | Next |
+| 3–46 | … | Queued |
 
-Audit: `docs/API_EXPANSION_II_AUDIT.md`
+## Sprint 1
+
+- Added providers: `tvdb`, `imdb`, `simkl`, `watchmode`, `fanart`
+- Fields: `tvdbId`, `imdbId`, `simklId`, `watchmodeId`
+- Methods: `mapping_dataset`, `multi_id_agree`
+- Title-match cannot overwrite authoritative mappings; field write gated for provisional maps
+- `mapId()` / `isAuthoritativeMapping()` / `IDENTITY_RESOLUTION_ORDER`
