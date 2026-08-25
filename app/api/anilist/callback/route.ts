@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import {
   AL_COOKIE_STATE,
+  anilistClientId,
+  anilistClientSecret,
   anilistRedirectUri,
   clearAniListTokenCookies,
   exchangeAniListCode,
@@ -48,8 +50,8 @@ export async function GET(req: NextRequest) {
   try {
     const tokens = await exchangeAniListCode({
       code,
-      clientId: process.env.ANILIST_CLIENT_ID!.trim(),
-      clientSecret: process.env.ANILIST_CLIENT_SECRET!.trim(),
+      clientId: anilistClientId(),
+      clientSecret: anilistClientSecret(),
       redirectUri: anilistRedirectUri(),
     });
     await setAniListTokenCookie(tokens.access_token);
@@ -66,7 +68,7 @@ export async function GET(req: NextRequest) {
     await clearAniListTokenCookies();
     return accountRedirect({
       anilist: "error",
-      reason: e instanceof Error ? e.message.slice(0, 80) : "exchange_failed",
+      reason: e instanceof Error ? e.message.slice(0, 120) : "exchange_failed",
     });
   }
 }
