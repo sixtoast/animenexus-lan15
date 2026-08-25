@@ -2,6 +2,8 @@ import type { AniListUserProfile } from "./anilist-user";
 
 export const SESSION_KEY = "animenexus.session.v1";
 
+export type SessionAuthMode = "quick" | "oauth";
+
 export type SessionState = {
   username: string;
   userId: number;
@@ -10,6 +12,8 @@ export type SessionState = {
   connectedAt: string;
   lastSyncAt?: string;
   lastSyncCount?: number;
+  /** quick = public username only; oauth = authorized token on server */
+  authMode?: SessionAuthMode;
 };
 
 export function readSession(): SessionState | null {
@@ -37,6 +41,7 @@ export function writeSession(session: SessionState | null) {
 export function profileToSession(
   profile: AniListUserProfile,
   prev?: SessionState | null,
+  authMode: SessionAuthMode = "quick",
 ): SessionState {
   return {
     username: profile.name,
@@ -46,5 +51,6 @@ export function profileToSession(
     connectedAt: prev?.connectedAt || new Date().toISOString(),
     lastSyncAt: prev?.lastSyncAt,
     lastSyncCount: prev?.lastSyncCount,
+    authMode,
   };
 }
