@@ -102,6 +102,12 @@ export default async function AnimeDetailPage({ params }: Props) {
     (!anime.characters || anime.characters.length === 0) &&
     jikan.characters.length > 0;
 
+  const hasThemes =
+    themes &&
+    (themes.openings.length > 0 ||
+      themes.endings.length > 0 ||
+      (themes.inserts && themes.inserts.length > 0));
+
   return (
     <main>
       <MemoryVisit
@@ -280,21 +286,23 @@ export default async function AnimeDetailPage({ params }: Props) {
           <AnimeNotes animeId={anime.id} />
         </div>
 
-        {themes &&
-        (themes.openings.length > 0 || themes.endings.length > 0) ? (
+        {hasThemes ? (
           <section className="detail-section">
-            <h2>Themes (OP / ED)</h2>
+            <h2>Themes (OP / ED / IN)</h2>
             <p className="tools-hint" style={{ marginBottom: 10 }}>
-              Sources: {themes.sourceNote}. Links open external sites.
+              Sources: {themes!.sourceNote}. Links open external sites.
             </p>
             <div className="theme-lists">
-              {themes.openings.length > 0 ? (
+              {themes!.openings.length > 0 ? (
                 <div>
                   <h3 className="theme-sub">Openings</h3>
                   <ul className="theme-ul">
-                    {themes.openings.map((t) => (
+                    {themes!.openings.map((t) => (
                       <li key={t.label}>
-                        <span>{t.label}</span>{" "}
+                        <span>{t.label}</span>
+                        {t.episodeRange ? (
+                          <span className="tools-hint"> · ep {t.episodeRange}</span>
+                        ) : null}{" "}
                         {t.animethemesUrl ? (
                           <a
                             href={t.animethemesUrl}
@@ -316,13 +324,47 @@ export default async function AnimeDetailPage({ params }: Props) {
                   </ul>
                 </div>
               ) : null}
-              {themes.endings.length > 0 ? (
+              {themes!.endings.length > 0 ? (
                 <div>
                   <h3 className="theme-sub">Endings</h3>
                   <ul className="theme-ul">
-                    {themes.endings.map((t) => (
+                    {themes!.endings.map((t) => (
                       <li key={`ed-${t.label}`}>
-                        <span>{t.label}</span>{" "}
+                        <span>{t.label}</span>
+                        {t.episodeRange ? (
+                          <span className="tools-hint"> · ep {t.episodeRange}</span>
+                        ) : null}{" "}
+                        {t.animethemesUrl ? (
+                          <a
+                            href={t.animethemesUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            AnimeThemes
+                          </a>
+                        ) : null}{" "}
+                        <a
+                          href={t.youtubeSearch}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          YouTube
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {themes!.inserts && themes!.inserts.length > 0 ? (
+                <div>
+                  <h3 className="theme-sub">Inserts</h3>
+                  <ul className="theme-ul">
+                    {themes!.inserts.map((t) => (
+                      <li key={`in-${t.label}`}>
+                        <span>{t.label}</span>
+                        {t.episodeRange ? (
+                          <span className="tools-hint"> · ep {t.episodeRange}</span>
+                        ) : null}{" "}
                         {t.animethemesUrl ? (
                           <a
                             href={t.animethemesUrl}
