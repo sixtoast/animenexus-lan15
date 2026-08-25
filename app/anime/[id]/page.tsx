@@ -2,10 +2,8 @@ import "./detail.css";
 import "./sprint-b-detail.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { fetchAnimeDetail } from "@/lib/anilist-detail";
+import { getAnimeExperience } from "@/lib/anime-experience";
 import { fetchAnimeById } from "@/lib/anilist";
-import { enrichThemes } from "@/lib/themes-enrich";
-import { enrichFromJikan } from "@/lib/providers/jikan";
 import { buildExternalLinks } from "@/lib/external-links";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
 import { AnimeImage } from "@/components/AnimeImage";
@@ -17,6 +15,7 @@ import { AncestryGraph } from "@/components/AncestryGraph";
 import { DetailRelatedClient } from "@/components/DetailRelatedClient";
 import { MemoryVisit } from "@/components/MemoryVisit";
 import { EpisodeList } from "@/components/EpisodeList";
+import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -30,9 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const num = parseInt(id, 10);
   if (isNaN(num)) return { title: "Anime · AnimeNexus" };
   try {
-    const anime =
-      (await fetchAnimeDetail(num).catch(() => null)) ||
-      (await fetchAnimeById(num));
+    const anime = await fetchAnimeById(num);
     if (!anime) return { title: "Not found · AnimeNexus" };
     return {
       title: `${anime.title} · AnimeNexus`,
@@ -59,10 +56,10 @@ export default async function AnimeDetailPage({ params }: Props) {
   const num = parseInt(id, 10);
   if (isNaN(num)) notFound();
 
-  const anime =
-    (await fetchAnimeDetail(num).catch(() => null)) ||
-    (await fetchAnimeById(num));
-  if (!anime) notFound();
+  const exp = await getAnimeExperience(num);
+  if (!exp) notFound();
+
+  const { anime, themes, jikan, nextEpisode, layers } = exp;
 
   const score = anime.score > 0 ? anime.score.toFixed(1) : "—";
   const season =
@@ -81,15 +78,6 @@ export default async function AnimeDetailPage({ params }: Props) {
     typeof anime.episodes === "number"
       ? anime.episodes
       : parseInt(String(anime.episodes), 10) || 0;
-
-  const [themes, jikan] = await Promise.all([
-    enrichThemes({
-      anilistId: anime.anilist_id || anime.id,
-      idMal: anime.idMal,
-      title: anime.title,
-    }),
-    enrichFromJikan(anime.idMal),
-  ]);
 
   const external = buildExternalLinks(anime);
   const relations = anime.relations || [];
@@ -158,6 +146,21 @@ export default async function AnimeDetailPage({ params }: Props) {
                 <span className="detail-source">via {anime.source}</span>
               ) : null}
             </div>
+
+            {nextEpisode && (nextEpisode.subAt || nextEpisode.rawAt) ? (
+              <p className="tools-hint" style={{ marginTop: 8 }}>
+                Next air
+                {nextEpisode.episode != null
+                  ? ` · Ep ${nextEpisode.episode}`
+                  : ""}
+                {nextEpisode.subAt
+                  ? ` · SUB ${formatAirTime(nextEpisode.subAt)}`
+                  : nextEpisode.rawAt
+                    ? ` · RAW ${formatAirTime(nextEpisode.rawAt)}`
+                    : ""}
+                {" · source: AnimeSchedule"}
+              </p>
+            ) : null}
 
             {anime.tags?.length ? (
               <div className="detail-tags">
@@ -229,7 +232,11 @@ export default async function AnimeDetailPage({ params }: Props) {
 
         <EpisodeList
           episodes={jikan.episodes}
-          sourceNote="Source: Jikan / MAL — titles only when provided (no invented names)."
+          sourceNote={
+            layers.jikanEpisodes
+              ? "Source: Jikan / MAL — titles only when provided."
+              : undefined
+          }
         />
 
         {jikan.staff.length > 0 ? (
