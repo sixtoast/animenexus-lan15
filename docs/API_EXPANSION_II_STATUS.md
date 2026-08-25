@@ -2,14 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–4 | Audit → AniDB provider | Done |
-| **5** | AniDB title intelligence | **Done** |
-| 6 | AniDB weighted tags | Next |
-| 7+ | Deep tag explorer … | Queued |
+| 0–5 | Audit → title intelligence | Done |
+| **6** | AniDB weighted tags | **Done** |
+| 7 | Deep tag explorer UI | Next |
+| 8+ | Relations / franchise … | Queued |
 
-## Sprint 5
+## Sprint 6
 
-- `lib/providers/anidb-titles.ts`
-- Dump `anime-titles.xml.gz` → in-memory + 7-day cache
-- `searchAniDbTitles(query)` — local alias index only
-- No per-keystroke AniDB HTTP API
+- `lib/deep-tags.ts` — `deepSignals`, `sharedDeepSignals`, `resonanceTagLine`
+- Spoilers excluded by default; weight floor for “signals”
+- Does not dump 40 tags under the poster
