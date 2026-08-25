@@ -12,18 +12,39 @@ const GRAPHQL = "https://graphql.anilist.co";
 export const AL_COOKIE_ACCESS = "anilist_access_token";
 export const AL_COOKIE_STATE = "anilist_oauth_state";
 
+/** Strip accidental quotes/whitespace from Vercel env values */
+export function cleanEnv(value: string | undefined): string {
+  if (!value) return "";
+  let v = value.trim();
+  if (
+    (v.startsWith('"') && v.endsWith('"')) ||
+    (v.startsWith("'") && v.endsWith("'"))
+  ) {
+    v = v.slice(1, -1).trim();
+  }
+  return v;
+}
+
 export function isAniListOAuthConfigured(): boolean {
   return Boolean(
-    process.env.ANILIST_CLIENT_ID?.trim() &&
-      process.env.ANILIST_CLIENT_SECRET?.trim(),
+    cleanEnv(process.env.ANILIST_CLIENT_ID) &&
+      cleanEnv(process.env.ANILIST_CLIENT_SECRET),
   );
 }
 
 export function anilistRedirectUri(): string {
   return (
-    process.env.ANILIST_REDIRECT_URI?.trim() ||
+    cleanEnv(process.env.ANILIST_REDIRECT_URI) ||
     "http://localhost:3000/api/anilist/callback"
   );
+}
+
+export function anilistClientId(): string {
+  return cleanEnv(process.env.ANILIST_CLIENT_ID);
+}
+
+export function anilistClientSecret(): string {
+  return cleanEnv(process.env.ANILIST_CLIENT_SECRET);
 }
 
 export function generateState(): string {
@@ -64,25 +85,43 @@ export async function exchangeAniListCode(opts: {
   clientSecret: string;
   redirectUri: string;
 }): Promise<AniListTokenResponse> {
+  const clientIdRaw = opts.clientId.trim();
+  const clientIdNum = parseInt(clientIdRaw, 10);
+  // AniList client IDs are numeric; send as number when possible
+  const client_id = Number.isFinite(clientIdNum) ? clientIdNum : clientIdRaw;
+
+  const body = {
+    grant_type: "authorization_code",
+    client_id,
+    client_secret: opts.clientSecret.trim(),
+    redirect_uri: opts.redirectUri.trim(),
+    code: opts.code.trim(),
+  };
+
   const res = await fetch(TOKEN_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: JSON.stringify({
-      grant_type: "authorization_code",
-      client_id: opts.clientId,
-      client_secret: opts.clientSecret,
-      redirect_uri: opts.redirectUri,
-      code: opts.code,
-    }),
+    body: JSON.stringify(body),
   });
+
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(
-      `AniList token exchange failed: ${res.status} ${text.slice(0, 200)}`,
-    );
+    let detail = text.slice(0, 240);
+    try {
+      const j = JSON.parse(text) as { error?: string; message?: string };
+      if (j.error === "invalid_client") {
+        detail =
+          "invalid_client — check ANILIST_CLIENT_ID and ANILIST_CLIENT_SECRET on Vercel (no quotes, exact secret from anilist.co/settings/developer), then redeploy.";
+      } else if (j.message) {
+        detail = `${j.error || "error"}: ${j.message}`;
+      }
+    } catch {
+      /* keep text */
+    }
+    throw new Error(detail);
   }
   return (await res.json()) as AniListTokenResponse;
 }
@@ -96,7 +135,6 @@ const COOKIE_BASE = {
 
 export async function setAniListTokenCookie(accessToken: string) {
   const jar = await cookies();
-  // AniList tokens last ~1 year
   jar.set(AL_COOKIE_ACCESS, accessToken, {
     ...COOKIE_BASE,
     maxAge: 60 * 60 * 24 * 365,
