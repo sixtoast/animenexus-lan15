@@ -2,13 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–12 | Audit → Watchmode | Done |
-| **13** | User streaming services (My Services) | **Done** |
-| 14 | Where to Watch (Detail) | Next |
-| 15+ | Available-to-me recommendations … | Queued |
+| 0–13 | Audit → My Services | Done |
+| **14** | Where to Watch (Detail) | **Done** |
+| 15 | Watchable recommendation mode | Next |
+| 16+ | Availability changes / Simkl … | Queued |
 
-## Sprint 13
+## Sprint 14
 
-- `lib/my-services.ts` — local prefs + provider matching
-- `MyServicesSettings` on Account — region + service checkboxes
-- Does not assume subscriptions; only explicit user selection
+- `GET /api/streaming?id=&region=&title=`
+- `WhereToWatch` on Detail — yours vs also available
+- Country from Account My Services; soft-fail without Watchmode key
