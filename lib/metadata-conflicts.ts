@@ -96,8 +96,8 @@ export function conflictEpisodeCount(
   return collectConflict("episodes", observations);
 }
 
-export type ProvenanceBag = {
-  value: unknown;
+export type ProvenanceBag<T = unknown> = {
+  value: T;
   provenance: MetadataProvenance;
 };
 
