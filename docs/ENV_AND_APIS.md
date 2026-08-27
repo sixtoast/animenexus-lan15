@@ -24,6 +24,7 @@ AniList is the **required** catalog. Everything else is optional enrichment.
 | `VAPID_PRIVATE_KEY` | Web Push (server send) |
 | `VAPID_SUBJECT` | e.g. `mailto:you@example.com` |
 | `PUSH_SEND_SECRET` | Bearer secret for `POST /api/push/send` |
+| `CRON_SECRET` | Bearer for `/api/cron/airing-push` (Vercel Cron) |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server store for push subs |
@@ -31,5 +32,5 @@ AniList is the **required** catalog. Everything else is optional enrichment.
 
 ## Docs
 
-- `docs/WEB_PUSH.md` · `docs/ICS_CALENDAR.md` · `docs/OPEN_METEO.md`
+- `docs/WEB_PUSH.md` · `docs/AIRING_PUSH.md` · `docs/ICS_CALENDAR.md`
 - `docs/WATCHMODE.md` · `docs/SIMKL.md` · `docs/FANART.md` · `docs/ANIDB.md`
