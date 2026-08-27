@@ -14,9 +14,15 @@ AniList is the **required** catalog. Everything else is optional enrichment.
 | `MAL_REDIRECT_URI` | e.g. `https://domain/api/mal/callback` |
 | `ANIMESCHEDULE_API_KEY` | Radar / home air times |
 | `SAUCENAO_API_KEY` | Sauce fallback |
+| `ANIDB_CLIENT` | AniDB HTTP client name (registered) |
+| `ANIDB_CLIENTVER` | AniDB client version |
+| `WATCHMODE_API_KEY` | Streaming availability |
+| `WATCHMODE_DEFAULT_REGION` | ISO-2 country, default `US` |
 | `NEXT_PUBLIC_SITE_URL` | Canonical URL for OAuth redirects |
 
 ## Docs
 
 - `docs/ANILIST_OAUTH.md` — OAuth vs Quick login
 - `docs/MAL_OAUTH.md` — MAL connect + flush
+- `docs/ANIDB.md` — niche metadata
+- `docs/WATCHMODE.md` — where to watch
