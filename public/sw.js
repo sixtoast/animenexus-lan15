@@ -1,9 +1,10 @@
-const CACHE = "animenexus-shell-v2";
+const CACHE = "animenexus-shell-v3";
 const SHELL = [
   "/",
   "/browse",
   "/tools",
   "/watchlist",
+  "/airing",
   "/manifest.webmanifest",
   "/icon.svg",
 ];
@@ -30,7 +31,6 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Never cache API routes (including error bodies)
   if (url.pathname.startsWith("/api/")) return;
 
   if (request.mode === "navigate") {
@@ -50,7 +50,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets: cache-first for shell-ish paths
   if (
     url.pathname.startsWith("/_next/static/") ||
     url.pathname === "/icon.svg" ||
@@ -70,4 +69,56 @@ self.addEventListener("fetch", (event) => {
       ),
     );
   }
+});
+
+/** Web Push foundation (Sprint 23) — show notifications when a push arrives. */
+self.addEventListener("push", (event) => {
+  let title = "AnimeNexus";
+  let body = "Something new on the radar.";
+  let url = "/";
+  let tag = "animenexus-signal";
+
+  try {
+    if (event.data) {
+      const raw = event.data.text();
+      try {
+        const j = JSON.parse(raw);
+        if (j.title) title = String(j.title);
+        if (j.body) body = String(j.body);
+        if (j.url) url = String(j.url);
+        if (j.tag) tag = String(j.tag);
+      } catch {
+        body = raw || body;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: "/icon.svg",
+      badge: "/icon.svg",
+      tag,
+      data: { url },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target =
+    (event.notification.data && event.notification.data.url) || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const c of clients) {
+        if ("focus" in c) {
+          c.navigate?.(target);
+          return c.focus();
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(target);
+    }),
+  );
 });
