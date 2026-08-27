@@ -21,12 +21,15 @@ AniList is the **required** catalog. Everything else is optional enrichment.
 | `SIMKL_CLIENT_ID` | Simkl id / metadata bridge |
 | `FANART_API_KEY` | Fanart.tv supplemental artwork |
 | `VAPID_PUBLIC_KEY` | Web Push (client subscribe) |
-| `VAPID_PRIVATE_KEY` | Web Push (server send — later) |
+| `VAPID_PRIVATE_KEY` | Web Push (server send) |
 | `VAPID_SUBJECT` | e.g. `mailto:you@example.com` |
+| `PUSH_SEND_SECRET` | Bearer secret for `POST /api/push/send` |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server store for push subs |
 | `NEXT_PUBLIC_SITE_URL` | Canonical URL for OAuth redirects |
 
 ## Docs
 
-- `docs/ANILIST_OAUTH.md` · `docs/MAL_OAUTH.md`
-- `docs/ANIDB.md` · `docs/WATCHMODE.md` · `docs/SIMKL.md` · `docs/FANART.md`
-- `docs/OPEN_METEO.md` · `docs/ICS_CALENDAR.md` · `docs/WEB_PUSH.md`
+- `docs/WEB_PUSH.md` · `docs/ICS_CALENDAR.md` · `docs/OPEN_METEO.md`
+- `docs/WATCHMODE.md` · `docs/SIMKL.md` · `docs/FANART.md` · `docs/ANIDB.md`
