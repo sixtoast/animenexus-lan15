@@ -2,12 +2,11 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–24 | Core → Signals inbox | Done |
-| **25** | Push send pipeline | **Done** |
-| 26+ | Simkl rewatch / manga adapter… | Queued |
+| 0–25 | Core → Push send | Done |
+| **26** | Rewatch sessions | **Done** |
+| 27+ | Manga adapter / airing push jobs… | Queued |
 
-## Sprint 25
+## Sprint 26
 
-- `web-push` + `lib/push-server.ts`
-- Durable store via Supabase `push_subscriptions` (optional)
-- `POST /api/push/send` guarded by `PUSH_SEND_SECRET`
+- `lib/rewatch-sessions.ts` — local session model (Simkl-ready shape)
+- `RewatchPanel` on Detail — start / update episode / end
