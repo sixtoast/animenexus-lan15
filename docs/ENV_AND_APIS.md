@@ -18,6 +18,7 @@ AniList is the **required** catalog. Everything else is optional enrichment.
 | `ANIDB_CLIENTVER` | AniDB client version |
 | `WATCHMODE_API_KEY` | Streaming availability |
 | `WATCHMODE_DEFAULT_REGION` | ISO-2 country, default `US` |
+| `SIMKL_CLIENT_ID` | Simkl id / metadata bridge |
 | `NEXT_PUBLIC_SITE_URL` | Canonical URL for OAuth redirects |
 
 ## Docs
@@ -26,3 +27,4 @@ AniList is the **required** catalog. Everything else is optional enrichment.
 - `docs/MAL_OAUTH.md` — MAL connect + flush
 - `docs/ANIDB.md` — niche metadata
 - `docs/WATCHMODE.md` — where to watch
+- `docs/SIMKL.md` — Simkl bridge
