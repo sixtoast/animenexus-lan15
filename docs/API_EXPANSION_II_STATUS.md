@@ -2,13 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–16 | Audit → availability changes | Done |
-| **17** | Simkl provider | **Done** |
-| 18 | Fanart.tv / artwork | Next |
-| 19+ | History layers … | Queued |
+| 0–17 | Audit → Simkl | Done |
+| **18** | Fanart.tv / artwork | **Done** |
+| 19 | Context / history layers | Next |
+| 20+ | … | Queued |
 
-## Sprint 17
+## Sprint 18
 
-- `lib/providers/simkl.ts` — resolve + anime detail + identity enrich
-- Soft-fail without `SIMKL_CLIENT_ID`
-- Docs: `docs/SIMKL.md`
+- `lib/providers/fanart.ts` — TVDB → posters/backgrounds/logos
+- `ArtworkGallery` on Detail (collapsible; AniList cover stays primary)
+- Soft-fail without `FANART_API_KEY` or `tvdbId`
