@@ -14,3 +14,7 @@
 ## Programme outcome
 
 Expansion II audit capabilities are implemented with soft-fail. Remaining work is ops (keys, VAPID, Supabase table) rather than missing architecture.
+
+## Build note
+
+`ProvenanceFact<T>` generic fix is on main; production build typechecks clean.
