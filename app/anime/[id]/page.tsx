@@ -8,6 +8,7 @@ import { buildExternalLinks } from "@/lib/external-links";
 import { enrichDeepFromAniDb } from "@/lib/providers/anidb";
 import { enrichArtworkFromFanart } from "@/lib/providers/fanart";
 import { buildCreativeDna, fullCreditLines } from "@/lib/creative-dna";
+import { buildViewingContext } from "@/lib/viewing-context";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
 import { AnimeImage } from "@/components/AnimeImage";
 import { DetailCoverMaterial } from "@/components/DetailCoverMaterial";
@@ -23,6 +24,7 @@ import { CreativeDnaPanel } from "@/components/CreativeDnaPanel";
 import { CreativeConnectionsPanel } from "@/components/CreativeConnectionsPanel";
 import { WhereToWatch } from "@/components/WhereToWatch";
 import { ArtworkGallery } from "@/components/ArtworkGallery";
+import { ViewingContextPanel } from "@/components/ViewingContextPanel";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -71,6 +73,17 @@ export default async function AnimeDetailPage({ params }: Props) {
 
   const deep = await enrichDeepFromAniDb(identity).catch(() => null);
   const fanart = await enrichArtworkFromFanart(identity).catch(() => null);
+
+  const viewingContext = buildViewingContext({
+    title: anime.title,
+    year: anime.year,
+    season: anime.season,
+    seasonYear: anime.seasonYear,
+    format: anime.format,
+    status: String(anime.status),
+    studios: anime.studios,
+    episodes: anime.episodes,
+  });
 
   const dnaSlots = buildCreativeDna({
     staff: jikan.staff.map((s) => ({
@@ -238,6 +251,8 @@ export default async function AnimeDetailPage({ params }: Props) {
             {anime.description || "No description available."}
           </p>
         </section>
+
+        <ViewingContextPanel context={viewingContext} />
 
         <WhereToWatch animeId={anime.id} title={anime.title} />
 
