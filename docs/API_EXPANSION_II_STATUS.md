@@ -2,11 +2,12 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–25 | Core → Push send | Done |
-| **26** | Rewatch sessions | **Done** |
-| 27+ | Manga adapter / airing push jobs… | Queued |
+| 0–26 | Core → Rewatch | Done |
+| **27** | Manga-source adapter | **Done** |
+| 28+ | Airing → push job… | Queued |
 
-## Sprint 26
+## Sprint 27
 
-- `lib/rewatch-sessions.ts` — local session model (Simkl-ready shape)
-- `RewatchPanel` on Detail — start / update episode / end
+- `MangaSummary` types · AniList + Jikan manga adapters
+- `resolveMangaSourcesFromRelations` from SOURCE/ADAPTATION links
+- `MangaSourcePanel` on Detail (context only — anime remains primary)
