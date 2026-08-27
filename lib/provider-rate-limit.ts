@@ -25,6 +25,9 @@ const DEFAULTS: Record<string, RateLimitConfig> = {
   musicbrainz: { minIntervalMs: 1100, maxFailures: 3, coolDownMs: 90_000 },
   youtube: { minIntervalMs: 200, maxFailures: 4, coolDownMs: 60_000 },
   wikidata: { minIntervalMs: 500, maxFailures: 4, coolDownMs: 60_000 },
+  watchmode: { minIntervalMs: 250, maxFailures: 4, coolDownMs: 120_000 },
+  anidb: { minIntervalMs: 2200, maxFailures: 3, coolDownMs: 120_000 },
+  "anidb-titles": { minIntervalMs: 5000, maxFailures: 2, coolDownMs: 300_000 },
 };
 
 type ProviderState = {
