@@ -7,6 +7,7 @@ import {
   type StreamingServiceId,
 } from "@/lib/my-services";
 import type { StreamingAvailability } from "@/lib/providers/watchmode";
+import { recordAvailabilityCheck } from "@/lib/availability-changes";
 
 type Props = {
   animeId: number;
@@ -73,6 +74,7 @@ export function WhereToWatch({ animeId, title }: Props) {
   const [other, setOther] = useState<StreamingAvailability[]>([]);
   const [region, setRegion] = useState("US");
   const [selected, setSelected] = useState<StreamingServiceId[]>([]);
+  const [freshNotes, setFreshNotes] = useState<string[]>([]);
 
   useEffect(() => {
     const prefs = readMyServices();
@@ -95,6 +97,23 @@ export function WhereToWatch({ animeId, title }: Props) {
         const split = partitionByMyServices(rows, prefs.services);
         setMine(split.mine);
         setOther(split.other);
+        if (j.configured && j.country) {
+          const signals = recordAvailabilityCheck({
+            id: animeId,
+            title,
+            country: j.country,
+            availability: rows,
+          });
+          if (signals.length) {
+            setFreshNotes(
+              signals.map((s) =>
+                s.kind === "added"
+                  ? `Now listed on ${s.provider}`
+                  : `No longer listed on ${s.provider}`,
+              ),
+            );
+          }
+        }
       })
       .catch(() => {
         if (!cancelled) setData({ configured: false, availability: [] });
@@ -141,6 +160,12 @@ export function WhereToWatch({ animeId, title }: Props) {
           : " · set My services on Account for “available to me”"}
         . Listing ≠ subscription ownership.
       </p>
+
+      {freshNotes.length > 0 ? (
+        <p className="tools-hint" style={{ marginBottom: 10, color: "var(--color-accent)" }}>
+          Change since last visit: {freshNotes.join(" · ")}
+        </p>
+      ) : null}
 
       {data.error ? (
         <p className="tools-hint">{data.error}</p>
