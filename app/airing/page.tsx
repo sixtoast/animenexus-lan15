@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { fetchAiring, fetchAiringSchedule } from "@/lib/anilist-discover";
 import { AnimeCard } from "@/components/AnimeCard";
+import { CalendarExportLinks } from "@/components/CalendarExportLinks";
 import "./airing.css";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +50,7 @@ export default async function AiringPage() {
           <p>
             Popular releasing titles and the next ~72 hours of episode drops.
           </p>
+          <CalendarExportLinks />
         </div>
       </section>
 
