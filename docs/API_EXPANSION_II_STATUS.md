@@ -2,13 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–15 | Audit → available-to-me | Done |
-| **16** | Streaming availability changes | **Done** |
-| 17 | Simkl provider | Next |
-| 18+ | Fanart / history … | Queued |
+| 0–16 | Audit → availability changes | Done |
+| **17** | Simkl provider | **Done** |
+| 18 | Fanart.tv / artwork | Next |
+| 19+ | History layers … | Queued |
 
-## Sprint 16
+## Sprint 17
 
-- `lib/availability-changes.ts` — local snapshots + diff signals
-- Detail Watch records snapshots; shows change since last visit
-- Radar: **Streaming changes** list (visit-based, not global feed)
+- `lib/providers/simkl.ts` — resolve + anime detail + identity enrich
+- Soft-fail without `SIMKL_CLIENT_ID`
+- Docs: `docs/SIMKL.md`
