@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSession } from "@/components/SessionProvider";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { SoundSettings } from "@/components/SoundSettings";
+import { MyServicesSettings } from "@/components/MyServicesSettings";
 import type { WatchlistEntry } from "@/lib/types";
 import { playCue } from "@/lib/sound-engine";
 import {
@@ -505,6 +506,15 @@ export function AccountClient() {
           </button>
         </div>
       </form>
+
+      <hr style={{ margin: "28px 0", borderColor: "var(--color-border)" }} />
+
+      <section aria-labelledby="my-services-heading">
+        <h2 id="my-services-heading" className="nx-kicker">
+          My services
+        </h2>
+        <MyServicesSettings />
+      </section>
 
       <hr style={{ margin: "28px 0", borderColor: "var(--color-border)" }} />
 
