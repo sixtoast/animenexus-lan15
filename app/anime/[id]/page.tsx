@@ -20,6 +20,7 @@ import { EpisodeList } from "@/components/EpisodeList";
 import { DeepSignalsPanel } from "@/components/DeepSignalsPanel";
 import { CreativeDnaPanel } from "@/components/CreativeDnaPanel";
 import { CreativeConnectionsPanel } from "@/components/CreativeConnectionsPanel";
+import { WhereToWatch } from "@/components/WhereToWatch";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -234,6 +235,8 @@ export default async function AnimeDetailPage({ params }: Props) {
             {anime.description || "No description available."}
           </p>
         </section>
+
+        <WhereToWatch animeId={anime.id} title={anime.title} />
 
         <DeepSignalsPanel
           genres={anime.tags || []}
