@@ -2,13 +2,15 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–28 | Core → Airing push job | Done |
-| **29** | Quiet hours + category filters | **Done** |
-| 30+ | Polish / optional eval items | Queued |
+| 0–29 | Core → Quiet hours | Done |
+| **30** | Polish (status UI + docs index) | **Done** |
 
-## Sprint 29
+## Sprint 30
 
-- Quiet hours + category prefs on Account notifications
-- Server `sendPushToAll` filters by stored prefs + quiet window
-- Airing cron sends with `category: "airing"`
-- **Sync prefs to server** re-upserts subscription prefs
+- Expanded `getOptionalProviderStatus` (VAPID, cron, Supabase, Open-Meteo)
+- `/tools/status` + tools hub card
+- `docs/API_EXPANSION_II_INDEX.md`
+
+## Programme outcome
+
+Expansion II audit capabilities are implemented with soft-fail. Remaining work is ops (keys, VAPID, Supabase table) rather than missing architecture.
