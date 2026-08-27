@@ -20,13 +20,13 @@ AniList is the **required** catalog. Everything else is optional enrichment.
 | `WATCHMODE_DEFAULT_REGION` | ISO-2 country, default `US` |
 | `SIMKL_CLIENT_ID` | Simkl id / metadata bridge |
 | `FANART_API_KEY` | Fanart.tv supplemental artwork |
+| `VAPID_PUBLIC_KEY` | Web Push (client subscribe) |
+| `VAPID_PRIVATE_KEY` | Web Push (server send — later) |
+| `VAPID_SUBJECT` | e.g. `mailto:you@example.com` |
 | `NEXT_PUBLIC_SITE_URL` | Canonical URL for OAuth redirects |
 
 ## Docs
 
-- `docs/ANILIST_OAUTH.md` — OAuth vs Quick login
-- `docs/MAL_OAUTH.md` — MAL connect + flush
-- `docs/ANIDB.md` — niche metadata
-- `docs/WATCHMODE.md` — where to watch
-- `docs/SIMKL.md` — Simkl bridge
-- `docs/FANART.md` — Fanart.tv
+- `docs/ANILIST_OAUTH.md` · `docs/MAL_OAUTH.md`
+- `docs/ANIDB.md` · `docs/WATCHMODE.md` · `docs/SIMKL.md` · `docs/FANART.md`
+- `docs/OPEN_METEO.md` · `docs/ICS_CALENDAR.md` · `docs/WEB_PUSH.md`
