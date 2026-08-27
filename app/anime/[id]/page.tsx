@@ -6,6 +6,7 @@ import { getAnimeExperience } from "@/lib/anime-experience";
 import { fetchAnimeById } from "@/lib/anilist";
 import { buildExternalLinks } from "@/lib/external-links";
 import { enrichDeepFromAniDb } from "@/lib/providers/anidb";
+import { enrichArtworkFromFanart } from "@/lib/providers/fanart";
 import { buildCreativeDna, fullCreditLines } from "@/lib/creative-dna";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
 import { AnimeImage } from "@/components/AnimeImage";
@@ -21,6 +22,7 @@ import { DeepSignalsPanel } from "@/components/DeepSignalsPanel";
 import { CreativeDnaPanel } from "@/components/CreativeDnaPanel";
 import { CreativeConnectionsPanel } from "@/components/CreativeConnectionsPanel";
 import { WhereToWatch } from "@/components/WhereToWatch";
+import { ArtworkGallery } from "@/components/ArtworkGallery";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -68,6 +70,7 @@ export default async function AnimeDetailPage({ params }: Props) {
   const { anime, themes, jikan, nextEpisode, layers, identity } = exp;
 
   const deep = await enrichDeepFromAniDb(identity).catch(() => null);
+  const fanart = await enrichArtworkFromFanart(identity).catch(() => null);
 
   const dnaSlots = buildCreativeDna({
     staff: jikan.staff.map((s) => ({
@@ -247,6 +250,13 @@ export default async function AnimeDetailPage({ params }: Props) {
         <CreativeDnaPanel slots={dnaSlots} fullCredits={dnaFull} />
 
         <CreativeConnectionsPanel dna={dnaSlots} currentId={anime.id} />
+
+        {fanart?.assets?.length ? (
+          <ArtworkGallery
+            assets={fanart.assets}
+            sourceNote="fanart.tv (TVDB)"
+          />
+        ) : null}
 
         {external.length > 0 ? (
           <section className="detail-section" id="external-links">
