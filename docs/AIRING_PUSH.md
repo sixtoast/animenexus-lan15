@@ -34,9 +34,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" \
 
 ## Vercel Cron
 
-`vercel.json` schedules hourly: `0 * * * *` → `/api/cron/airing-push`
+`vercel.json` schedules **once daily** at 12:00 UTC (`0 12 * * *`) — required on **Hobby** (hourly crons need Pro).
 
-Requires Pro for cron on some plans — without it, call the route from any external scheduler.
+For more frequent checks on Hobby, call the route from an external scheduler (e.g. cron-job.org) with the bearer secret.
 
 ## Soft-fail
 
