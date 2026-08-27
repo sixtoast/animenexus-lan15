@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { TonightPlanner } from "@/components/TonightPlanner";
+import { WeatherContextHint } from "@/components/WeatherContextHint";
 import "../tools.css";
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function TonightPage() {
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
+        <WeatherContextHint />
         <TonightPlanner />
       </section>
     </main>
