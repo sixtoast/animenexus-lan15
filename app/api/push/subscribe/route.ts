@@ -1,35 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
+import { savePushSubscription } from "@/lib/push-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/**
- * Acknowledge a push subscription.
- * Foundation: logs + accepts JSON; durable store / send comes in a later sprint.
- */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const endpoint =
-      typeof body?.subscription?.endpoint === "string"
-        ? body.subscription.endpoint
-        : null;
+    const sub = body?.subscription;
+    const endpoint = typeof sub?.endpoint === "string" ? sub.endpoint : null;
     if (!endpoint) {
       return NextResponse.json(
         { ok: false, error: "subscription.endpoint required" },
         { status: 400 },
       );
     }
-    // Soft acknowledge — no secret leakage
-    console.info(
-      "[push] subscribe",
-      endpoint.slice(0, 48) + "…",
-      body?.prefs ? "with prefs" : "",
+
+    const result = await savePushSubscription(
+      {
+        endpoint,
+        keys: sub.keys,
+        expirationTime: sub.expirationTime ?? null,
+      },
+      body?.prefs,
     );
+
     return NextResponse.json({
       ok: true,
-      stored: false,
-      note: "Subscription received. Server-side delivery needs VAPID private key + store (next sprint).",
+      stored: result.stored,
+      note:
+        result.stored === "supabase"
+          ? "Subscription stored in Supabase."
+          : result.stored === "memory"
+            ? "Subscription held in process memory (add Supabase table for multi-instance)."
+            : result.error || "not stored",
     });
   } catch {
     return NextResponse.json({ ok: false, error: "bad body" }, { status: 400 });
