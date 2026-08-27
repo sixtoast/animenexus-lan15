@@ -1,28 +1,44 @@
-# Web Push foundation
+# Web Push
 
-## What works now
+## Foundation (Sprint 23)
 
-- Service worker (`public/sw.js`) handles `push` + `notificationclick`
-- Account → **Notifications** opt-in UI
-- Local preference categories (airing / streaming / radar)
-- Optional `PushManager.subscribe` when `VAPID_PUBLIC_KEY` is set
-- `POST /api/push/subscribe` acknowledges endpoints (no durable store yet)
+- Service worker `push` + `notificationclick`
+- Account → Notifications opt-in
+- `GET /api/push/vapid` · `POST /api/push/subscribe`
 
-## Env (optional)
+## Send pipeline (Sprint 25)
+
+### Env
 
 ```
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
 VAPID_SUBJECT=mailto:you@example.com
+PUSH_SEND_SECRET=long-random-string
+
+# Optional durable store
+NEXT_PUBLIC_SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
 ```
 
-Generate a pair with `npx web-push generate-vapid-keys`.
+Generate VAPID: `npx web-push generate-vapid-keys`
 
-**Never** expose the private key to the client.
+SQL table: `docs/sql/push_subscriptions.sql`
 
-## Not yet
+### Send a test push
 
-- Persistent subscription database
-- Server job that sends pushes for airing / streaming signals
+```bash
+curl -X POST https://YOUR_DOMAIN/api/push/send \
+  -H "Authorization: Bearer $PUSH_SEND_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Radar","body":"Something new","url":"/tools/signals"}'
+```
 
-Those are the natural follow-up sprint (Signals inbox + send pipeline).
+Without Supabase, subscriptions live in **process memory** (lost on cold start). Use Supabase for production multi-instance.
+
+### Flow
+
+1. User enables notifications on Account (with VAPID public key)
+2. Browser subscribes → `POST /api/push/subscribe` stores endpoint
+3. Admin/cron calls `POST /api/push/send` with secret
+4. SW shows notification; click opens `url`
