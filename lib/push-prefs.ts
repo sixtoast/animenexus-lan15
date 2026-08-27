@@ -1,6 +1,6 @@
 /**
- * Web Push preference helpers (API Expansion II Sprint 23).
- * Client-local opt-in; real delivery needs VAPID + server store (later).
+ * Web Push preference helpers (Sprints 23 + 29).
+ * Client-local opt-in; prefs also posted with subscription for server filters.
  */
 
 export const PUSH_PREF_KEY = "animenexus.push-prefs.v1";
@@ -8,10 +8,13 @@ export const PUSH_PREF_KEY = "animenexus.push-prefs.v1";
 export type PushPrefs = {
   /** User wants browser notifications when allowed */
   enabled: boolean;
-  /** Categories — soft labels for future server filters */
+  /** Categories — server may filter when stored with subscription */
   airing: boolean;
   streaming: boolean;
   radar: boolean;
+  /** Quiet hours (local clock, soft) — 0–23 inclusive start, exclusive end */
+  quietStartHour: number | null;
+  quietEndHour: number | null;
   updatedAt: string;
 };
 
@@ -20,6 +23,8 @@ export const defaultPushPrefs = (): PushPrefs => ({
   airing: true,
   streaming: true,
   radar: true,
+  quietStartHour: null,
+  quietEndHour: null,
   updatedAt: new Date().toISOString(),
 });
 
@@ -32,6 +37,14 @@ export function readPushPrefs(): PushPrefs {
     return {
       ...defaultPushPrefs(),
       ...j,
+      quietStartHour:
+        j.quietStartHour == null || Number.isNaN(Number(j.quietStartHour))
+          ? null
+          : Math.min(23, Math.max(0, Number(j.quietStartHour))),
+      quietEndHour:
+        j.quietEndHour == null || Number.isNaN(Number(j.quietEndHour))
+          ? null
+          : Math.min(23, Math.max(0, Number(j.quietEndHour))),
       updatedAt: j.updatedAt || new Date().toISOString(),
     };
   } catch {
@@ -48,6 +61,23 @@ export function writePushPrefs(prefs: PushPrefs): void {
   } catch {
     /* ignore */
   }
+}
+
+/**
+ * Quiet window may wrap midnight (e.g. 22 → 7).
+ * Returns true if local hour is inside quiet range.
+ */
+export function isInQuietHours(
+  prefs: Pick<PushPrefs, "quietStartHour" | "quietEndHour">,
+  now = new Date(),
+): boolean {
+  const s = prefs.quietStartHour;
+  const e = prefs.quietEndHour;
+  if (s == null || e == null) return false;
+  const h = now.getHours();
+  if (s === e) return true; // 24h quiet
+  if (s < e) return h >= s && h < e;
+  return h >= s || h < e;
 }
 
 export function urlBase64ToUint8Array(base64String: string): Uint8Array {
