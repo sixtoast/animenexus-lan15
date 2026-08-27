@@ -2,13 +2,12 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–23 | Core → Web Push foundation | Done |
-| **24** | Signals inbox | **Done** |
-| 25 | Push send pipeline (optional) | Next |
+| 0–24 | Core → Signals inbox | Done |
+| **25** | Push send pipeline | **Done** |
 | 26+ | Simkl rewatch / manga adapter… | Queued |
 
-## Sprint 24
+## Sprint 25
 
-- `lib/signals-inbox.ts` — unified local inbox
-- `/tools/signals` + hub card
-- Merges streaming availability signals + manual/demo entries
+- `web-push` + `lib/push-server.ts`
+- Durable store via Supabase `push_subscriptions` (optional)
+- `POST /api/push/send` guarded by `PUSH_SEND_SECRET`
