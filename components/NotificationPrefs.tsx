@@ -11,9 +11,9 @@ import {
 
 export function NotificationPrefs() {
   const [prefs, setPrefs] = useState<PushPrefs>(defaultPushPrefs);
-  const [permission, setPermission] = useState<NotificationPermission | "unsupported">(
-    "default",
-  );
+  const [permission, setPermission] = useState<
+    NotificationPermission | "unsupported"
+  >("default");
   const [vapidOk, setVapidOk] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -54,6 +54,7 @@ export function NotificationPrefs() {
 
       const reg = await navigator.serviceWorker.ready;
       let subscription: PushSubscription | null = null;
+      const nextPrefs = { ...prefs, enabled: true };
 
       if (vapidOk) {
         const vapid = await fetch("/api/push/vapid").then((r) => r.json());
@@ -69,20 +70,19 @@ export function NotificationPrefs() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               subscription: subscription.toJSON(),
-              prefs: { ...prefs, enabled: true },
+              prefs: nextPrefs,
             }),
           });
         }
       }
 
-      persist({ ...prefs, enabled: true });
+      persist(nextPrefs);
       setMsg(
         vapidOk && subscription
-          ? "Notifications enabled. Server can target this browser once push delivery is wired."
-          : "Permission granted. Local prefs saved. Add VAPID_PUBLIC_KEY for push subscribe.",
+          ? "Notifications enabled. Categories and quiet hours apply on the server when prefs are stored."
+          : "Permission granted. Local prefs saved. Add VAPID keys for remote push.",
       );
 
-      // Local smoke test — not a remote push
       if (reg.showNotification) {
         await reg.showNotification("AnimeNexus", {
           body: "Notifications are ready when signals arrive.",
@@ -116,6 +116,33 @@ export function NotificationPrefs() {
     }
   }
 
+  async function syncPrefsToServer() {
+    setBusy(true);
+    setMsg(null);
+    try {
+      if (!("serviceWorker" in navigator)) return;
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        setMsg("No active subscription — enable notifications first.");
+        return;
+      }
+      await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subscription: sub.toJSON(),
+          prefs,
+        }),
+      });
+      setMsg("Prefs synced to server for this browser.");
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Sync failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (permission === "unsupported") {
     return (
       <p className="account-note">
@@ -127,9 +154,8 @@ export function NotificationPrefs() {
   return (
     <div>
       <p className="account-note">
-        Opt-in only. We never request permission until you enable here. Real
-        remote pushes need server VAPID keys; until then prefs and the service
-        worker handlers are ready.
+        Opt-in only. Categories and quiet hours filter remote pushes when your
+        subscription is stored with prefs.
       </p>
       <p className="tools-hint" style={{ marginBottom: 10 }}>
         Permission: <strong>{permission}</strong>
@@ -147,14 +173,24 @@ export function NotificationPrefs() {
             Enable notifications
           </button>
         ) : (
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
-            disabled={busy}
-            onClick={() => void disable()}
-          >
-            Disable notifications
-          </button>
+          <>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              disabled={busy}
+              onClick={() => void disable()}
+            >
+              Disable notifications
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              disabled={busy}
+              onClick={() => void syncPrefsToServer()}
+            >
+              Sync prefs to server
+            </button>
+          </>
         )}
       </div>
       <div style={{ marginTop: 12, display: "grid", gap: 8 }}>
@@ -181,6 +217,61 @@ export function NotificationPrefs() {
           </label>
         ))}
       </div>
+
+      <div style={{ marginTop: 16 }}>
+        <p className="tools-hint" style={{ marginBottom: 8 }}>
+          Quiet hours (local clock). Leave both blank to disable.
+        </p>
+        <div className="account-row" style={{ gap: 8, flexWrap: "wrap" }}>
+          <label style={{ fontSize: 13 }}>
+            From{" "}
+            <select
+              className="filter-input"
+              style={{ width: 72 }}
+              disabled={!prefs.enabled}
+              value={prefs.quietStartHour ?? ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                persist({
+                  ...prefs,
+                  quietStartHour: v === "" ? null : parseInt(v, 10),
+                });
+              }}
+            >
+              <option value="">—</option>
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h}>
+                  {String(h).padStart(2, "0")}:00
+                </option>
+              ))}
+            </select>
+          </label>
+          <label style={{ fontSize: 13 }}>
+            To{" "}
+            <select
+              className="filter-input"
+              style={{ width: 72 }}
+              disabled={!prefs.enabled}
+              value={prefs.quietEndHour ?? ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                persist({
+                  ...prefs,
+                  quietEndHour: v === "" ? null : parseInt(v, 10),
+                });
+              }}
+            >
+              <option value="">—</option>
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h}>
+                  {String(h).padStart(2, "0")}:00
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
+
       {msg ? (
         <p className="tools-hint" style={{ marginTop: 10 }}>
           {msg}
