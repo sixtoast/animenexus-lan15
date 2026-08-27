@@ -30,6 +30,7 @@ const DEFAULTS: Record<string, RateLimitConfig> = {
   "anidb-titles": { minIntervalMs: 5000, maxFailures: 2, coolDownMs: 300_000 },
   simkl: { minIntervalMs: 200, maxFailures: 5, coolDownMs: 60_000 },
   fanart: { minIntervalMs: 300, maxFailures: 4, coolDownMs: 90_000 },
+  "open-meteo": { minIntervalMs: 500, maxFailures: 4, coolDownMs: 60_000 },
 };
 
 type ProviderState = {
