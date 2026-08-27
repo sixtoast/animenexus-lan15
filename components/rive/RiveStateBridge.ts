@@ -1,9 +1,13 @@
 /**
- * Rive interaction state convention (Creative Tech Sprints 2–3).
+ * Rive interaction state convention (Creative Tech Sprint 3).
  *
- * Application state drives Rive — never the reverse for success/error.
- * Shared vocabulary across .riv assets:
+ * Rules:
+ * 1. Application state drives Rive — never the reverse for success/error.
+ * 2. Never show success before the underlying operation confirms.
+ * 3. Shared vocabulary across .riv assets (extend intentionally only).
+ * 4. HTML control remains the accessible source of truth; Rive is presentation.
  *
+ * Core states:
  *   idle | hover | pressed | loading | success | error | disabled | attention | complete
  */
 
@@ -21,18 +25,65 @@ export const RIVE_INPUT_STATES = [
 
 export type RiveInputState = (typeof RIVE_INPUT_STATES)[number];
 
+/** Optional number band inputs for instruments (Radar/Oracle). */
+export type RiveInstrumentBand =
+  | "band_0"
+  | "band_1"
+  | "band_2"
+  | "band_3"
+  | "band_4"
+  | "band_5";
+
 export type RiveBridgeTarget = {
-  /** Fire a named trigger on the active state machine */
   fire?: (name: string) => void;
-  /** Set a boolean input */
   setBool?: (name: string, value: boolean) => void;
-  /** Set a number input */
   setNumber?: (name: string, value: number) => void;
 };
 
+export type AsyncVisualStatus = {
+  loading?: boolean;
+  error?: boolean;
+  /** Only set after real success */
+  success?: boolean;
+  disabled?: boolean;
+  /** Soft pull of attention without claiming success */
+  attention?: boolean;
+  /** Durable completion (e.g. challenge finished) */
+  complete?: boolean;
+};
+
+export type PointerVisualStatus = {
+  hover?: boolean;
+  pressed?: boolean;
+};
+
+/**
+ * Priority: disabled > loading > error > complete > success > attention > pressed > hover > idle
+ * Matches product truth, not animation convenience.
+ */
+export function resolveRiveState(
+  async: AsyncVisualStatus = {},
+  pointer: PointerVisualStatus = {},
+): RiveInputState {
+  if (async.disabled) return "disabled";
+  if (async.loading) return "loading";
+  if (async.error) return "error";
+  if (async.complete) return "complete";
+  if (async.success) return "success";
+  if (async.attention) return "attention";
+  if (pointer.pressed) return "pressed";
+  if (pointer.hover) return "hover";
+  return "idle";
+}
+
+/** @deprecated Prefer resolveRiveState */
+export function stateFromAsync(status: AsyncVisualStatus): RiveInputState {
+  return resolveRiveState(status, {});
+}
+
 /**
  * Map a high-level app state into Rive inputs.
- * Prefer boolean flags named after RIVE_INPUT_STATES when the artboard uses them.
+ * Prefer exclusive boolean flags named after RIVE_INPUT_STATES.
  */
 export function applyRiveState(
   target: RiveBridgeTarget | null | undefined,
@@ -56,18 +107,12 @@ export function applyRiveState(
   }
 }
 
-/**
- * Derive presentation state from real async work — never invent success.
- */
-export function stateFromAsync(status: {
-  loading?: boolean;
-  error?: boolean;
-  success?: boolean;
-  disabled?: boolean;
-}): RiveInputState {
-  if (status.disabled) return "disabled";
-  if (status.loading) return "loading";
-  if (status.error) return "error";
-  if (status.success) return "success";
-  return "idle";
+/** Instrument band (0–5) as number input `band` when the .riv defines it. */
+export function applyRiveBand(
+  target: RiveBridgeTarget | null | undefined,
+  bandIndex: number,
+): void {
+  if (!target?.setNumber) return;
+  const n = Math.max(0, Math.min(5, Math.round(bandIndex)));
+  target.setNumber("band", n);
 }
