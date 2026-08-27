@@ -1,4 +1,4 @@
-/* Creative Tech Sprint 2 — Rive host / fallback shell */
+/* Creative Tech Sprint 2–3 — Rive host / fallback / button shell */
 
 .nx-rive-fallback {
   display: flex;
@@ -30,4 +30,33 @@
   width: 100%;
   height: 100%;
   max-width: 100%;
+}
+
+.nx-rive-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  position: relative;
+}
+
+.nx-rive-btn-visual {
+  display: inline-flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.nx-rive-btn-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.nx-rive-btn-fallback {
+  display: block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.35;
 }
