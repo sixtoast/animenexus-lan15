@@ -1,10 +1,11 @@
 /**
- * Web Push send pipeline (API Expansion II Sprint 25).
- * Soft-fail without VAPID keys. Optional Supabase store for endpoints.
+ * Web Push send pipeline (Sprints 25 + 29).
+ * Soft-fail without VAPID. Optional category / quiet-hour filters from stored prefs.
  */
 
 import webpush from "web-push";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { isInQuietHours, type PushPrefs } from "./push-prefs";
 
 export type PushSubscriptionJSON = {
   endpoint: string;
@@ -12,15 +13,20 @@ export type PushSubscriptionJSON = {
   expirationTime?: number | null;
 };
 
+export type StoredPushSub = PushSubscriptionJSON & {
+  prefs?: Partial<PushPrefs> & Record<string, unknown>;
+};
+
 export type PushPayload = {
   title: string;
   body: string;
   url?: string;
   tag?: string;
+  /** Filter against subscription prefs */
+  category?: "airing" | "streaming" | "radar" | "system";
 };
 
-/** Process-local fallback when Supabase is unavailable (dev / single instance). */
-const memorySubs = new Map<string, PushSubscriptionJSON>();
+const memorySubs = new Map<string, StoredPushSub>();
 
 export function isVapidReady(): boolean {
   return Boolean(
@@ -58,6 +64,8 @@ export async function savePushSubscription(
 ): Promise<{ stored: "supabase" | "memory" | "none"; error?: string }> {
   if (!sub?.endpoint) return { stored: "none", error: "missing endpoint" };
 
+  const stored: StoredPushSub = { ...sub, prefs: prefs || {} };
+
   const sb = getServiceSupabase();
   if (sb) {
     const { error } = await sb.from("push_subscriptions").upsert(
@@ -70,11 +78,14 @@ export async function savePushSubscription(
       },
       { onConflict: "endpoint" },
     );
-    if (!error) return { stored: "supabase" };
+    if (!error) {
+      memorySubs.set(sub.endpoint, stored);
+      return { stored: "supabase" };
+    }
     console.warn("[push] supabase upsert", error.message);
   }
 
-  memorySubs.set(sub.endpoint, sub);
+  memorySubs.set(sub.endpoint, stored);
   return { stored: "memory" };
 }
 
@@ -86,15 +97,15 @@ export async function removePushSubscription(endpoint: string): Promise<void> {
   }
 }
 
-export async function listPushSubscriptions(): Promise<PushSubscriptionJSON[]> {
-  const out = new Map<string, PushSubscriptionJSON>();
+export async function listStoredSubscriptions(): Promise<StoredPushSub[]> {
+  const out = new Map<string, StoredPushSub>();
   for (const [k, v] of memorySubs) out.set(k, v);
 
   const sb = getServiceSupabase();
   if (sb) {
     const { data, error } = await sb
       .from("push_subscriptions")
-      .select("endpoint, p256dh, auth")
+      .select("endpoint, p256dh, auth, prefs")
       .limit(500);
     if (!error && data) {
       for (const row of data) {
@@ -105,6 +116,7 @@ export async function listPushSubscriptions(): Promise<PushSubscriptionJSON[]> {
             p256dh: row.p256dh || undefined,
             auth: row.auth || undefined,
           },
+          prefs: (row.prefs as Record<string, unknown>) || {},
         });
       }
     }
@@ -112,16 +124,47 @@ export async function listPushSubscriptions(): Promise<PushSubscriptionJSON[]> {
   return [...out.values()];
 }
 
+export async function listPushSubscriptions(): Promise<PushSubscriptionJSON[]> {
+  return listStoredSubscriptions();
+}
+
+function allowsCategory(
+  prefs: StoredPushSub["prefs"],
+  category?: PushPayload["category"],
+): boolean {
+  if (!category || category === "system") return true;
+  if (!prefs) return true;
+  if (prefs.enabled === false) return false;
+  const flag = prefs[category];
+  if (typeof flag === "boolean") return flag;
+  return true;
+}
+
+function inQuiet(prefs: StoredPushSub["prefs"]): boolean {
+  if (!prefs) return false;
+  return isInQuietHours({
+    quietStartHour:
+      typeof prefs.quietStartHour === "number" ? prefs.quietStartHour : null,
+    quietEndHour:
+      typeof prefs.quietEndHour === "number" ? prefs.quietEndHour : null,
+  });
+}
+
 export async function sendPushToAll(
   payload: PushPayload,
-): Promise<{ sent: number; failed: number; skipped: string | null }> {
+): Promise<{
+  sent: number;
+  failed: number;
+  skipped: string | null;
+  filtered: number;
+}> {
   if (!configureWebPush()) {
-    return { sent: 0, failed: 0, skipped: "VAPID not configured" };
+    return { sent: 0, failed: 0, skipped: "VAPID not configured", filtered: 0 };
   }
 
-  const subs = await listPushSubscriptions();
+  const subs = await listStoredSubscriptions();
   if (!subs.length) {
-    return { sent: 0, failed: 0, skipped: "no subscriptions" };
+    return { sent: 0, failed: 0, skipped: "no subscriptions", filtered: 0 };
   }
 
   const body = JSON.stringify({
@@ -133,9 +176,14 @@ export async function sendPushToAll(
 
   let sent = 0;
   let failed = 0;
+  let filtered = 0;
 
   await Promise.all(
     subs.map(async (sub) => {
+      if (!allowsCategory(sub.prefs, payload.category) || inQuiet(sub.prefs)) {
+        filtered += 1;
+        return;
+      }
       if (!sub.keys?.p256dh || !sub.keys?.auth) {
         failed += 1;
         return;
@@ -169,5 +217,5 @@ export async function sendPushToAll(
     }),
   );
 
-  return { sent, failed, skipped: null };
+  return { sent, failed, skipped: null, filtered };
 }
