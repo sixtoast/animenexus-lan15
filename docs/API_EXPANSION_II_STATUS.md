@@ -2,13 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–14 | Audit → Where to Watch | Done |
-| **15** | Watchable recommendation mode | **Done** |
-| 16 | Streaming availability changes | Next |
-| 17+ | Simkl … | Queued |
+| 0–15 | Audit → available-to-me | Done |
+| **16** | Streaming availability changes | **Done** |
+| 17 | Simkl provider | Next |
+| 18+ | Fanart / history … | Queued |
 
-## Sprint 15
+## Sprint 16
 
-- `lib/available-to-me.ts` — probe + client cache (6h), sequential top-N only
-- Tonight: optional **Available to me** checkbox
-- Soft-keep unknown; never mandatory for ordinary recs
+- `lib/availability-changes.ts` — local snapshots + diff signals
+- Detail Watch records snapshots; shows change since last visit
+- Radar: **Streaming changes** list (visit-based, not global feed)
