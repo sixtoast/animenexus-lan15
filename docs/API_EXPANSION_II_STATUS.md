@@ -2,12 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–27 | Core → Manga adapter | Done |
-| **28** | Airing → push job | **Done** |
-| 29+ | Remaining plan items / polish | Queued |
+| 0–28 | Core → Airing push job | Done |
+| **29** | Quiet hours + category filters | **Done** |
+| 30+ | Polish / optional eval items | Queued |
 
-## Sprint 28
+## Sprint 29
 
-- `lib/airing-push-job.ts` — window scanner
-- `GET|POST /api/cron/airing-push` — dry run or send
-- `vercel.json` hourly cron + `docs/AIRING_PUSH.md`
+- Quiet hours + category prefs on Account notifications
+- Server `sendPushToAll` filters by stored prefs + quiet window
+- Airing cron sends with `category: "airing"`
+- **Sync prefs to server** re-upserts subscription prefs
