@@ -29,6 +29,7 @@ const DEFAULTS: Record<string, RateLimitConfig> = {
   anidb: { minIntervalMs: 2200, maxFailures: 3, coolDownMs: 120_000 },
   "anidb-titles": { minIntervalMs: 5000, maxFailures: 2, coolDownMs: 300_000 },
   simkl: { minIntervalMs: 200, maxFailures: 5, coolDownMs: 60_000 },
+  fanart: { minIntervalMs: 300, maxFailures: 4, coolDownMs: 90_000 },
 };
 
 type ProviderState = {
