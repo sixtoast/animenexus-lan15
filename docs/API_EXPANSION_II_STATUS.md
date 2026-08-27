@@ -2,14 +2,14 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–10 | Audit → creative DNA | Done |
-| **11** | Production / creative connections | **Done** |
-| 12 | Watchmode provider | Next |
-| 13+ | My Services / Where to Watch … | Queued |
+| 0–11 | Audit → creative connections | Done |
+| **12** | Watchmode provider | **Done** |
+| 13 | User streaming services (My Services) | Next |
+| 14+ | Where to Watch UI … | Queued |
 
-## Sprint 11
+## Sprint 12
 
-- `lib/creative-connections.ts` — factual shelf overlaps
-- `CreativeConnectionsPanel` on Detail
-- Watchlist now stores `studios` when adding titles
-- Lines like: "Studio X appears in N of your highest-rated titles" — no causation claims
+- `lib/providers/watchmode.ts` — resolve + sources by country
+- Soft-fail without `WATCHMODE_API_KEY`
+- Never implies user owns the subscription
+- Docs: `docs/WATCHMODE.md`
