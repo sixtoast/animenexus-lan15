@@ -2,14 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–11 | Audit → creative connections | Done |
-| **12** | Watchmode provider | **Done** |
-| 13 | User streaming services (My Services) | Next |
-| 14+ | Where to Watch UI … | Queued |
+| 0–12 | Audit → Watchmode | Done |
+| **13** | User streaming services (My Services) | **Done** |
+| 14 | Where to Watch (Detail) | Next |
+| 15+ | Available-to-me recommendations … | Queued |
 
-## Sprint 12
+## Sprint 13
 
-- `lib/providers/watchmode.ts` — resolve + sources by country
-- Soft-fail without `WATCHMODE_API_KEY`
-- Never implies user owns the subscription
-- Docs: `docs/WATCHMODE.md`
+- `lib/my-services.ts` — local prefs + provider matching
+- `MyServicesSettings` on Account — region + service checkboxes
+- Does not assume subscriptions; only explicit user selection
