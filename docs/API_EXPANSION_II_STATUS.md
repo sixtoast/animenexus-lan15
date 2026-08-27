@@ -2,13 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–17 | Audit → Simkl | Done |
-| **18** | Fanart.tv / artwork | **Done** |
-| 19 | Context / history layers | Next |
-| 20+ | … | Queued |
+| 0–18 | Audit → Fanart | Done |
+| **19** | Context / history layers | **Done** |
+| 20 | Polish / hardening | Next |
+| 21+ | Remaining plan items | Queued |
 
-## Sprint 18
+## Sprint 19
 
-- `lib/providers/fanart.ts` — TVDB → posters/backgrounds/logos
-- `ArtworkGallery` on Detail (collapsible; AniList cover stays primary)
-- Soft-fail without `FANART_API_KEY` or `tvdbId`
+- `lib/viewing-context.ts` — era, season, format, length, status chips
+- `ViewingContextPanel` on Detail
+- Soft framing only — not a watch-order mandate
