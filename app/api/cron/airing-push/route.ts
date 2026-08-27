@@ -13,8 +13,9 @@ export const dynamic = "force-dynamic";
  *
  * Auth: Authorization: Bearer $CRON_SECRET (or PUSH_SEND_SECRET)
  * Query: dry=1 → list only, no push
- *        send=1 → send one summary push (default when not dry)
  *        per_title=1 → one push per title (cap 5)
+ *
+ * Sends with category "airing" so quiet hours + user prefs filter delivery.
  */
 export async function GET(req: NextRequest) {
   return run(req);
@@ -39,7 +40,6 @@ async function run(req: NextRequest) {
   const auth = req.headers.get("authorization") || "";
   const bearer = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
   const qSecret = req.nextUrl.searchParams.get("secret") || "";
-  // Vercel Cron sends Authorization: Bearer <CRON_SECRET> when configured
   if (bearer !== expected && qSecret !== expected) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
@@ -70,8 +70,13 @@ async function run(req: NextRequest) {
     });
   }
 
-  const results: { title: string; sent: number; failed: number; skipped: string | null }[] =
-    [];
+  const results: {
+    title: string;
+    sent: number;
+    failed: number;
+    skipped: string | null;
+    filtered: number;
+  }[] = [];
 
   if (perTitle) {
     for (const item of items.slice(0, 5)) {
@@ -81,6 +86,7 @@ async function run(req: NextRequest) {
         body: payload.body,
         url: payload.url,
         tag: `airing-${item.anilistId}-${item.episode}`,
+        category: "airing",
       });
       results.push({ title: payload.title, ...r });
     }
@@ -94,6 +100,7 @@ async function run(req: NextRequest) {
       body: `${payload.body}${extra}`,
       url: "/airing",
       tag: "airing-window",
+      category: "airing",
     });
     results.push({ title: "Airing soon", ...r });
   }
