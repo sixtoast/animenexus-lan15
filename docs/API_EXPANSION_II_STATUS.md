@@ -2,13 +2,13 @@
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 0–13 | Audit → My Services | Done |
-| **14** | Where to Watch (Detail) | **Done** |
-| 15 | Watchable recommendation mode | Next |
-| 16+ | Availability changes / Simkl … | Queued |
+| 0–14 | Audit → Where to Watch | Done |
+| **15** | Watchable recommendation mode | **Done** |
+| 16 | Streaming availability changes | Next |
+| 17+ | Simkl … | Queued |
 
-## Sprint 14
+## Sprint 15
 
-- `GET /api/streaming?id=&region=&title=`
-- `WhereToWatch` on Detail — yours vs also available
-- Country from Account My Services; soft-fail without Watchmode key
+- `lib/available-to-me.ts` — probe + client cache (6h), sequential top-N only
+- Tonight: optional **Available to me** checkbox
+- Soft-keep unknown; never mandatory for ordinary recs
