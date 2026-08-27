@@ -5,6 +5,7 @@ import { WatchlistProvider } from "@/components/WatchlistProvider";
 import { SessionProvider } from "@/components/SessionProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { MotionProvider } from "@/components/MotionProvider";
+import { CreativeRuntimeProvider } from "@/components/CreativeRuntimeProvider";
 import { ToastProvider } from "@/components/ToastProvider";
 import { SoundProvider } from "@/components/SoundProvider";
 import { ScrollProgress } from "@/components/ScrollProgress";
@@ -118,55 +119,57 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <MotionProvider>
-            <ToastProvider>
-              <SoundProvider>
-                <WatchlistProvider>
-                  <SessionProvider>
-                    <SkipToContent />
-                    <LanternMemoryBoot />
-                    <NexusRouteBeacon />
-                    <EnvironmentController />
-                    <CinematographyController />
-                    <ScrollProgress />
-                    <PwaRegister />
-                    <RouteTune />
-                    <Navbar />
-                    <div className="app-shell" id="main-content" tabIndex={-1}>
-                      <RoomEnter>{children}</RoomEnter>
-                    </div>
-                    <MascotErrorBoundary>
-                      <MascotHost />
-                    </MascotErrorBoundary>
-                    <AIPanel />
-                    <CommandPalette />
-                    <SessionTools />
-                    <ConfettiHost />
-                    <SealMomentHost />
-                    <FirstVisitHost />
-                    <ShortcutsHelp />
-                    <LoadingTheater />
-                    <footer className="site-footer">
-                      <div className="container site-footer-inner">
-                        <span>AnimeNexus · Lantern</span>
-                        <span className="site-footer-sep" aria-hidden>
-                          ·
-                        </span>
-                        <span>
-                          Data via{" "}
-                          <a
-                            href="https://anilist.co"
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            AniList
-                          </a>
-                        </span>
+            <CreativeRuntimeProvider>
+              <ToastProvider>
+                <SoundProvider>
+                  <WatchlistProvider>
+                    <SessionProvider>
+                      <SkipToContent />
+                      <LanternMemoryBoot />
+                      <NexusRouteBeacon />
+                      <EnvironmentController />
+                      <CinematographyController />
+                      <ScrollProgress />
+                      <PwaRegister />
+                      <RouteTune />
+                      <Navbar />
+                      <div className="app-shell" id="main-content" tabIndex={-1}>
+                        <RoomEnter>{children}</RoomEnter>
                       </div>
-                    </footer>
-                  </SessionProvider>
-                </WatchlistProvider>
-              </SoundProvider>
-            </ToastProvider>
+                      <MascotErrorBoundary>
+                        <MascotHost />
+                      </MascotErrorBoundary>
+                      <AIPanel />
+                      <CommandPalette />
+                      <SessionTools />
+                      <ConfettiHost />
+                      <SealMomentHost />
+                      <FirstVisitHost />
+                      <ShortcutsHelp />
+                      <LoadingTheater />
+                      <footer className="site-footer">
+                        <div className="container site-footer-inner">
+                          <span>AnimeNexus · Lantern</span>
+                          <span className="site-footer-sep" aria-hidden>
+                            ·
+                          </span>
+                          <span>
+                            Data via{" "}
+                            <a
+                              href="https://anilist.co"
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              AniList
+                            </a>
+                          </span>
+                        </div>
+                      </footer>
+                    </SessionProvider>
+                  </WatchlistProvider>
+                </SoundProvider>
+              </ToastProvider>
+            </CreativeRuntimeProvider>
           </MotionProvider>
         </ThemeProvider>
       </body>
