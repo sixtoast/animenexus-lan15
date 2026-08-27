@@ -1,5 +1,6 @@
 import { RadarClient } from "@/components/RadarClient";
 import { DeskShell } from "@/components/DeskShell";
+import { AvailabilitySignals } from "@/components/AvailabilitySignals";
 import "../tools.css";
 import "../stats/stats.css";
 import "./radar.css";
@@ -28,6 +29,16 @@ export default function Page() {
       <section className="container" style={{ paddingBottom: 48 }}>
         <DeskShell title="Radar" personality="radar">
           <RadarClient />
+          <div style={{ marginTop: 28 }}>
+            <h2 className="nx-kicker" style={{ marginBottom: 10 }}>
+              Streaming changes
+            </h2>
+            <p className="tools-hint" style={{ marginBottom: 12 }}>
+              From titles you opened on Detail — when providers appear or leave
+              for your region between visits.
+            </p>
+            <AvailabilitySignals />
+          </div>
         </DeskShell>
       </section>
     </main>
