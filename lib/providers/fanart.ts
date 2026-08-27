@@ -46,9 +46,7 @@ export function isFanartConfigured(): boolean {
   return Boolean(apiKey());
 }
 
-function mapType(
-  key: string,
-): ArtworkAsset["type"] {
+function mapType(key: string): ArtworkAsset["type"] {
   if (key.includes("poster")) return "poster";
   if (key.includes("background") || key.includes("fanart")) return "background";
   if (key.includes("logo")) return "logo";
@@ -65,10 +63,7 @@ function toAssets(
   if (!images?.length) return [];
   const prov = nowProvenance("fanart", 0.85, "tvdb_lookup");
   return [...images]
-    .sort(
-      (a, b) =>
-        (Number(b.likes) || 0) - (Number(a.likes) || 0),
-    )
+    .sort((a, b) => (Number(b.likes) || 0) - (Number(a.likes) || 0))
     .slice(0, limit)
     .filter((img) => img.url)
     .map((img) => ({
@@ -121,7 +116,7 @@ export async function fetchFanartByTvdb(
         };
       });
     },
-    CACHE_TTL.long ?? CACHE_TTL.medium,
+    CACHE_TTL.identity,
   ).catch(() => null);
 }
 
