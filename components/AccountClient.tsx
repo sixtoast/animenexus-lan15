@@ -6,6 +6,7 @@ import { useSession } from "@/components/SessionProvider";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { SoundSettings } from "@/components/SoundSettings";
 import { MyServicesSettings } from "@/components/MyServicesSettings";
+import { NotificationPrefs } from "@/components/NotificationPrefs";
 import type { WatchlistEntry } from "@/lib/types";
 import { playCue } from "@/lib/sound-engine";
 import {
@@ -514,6 +515,15 @@ export function AccountClient() {
           My services
         </h2>
         <MyServicesSettings />
+      </section>
+
+      <hr style={{ margin: "28px 0", borderColor: "var(--color-border)" }} />
+
+      <section aria-labelledby="notif-heading">
+        <h2 id="notif-heading" className="nx-kicker">
+          Notifications
+        </h2>
+        <NotificationPrefs />
       </section>
 
       <hr style={{ margin: "28px 0", borderColor: "var(--color-border)" }} />
