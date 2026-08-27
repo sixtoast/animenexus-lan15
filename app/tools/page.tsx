@@ -22,6 +22,7 @@ const TOOLS: {
   { href: "/tools/completionist", emoji: "✅", title: "Completionist", blurb: "Finish Watching, rank Planning.", personality: "completionist" },
   { href: "/tools/radar", emoji: "📡", title: "Radar", blurb: "Upcoming scanner + prefs.", personality: "radar" },
   { href: "/tools/signals", emoji: "🔔", title: "Signals", blurb: "Local inbox of soft changes.", personality: "radar" },
+  { href: "/tools/status", emoji: "🩺", title: "Status", blurb: "Optional API gates · soft-fail.", personality: "generic" },
   { href: "/tools/stats", emoji: "📊", title: "Stats", blurb: "Year-in-anime editorial.", personality: "stats" },
   { href: "/tools/challenge", emoji: "🎯", title: "Challenge", blurb: "Silhouette daily MCQ.", personality: "challenge" },
   { href: "/tools/sauce", emoji: "🔍", title: "Sauce", blurb: "Drop, paste, URL → trace.moe.", personality: "sauce" },
