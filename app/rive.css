@@ -1,0 +1,33 @@
+/* Creative Tech Sprint 2 — Rive host / fallback shell */
+
+.nx-rive-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.5rem;
+  color: var(--nx-muted, rgba(245, 230, 210, 0.45));
+  background: transparent;
+  pointer-events: none;
+  user-select: none;
+}
+
+.nx-rive-fallback-mark {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.nx-rive-fallback--loading .nx-rive-fallback-mark {
+  opacity: 0.4;
+}
+
+.nx-rive-fallback--error {
+  color: var(--nx-danger, #c45c5c);
+}
+
+[data-nexus-rive="1"] canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+}
