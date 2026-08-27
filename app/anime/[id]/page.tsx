@@ -25,6 +25,7 @@ import { CreativeConnectionsPanel } from "@/components/CreativeConnectionsPanel"
 import { WhereToWatch } from "@/components/WhereToWatch";
 import { ArtworkGallery } from "@/components/ArtworkGallery";
 import { ViewingContextPanel } from "@/components/ViewingContextPanel";
+import { RewatchPanel } from "@/components/RewatchPanel";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -340,6 +341,12 @@ export default async function AnimeDetailPage({ params }: Props) {
           />
           <AnimeNotes animeId={anime.id} />
         </div>
+
+        <RewatchPanel
+          animeId={anime.id}
+          title={anime.title}
+          image={anime.image}
+        />
 
         {hasThemes ? (
           <section className="detail-section">
