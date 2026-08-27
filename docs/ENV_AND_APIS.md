@@ -19,6 +19,7 @@ AniList is the **required** catalog. Everything else is optional enrichment.
 | `WATCHMODE_API_KEY` | Streaming availability |
 | `WATCHMODE_DEFAULT_REGION` | ISO-2 country, default `US` |
 | `SIMKL_CLIENT_ID` | Simkl id / metadata bridge |
+| `FANART_API_KEY` | Fanart.tv supplemental artwork |
 | `NEXT_PUBLIC_SITE_URL` | Canonical URL for OAuth redirects |
 
 ## Docs
@@ -28,3 +29,4 @@ AniList is the **required** catalog. Everything else is optional enrichment.
 - `docs/ANIDB.md` — niche metadata
 - `docs/WATCHMODE.md` — where to watch
 - `docs/SIMKL.md` — Simkl bridge
+- `docs/FANART.md` — Fanart.tv
