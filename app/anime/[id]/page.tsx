@@ -9,6 +9,7 @@ import { enrichDeepFromAniDb } from "@/lib/providers/anidb";
 import { enrichArtworkFromFanart } from "@/lib/providers/fanart";
 import { buildCreativeDna, fullCreditLines } from "@/lib/creative-dna";
 import { buildViewingContext } from "@/lib/viewing-context";
+import { resolveMangaSourcesFromRelations } from "@/lib/manga-adapter";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
 import { AnimeImage } from "@/components/AnimeImage";
 import { DetailCoverMaterial } from "@/components/DetailCoverMaterial";
@@ -26,6 +27,7 @@ import { WhereToWatch } from "@/components/WhereToWatch";
 import { ArtworkGallery } from "@/components/ArtworkGallery";
 import { ViewingContextPanel } from "@/components/ViewingContextPanel";
 import { RewatchPanel } from "@/components/RewatchPanel";
+import { MangaSourcePanel } from "@/components/MangaSourcePanel";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -74,6 +76,11 @@ export default async function AnimeDetailPage({ params }: Props) {
 
   const deep = await enrichDeepFromAniDb(identity).catch(() => null);
   const fanart = await enrichArtworkFromFanart(identity).catch(() => null);
+
+  const relations = anime.relations || [];
+  const mangaSources = await resolveMangaSourcesFromRelations(relations).catch(
+    () => [],
+  );
 
   const viewingContext = buildViewingContext({
     title: anime.title,
@@ -125,7 +132,6 @@ export default async function AnimeDetailPage({ params }: Props) {
       : parseInt(String(anime.episodes), 10) || 0;
 
   const external = buildExternalLinks(anime);
-  const relations = anime.relations || [];
   const relationsSummary = relations
     .map((r) => `${r.relationType}: ${r.title}`)
     .join("\n");
@@ -254,6 +260,8 @@ export default async function AnimeDetailPage({ params }: Props) {
         </section>
 
         <ViewingContextPanel context={viewingContext} />
+
+        <MangaSourcePanel links={mangaSources} />
 
         <WhereToWatch animeId={anime.id} title={anime.title} />
 
