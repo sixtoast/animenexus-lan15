@@ -6,6 +6,7 @@ import {
   writeWatchlistPresentation,
   type WatchlistPresentation,
 } from "@/lib/living-shelf";
+import { Button } from "@/components/ui/Button";
 
 export function WatchlistPresentationToggle({
   value,
@@ -34,28 +35,29 @@ export function WatchlistPresentationToggle({
       role="group"
       aria-label="Watchlist presentation mode"
     >
-      <button
+      <Button
         type="button"
-        className={
-          "btn btn-sm " + (current === "manage" ? "btn-accent" : "btn-outline")
-        }
+        size="sm"
+        variant={current === "manage" ? "accent" : "outline"}
         aria-pressed={current === "manage"}
         aria-label="Manage list — edit status, progress, and ratings"
         onClick={() => select("manage")}
+        silent
       >
         Manage
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
-        className={
-          "btn btn-sm " + (current === "shelf" ? "btn-accent" : "btn-outline")
-        }
+        size="sm"
+        variant={current === "shelf" ? "accent" : "outline"}
         aria-pressed={current === "shelf"}
         aria-label="Shelf — spatial collection view"
         onClick={() => select("shelf")}
+        silent
+        riveKey="shelf_mode"
       >
         Shelf
-      </button>
+      </Button>
     </div>
   );
 }
