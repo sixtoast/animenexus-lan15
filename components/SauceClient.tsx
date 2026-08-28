@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { SauceHit } from "@/lib/sauce";
 import { formatTime } from "@/lib/sauce";
 import { loadingStart, loadingStop } from "@/components/LoadingTheater";
+import { Button } from "@/components/ui/Button";
 
 export function SauceClient() {
   const [url, setUrl] = useState("");
@@ -135,13 +136,17 @@ export function SauceClient() {
             onChange={(e) => setUrl(e.target.value)}
             disabled={loading}
           />
-          <button
+          <Button
             type="submit"
-            className="btn btn-accent btn-sm"
+            variant="accent"
+            size="sm"
             disabled={loading || !url.trim()}
+            loading={loading}
+            silent
+            riveKey="sauce_trace"
           >
             {loading ? "Tracing…" : "Trace URL"}
-          </button>
+          </Button>
         </div>
       </form>
 
