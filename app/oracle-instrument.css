@@ -1,0 +1,85 @@
+/* Creative Sprint 6 — Oracle frequency instrument fallback */
+
+.nx-oracle-rive {
+  width: 100%;
+  max-width: 240px;
+  margin: 0 0 8px;
+}
+
+.nx-oracle-rive-fallback {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(240, 160, 144, 0.22);
+  background: rgba(18, 14, 12, 0.55);
+}
+
+.nx-oracle-rive-dial {
+  position: relative;
+  width: 72px;
+  height: 40px;
+  border-radius: 72px 72px 0 0;
+  border: 1px solid rgba(240, 160, 144, 0.28);
+  border-bottom: none;
+  overflow: hidden;
+}
+
+.nx-oracle-rive-needle {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 2px;
+  height: 34px;
+  margin-left: -1px;
+  background: linear-gradient(to top, #e8a598, rgba(232, 165, 152, 0.2));
+  transform-origin: bottom center;
+  transition: transform 280ms var(--ix-ease-soft, ease);
+}
+
+.nx-oracle-rive-fallback[data-ai="thinking"] .nx-oracle-rive-needle {
+  animation: nx-oracle-needle-wobble 0.9s ease-in-out infinite;
+}
+
+.nx-oracle-rive-fallback[data-ai="complete"] {
+  border-color: rgba(240, 160, 144, 0.5);
+  box-shadow: 0 0 20px rgba(240, 160, 144, 0.12);
+}
+
+.nx-oracle-rive-fallback[data-ai="failed"] {
+  border-color: rgba(196, 92, 92, 0.5);
+}
+
+.nx-oracle-rive-freq {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: rgba(245, 230, 210, 0.7);
+}
+
+.nx-oracle-rive-status {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 230, 210, 0.45);
+}
+
+@keyframes nx-oracle-needle-wobble {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.35);
+  }
+}
+
+html[data-reduce-motion="true"] .nx-oracle-rive-needle,
+@media (prefers-reduced-motion: reduce) {
+  .nx-oracle-rive-needle {
+    transition: none !important;
+    animation: none !important;
+  }
+}
