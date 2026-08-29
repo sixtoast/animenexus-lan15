@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "s4.anilist.co" },
       { protocol: "https", hostname: "cdn.myanimelist.net" },
       { protocol: "https", hostname: "placehold.co" },
+      { protocol: "https", hostname: "res.cloudinary.com" },
     ],
   },
 };
