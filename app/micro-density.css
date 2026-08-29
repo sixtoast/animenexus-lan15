@@ -1,0 +1,109 @@
+/**
+ * Creative Sprint 34 — density pass on common controls.
+ * Confirms action without excess motion. Reduced motion inherits tokens.
+ */
+
+/* Feed / mode tabs */
+.feed-tab {
+  transition:
+    color var(--ix-trans-fast),
+    background var(--ix-trans-standard),
+    border-color var(--ix-trans-fast),
+    transform var(--ix-trans-fast),
+    box-shadow var(--ix-trans-standard);
+}
+
+.feed-tab:active:not(:disabled) {
+  transform: translateY(var(--ix-press-y)) scale(var(--ix-press-scale));
+}
+
+.feed-tab.active,
+.feed-tab[aria-selected="true"] {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent, #f0a090) 35%, transparent);
+}
+
+/* Filter chips / pill toggles */
+.filter-chip,
+.chip,
+[data-filter-chip] {
+  transition:
+    background var(--ix-trans-standard),
+    border-color var(--ix-trans-fast),
+    color var(--ix-trans-fast),
+    transform var(--ix-trans-fast);
+}
+
+.filter-chip:active,
+.chip:active,
+[data-filter-chip]:active {
+  transform: scale(var(--ix-press-scale));
+}
+
+.filter-chip.active,
+.chip.active,
+[data-filter-chip][aria-pressed="true"] {
+  transform: scale(var(--ix-select-scale));
+}
+
+/* Checkbox / switch affordance */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--accent, #f0a090);
+  transition: transform var(--ix-trans-fast);
+}
+
+input[type="checkbox"]:active,
+input[type="radio"]:active {
+  transform: scale(0.92);
+}
+
+/* Drag targets (sauce drop, etc.) */
+.sauce-drop,
+[data-dropzone] {
+  transition:
+    border-color var(--ix-trans-fast),
+    background var(--ix-trans-standard),
+    box-shadow var(--ix-trans-standard),
+    transform var(--ix-trans-standard);
+}
+
+.sauce-drop.over,
+[data-dropzone][data-over="true"] {
+  transform: scale(1.01);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent, #f0a090) 40%, transparent);
+}
+
+/* Nav links — subtle press only */
+.nav-link:active {
+  transform: translateY(var(--ix-press-y));
+  transition: transform var(--ix-trans-fast), color var(--ix-trans-fast);
+}
+
+/* Details / expand */
+details > summary {
+  cursor: pointer;
+  transition: color var(--ix-trans-fast);
+}
+
+details > summary:active {
+  opacity: 0.85;
+}
+
+/* Progress track fill already uses .ix-progress where marked */
+.progress-bar-fill,
+[role="progressbar"] > span {
+  transition: width var(--ix-trans-deliberate);
+}
+
+/* Copy / icon buttons */
+.btn-icon:active:not(:disabled),
+button.btn-icon:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+html[data-reduce-motion="true"] .feed-tab:active,
+html[data-reduce-motion="true"] .filter-chip:active,
+html[data-reduce-motion="true"] .sauce-drop.over,
+html[data-reduce-motion="true"] .nav-link:active {
+  transform: none !important;
+}
