@@ -1,0 +1,39 @@
+/**
+ * Creative Sprint 35 — cross-tech motion category aliases.
+ * Aligns legacy --dur-* with --ix-* and names Immediate→Cinematic.
+ */
+
+:root {
+  /* Prefer ix bands as source of truth for new work */
+  --motion-immediate: var(--ix-fast, 90ms) var(--ix-ease-soft, cubic-bezier(0.4, 0, 0.2, 1));
+  --motion-responsive: var(--ix-standard, 200ms) var(--ix-ease-expo, cubic-bezier(0.16, 1, 0.3, 1));
+  --motion-deliberate: var(--ix-deliberate, 420ms) var(--ix-ease-expo, cubic-bezier(0.16, 1, 0.3, 1));
+  --motion-cinematic: var(--dur-slow, 720ms) var(--ease-out-expo, cubic-bezier(0.16, 1, 0.3, 1));
+
+  /* Bridge: choreography tokens → categories */
+  --motion-enter: var(--motion-deliberate);
+  --motion-exit: var(--motion-responsive);
+  --motion-seal: var(--motion-deliberate);
+  --motion-overlay: var(--motion-deliberate);
+}
+
+/* Utility markers for audits */
+.motion-immediate {
+  transition: transform var(--motion-immediate), opacity var(--motion-immediate);
+}
+.motion-responsive {
+  transition: transform var(--motion-responsive), opacity var(--motion-responsive);
+}
+.motion-deliberate {
+  transition: transform var(--motion-deliberate), opacity var(--motion-deliberate);
+}
+.motion-cinematic {
+  transition: transform var(--motion-cinematic), opacity var(--motion-cinematic);
+}
+
+html[data-reduce-motion="true"] {
+  --motion-immediate: 1ms linear;
+  --motion-responsive: 1ms linear;
+  --motion-deliberate: 1ms linear;
+  --motion-cinematic: 1ms linear;
+}
