@@ -1,12 +1,8 @@
 /**
- * Cloudinary URL helpers (Creative Sprint 12).
+ * Cloudinary URL helpers (Creative Sprints 12–13).
  *
- * Use for AnimeNexus-owned / ingested media only:
- * session covers, site art, UGC where allowed, processed sauce previews.
- * Do NOT auto-upload third-party catalogue covers (AniList/MAL) without rights review.
- *
- * Secrets (API key/secret) stay server-only — this module only builds delivery URLs
- * from the public cloud name + public IDs.
+ * Site-owned / ingested media only. Named transforms include f_auto, q_auto,
+ * and dpr_auto where appropriate so Next/Image should NOT re-optimise.
  */
 
 export type CloudinaryNamedTransform =
@@ -18,17 +14,17 @@ export type CloudinaryNamedTransform =
   | "nexus-social"
   | "nexus-sauce-preview";
 
-/** Named transforms — keep in sync with Cloudinary console presets when created. */
+/** Named transforms — mirror in Cloudinary console when ready. */
 export const CLOUDINARY_TRANSFORMS: Record<
   CloudinaryNamedTransform,
   string
 > = {
-  "nexus-card": "c_fill,w_360,h_540,q_auto,f_auto,dpr_auto",
-  "nexus-hero": "c_fill,w_960,h_540,q_auto,f_auto,dpr_auto",
-  "nexus-avatar": "c_fill,w_96,h_96,q_auto,f_auto,dpr_auto,r_max",
-  "nexus-session-cover": "c_fill,w_1200,h_630,q_auto,f_auto",
-  "nexus-thumbnail": "c_fill,w_160,h_240,q_auto,f_auto,dpr_auto",
-  "nexus-social": "c_fill,w_1200,h_630,q_auto,f_auto",
+  "nexus-card": "c_fill,g_auto,w_360,h_540,q_auto,f_auto,dpr_auto",
+  "nexus-hero": "c_fill,g_auto,w_960,h_540,q_auto,f_auto,dpr_auto",
+  "nexus-avatar": "c_fill,g_face,w_96,h_96,q_auto,f_auto,dpr_auto,r_max",
+  "nexus-session-cover": "c_fill,g_auto,w_1200,h_630,q_auto,f_auto",
+  "nexus-thumbnail": "c_fill,g_auto,w_160,h_240,q_auto,f_auto,dpr_auto",
+  "nexus-social": "c_fill,g_auto,w_1200,h_630,q_auto,f_auto",
   "nexus-sauce-preview": "c_limit,w_720,h_720,q_auto,f_auto",
 };
 
@@ -46,20 +42,15 @@ export function isCloudinaryConfigured(): boolean {
 }
 
 export type BuildCloudinaryUrlOptions = {
-  /** public_id without extension, or full path under the account */
   publicId: string;
-  /** Named preset or raw transform string */
   transform?: CloudinaryNamedTransform | string;
   resourceType?: "image" | "video" | "raw";
-  /** Optional version number from Cloudinary */
   version?: number | string;
   format?: string;
+  /** Override width for responsive variants */
+  width?: number;
 };
 
-/**
- * Build a delivery URL. Returns null if Cloudinary is not configured.
- * Does not hit the network.
- */
 export function buildCloudinaryUrl(
   opts: BuildCloudinaryUrlOptions,
 ): string | null {
@@ -71,6 +62,14 @@ export function buildCloudinaryUrl(
   if (transform in CLOUDINARY_TRANSFORMS) {
     transform = CLOUDINARY_TRANSFORMS[transform as CloudinaryNamedTransform];
   }
+  if (opts.width && opts.width > 0) {
+    // Responsive width override while keeping quality/format
+    if (!/\bw_\d+/.test(transform)) {
+      transform = `${transform},w_${Math.round(opts.width)}`;
+    } else {
+      transform = transform.replace(/\bw_\d+/, `w_${Math.round(opts.width)}`);
+    }
+  }
 
   const id = opts.publicId.replace(/^\/+/, "").replace(/\s+/g, "_");
   const version =
@@ -79,11 +78,9 @@ export function buildCloudinaryUrl(
       : "";
   const fmt = opts.format ? `.${opts.format.replace(/^\./, "")}` : "";
 
-  // https://res.cloudinary.com/<cloud>/<type>/upload/<transform>/<version><id><fmt>
   return `https://res.cloudinary.com/${cloud}/${resourceType}/upload/${transform}/${version}${id}${fmt}`;
 }
 
-/** True when URL is already a Cloudinary delivery URL. */
 export function isCloudinaryUrl(src: string): boolean {
   try {
     const u = new URL(src);
@@ -93,14 +90,10 @@ export function isCloudinaryUrl(src: string): boolean {
   }
 }
 
-/**
- * Responsive srcset widths for a public_id (image only).
- * Parent still sets width/height to avoid CLS.
- */
 export function cloudinarySrcSet(
   publicId: string,
   widths: number[] = [240, 360, 480, 720, 960],
-  baseTransform = "c_fill,q_auto,f_auto,dpr_auto",
+  baseTransform = "c_fill,g_auto,q_auto,f_auto,dpr_auto",
 ): string | null {
   const parts: string[] = [];
   for (const w of widths) {
