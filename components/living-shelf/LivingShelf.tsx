@@ -11,6 +11,12 @@ import { ShelfFallback } from "./ShelfFallback";
 import { ShelfHUD } from "./ShelfHUD";
 import { ShelfResonancePanel } from "./ShelfResonancePanel";
 import { playCue } from "@/lib/sound-engine";
+import {
+  panFromShelfX,
+  playResonanceResolve,
+  playSpatialCue,
+} from "@/lib/spatial-audio";
+import { shelfPosition } from "./ShelfObjectMesh";
 
 const ShelfScene = dynamic(
   () => import("./ShelfScene").then((m) => m.ShelfScene),
@@ -108,9 +114,14 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
       if (compareArmed && selectedId != null && id !== selectedId) {
         setCompareId(id);
         setCompareArmed(false);
-        playCue("resonance");
         const a = byId.get(selectedId);
         const b = byId.get(id);
+        if (a && b) {
+          const rel = describeShelfPair(a, b);
+          playResonanceResolve(rel.resonanceOverlap);
+        } else {
+          playCue("resonance");
+        }
         setAnnounce(
           a && b
             ? `Compared ${a.title} with ${b.title}.`
@@ -131,6 +142,16 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
       setSelectedId(id);
       setCompareId(null);
       const e = byId.get(id);
+      const obj = objects.find((o) => o.animeId === id);
+      if (obj) {
+        const clusterIdx = objects
+          .filter((o) => o.cluster === obj.cluster)
+          .findIndex((o) => o.animeId === id);
+        const [sx] = shelfPosition(obj, Math.max(0, clusterIdx));
+        playSpatialCue("shelf_settle", { pan: panFromShelfX(sx), gain: 0.7 });
+      } else {
+        playCue("shelf_settle");
+      }
       setAnnounce(e ? `Selected ${e.title}.` : "Selected.");
       getCinematography().pulse(
         {
@@ -144,7 +165,7 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
         1800,
       );
     },
-    [compareArmed, selectedId, byId],
+    [compareArmed, selectedId, byId, objects],
   );
 
   const moveFocus = useCallback(
