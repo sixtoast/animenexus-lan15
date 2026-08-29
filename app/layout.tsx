@@ -73,6 +73,7 @@ import "./taste-micro.css";
 import "./challenge-micro.css";
 import "./account-micro.css";
 import "./loading-symbol.css";
+import "./outcome-mark.css";
 import "./rive.css";
 
 export const metadata: Metadata = {
