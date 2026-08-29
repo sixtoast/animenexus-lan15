@@ -33,3 +33,9 @@ export {
   type LoadingPhase,
   type LoadingSymbolProps,
 } from "./LoadingSymbol";
+export {
+  OutcomeMark,
+  outcomeToRive,
+  type OutcomeTone,
+  type OutcomeMarkProps,
+} from "./OutcomeMark";

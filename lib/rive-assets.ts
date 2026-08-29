@@ -12,7 +12,8 @@ export type RiveAssetKey =
   | "shelf_mode"
   | "radar_instrument"
   | "oracle_instrument"
-  | "loading_symbol";
+  | "loading_symbol"
+  | "outcome_mark";
 
 export type RiveAssetDef = {
   key: RiveAssetKey;
@@ -76,6 +77,12 @@ export const RIVE_ASSETS: Record<RiveAssetKey, RiveAssetDef> = {
     src: "/rive/loading-symbol.riv",
     stateMachines: "State Machine 1",
     label: "Loading symbol",
+  },
+  outcome_mark: {
+    key: "outcome_mark",
+    src: "/rive/outcome-mark.riv",
+    stateMachines: "State Machine 1",
+    label: "Outcome mark",
   },
 };
 
