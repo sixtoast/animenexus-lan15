@@ -1,6 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import {
+  EmptyIllustration,
+  type EmptyKind,
+} from "@/components/rive/EmptyIllustration";
 
 type Action =
   | { label: string; onClick: () => void }
@@ -16,13 +20,16 @@ type Props = {
   /** Secondary action */
   secondary?: Action;
   className?: string;
-  /** Optional icon / glyph */
+  /** Optional icon / glyph (CSS fallback inside illustration) */
   glyph?: string;
+  /** Illustration family — only shown for real empty UIs */
+  kind?: EmptyKind;
 };
 
 /**
- * Intelligent empty state (master plan · Sprint 19).
+ * Intelligent empty state (master plan · Sprint 19 + Creative Sprint 9).
  * Always: human message + optional next step — never a blank void.
+ * Illustration is progressive enhancement only.
  */
 export function SignalEmpty({
   title = "Nothing on this frequency.",
@@ -30,7 +37,8 @@ export function SignalEmpty({
   action,
   secondary,
   className = "",
-  glyph = "📡",
+  glyph,
+  kind = "generic",
 }: Props) {
   return (
     <div
@@ -38,9 +46,7 @@ export function SignalEmpty({
       role="status"
       aria-live="polite"
     >
-      <p className="signal-empty-glyph" aria-hidden>
-        {glyph}
-      </p>
+      <EmptyIllustration kind={kind} glyph={glyph} />
       <p className="signal-empty-title">{title}</p>
       {body ? <p className="signal-empty-body">{body}</p> : null}
 
