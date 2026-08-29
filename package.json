@@ -7,7 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate:sfx": "node scripts/generate-ui-sfx.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.6",
