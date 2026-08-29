@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { OutcomeMark } from "@/components/rive/OutcomeMark";
+import { playCue } from "@/lib/sound-engine";
 
 export type ToastTone = "neutral" | "success" | "error";
 
@@ -62,6 +63,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       milestone?: boolean,
     ) => {
       const opts = resolveOpts(emojiOrOpts, milestone);
+      const tone = opts.tone || "neutral";
+      if (tone === "success") playCue("success");
+      else if (tone === "error") playCue("error");
+      else if (opts.milestone) playCue("complete");
       const id = idSeq++;
       setItems((prev) => [
         ...prev,
@@ -70,7 +75,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           message,
           emoji: opts.emoji,
           milestone: opts.milestone,
-          tone: opts.tone || "neutral",
+          tone,
         },
       ]);
       window.setTimeout(
