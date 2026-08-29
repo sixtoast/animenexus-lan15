@@ -1,8 +1,9 @@
 /**
- * Sprint 19 — Soft procedural audio for Lantern-ko
+ * Lantern-ko procedural audio (Sprints 19 + 26 foley).
  *
  * Tiny oscillators only — no external assets.
- * Off by default. Respects mascot mute, reduced motion, and low volume.
+ * Magical/social cues + sparse physical foley (step, cloth, land, hop, object).
+ * Off by default. Event-driven and heavily throttled — not every micro-move.
  */
 
 import type { MascotAnim } from "./types";
@@ -21,14 +22,19 @@ export type CueKind =
   | "surprise"
   | "sleepy"
   | "wave"
-  | "sad";
+  | "sad"
+  /** Object interaction (desk / landmark touch) */
+  | "object";
 
 let ctx: AudioContext | null = null;
 let enabled = false;
 let volume = 0.7;
 let lastCueAt = 0;
-const MIN_GAP_MS = 90;
+/** Global floor between any two cues */
+const MIN_GAP_MS = 110;
 const lastByKind = new Map<string, number>();
+/** Walk steps only every Nth anim cue */
+let walkStepCounter = 0;
 
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -95,27 +101,62 @@ type CueProfile = {
   dur: number;
   type: OscillatorType;
   peak: number;
-  /** Optional second partial */
   f2?: number;
-  /** Per-kind min gap ms */
+  /** Per-kind min gap ms — foley is aggressive */
   gapMs?: number;
+  /** Soft noise burst under the tone (cloth / land) */
+  noise?: boolean;
 };
 
+/**
+ * Foley profiles stay quiet; magical cues can be slightly brighter.
+ * Footsteps are sparse (high gapMs + walk counter).
+ */
 const PROFILES: Record<CueKind, CueProfile> = {
   pet: { f: 520, dur: 0.12, type: "sine", peak: 0.04 },
   point: { f: 660, dur: 0.1, type: "triangle", peak: 0.03 },
   seal: { f: 380, dur: 0.18, type: "sine", peak: 0.045, f2: 570 },
-  hop: { f: 280, dur: 0.08, type: "square", peak: 0.025 },
+  hop: { f: 290, dur: 0.07, type: "square", peak: 0.022, gapMs: 280 },
   think: { f: 440, dur: 0.15, type: "sine", peak: 0.02 },
-  footstep: { f: 160, dur: 0.05, type: "triangle", peak: 0.018, gapMs: 220 },
-  land: { f: 120, dur: 0.09, type: "sine", peak: 0.03, f2: 90 },
-  cloth: { f: 900, dur: 0.06, type: "triangle", peak: 0.012, gapMs: 400 },
+  footstep: {
+    f: 150,
+    dur: 0.045,
+    type: "triangle",
+    peak: 0.014,
+    gapMs: 480,
+    noise: true,
+  },
+  land: {
+    f: 110,
+    dur: 0.1,
+    type: "sine",
+    peak: 0.028,
+    f2: 85,
+    gapMs: 350,
+    noise: true,
+  },
+  cloth: {
+    f: 880,
+    dur: 0.055,
+    type: "triangle",
+    peak: 0.01,
+    gapMs: 550,
+    noise: true,
+  },
   "ui-tap": { f: 720, dur: 0.06, type: "sine", peak: 0.025 },
   chirp: { f: 780, dur: 0.1, type: "sine", peak: 0.035, f2: 980 },
   surprise: { f: 480, dur: 0.12, type: "square", peak: 0.03, f2: 720 },
-  sleepy: { f: 220, dur: 0.22, type: "sine", peak: 0.022 },
+  sleepy: { f: 210, dur: 0.24, type: "sine", peak: 0.018, gapMs: 900 },
   wave: { f: 560, dur: 0.11, type: "sine", peak: 0.028, f2: 700 },
   sad: { f: 300, dur: 0.2, type: "triangle", peak: 0.02 },
+  object: {
+    f: 340,
+    dur: 0.07,
+    type: "sine",
+    peak: 0.02,
+    f2: 510,
+    gapMs: 320,
+  },
 };
 
 function tone(
@@ -141,6 +182,27 @@ function tone(
   osc.stop(now + dur + 0.02);
 }
 
+function softNoise(ac: AudioContext, dur: number, peak: number, now: number) {
+  const n = Math.floor(ac.sampleRate * dur);
+  const buf = ac.createBuffer(1, n, ac.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (n * 0.35));
+  }
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  const gain = ac.createGain();
+  const filter = ac.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = 1200;
+  gain.gain.value = peak * volume * 0.35;
+  src.connect(filter);
+  filter.connect(gain);
+  gain.connect(ac.destination);
+  src.start(now);
+  src.stop(now + dur + 0.01);
+}
+
 /** Play a soft cue. No-op when muted, reduced-motion, or spamming. */
 export function playCue(kind: CueKind) {
   if (!enabled) return;
@@ -161,6 +223,7 @@ export function playCue(kind: CueKind) {
   const now = ac.currentTime;
   tone(ac, p.f, p.dur, p.type, p.peak, now);
   if (p.f2) tone(ac, p.f2, p.dur * 0.85, "sine", p.peak * 0.55, now + 0.01);
+  if (p.noise) softNoise(ac, p.dur * 0.9, p.peak, now);
 
   lastCueAt = nowMs;
   lastByKind.set(kind, nowMs);
@@ -170,7 +233,9 @@ export function playCue(kind: CueKind) {
 export function cueForAnim(anim: MascotAnim): CueKind | null {
   switch (anim) {
     case "walk":
-      return "footstep";
+      // Only every 3rd walk tick — not a continuous march
+      walkStepCounter += 1;
+      return walkStepCounter % 3 === 0 ? "footstep" : null;
     case "jump":
       return "hop";
     case "point":
@@ -196,7 +261,7 @@ export function playAnimCue(anim: MascotAnim) {
   if (kind) playCue(kind);
 }
 
-/** Event-level cues */
+/** Event-level cues — preferred entry for physical foley */
 export function playEventCue(
   event:
     | "pet"
@@ -205,7 +270,9 @@ export function playEventCue(
     | "land"
     | "ui-tap"
     | "drag"
-    | "error",
+    | "error"
+    | "object"
+    | "hop",
 ) {
   switch (event) {
     case "pet":
@@ -226,6 +293,12 @@ export function playEventCue(
       break;
     case "error":
       playCue("surprise");
+      break;
+    case "object":
+      playCue("object");
+      break;
+    case "hop":
+      playCue("hop");
       break;
   }
 }
