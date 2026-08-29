@@ -10,6 +10,7 @@ import { getCinematography } from "@/lib/cinematography-store";
 import { ShelfFallback } from "./ShelfFallback";
 import { ShelfHUD } from "./ShelfHUD";
 import { ShelfResonancePanel } from "./ShelfResonancePanel";
+import { playCue } from "@/lib/sound-engine";
 
 const ShelfScene = dynamic(
   () => import("./ShelfScene").then((m) => m.ShelfScene),
@@ -66,11 +67,14 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
     getCinematography().setFocus("watchlist");
   }, []);
 
-  // Cap 3D textured objects; remainder still selectable via fallback note
   const objects = useMemo(() => {
     if (allObjects.length <= budget.shelfMaxTextures) return allObjects;
     return allObjects.slice(0, budget.shelfMaxTextures);
   }, [allObjects, budget.shelfMaxTextures]);
+
+  useEffect(() => {
+    if (objects.length > 0) playCue("shelf_settle");
+  }, [objects.length]);
 
   const ids = useMemo(() => orderedIds(objects), [objects]);
   const byId = useMemo(() => {
@@ -104,6 +108,7 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
       if (compareArmed && selectedId != null && id !== selectedId) {
         setCompareId(id);
         setCompareArmed(false);
+        playCue("resonance");
         const a = byId.get(selectedId);
         const b = byId.get(id);
         setAnnounce(
