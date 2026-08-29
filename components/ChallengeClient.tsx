@@ -102,8 +102,7 @@ export function ChallengeClient() {
 
   function onCorrect() {
     setMedal(true);
-    playCue("complete");
-    // Confetti only on longer streaks — keep reward physical, not noisy
+    playCue("challenge_ok");
     if (streak + 1 >= 3) fireConfetti();
     window.dispatchEvent(new CustomEvent("animenexus:lantern-pulse"));
   }
@@ -117,7 +116,7 @@ export function ChallengeClient() {
       onCorrect();
       showToast("Correct frequency!", "✦");
     } else {
-      playCue("error");
+      playCue("challenge_bad");
       showToast(`It was ${anime.title}`, "😅");
     }
   }
@@ -139,7 +138,7 @@ export function ChallengeClient() {
       onCorrect();
       showToast("Correct frequency!", "✦");
     } else {
-      playCue("error");
+      playCue("challenge_bad");
     }
   }
 
