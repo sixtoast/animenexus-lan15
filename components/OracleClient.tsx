@@ -24,6 +24,10 @@ import type { Anime } from "@/lib/types";
 import { emitNexus } from "@/lib/nexus";
 import { loadingStart, loadingStop } from "@/components/LoadingTheater";
 import { playCue } from "@/lib/sound-engine";
+import {
+  OracleInstrument,
+  type OracleAiState,
+} from "@/components/rive/OracleInstrument";
 
 type ResolvedPick = VibecastPick & {
   anime?: Anime | null;
@@ -42,8 +46,17 @@ export function OracleClient() {
   const [bandFlash, setBandFlash] = useState(false);
   const [tuning, setTuning] = useState(false);
   const [locked, setLocked] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const band = oracleBand(mode);
+
+  const oracleAiState: OracleAiState = tuning
+    ? "thinking"
+    : failed
+      ? "failed"
+      : locked
+        ? "complete"
+        : "idle";
 
   useEffect(() => {
     emitNexus({ type: "tool_opened", tool: "oracle" });
@@ -62,6 +75,7 @@ export function OracleClient() {
     setCloudText(null);
     setVibeCards([]);
     setLocked(false);
+    setFailed(false);
     playCue("oracle_tune");
     window.setTimeout(() => setBandFlash(false), 420);
   }
@@ -111,6 +125,7 @@ export function OracleClient() {
     setBusy(true);
     setTuning(true);
     setLocked(false);
+    setFailed(false);
     setCloudText(null);
     setVibeCards([]);
     playCue("oracle_tune");
@@ -126,7 +141,6 @@ export function OracleClient() {
           const resolved = await Promise.all(picks.map(resolvePick));
           setVibeCards(resolved);
           setCloudText(null);
-          // One soft settle for the deal — not per card
           playCue("shelf_settle");
         } else {
           setCloudText(text);
@@ -137,6 +151,7 @@ export function OracleClient() {
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Oracle failed", "😅");
       setUseCloud(false);
+      setFailed(true);
       playCue("error");
     } finally {
       setBusy(false);
@@ -165,6 +180,11 @@ export function OracleClient() {
       data-oracle-band={band.band}
     >
       <div className="oracle-tuner" aria-live="polite">
+        <OracleInstrument
+          mode={mode}
+          aiState={oracleAiState}
+          frequency={band.frequency}
+        />
         <div className="oracle-tuner-dial" aria-hidden>
           <span className="oracle-tuner-needle" />
         </div>
@@ -237,6 +257,8 @@ export function OracleClient() {
           loading={busy}
           disabled={busy}
           silent
+          riveKey="oracle_ask"
+          error={failed}
           className={busy ? "oracle-ask-pressed" : undefined}
           onClick={runCloud}
         >
@@ -252,6 +274,7 @@ export function OracleClient() {
             setVibeCards([]);
             setCloudText(null);
             setLocked(false);
+            setFailed(false);
             setSeed((s) => s + 1);
             playCue("filter_select");
           }}
