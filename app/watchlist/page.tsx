@@ -1,5 +1,6 @@
 import "./watchlist.css";
 import { WatchlistClient } from "@/components/WatchlistClient";
+import { OnboardingTip } from "@/components/OnboardingTips";
 
 export const metadata = {
   title: "Watchlist · AnimeNexus",
@@ -22,6 +23,7 @@ export default function WatchlistPage() {
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
+        <OnboardingTip feature="seal" />
         <WatchlistClient />
       </section>
     </main>

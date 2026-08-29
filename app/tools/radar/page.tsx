@@ -5,6 +5,7 @@ import { AvailabilitySignals } from "@/components/AvailabilitySignals";
 import "../tools.css";
 import "../stats/stats.css";
 import "./radar.css";
+import { OnboardingTip } from "@/components/OnboardingTips";
 
 export const metadata = {
   title: "Radar · AnimeNexus",
@@ -29,6 +30,7 @@ export default function Page() {
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
         <DeskShell title="Radar" personality="radar">
+          <OnboardingTip feature="radar" />
           <RadarClient />
           <div style={{ marginTop: 28 }}>
             <div

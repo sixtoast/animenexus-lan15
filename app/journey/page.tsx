@@ -3,6 +3,7 @@ import { JourneyClient } from "@/components/JourneyClient";
 import { ModelDisclosure } from "@/components/ModelDisclosure";
 import "../home-dash.css";
 import "./journey.css";
+import { OnboardingTip } from "@/components/OnboardingTips";
 
 export const metadata: Metadata = {
   title: "Journey · AnimeNexus",
@@ -12,6 +13,9 @@ export const metadata: Metadata = {
 export default function JourneyPage() {
   return (
     <main>
+      <div className="container" style={{ paddingTop: 12 }}>
+        <OnboardingTip feature="journey" />
+      </div>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
           <div className="hero-badge">Personal · journey</div>

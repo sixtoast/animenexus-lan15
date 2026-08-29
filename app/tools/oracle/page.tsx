@@ -2,6 +2,7 @@ import { OracleClient } from "@/components/OracleClient";
 import { DeskShell } from "@/components/DeskShell";
 import "../tools.css";
 import "../../oracle-vibe.css";
+import { OnboardingTip } from "@/components/OnboardingTips";
 
 export const metadata = {
   title: "Night Desk · AnimeNexus",
@@ -27,6 +28,7 @@ export default function OraclePage() {
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
         <DeskShell title="Oracle" personality="oracle">
+          <OnboardingTip feature="oracle" />
           <OracleClient />
         </DeskShell>
       </section>
