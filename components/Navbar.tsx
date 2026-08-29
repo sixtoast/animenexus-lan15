@@ -14,6 +14,7 @@ import { MotionToggle } from "@/components/MotionToggle";
 import { Button } from "@/components/ui/Button";
 import { OnAir } from "@/components/ui/OnAir";
 import { playCue } from "@/lib/sound-engine";
+import { NexusIcon } from "@/components/ui/NexusIcon";
 
 const LINKS = [
   { href: "/", label: "Home", poetic: "Signal" },
@@ -74,208 +75,163 @@ export function Navbar() {
     return () => window.removeEventListener("resize", measureIndicator);
   }, [measureIndicator]);
 
-  // Home return / first mount — subtle logo accent pulse
   useEffect(() => {
     if (pathname === "/") {
       setLogoPulse(true);
-      const t = window.setTimeout(() => setLogoPulse(false), 1200);
+      const t = window.setTimeout(() => setLogoPulse(false), 900);
       return () => window.clearTimeout(t);
     }
   }, [pathname]);
 
-  // Route change: light nav tick (not on every hover)
   useEffect(() => {
     if (prevPath.current !== pathname) {
-      playCue("nav_tick");
+      playCue("nav_click");
       prevPath.current = pathname;
     }
+  }, [pathname]);
+
+  useEffect(() => {
     setOpen(false);
     setClosing(false);
   }, [pathname]);
 
-  useEffect(() => {
-    document.body.style.overflow = open || closing ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [open, closing]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeMenu();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
-
-  function openMenu() {
-    setClosing(false);
-    setOpen(true);
-    playCue("menu_open");
-  }
-
   function closeMenu() {
-    if (!open) return;
     setClosing(true);
-    playCue("menu_close");
     window.setTimeout(() => {
       setOpen(false);
       setClosing(false);
     }, 180);
   }
 
-  function toggleMenu() {
-    if (open) closeMenu();
-    else openMenu();
-  }
-
   return (
-    <header className="navbar">
-      <div className="container navbar-inner">
+    <header className="site-header">
+      <div className="container nav-inner">
         <Link
           href="/"
           className={"logo" + (logoPulse ? " logo--pulse" : "")}
-          aria-label="AnimeNexus home"
+          onClick={() => playCue("ui_tap")}
         >
           Anime<span>Nexus</span>
         </Link>
 
         <nav className="nav-desktop" aria-label="Primary">
-          <ul className="nav-links" ref={listRef}>
-            <span
-              className={
-                "nav-indicator" + (indicator.ready ? " nav-indicator--on" : "")
-              }
-              aria-hidden
-              style={{
-                transform: `translateX(${indicator.left}px)`,
-                width: indicator.width,
-              }}
-            />
-            {LINKS.map((l, i) => {
-              const active = isActive(pathname, l.href);
-              return (
-                <li key={l.label}>
-                  <Link
-                    ref={(el) => {
-                      linkRefs.current[i] = el;
-                    }}
-                    href={l.href}
-                    className={"nav-link ix-nav" + (active ? " active" : "")}
-                    aria-current={active ? "page" : undefined}
-                    title={l.poetic ? `${l.label} · ${l.poetic}` : l.label}
-                  >
-                    <span className="nav-link-label">{l.label}</span>
-                    {l.poetic ? (
-                      <span className="nav-link-poetic" aria-hidden>
-                        {l.poetic}
-                      </span>
-                    ) : null}
-                  </Link>
-                </li>
-              );
-            })}
+          <ul ref={listRef} className="nav-list">
+            {LINKS.map((l, i) => (
+              <li key={l.href}>
+                <Link
+                  ref={(el) => {
+                    linkRefs.current[i] = el;
+                  }}
+                  href={l.href}
+                  className={
+                    "nav-link" + (isActive(pathname, l.href) ? " active" : "")
+                  }
+                  onClick={() => playCue("nav_click")}
+                >
+                  <span className="nav-link-label">{l.label}</span>
+                  <span className="nav-link-poetic">{l.poetic}</span>
+                </Link>
+              </li>
+            ))}
+            {indicator.ready ? (
+              <li
+                className="nav-indicator"
+                aria-hidden
+                style={{
+                  transform: `translateX(${indicator.left}px)`,
+                  width: indicator.width,
+                }}
+              />
+            ) : null}
           </ul>
         </nav>
 
-        <div className="nav-right">
-          <OnAir className="nav-on-air" />
+        <div className="nav-actions">
+          <OnAir />
           <MotionToggle />
           <Button
-            variant="icon"
+            variant="outline"
             size="sm"
-            onClick={toggleTheme}
-            title="Toggle theme"
-            aria-label="Toggle light/dark theme"
-            className="theme-toggle-btn"
-            silent
+            className="nav-theme-btn"
+            onClick={() => {
+              toggleTheme();
+              playCue("ui_tap");
+            }}
+            aria-label={theme === "dark" ? "Switch to light" : "Switch to dark"}
           >
-            {theme === "dark" ? "☀️" : "🌙"}
+            {theme === "dark" ? (
+              <NexusIcon name="theme-light" size="sm" />
+            ) : (
+              <NexusIcon name="theme-dark" size="sm" />
+            )}
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="nav-toggle"
+            className="nav-menu-btn"
             aria-expanded={open}
-            aria-controls="mobile-nav"
-            onClick={toggleMenu}
-            silent
+            aria-controls="nav-drawer"
+            onClick={() => {
+              if (open) closeMenu();
+              else {
+                setOpen(true);
+                playCue("ui_tap");
+              }
+            }}
           >
-            {open ? "Close" : "Frequency"}
+            Menu
           </Button>
         </div>
       </div>
 
       {open || closing ? (
-        <>
-          <button
-            type="button"
-            className={
-              "nav-scrim" + (closing ? " nav-scrim--out" : "")
-            }
-            aria-label="Close menu"
-            onClick={closeMenu}
-          />
-          <nav
-            id="mobile-nav"
-            className={
-              "nav-mobile nav-mobile--frequency" +
-              (closing ? " nav-mobile--out" : "")
-            }
-            aria-label="Frequency menu"
-          >
-            <div className="nav-mobile-head">
-              <p className="nav-mobile-kicker">Frequency</p>
-              <p className="nav-mobile-sub">
-                Choose a channel · same site, clearer mood
-              </p>
-            </div>
-            <ul>
-              {LINKS.map((l) => {
-                const active = isActive(pathname, l.href);
-                return (
-                  <li key={l.label}>
-                    <Link
-                      href={l.href}
-                      className={
-                        "nav-mobile-link" + (active ? " active" : "")
-                      }
-                      aria-current={active ? "page" : undefined}
-                      onClick={() => closeMenu()}
-                    >
-                      <span className="nav-mobile-main">
-                        <span className="nav-mobile-label">{l.label}</span>
-                        {l.poetic ? (
-                          <span className="nav-mobile-poetic">{l.poetic}</span>
-                        ) : null}
-                      </span>
-                      {active ? (
-                        <span className="nav-mobile-here">Here</span>
-                      ) : (
-                        <span className="nav-mobile-chev" aria-hidden>
-                          →
-                        </span>
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
+        <div
+          id="nav-drawer"
+          className={
+            "nav-drawer" + (closing ? " nav-drawer--out" : " nav-drawer--in")
+          }
+        >
+          <div className="container">
+            <ul className="nav-drawer-list">
+              {LINKS.map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    className={
+                      "nav-drawer-link" +
+                      (isActive(pathname, l.href) ? " active" : "")
+                    }
+                    onClick={() => {
+                      playCue("nav_click");
+                      closeMenu();
+                    }}
+                  >
+                    {l.label}
+                    <span className="nav-drawer-poetic">{l.poetic} →</span>
+                  </Link>
+                </li>
+              ))}
             </ul>
-            <div className="nav-mobile-foot">
+            <div className="nav-drawer-foot">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                silent
                 onClick={() => {
                   toggleTheme();
+                  playCue("ui_tap");
                 }}
               >
-                {theme === "dark" ? "☀️ Light frequency" : "🌙 Dark frequency"}
+                <>
+                  <NexusIcon
+                    name={theme === "dark" ? "theme-light" : "theme-dark"}
+                    size="sm"
+                  />
+                  {theme === "dark" ? " Light frequency" : " Dark frequency"}
+                </>
               </Button>
             </div>
-          </nav>
-        </>
+          </div>
+        </div>
       ) : null}
     </header>
   );
