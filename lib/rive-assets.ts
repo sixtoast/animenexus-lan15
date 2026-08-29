@@ -13,7 +13,8 @@ export type RiveAssetKey =
   | "radar_instrument"
   | "oracle_instrument"
   | "loading_symbol"
-  | "outcome_mark";
+  | "outcome_mark"
+  | "empty_state";
 
 export type RiveAssetDef = {
   key: RiveAssetKey;
@@ -83,6 +84,12 @@ export const RIVE_ASSETS: Record<RiveAssetKey, RiveAssetDef> = {
     src: "/rive/outcome-mark.riv",
     stateMachines: "State Machine 1",
     label: "Outcome mark",
+  },
+  empty_state: {
+    key: "empty_state",
+    src: "/rive/empty-state.riv",
+    stateMachines: "State Machine 1",
+    label: "Empty state",
   },
 };
 

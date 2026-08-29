@@ -39,3 +39,8 @@ export {
   type OutcomeTone,
   type OutcomeMarkProps,
 } from "./OutcomeMark";
+export {
+  EmptyIllustration,
+  type EmptyKind,
+  type EmptyIllustrationProps,
+} from "./EmptyIllustration";
