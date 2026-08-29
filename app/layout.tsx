@@ -74,6 +74,7 @@ import "./challenge-micro.css";
 import "./account-micro.css";
 import "./loading-symbol.css";
 import "./outcome-mark.css";
+import "./empty-illustration.css";
 import "./rive.css";
 
 export const metadata: Metadata = {
