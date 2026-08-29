@@ -4,14 +4,13 @@
  * ViewBox 0 0 24 24, ~1.75 stroke for optical consistency.
  */
 
+import type { ReactNode } from "react";
 import type { NexusIconName } from "./registry";
 
 export const ICON_VIEWBOX = "0 0 24 24";
 
 /** Path/children for each icon — omit = fall back to unicode glyph */
-export const ICON_SVG: Partial<
-  Record<NexusIconName, React.ReactNode>
-> = {
+export const ICON_SVG: Partial<Record<NexusIconName, ReactNode>> = {
   home: (
     <path
       fill="none"
@@ -125,7 +124,6 @@ export const ICON_SVG: Partial<
       d="M4 18c2-4 4-6 8-6s6 2 8 6M12 12V5m0 0 3 3M12 5 9 8"
     />
   ),
-  /** Proprietary-leaning marks */
   seal: (
     <>
       <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="1.75" />
