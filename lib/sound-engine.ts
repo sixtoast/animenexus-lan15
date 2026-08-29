@@ -1,5 +1,5 @@
 /**
- * AnimeNexus Sound Engine (Sprints 1 + 16).
+ * AnimeNexus Sound Engine (Sprints 1 + 16 + 23).
  * Real AudioBuffer samples — not runtime oscillator beeps as primary path.
  */
 
@@ -67,6 +67,7 @@ function ensureGraph(): boolean {
       "lantern",
       "tool",
       "celebration",
+      "warning",
     ] as SoundCategory[]) {
       const g = ctx.createGain();
       g.connect(masterGain);
