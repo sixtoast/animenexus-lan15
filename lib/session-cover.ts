@@ -7,6 +7,7 @@
 import type { WatchlistEntry } from "./types";
 import {
   describeUserResonance,
+  resonanceLabel,
   topResonanceDims,
   userResonance,
 } from "./resonance";
@@ -94,7 +95,7 @@ export function buildSessionCoverModel(
   const tops = topResonanceDims(vec, 3);
   const resonanceLine =
     tops.length > 0
-      ? tops.map((d) => d.replace(/([A-Z])/g, " $1").trim()).join(" · ")
+      ? tops.map((t) => resonanceLabel(t.dim)).join(" · ")
       : "Quiet frequency";
 
   const watching = entries.filter((e) => e.watchStatus === "watching").length;
@@ -121,7 +122,6 @@ export function buildSessionCoverModel(
       ? describeUserResonance(vec)
       : "The desk is waiting for a first seal.");
 
-  // Soft accent from shelf size
   const accents = ["#e8a598", "#c4a484", "#9b8b7a", "#d4847a", "#b8a99a"];
   const accent = accents[entries.length % accents.length];
 
@@ -171,9 +171,6 @@ async function loadCover(url: string): Promise<HTMLImageElement | null> {
   });
 }
 
-/**
- * Paint session cover onto a canvas. Returns the canvas for toBlob/download.
- */
 export async function renderSessionCover(
   model: SessionCoverModel,
 ): Promise<HTMLCanvasElement> {
@@ -184,7 +181,6 @@ export async function renderSessionCover(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas unavailable");
 
-  // Base
   const g = ctx.createLinearGradient(0, 0, width, height);
   g.addColorStop(0, "#120e0c");
   g.addColorStop(0.55, "#1a1412");
@@ -192,7 +188,6 @@ export async function renderSessionCover(
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, width, height);
 
-  // Soft accent glow
   const glow = ctx.createRadialGradient(
     width * 0.7,
     height * 0.2,
@@ -220,15 +215,19 @@ export async function renderSessionCover(
 
   ctx.fillStyle = "rgba(245,235,230,0.72)";
   ctx.font = `400 ${bodySize}px system-ui, sans-serif`;
-  ctx.fillText(model.dateLabel, pad, pad + bodySize + titleSize * 1.15 + bodySize * 1.4);
+  ctx.fillText(
+    model.dateLabel,
+    pad,
+    pad + bodySize + titleSize * 1.15 + bodySize * 1.4,
+  );
 
-  // Layout-specific
   if (model.layout === "shelf" || model.layout === "desk") {
     const urls = model.coverUrls.slice(0, model.layout === "shelf" ? 3 : 1);
     const imgs = await Promise.all(urls.map(loadCover));
-    const slotW = model.layout === "shelf"
-      ? Math.round((width - pad * 2 - 24) / Math.max(urls.length, 1))
-      : Math.round(width * 0.28);
+    const slotW =
+      model.layout === "shelf"
+        ? Math.round((width - pad * 2 - 24) / Math.max(urls.length, 1))
+        : Math.round(width * 0.28);
     const slotH = Math.round(slotW * 1.5);
     const top = Math.round(height * 0.32);
     imgs.forEach((img, i) => {
@@ -264,7 +263,6 @@ export async function renderSessionCover(
     });
   }
 
-  // Footer band
   const footerY = height - pad - bodySize * 4;
   ctx.fillStyle = "rgba(245,235,230,0.9)";
   ctx.font = `500 ${bodySize}px system-ui, sans-serif`;
@@ -281,7 +279,6 @@ export async function renderSessionCover(
     ctx.fillText(model.resonanceLine, pad, footerY - bodySize * 1.2);
   }
 
-  // Mark
   ctx.fillStyle = "rgba(245,235,230,0.35)";
   ctx.font = `400 ${Math.round(bodySize * 0.75)}px system-ui, sans-serif`;
   ctx.fillText("animenexus · lantern", pad, height - pad * 0.5);
