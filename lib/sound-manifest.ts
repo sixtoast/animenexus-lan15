@@ -1,5 +1,5 @@
 /**
- * AnimeNexus Sound Engine — cue registry (Sprints 1 + 16 polish).
+ * AnimeNexus Sound Engine — cue registry (Sprints 1 + 16 + 23 mastering).
  * Prefer files under /audio/ui/*.wav; engine falls back to bundled PCM if missing.
  */
 
@@ -9,7 +9,8 @@ export type SoundCategory =
   | "object"
   | "lantern"
   | "tool"
-  | "celebration";
+  | "celebration"
+  | "warning";
 
 export type SoundCueId =
   | "ui_tap"
@@ -119,7 +120,7 @@ export const SOUND_CUES: Record<SoundCueId, SoundCueDef> = {
   },
   error: {
     id: "error",
-    category: "ui",
+    category: "warning",
     src: "/audio/ui/error.wav",
     gain: 0.36,
     cooldownMs: 350,
@@ -154,7 +155,7 @@ export const SOUND_CUES: Record<SoundCueId, SoundCueDef> = {
   },
   challenge_bad: {
     id: "challenge_bad",
-    category: "tool",
+    category: "warning",
     src: "/audio/ui/challenge_bad.wav",
     gain: 0.36,
     cooldownMs: 220,
@@ -228,6 +229,7 @@ export type SoundPrefs = {
   lantern: number;
   tool: number;
   celebration: number;
+  warning: number;
 };
 
 export const DEFAULT_SOUND_PREFS: SoundPrefs = {
@@ -239,4 +241,5 @@ export const DEFAULT_SOUND_PREFS: SoundPrefs = {
   lantern: 0.8,
   tool: 0.95,
   celebration: 0.9,
+  warning: 0.95,
 };
