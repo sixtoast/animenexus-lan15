@@ -1,4 +1,4 @@
-/* Creative Sprint 19 — NexusIcon */
+/* Creative Sprints 19–20 — NexusIcon */
 
 .nx-icon {
   display: inline-flex;
@@ -14,6 +14,13 @@
   font-style: normal;
   font-weight: 500;
   speak: none;
+}
+
+.nx-icon-svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
 }
 
 .nx-icon--sm {
@@ -34,10 +41,10 @@
   font-size: 1.35rem;
 }
 
-.nx-icon[data-icon-class="tool"] .nx-icon-glyph {
-  opacity: 0.92;
+.nx-icon[data-icon-class="tool"] {
+  opacity: 0.95;
 }
 
-.nx-icon[data-icon-class="status"] .nx-icon-glyph {
-  opacity: 0.88;
+.nx-icon[data-icon-class="status"] {
+  opacity: 0.9;
 }
