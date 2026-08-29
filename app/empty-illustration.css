@@ -1,0 +1,50 @@
+/* Creative Sprint 9 — empty-state illustration */
+
+.nx-empty-illust {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 10px;
+}
+
+.nx-empty-illust-fallback {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nx-empty-illust-ring {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px dashed rgba(240, 160, 144, 0.28);
+  opacity: 0.7;
+}
+
+.nx-empty-illust-glyph {
+  position: relative;
+  z-index: 1;
+  font-size: 1.55rem;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.nx-empty-illust--shelf .nx-empty-illust-ring {
+  border-style: solid;
+  border-color: rgba(240, 160, 144, 0.18);
+}
+
+.nx-empty-illust--search .nx-empty-illust-ring {
+  border-radius: 14px;
+}
+
+.signal-empty .nx-empty-illust {
+  margin-bottom: 4px;
+}
+
+.signal-empty-glyph:has(+ .nx-empty-illust),
+.signal-empty .signal-empty-glyph.nx-empty-replaced {
+  display: none;
+}
