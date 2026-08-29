@@ -1,11 +1,11 @@
-/* Shared-element choreography (Awwwards Sprint 14)
+/* Shared-element choreography (Awwwards Sprint 14 + Creative Sprint 10)
  * Progressive enhancement — navigation never depends on VT.
  */
 
 @supports (view-transition-name: none) {
   ::view-transition-old(root),
   ::view-transition-new(root) {
-    animation-duration: 0.32s;
+    animation-duration: 0.3s;
     animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
@@ -20,26 +20,26 @@
   @keyframes vtRootOut {
     to {
       opacity: 0;
-      filter: brightness(0.92);
+      filter: brightness(0.94);
     }
   }
 
   @keyframes vtRootIn {
     from {
       opacity: 0;
-      filter: brightness(1.04);
+      filter: brightness(1.03);
     }
   }
 
   /* Named cover morph — card / shelf poster → detail cover */
   ::view-transition-group(*) {
-    animation-duration: 0.48s;
+    animation-duration: 0.45s;
     animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   ::view-transition-old(cover-*),
   ::view-transition-new(cover-*) {
-    animation-duration: 0.48s;
+    animation-duration: 0.45s;
     animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
     mix-blend-mode: normal;
     height: 100%;
@@ -65,6 +65,12 @@
   /* Avoid double enter when VT is handling the route */
   .room-enter-vt {
     animation: none !important;
+  }
+
+  /* MINIMAL tier: keep shared cover names but skip decorative root fade */
+  html[data-creative-tier="MINIMAL"]::view-transition-old(root),
+  html[data-creative-tier="MINIMAL"]::view-transition-new(root) {
+    animation-duration: 0.12s;
   }
 }
 

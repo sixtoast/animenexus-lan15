@@ -1,5 +1,6 @@
 /**
  * View Transitions + persistent anime object identity (Awwwards Sprints 3 + 14).
+ * Creative Sprint 10: mark route + soft-fail always.
  *
  * Contract:
  * - Progressive enhancement only — navigation never requires VT
@@ -18,16 +19,18 @@ export function prefersReducedMotion(): boolean {
   try {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   } catch {
-    return false;
+    return true;
   }
 }
 
 export function canViewTransition(): boolean {
   if (typeof document === "undefined") return false;
   if (prefersReducedMotion()) return false;
-  return typeof (
-    document as Document & { startViewTransition?: unknown }
-  ).startViewTransition === "function";
+  return (
+    typeof (
+      document as Document & { startViewTransition?: unknown }
+    ).startViewTransition === "function"
+  );
 }
 
 /**
@@ -45,6 +48,15 @@ export function getAnimeObjectId(animeId: string | number): string {
   return String(animeId);
 }
 
+/** Optional: mark document for CSS that skips competing room-enter. */
+export function markViewTransitionRoute(): void {
+  if (typeof document === "undefined") return;
+  document.documentElement.classList.add("room-enter-vt");
+  window.setTimeout(() => {
+    document.documentElement.classList.remove("room-enter-vt");
+  }, 600);
+}
+
 /**
  * Run a navigation (or any DOM update) inside a View Transition when available.
  * Always invokes `update` — never blocks the action.
@@ -55,6 +67,7 @@ export function withViewTransition(update: () => void): void {
     return;
   }
   try {
+    markViewTransitionRoute();
     const doc = document as Document & {
       startViewTransition: (cb: () => void) => { finished: Promise<void> };
     };
@@ -64,13 +77,4 @@ export function withViewTransition(update: () => void): void {
   } catch {
     update();
   }
-}
-
-/** Optional: mark document for CSS that skips competing room-enter. */
-export function markViewTransitionRoute(): void {
-  if (typeof document === "undefined") return;
-  document.documentElement.classList.add("room-enter-vt");
-  window.setTimeout(() => {
-    document.documentElement.classList.remove("room-enter-vt");
-  }, 600);
 }
