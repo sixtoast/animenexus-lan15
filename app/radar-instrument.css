@@ -1,0 +1,86 @@
+/* Creative Sprint 5 — Radar instrument (Rive host + CSS fallback) */
+
+.radar-instrument {
+  width: 100%;
+  max-width: 220px;
+  margin: 0 auto 12px;
+}
+
+.radar-instrument-fallback {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+  border-radius: 50%;
+  border: 1px solid rgba(240, 160, 144, 0.28);
+  background:
+    radial-gradient(circle at 50% 50%, rgba(240, 160, 144, 0.12), transparent 62%),
+    rgba(18, 14, 12, 0.65);
+  overflow: hidden;
+}
+
+.radar-instrument-ring {
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  border: 1px dashed rgba(240, 160, 144, 0.22);
+}
+
+.radar-instrument-sweep {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(240, 160, 144, 0.35) 40deg,
+    transparent 70deg
+  );
+  opacity: 0.35;
+}
+
+.radar-instrument-fallback[data-phase="scanning"] .radar-instrument-sweep,
+.radar-instrument-fallback[data-phase="signal"] .radar-instrument-sweep,
+.radar-instrument-fallback[data-phase="identify"] .radar-instrument-sweep {
+  opacity: 0.85;
+  animation: radar-instrument-spin 1.15s linear infinite;
+}
+
+.radar-instrument-fallback[data-phase="result"] {
+  border-color: rgba(240, 160, 144, 0.55);
+  box-shadow: 0 0 24px rgba(240, 160, 144, 0.18);
+}
+
+.radar-instrument-fallback[data-phase="result"] .radar-instrument-sweep {
+  opacity: 0.2;
+  animation: none;
+}
+
+.radar-instrument-fallback[data-phase="error"] {
+  border-color: rgba(196, 92, 92, 0.55);
+}
+
+.radar-instrument-label {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(245, 230, 210, 0.55);
+  white-space: nowrap;
+}
+
+@keyframes radar-instrument-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+html[data-reduce-motion="true"] .radar-instrument-fallback .radar-instrument-sweep,
+@media (prefers-reduced-motion: reduce) {
+  .radar-instrument-fallback .radar-instrument-sweep {
+    animation: none !important;
+  }
+}
