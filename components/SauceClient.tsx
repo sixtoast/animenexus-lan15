@@ -7,6 +7,7 @@ import { formatTime } from "@/lib/sauce";
 import { preprocessSauceFile } from "@/lib/sauce-preprocess";
 import { loadingStart, loadingStop } from "@/components/LoadingTheater";
 import { Button } from "@/components/ui/Button";
+import { playCue } from "@/lib/sound-engine";
 
 type SaucePhase = "idle" | "prepare" | "search" | "done";
 
@@ -30,15 +31,12 @@ export function SauceClient() {
     setPrepNote(null);
     loadingStart("sauce");
 
-    let previewUrl: string | null = null;
     try {
-      // Local preview of original while we prepare
       const rawPreview = URL.createObjectURL(file);
       setPreview(rawPreview);
 
       const prepared = await preprocessSauceFile(file);
       URL.revokeObjectURL(rawPreview);
-      previewUrl = prepared.previewUrl;
       setPreview(prepared.previewUrl);
       setPrepNote(
         `Prepared ${prepared.width}×${prepared.height} · ${(prepared.bytes / 1024).toFixed(0)} KB (metadata stripped)`,
@@ -53,11 +51,16 @@ export function SauceClient() {
       if (json.error) throw new Error(json.error);
       setHits(json.hits || []);
       setProviders(json.providers || ["trace.moe"]);
-      if (!(json.hits || []).length)
+      if (!(json.hits || []).length) {
         setError("No matches — try a clearer frame.");
+        playCue("error");
+      } else {
+        playCue("signal_acquired");
+      }
       setPhase("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Search failed");
+      playCue("error");
       setPhase("idle");
     } finally {
       setLoading(false);
@@ -87,11 +90,16 @@ export function SauceClient() {
       if (json.error) throw new Error(json.error);
       setHits(json.hits || []);
       setProviders(json.providers || ["trace.moe"]);
-      if (!(json.hits || []).length)
+      if (!(json.hits || []).length) {
         setError("No matches — try a clearer frame.");
+        playCue("error");
+      } else {
+        playCue("signal_acquired");
+      }
       setPhase("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Search failed");
+      playCue("error");
       setPhase("idle");
     } finally {
       setLoading(false);
