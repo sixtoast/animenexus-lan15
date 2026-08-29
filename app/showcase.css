@@ -1,0 +1,42 @@
+/* Showcase sequence — sparse, editorial */
+.showcase-page .lede {
+  max-width: 42rem;
+}
+
+.showcase-steps {
+  list-style: none;
+  margin: 2rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.showcase-step {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--border, #3a322c) 80%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface, #1a1614) 88%, transparent);
+}
+
+.showcase-step-n {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  opacity: 0.55;
+  padding-top: 0.2rem;
+}
+
+.showcase-step-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.showcase-step-blurb {
+  margin: 0 0 0.5rem;
+  opacity: 0.88;
+  line-height: 1.45;
+}
