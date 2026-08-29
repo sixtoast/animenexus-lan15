@@ -14,3 +14,9 @@ export {
 } from "./RiveStateBridge";
 export { useRiveAppState, type UseRiveAppStateOptions } from "./useRiveAppState";
 export { RiveButtonShell, type RiveButtonShellProps } from "./RiveButtonShell";
+export {
+  RadarInstrument,
+  radarPhaseToRive,
+  type RadarPhase,
+  type RadarInstrumentProps,
+} from "./RadarInstrument";

@@ -9,7 +9,8 @@ export type RiveAssetKey =
   | "sauce_trace"
   | "tonight_start"
   | "challenge_submit"
-  | "shelf_mode";
+  | "shelf_mode"
+  | "radar_instrument";
 
 export type RiveAssetDef = {
   key: RiveAssetKey;
@@ -55,6 +56,12 @@ export const RIVE_ASSETS: Record<RiveAssetKey, RiveAssetDef> = {
     src: "/rive/shelf-mode.riv",
     stateMachines: "State Machine 1",
     label: "Shelf mode",
+  },
+  radar_instrument: {
+    key: "radar_instrument",
+    src: "/rive/radar-instrument.riv",
+    stateMachines: "State Machine 1",
+    label: "Radar instrument",
   },
 };
 
