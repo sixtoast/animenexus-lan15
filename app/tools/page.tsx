@@ -26,6 +26,7 @@ const TOOLS: {
   { href: "/tools/stats", emoji: "📊", title: "Stats", blurb: "Year-in-anime editorial.", personality: "stats" },
   { href: "/tools/challenge", emoji: "🎯", title: "Challenge", blurb: "Silhouette daily MCQ.", personality: "challenge" },
   { href: "/tools/sauce", emoji: "🔍", title: "Sauce", blurb: "Drop, paste, URL → trace.moe.", personality: "sauce" },
+  { href: "/tools/session-cover", emoji: "🖼️", title: "Session Cover", blurb: "Editorial share cards from your shelf.", personality: "generic" },
   { href: "/tools/oracle", emoji: "🕯️", title: "Night Desk", blurb: "Local + cloud oracle.", personality: "oracle" },
   { href: "/tools/fanzone", emoji: "💌", title: "Fan zone", blurb: "Bingo, confessions, Taste DNA.", personality: "fanzone" },
   { href: "/tools/motion", emoji: "🎬", title: "Motion", blurb: "Clip room (honest scaffold).", personality: "motion" },
