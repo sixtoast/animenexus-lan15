@@ -62,7 +62,6 @@ export function RadarInstrument({
   const appState = useMemo(() => radarPhaseToRive(phase), [phase]);
 
   const onReady = (bridge: RiveBridgeTarget) => {
-    // band 0–5 from contact density (soft signal, not a ranking)
     const band =
       contactCount <= 0
         ? 0
@@ -72,7 +71,7 @@ export function RadarInstrument({
 
   return (
     <div
-      className={`radar-instrument ${className}`.trim()}
+      className={`nx-radar-rive ${className}`.trim()}
       data-radar-phase={phase}
       data-radar-contacts={contactCount}
       aria-hidden
@@ -87,10 +86,10 @@ export function RadarInstrument({
         onRiveReady={onReady}
         label={`Radar instrument · ${phase}`}
         fallback={
-          <div className="radar-instrument-fallback" data-phase={phase}>
-            <div className="radar-instrument-ring" />
-            <div className="radar-instrument-sweep" />
-            <span className="radar-instrument-label">{phaseLabel(phase)}</span>
+          <div className="nx-radar-rive-fallback" data-phase={phase}>
+            <div className="nx-radar-rive-ring" />
+            <div className="nx-radar-rive-sweep" />
+            <span className="nx-radar-rive-label">{phaseLabel(phase)}</span>
           </div>
         }
       />
