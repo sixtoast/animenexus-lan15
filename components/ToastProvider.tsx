@@ -7,32 +7,78 @@ import {
   useMemo,
   useState,
 } from "react";
+import { OutcomeMark } from "@/components/rive/OutcomeMark";
+
+export type ToastTone = "neutral" | "success" | "error";
+
+export type ToastOptions = {
+  emoji?: string;
+  milestone?: boolean;
+  /** Visual tone — only use success after real confirmation */
+  tone?: ToastTone;
+};
 
 type ToastItem = {
   id: number;
   message: string;
   emoji?: string;
   milestone?: boolean;
+  tone: ToastTone;
 };
 
 type Ctx = {
-  showToast: (message: string, emoji?: string, milestone?: boolean) => void;
+  showToast: (
+    message: string,
+    emojiOrOpts?: string | ToastOptions,
+    milestone?: boolean,
+  ) => void;
 };
 
 const ToastContext = createContext<Ctx | null>(null);
 
 let idSeq = 1;
 
+function resolveOpts(
+  emojiOrOpts?: string | ToastOptions,
+  milestone?: boolean,
+): ToastOptions {
+  if (emojiOrOpts && typeof emojiOrOpts === "object") {
+    return emojiOrOpts;
+  }
+  return {
+    emoji: typeof emojiOrOpts === "string" ? emojiOrOpts : undefined,
+    milestone,
+    tone: "neutral",
+  };
+}
+
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
 
   const showToast = useCallback(
-    (message: string, emoji?: string, milestone?: boolean) => {
+    (
+      message: string,
+      emojiOrOpts?: string | ToastOptions,
+      milestone?: boolean,
+    ) => {
+      const opts = resolveOpts(emojiOrOpts, milestone);
       const id = idSeq++;
-      setItems((prev) => [...prev, { id, message, emoji, milestone }]);
-      window.setTimeout(() => {
-        setItems((prev) => prev.filter((t) => t.id !== id));
-      }, milestone ? 3600 : 2800);
+      setItems((prev) => [
+        ...prev,
+        {
+          id,
+          message,
+          emoji: opts.emoji,
+          milestone: opts.milestone,
+          tone: opts.tone || "neutral",
+        },
+      ]);
+      window.setTimeout(
+        () => {
+          setItems((prev) => prev.filter((t) => t.id !== id));
+        },
+        opts.milestone ? 3600 : 2800,
+      );
     },
     [],
   );
@@ -46,9 +92,20 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {items.map((t) => (
           <div
             key={t.id}
-            className={"anime-toast" + (t.milestone ? " milestone" : "")}
+            className={
+              "anime-toast" +
+              (t.milestone ? " milestone" : "") +
+              (t.tone !== "neutral" ? ` tone-${t.tone}` : "")
+            }
+            data-tone={t.tone !== "neutral" ? t.tone : undefined}
           >
-            {t.emoji ? (
+            {t.tone === "success" || t.tone === "error" ? (
+              <OutcomeMark
+                tone={t.tone}
+                size="sm"
+                className="anime-toast-mark"
+              />
+            ) : t.emoji ? (
               <span className="anime-toast-emoji">{t.emoji}</span>
             ) : null}
             <span>{t.message}</span>

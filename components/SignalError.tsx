@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { lanternReactConcern } from "@/lib/mascot/nexus-attention-bridge";
+import { OutcomeMark } from "@/components/rive/OutcomeMark";
 
 type Props = {
   /** Soft, human-facing line */
@@ -18,7 +19,7 @@ type Props = {
 
 /**
  * Intelligent error state (master plan · Sprint 15).
- * Sprint 29: notifies Lantern once (concern) — ambient, not needy.
+ * Creative Sprint 8: OutcomeMark only when this panel is shown (real failure).
  */
 export function SignalError({
   title = "The signal went quiet.",
@@ -40,6 +41,7 @@ export function SignalError({
       className={"state-box error signal-error " + className}
       role="alert"
     >
+      <OutcomeMark tone="error" size="md" className="signal-error-mark" />
       <p className="signal-error-title">{title}</p>
       {body ? <p className="signal-error-body">{body}</p> : null}
 
