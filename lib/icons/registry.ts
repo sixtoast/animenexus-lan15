@@ -1,8 +1,8 @@
 /**
- * Semantic icon registry (Creative Sprint 18 prep → Sprint 19 NexusIcon).
+ * Semantic icon registry (Creative Sprints 18–21).
  *
- * App code should request these names — never raw emoji or vendor icon ids
- * in product chrome. Glyphs below are interim unicode until local SVGs land.
+ * Product chrome uses these names only. Proprietary marks are first-class
+ * (seal, signal, resonance, frequency, living-shelf, taste-mirror, night-desk).
  */
 
 export type NexusIconName =
@@ -30,7 +30,14 @@ export type NexusIconName =
   | "theme-dark"
   | "success"
   | "error"
-  | "empty";
+  | "empty"
+  /** Proprietary AnimeNexus family (Sprint 21) */
+  | "resonance"
+  | "frequency"
+  | "living-shelf"
+  | "taste-mirror"
+  | "night-desk"
+  | "lantern";
 
 export type IconClass =
   | "navigation"
@@ -39,16 +46,18 @@ export type IconClass =
   | "tool"
   | "decorative"
   | "social"
-  | "provider";
+  | "provider"
+  | "brand";
 
 export type IconDef = {
   name: NexusIconName;
-  /** Interim glyph — replace with local SVG path in Sprint 20–21 */
   glyph: string;
   label: string;
   class: IconClass;
-  /** Future Iconify ref for design only, e.g. phosphor:house */
+  /** Offline design reference only — never loaded at runtime */
   designRef?: string;
+  /** True when mark is proprietary to AnimeNexus */
+  proprietary?: boolean;
 };
 
 export const NEXUS_ICONS: Record<NexusIconName, IconDef> = {
@@ -154,8 +163,8 @@ export const NEXUS_ICONS: Record<NexusIconName, IconDef> = {
     name: "seal",
     glyph: "◉",
     label: "Seal",
-    class: "action",
-    designRef: "ph:circle",
+    class: "brand",
+    proprietary: true,
   },
   sauce: {
     name: "sauce",
@@ -168,8 +177,8 @@ export const NEXUS_ICONS: Record<NexusIconName, IconDef> = {
     name: "signal",
     glyph: "≋",
     label: "Signal",
-    class: "status",
-    designRef: "ph:wave-sine",
+    class: "brand",
+    proprietary: true,
   },
   challenge: {
     name: "challenge",
@@ -227,6 +236,48 @@ export const NEXUS_ICONS: Record<NexusIconName, IconDef> = {
     class: "status",
     designRef: "ph:circle-dashed",
   },
+  resonance: {
+    name: "resonance",
+    glyph: "∿",
+    label: "Resonance",
+    class: "brand",
+    proprietary: true,
+  },
+  frequency: {
+    name: "frequency",
+    glyph: "▥",
+    label: "Frequency",
+    class: "brand",
+    proprietary: true,
+  },
+  "living-shelf": {
+    name: "living-shelf",
+    glyph: "▣",
+    label: "Living Shelf",
+    class: "brand",
+    proprietary: true,
+  },
+  "taste-mirror": {
+    name: "taste-mirror",
+    glyph: "◇",
+    label: "Taste Mirror",
+    class: "brand",
+    proprietary: true,
+  },
+  "night-desk": {
+    name: "night-desk",
+    glyph: "✦",
+    label: "Night Desk",
+    class: "brand",
+    proprietary: true,
+  },
+  lantern: {
+    name: "lantern",
+    glyph: "◉",
+    label: "Lantern",
+    class: "brand",
+    proprietary: true,
+  },
 };
 
 export function getIconDef(name: NexusIconName): IconDef {
@@ -235,4 +286,8 @@ export function getIconDef(name: NexusIconName): IconDef {
 
 export function listIconsByClass(cls: IconClass): IconDef[] {
   return Object.values(NEXUS_ICONS).filter((i) => i.class === cls);
+}
+
+export function listProprietaryIcons(): IconDef[] {
+  return Object.values(NEXUS_ICONS).filter((i) => i.proprietary);
 }

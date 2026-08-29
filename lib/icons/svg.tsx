@@ -1,16 +1,15 @@
 /**
- * Self-hosted icon paths (Creative Sprint 20).
- * No Iconify runtime CDN — critical chrome ships as local SVG.
- * ViewBox 0 0 24 24, ~1.75 stroke for optical consistency.
+ * Self-hosted icon paths (Creative Sprints 20–21).
+ * Generic chrome + proprietary family merged for NexusIcon.
  */
 
 import type { ReactNode } from "react";
 import type { NexusIconName } from "./registry";
+import { CUSTOM_ICON_SVG } from "./custom";
 
 export const ICON_VIEWBOX = "0 0 24 24";
 
-/** Path/children for each icon — omit = fall back to unicode glyph */
-export const ICON_SVG: Partial<Record<NexusIconName, ReactNode>> = {
+const GENERIC_SVG: Partial<Record<NexusIconName, ReactNode>> = {
   home: (
     <path
       fill="none"
@@ -124,21 +123,6 @@ export const ICON_SVG: Partial<Record<NexusIconName, ReactNode>> = {
       d="M4 18c2-4 4-6 8-6s6 2 8 6M12 12V5m0 0 3 3M12 5 9 8"
     />
   ),
-  seal: (
-    <>
-      <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="1.75" />
-      <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.85" />
-    </>
-  ),
-  signal: (
-    <path
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      d="M3 14c2-4 4-6 9-6s7 2 9 6M6 17c1.5-2.5 3-3.5 6-3.5s4.5 1 6 3.5M10.5 20c.5-.8 1-1 1.5-1s1 .2 1.5 1"
-    />
-  ),
   sauce: (
     <>
       <rect x="4" y="5" width="16" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1.75" />
@@ -213,6 +197,12 @@ export const ICON_SVG: Partial<Record<NexusIconName, ReactNode>> = {
       strokeDasharray="3 3"
     />
   ),
+};
+
+/** Custom proprietary overrides generic when both define a name */
+export const ICON_SVG: Partial<Record<NexusIconName, ReactNode>> = {
+  ...GENERIC_SVG,
+  ...CUSTOM_ICON_SVG,
 };
 
 export function hasLocalSvg(name: NexusIconName): boolean {
