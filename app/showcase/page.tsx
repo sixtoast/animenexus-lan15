@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import "../showcase.css";
 
 export const metadata: Metadata = {
   title: "Showcase sequence · AnimeNexus",
