@@ -72,6 +72,7 @@ import "./radar-instrument.css";
 import "./taste-micro.css";
 import "./challenge-micro.css";
 import "./account-micro.css";
+import "./loading-symbol.css";
 import "./rive.css";
 
 export const metadata: Metadata = {
