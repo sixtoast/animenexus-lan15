@@ -10,7 +10,8 @@ export type RiveAssetKey =
   | "tonight_start"
   | "challenge_submit"
   | "shelf_mode"
-  | "radar_instrument";
+  | "radar_instrument"
+  | "oracle_instrument";
 
 export type RiveAssetDef = {
   key: RiveAssetKey;
@@ -62,6 +63,12 @@ export const RIVE_ASSETS: Record<RiveAssetKey, RiveAssetDef> = {
     src: "/rive/radar-instrument.riv",
     stateMachines: "State Machine 1",
     label: "Radar instrument",
+  },
+  oracle_instrument: {
+    key: "oracle_instrument",
+    src: "/rive/oracle-instrument.riv",
+    stateMachines: "State Machine 1",
+    label: "Oracle frequency",
   },
 };
 

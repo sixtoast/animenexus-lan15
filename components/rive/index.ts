@@ -20,3 +20,10 @@ export {
   type RadarPhase,
   type RadarInstrumentProps,
 } from "./RadarInstrument";
+export {
+  OracleInstrument,
+  oracleAiToRive,
+  oracleModeBandIndex,
+  type OracleAiState,
+  type OracleInstrumentProps,
+} from "./OracleInstrument";
