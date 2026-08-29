@@ -1,0 +1,56 @@
+/* Creative Sprint 8 — success / error micro-feedback */
+
+.nx-outcome-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nx-outcome-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4em;
+  height: 1.4em;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.nx-outcome-fallback[data-tone="success"] {
+  color: #2a1210;
+  background: linear-gradient(135deg, #e8a598, #d4847a);
+  animation: ixSuccessPulse var(--ix-trans-spring, 420ms ease) both;
+}
+
+.nx-outcome-fallback[data-tone="error"] {
+  color: #f0b0a8;
+  background: rgba(180, 60, 50, 0.28);
+  border: 1px solid rgba(220, 100, 90, 0.4);
+}
+
+.signal-error-mark {
+  margin-bottom: 8px;
+}
+
+.anime-toast[data-tone="success"] {
+  border-color: rgba(240, 160, 144, 0.45);
+  box-shadow: 0 0 16px rgba(240, 160, 144, 0.12);
+}
+
+.anime-toast[data-tone="error"] {
+  border-color: rgba(196, 92, 92, 0.45);
+}
+
+.anime-toast-mark {
+  margin-right: 2px;
+}
+
+html[data-reduce-motion="true"] .nx-outcome-fallback,
+@media (prefers-reduced-motion: reduce) {
+  .nx-outcome-fallback {
+    animation: none !important;
+  }
+}
