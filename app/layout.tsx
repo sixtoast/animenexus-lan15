@@ -60,6 +60,7 @@ import "./living-shelf.css";
 import "./memory-chapters.css";
 import "./editorial.css";
 import "./micro-interactions.css";
+import "./micro-density.css";
 import "./sound-settings.css";
 import "./browse-micro.css";
 import "./load-choreography.css";
