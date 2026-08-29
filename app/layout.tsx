@@ -66,6 +66,7 @@ import "./load-choreography.css";
 import "./watchlist-micro.css";
 import "./detail-micro.css";
 import "./oracle-micro.css";
+import "./oracle-instrument.css";
 import "./radar-micro.css";
 import "./radar-instrument.css";
 import "./taste-micro.css";
