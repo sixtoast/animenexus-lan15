@@ -88,6 +88,25 @@ export const metadata: Metadata = {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
     apple: [{ url: "/icon.svg" }],
   },
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "https://animenexus.vercel.app"),
+  ),
+  openGraph: {
+    title: "AnimeNexus — Lantern",
+    description:
+      "Mood-based anime recommendations, taste profile, and AI tools — late-night broadcast console.",
+    images: [
+      { url: "/api/og?kind=site", width: 1200, height: 630, alt: "AnimeNexus" },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AnimeNexus — Lantern",
+    images: ["/api/og?kind=site"],
+  },
 };
 
 export const viewport: Viewport = {
