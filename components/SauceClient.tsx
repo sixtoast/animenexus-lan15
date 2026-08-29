@@ -4,8 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { SauceHit } from "@/lib/sauce";
 import { formatTime } from "@/lib/sauce";
+import { preprocessSauceFile } from "@/lib/sauce-preprocess";
 import { loadingStart, loadingStop } from "@/components/LoadingTheater";
 import { Button } from "@/components/ui/Button";
+
+type SaucePhase = "idle" | "prepare" | "search" | "done";
 
 export function SauceClient() {
   const [url, setUrl] = useState("");
@@ -13,19 +16,37 @@ export function SauceClient() {
   const [hits, setHits] = useState<SauceHit[]>([]);
   const [providers, setProviders] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [phase, setPhase] = useState<SaucePhase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [prepNote, setPrepNote] = useState<string | null>(null);
 
   const searchByFile = useCallback(async (file: File) => {
     setLoading(true);
-    loadingStart("sauce");
+    setPhase("prepare");
     setError(null);
     setHits([]);
     setProviders([]);
-    setPreview(URL.createObjectURL(file));
+    setPrepNote(null);
+    loadingStart("sauce");
+
+    let previewUrl: string | null = null;
     try {
+      // Local preview of original while we prepare
+      const rawPreview = URL.createObjectURL(file);
+      setPreview(rawPreview);
+
+      const prepared = await preprocessSauceFile(file);
+      URL.revokeObjectURL(rawPreview);
+      previewUrl = prepared.previewUrl;
+      setPreview(prepared.previewUrl);
+      setPrepNote(
+        `Prepared ${prepared.width}×${prepared.height} · ${(prepared.bytes / 1024).toFixed(0)} KB (metadata stripped)`,
+      );
+
+      setPhase("search");
       const form = new FormData();
-      form.append("image", file);
+      form.append("image", prepared.file);
       const res = await fetch("/api/sauce", { method: "POST", body: form });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Search failed");
@@ -34,8 +55,10 @@ export function SauceClient() {
       setProviders(json.providers || ["trace.moe"]);
       if (!(json.hits || []).length)
         setError("No matches — try a clearer frame.");
+      setPhase("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Search failed");
+      setPhase("idle");
     } finally {
       setLoading(false);
       loadingStop();
@@ -46,10 +69,12 @@ export function SauceClient() {
     e?.preventDefault();
     if (!url.trim()) return;
     setLoading(true);
+    setPhase("search");
     loadingStart("sauce");
     setError(null);
     setHits([]);
     setProviders([]);
+    setPrepNote(null);
     setPreview(url.trim());
     try {
       const res = await fetch("/api/sauce", {
@@ -64,8 +89,10 @@ export function SauceClient() {
       setProviders(json.providers || ["trace.moe"]);
       if (!(json.hits || []).length)
         setError("No matches — try a clearer frame.");
+      setPhase("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Search failed");
+      setPhase("idle");
     } finally {
       setLoading(false);
       loadingStop();
@@ -91,6 +118,15 @@ export function SauceClient() {
     return () => window.removeEventListener("paste", onPaste);
   }, [searchByFile]);
 
+  const phaseLabel =
+    phase === "prepare"
+      ? "Preparing frame…"
+      : phase === "search"
+        ? "Tracing…"
+        : loading
+          ? "Working…"
+          : null;
+
   return (
     <div className="tools-panel">
       <p className="tools-hint" style={{ marginBottom: 16 }}>
@@ -98,7 +134,8 @@ export function SauceClient() {
         <a href="https://trace.moe" target="_blank" rel="noreferrer">
           trace.moe
         </a>
-        . Optional SauceNAO when configured. Confidence is shown honestly.
+        . Screenshots are resized and metadata-stripped in your browser before
+        the request — AnimeNexus does not keep your frames on Cloudinary.
       </p>
 
       <div
@@ -122,6 +159,15 @@ export function SauceClient() {
           <p>Drop image here or paste from clipboard</p>
         )}
       </div>
+
+      {phaseLabel ? (
+        <p className="tools-hint sauce-phase" role="status" aria-live="polite">
+          {phaseLabel}
+          {prepNote && phase !== "prepare" ? ` · ${prepNote}` : null}
+        </p>
+      ) : prepNote ? (
+        <p className="tools-hint sauce-phase">{prepNote}</p>
+      ) : null}
 
       <form className="sauce-form" onSubmit={searchByUrl}>
         <label className="filter-label" htmlFor="sauce-url">
@@ -196,7 +242,8 @@ export function SauceClient() {
                 ) : null}
                 <div className="sauce-file">{h.filename}</div>
                 <div className="sauce-meta">
-                  {h.episode != null ? `Ep ${h.episode} · ` : ""}
+                  {h.episode != null ? `Ep ${h.episode}` : null}
+                  {h.episode != null && (h.from || h.to) ? " · " : null}
                   {h.from || h.to
                     ? `${formatTime(h.from)}–${formatTime(h.to)}`
                     : null}
