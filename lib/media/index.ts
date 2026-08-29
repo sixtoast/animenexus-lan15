@@ -16,3 +16,14 @@ export {
   type ImageLayout,
   type OptimiseOwner,
 } from "./image-strategy";
+export {
+  CROP_SPECS,
+  MOBILE_HERO_CROP,
+  cropTransformFor,
+  cropVariantsFor,
+  getFocalPoint,
+  setFocalPoint,
+  listFocalPoints,
+  type CropSpec,
+  type FocalPoint,
+} from "./crop";

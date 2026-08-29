@@ -7,6 +7,7 @@ import {
   isCloudinaryConfigured,
   type CloudinaryNamedTransform,
 } from "@/lib/media/cloudinary";
+import { cropTransformFor } from "@/lib/media/crop";
 import {
   layoutFor,
   type ImageContext,
@@ -15,7 +16,7 @@ import {
 export type NexusCloudImageProps = {
   publicId: string;
   alt: string;
-  /** Prefer a named context — fills width/height/sizes/transform */
+  /** Prefer a named context — fills width/height/sizes + intelligent crop */
   context?: ImageContext;
   width?: number;
   height?: number;
@@ -24,12 +25,14 @@ export type NexusCloudImageProps = {
   sizes?: string;
   priority?: boolean;
   fallbackSrc?: string;
+  /** Prefer mobile-hero crop when context is hero */
+  mobileHero?: boolean;
 };
 
 /**
- * Site-owned image via Cloudinary (Sprints 12–13).
- * Uses `unoptimized` so Next does not re-encode Cloudinary f_auto/q_auto URLs.
- * Layout dimensions always explicit → no CLS.
+ * Site-owned image via Cloudinary (Sprints 12–14).
+ * Context crops use subject gravity + optional focal overrides.
+ * `unoptimized` when Cloudinary URL — no double encode.
  */
 export function NexusCloudImage({
   publicId,
@@ -42,13 +45,18 @@ export function NexusCloudImage({
   sizes: sizesProp,
   priority = false,
   fallbackSrc,
+  mobileHero = false,
 }: NexusCloudImageProps) {
   const layout = context ? layoutFor(context) : null;
   const width = widthProp ?? layout?.width ?? 360;
   const height = heightProp ?? layout?.height ?? 540;
-  const transform =
-    transformProp ?? layout?.transform ?? ("nexus-card" as CloudinaryNamedTransform);
   const sizes = sizesProp ?? layout?.sizes ?? "(max-width: 640px) 45vw, 180px";
+
+  const transform =
+    transformProp ??
+    (context
+      ? cropTransformFor(context, publicId, { mobileHero })
+      : ("nexus-card" as CloudinaryNamedTransform));
 
   const [broken, setBroken] = useState(false);
   const cloudUrl =
@@ -81,9 +89,12 @@ export function NexusCloudImage({
       height={height}
       sizes={sizes}
       className={`nx-cloud-img ${className}`.trim()}
-      style={layout?.aspect ? { aspectRatio: layout.aspect, objectFit: "cover" } : undefined}
+      style={
+        layout?.aspect
+          ? { aspectRatio: layout.aspect, objectFit: "cover" }
+          : undefined
+      }
       priority={priority}
-      /* Cloudinary already serves f_auto / q_auto — skip Next re-encode */
       unoptimized={Boolean(cloudUrl)}
       onError={() => setBroken(true)}
     />
