@@ -76,6 +76,7 @@ import "./loading-symbol.css";
 import "./outcome-mark.css";
 import "./empty-illustration.css";
 import "./feature-tip.css";
+import "./nexus-icon.css";
 import "./rive.css";
 
 export const metadata: Metadata = {
