@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { SignalBars } from "@/components/ui/SignalBars";
+import { LoadingSymbol } from "@/components/rive/LoadingSymbol";
 import {
   loadingLabel,
   contextFromPath,
@@ -106,7 +106,7 @@ export function LoadingTheater() {
       aria-live="polite"
       aria-busy="true"
     >
-      <SignalBars level={3} animated label="Receiving signal" />
+      <LoadingSymbol phase={phase} level={3} label="Receiving signal" />
       <p className="loading-theater-label">{label}</p>
       <p className="loading-theater-phase">{phaseLine}</p>
       <p className="loading-theater-hint">

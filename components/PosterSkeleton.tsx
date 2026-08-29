@@ -1,4 +1,4 @@
-import { SignalBars } from "@/components/ui/SignalBars";
+import { LoadingSymbol } from "@/components/rive/LoadingSymbol";
 import {
   LOADING_COPY,
   loadingLabel,
@@ -19,7 +19,7 @@ export function PosterSkeleton({
   return (
     <div className="poster-skel-wrap" role="status" aria-live="polite">
       <div className="tuning-row">
-        <SignalBars level={3} animated />
+        <LoadingSymbol phase={0} level={3} size="sm" label="Loading poster" />
         <p className="tuning-label">{text}</p>
       </div>
       <div className="poster-skel-grid" aria-hidden>

@@ -27,3 +27,9 @@ export {
   type OracleAiState,
   type OracleInstrumentProps,
 } from "./OracleInstrument";
+export {
+  LoadingSymbol,
+  loadingPhaseToRive,
+  type LoadingPhase,
+  type LoadingSymbolProps,
+} from "./LoadingSymbol";
