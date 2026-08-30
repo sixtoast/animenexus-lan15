@@ -18,6 +18,8 @@ export function onPageVisibility(
   if (typeof document === "undefined") return () => {};
   const handler = () => cb(document.visibilityState === "visible");
   document.addEventListener("visibilitychange", handler);
+  // Sync initial
+  cb(document.visibilityState === "visible");
   return () => document.removeEventListener("visibilitychange", handler);
 }
 
@@ -29,7 +31,7 @@ export type InViewOptions = {
 };
 
 /**
- * Observe element intersection. Safe for SSR (no-op).
+ * Observe element intersection. Safe for SSR (no-op → reports true).
  */
 export function observeInView(
   el: Element | null,

@@ -2,29 +2,33 @@
 
 ## Goal
 
-Do not burn GPU cycles for invisible delight.
+Do not burn GPU/CPU for invisible delight.
 
 ## Pause when
 
 | Condition | Systems |
 |-----------|---------|
-| Off-screen (IO) | Rive, Lottie, R3F |
-| Tab hidden (`visibilitychange`) | Rive, Lottie, R3F frameloop |
-| Modal closed | Any instrument inside modal |
-| Route inactive | Unmount / dynamic unload |
+| Off-screen | Rive, Lottie, R3F (demand) |
+| Tab hidden (`visibilitychange`) | Rive pause, R3F `frameloop="demand"` |
+| Modal closed / route inactive | Prefer unmount or `active={false}` |
+| Reduced motion | Soft-fail / no continuous loops |
 
 ## Implementation
 
-| System | Behaviour |
-|--------|-----------|
-| **NexusRive** | IntersectionObserver + `document.hidden` → `rive.pause()` |
-| **NexusLottie** | IO; only play when intersecting |
-| **Living Shelf** | Canvas `frameloop="demand"` when tab hidden or reduced motion |
-| **Video** | YouTube embeds only — browser pauses background tabs |
+| Surface | Mechanism |
+|---------|-----------|
+| `lib/creative-visibility.ts` | `onPageVisibility`, `observeInView`, `shouldAnimateCreative` |
+| `NexusRive` | IntersectionObserver (continuous) + page visibility → `rive.pause` |
+| `NexusLottie` | In-view + page visibility gate |
+| `ShelfScene` | `frameloop` demand when tab hidden or reduced motion |
 
-Shared helpers: `lib/creative-visibility.ts`.
+## Rules
+
+1. Prefer **pause** over teardown for quick return to view.
+2. Do not run twenty off-screen Lotties or Rive instances.
+3. Video (if any): same visibility rules; no Mux (gate NO).
 
 ## Related
 
-- `lib/media-budget.ts` — do not mount heavy systems on Home
-- `lib/creative-runtime.ts` — device tier
+- `docs/MEDIA_BUDGET.md`
+- `lib/creative-runtime.ts`
