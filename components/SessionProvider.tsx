@@ -10,6 +10,7 @@ import {
 } from "react";
 import { fetchUserAnimeList, fetchUserByName } from "@/lib/anilist-user";
 import {
+  getRememberPreference,
   profileToSession,
   readSession,
   writeSession,
@@ -24,14 +25,11 @@ type Ctx = {
   connecting: boolean;
   syncing: boolean;
   error: string | null;
-  /** Public username only — no OAuth */
-  connectQuick: (username: string) => Promise<void>;
-  /** Apply profile after OAuth callback */
-  applyOAuthSession: (profile: {
-    username: string;
-    userId: number;
-    avatar?: string;
-  }) => void;
+  connectQuick: (username: string, remember?: boolean) => Promise<void>;
+  applyOAuthSession: (
+    profile: { username: string; userId: number; avatar?: string },
+    remember?: boolean,
+  ) => void;
   disconnect: () => void;
   syncLists: () => Promise<number>;
   clearError: () => void;
@@ -51,7 +49,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setReady(true);
   }, []);
 
-  const connectQuick = useCallback(async (username: string) => {
+  const connectQuick = useCallback(async (username: string, remember = true) => {
     const name = username.trim().replace(/^@/, "");
     if (!name) {
       setError("Enter an AniList username.");
@@ -65,7 +63,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         setError(`No public AniList user named “${name}”.`);
         return;
       }
-      const next = profileToSession(profile, null, "quick");
+      const next = profileToSession(profile, null, "quick", remember);
       writeSession(next);
       setSession(next);
     } catch (e) {
@@ -76,13 +74,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const applyOAuthSession = useCallback(
-    (profile: { username: string; userId: number; avatar?: string }) => {
+    (
+      profile: { username: string; userId: number; avatar?: string },
+      remember = getRememberPreference(),
+    ) => {
       const next: SessionState = {
         username: profile.username,
         userId: profile.userId,
         avatar: profile.avatar,
         connectedAt: new Date().toISOString(),
         authMode: "oauth",
+        remember,
       };
       writeSession(next);
       setSession(next);
@@ -95,8 +97,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     writeSession(null);
     setSession(null);
     setError(null);
-    // Best-effort clear server OAuth cookie
     void fetch("/api/anilist/status", { method: "DELETE" }).catch(() => null);
+    void fetch("/api/mal/status", { method: "DELETE" }).catch(() => null);
   }, []);
 
   const syncLists = useCallback(async () => {
@@ -134,6 +136,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         ...current,
         lastSyncAt: new Date().toISOString(),
         lastSyncCount: remote.length,
+        remember: current.remember !== false,
       };
       writeSession(next);
       setSession(next);
