@@ -1,35 +1,36 @@
 # Audio QA matrix (Creative Sprint 50)
 
-## Devices / conditions
+## Device / environment
 
-| Scenario | Expected |
-|----------|----------|
-| iPhone / Android speaker | Clear, no harsh clipping |
-| Laptop speaker | Same at mid volume |
-| Headphones | No harsh peaks; stereo shelf pan sane |
-| Device muted / master 0 | Silent, no errors |
-| Autoplay blocked | No throw; unlock after first gesture |
-| Rapid clicks | Cooldown + max concurrent (5) |
-| Background tab | Prefer silence / no new cues |
-| Low master volume | Linear duck, still intelligible |
-| Screen reader + SFX | UI still operable; sound optional |
+| Condition | Expectation |
+|-----------|-------------|
+| iPhone / Android speaker | Clear, no harsh peaks |
+| Laptop speaker | Same |
+| Headphones | No extreme stereo imbalance (spatial pan moderate) |
+| Device muted / OS mute | No crash; engine stays quiet |
+| Autoplay restricted | No sound until first gesture (`unlockSound`) |
+| Rapid clicks | Cooldown + `MAX_CONCURRENT` — no cacophony |
+| Background tab | Page visibility pauses creative animation; SFX should not stack |
+| Low volume prefs | Category gains respect user settings |
+| Screen reader + SFX | Toasts remain `aria-live`; SFX optional |
 
-## Engine guards (already)
+## Engine guarantees (`lib/sound-engine.ts`)
 
-- `unlocked` gate until user gesture
-- `prefs.enabled` / category gains
-- Cue cooldowns
-- `MAX_CONCURRENT = 5`
-- `try/catch` on `src.start()`
-- Soft duck under celebration
+1. **Opt-in** — `prefs.enabled` and unlock after gesture.
+2. **No thrown AudioContext errors** to UI — failures `catch` and return.
+3. **Cooldown** per cue — rapid actions dedupe.
+4. **Voice cap** — concurrent sources limited.
+5. **Missing WAV** — soft fail (no buffer → no play).
 
 ## Manual checklist
 
-1. Load site muted → enable sound in settings → tap UI.
-2. Spam Radar scan → no cacophony.
-3. Switch tab mid-shelf SFX → no console AudioContext spam.
-4. Reduced motion / MINIMAL → still no hard failures.
+- [ ] First visit: no sound until click/key
+- [ ] Enable sound in settings → `ui_tap` works
+- [ ] Spam Radar scan → pings spaced, not a wall of noise
+- [ ] Mute → silent, UI still works
+- [ ] Complete title → complete cue once, not on every micro save
+- [ ] Background tab → no runaway audio
 
 ## Related
 
-- `lib/sound-engine.ts`, `docs/SFX_MASTERING.md`, `docs/SONIC_COHESION.md`
+- `docs/SONIC_COHESION.md`, `docs/SFX_MASTERING.md`, `docs/SONIC_MICRO.md`
