@@ -1,4 +1,5 @@
 import "./detail.css";
+import "../../detail-trailer.css";
 import "./sprint-b-detail.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -28,6 +29,7 @@ import { ArtworkGallery } from "@/components/ArtworkGallery";
 import { ViewingContextPanel } from "@/components/ViewingContextPanel";
 import { RewatchPanel } from "@/components/RewatchPanel";
 import { MangaSourcePanel } from "@/components/MangaSourcePanel";
+import { DetailTrailer } from "@/components/DetailTrailer";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -120,11 +122,6 @@ export default async function AnimeDetailPage({ params }: Props) {
       : anime.year
         ? String(anime.year)
         : null;
-
-  const youtube =
-    anime.trailer?.site?.toLowerCase() === "youtube" && anime.trailer.id
-      ? `https://www.youtube.com/embed/${anime.trailer.id}`
-      : null;
 
   const epNum =
     typeof anime.episodes === "number"
@@ -326,18 +323,12 @@ export default async function AnimeDetailPage({ params }: Props) {
           relations={relations}
         />
 
-        {youtube ? (
-          <section className="detail-section">
-            <h2>Trailer</h2>
-            <div className="detail-trailer">
-              <iframe
-                src={youtube}
-                title={`${anime.title} trailer`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          </section>
+        {anime.trailer?.site?.toLowerCase() === "youtube" && anime.trailer.id ? (
+          <DetailTrailer
+            videoId={anime.trailer.id}
+            title={anime.title}
+            thumbnail={anime.trailer.thumbnail}
+          />
         ) : null}
 
         <div className="detail-split">
