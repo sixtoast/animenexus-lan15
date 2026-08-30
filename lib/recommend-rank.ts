@@ -1,24 +1,18 @@
 /**
- * Recommendation ranking & explanation (Sprint 4).
- * Client-side: combines community score with resonance cosine similarity.
- * Does not invent precision like 93.271% — uses coarse confidence labels.
+ * Recommendation ranking (V2).
+ * Similarity is one signal among: clusters, session intent, drift, quality, fatigue.
  */
 
 import type { Anime, WatchlistEntry } from "./types";
 import {
-  cosineSimilarity,
-  resonanceFromGenres,
-  topResonanceDims,
-  userResonance,
-  resonanceLabel,
-  type ResonanceVector,
-} from "./resonance";
+  buildPreferenceProfile,
+  scoreCandidate,
+} from "./preference-engine";
+import { resonanceLabel, topResonanceDims, userResonance } from "./resonance";
 
 export type RankedRecommendation = {
   anime: Anime;
-  /** 0–1 blended score used for ordering */
   score: number;
-  /** Coarse match strength for UI */
   confidence: "strong" | "good" | "soft" | "exploratory";
   resonanceSim: number;
   reasons: string[];
@@ -46,42 +40,14 @@ export function confidenceCopy(
   }
 }
 
-function communityNorm(score: number | undefined | null): number {
-  if (score == null || score <= 0) return 0.45;
-  // AniList-style ~0–100 or 0–10
-  const s = score > 10 ? score / 100 : score / 10;
-  return Math.max(0, Math.min(1, s));
-}
-
-/** Shared top dimensions between user and anime vectors. */
-function sharedDimReasons(
-  user: ResonanceVector,
-  anime: ResonanceVector,
-  limit = 3,
-): string[] {
-  const pairs = topResonanceDims(user, 8)
-    .map(({ dim, value }) => ({
-      dim,
-      value,
-      both: Math.min(value, anime[dim]),
-    }))
-    .filter((p) => p.both > 0.2 && anime[p.dim] > 0.15)
-    .sort((a, b) => b.both - a.both)
-    .slice(0, limit);
-
-  return pairs.map(
-    (p) =>
-      `Shares ${resonanceLabel(p.dim).toLowerCase()} with your shelf signal`,
-  );
-}
-
 export function rankRecommendations(
   candidates: Anime[],
   entries: WatchlistEntry[],
   opts?: {
     excludeIds?: Set<number> | number[];
-    /** Weight on resonance vs community score (default 0.65 resonance). */
     resonanceWeight?: number;
+    /** Viewing Intent slug from /mood/[slug] */
+    experienceSlug?: string;
   },
 ): RankedRecommendation[] {
   const exclude = new Set(
@@ -91,31 +57,30 @@ export function rankRecommendations(
         : [...opts.excludeIds]
       : entries.map((e) => e.id),
   );
-  const rw = opts?.resonanceWeight ?? 0.65;
-  const cw = 1 - rw;
-  const user = userResonance(entries);
 
+  const profile = buildPreferenceProfile(entries);
   const ranked: RankedRecommendation[] = [];
 
   for (const anime of candidates) {
     if (exclude.has(anime.id)) continue;
-    const animeVec = resonanceFromGenres(anime.tags);
-    const sim = cosineSimilarity(user, animeVec);
-    const community = communityNorm(anime.score);
-    const score = sim * rw + community * cw;
 
-    const reasons: string[] = [];
-    reasons.push(...sharedDimReasons(user, animeVec));
-    if (anime.score && anime.score > 0) {
-      const display =
-        anime.score > 10
-          ? anime.score.toFixed(0)
-          : anime.score.toFixed(1);
-      reasons.push(`Community score around ${display}`);
+    const signals = scoreCandidate(anime, profile, {
+      experienceSlug: opts?.experienceSlug,
+    });
+
+    // Optional legacy blend if caller still passes resonanceWeight
+    let score = signals.score;
+    if (opts?.resonanceWeight != null) {
+      const rw = opts.resonanceWeight;
+      score = signals.resonanceSim * rw + signals.score * (1 - rw * 0.5);
+      score = Math.max(0, Math.min(1, score));
     }
-    if (anime.tags?.length) {
-      const g = anime.tags.slice(0, 2).join(" / ");
-      reasons.push(`Catalog genres: ${g}`);
+
+    const reasons = [...signals.reasons];
+    if (anime.score > 0 && reasons.length < 3) {
+      const display =
+        anime.score > 10 ? anime.score.toFixed(0) : anime.score.toFixed(1);
+      reasons.push(`Community score around ${display}`);
     }
     if (!reasons.length) {
       reasons.push("Discoverable from the current signal desk");
@@ -125,18 +90,47 @@ export function rankRecommendations(
       anime,
       score,
       confidence: confidenceLabel(score),
-      resonanceSim: sim,
+      resonanceSim: signals.resonanceSim,
       reasons: reasons.slice(0, 4),
     });
   }
 
   ranked.sort((a, b) => b.score - a.score);
+
+  // Light diversity: demote near-duplicates of top genres in the first 12
+  const seenGenres = new Map<string, number>();
+  for (let i = 0; i < Math.min(ranked.length, 24); i++) {
+    const g = (ranked[i].anime.tags?.[0] || "").toLowerCase();
+    if (!g) continue;
+    const n = seenGenres.get(g) || 0;
+    if (n >= 3) ranked[i].score *= 0.92;
+    seenGenres.set(g, n + 1);
+  }
+  ranked.sort((a, b) => b.score - a.score);
+
   return ranked;
 }
 
-/** Short “Why this is here” block for one title. */
 export function whyThisIsHere(r: RankedRecommendation): string {
   const head = confidenceCopy(r.confidence);
   const body = r.reasons[0] || "Aligned with your current shelf.";
   return `${head}. ${body}`;
+}
+
+/** Expose trend line for UI intros. */
+export function preferenceTrendLine(entries: WatchlistEntry[]): string | null {
+  return buildPreferenceProfile(entries).trendLine;
+}
+
+export function preferenceClusterLabels(
+  entries: WatchlistEntry[],
+): string[] {
+  return buildPreferenceProfile(entries).clusters.map((c) => c.label);
+}
+
+// Keep resonance helpers available for explainers
+export function topUserResonanceLabels(entries: WatchlistEntry[], n = 3) {
+  return topResonanceDims(userResonance(entries), n).map((d) =>
+    resonanceLabel(d.dim),
+  );
 }

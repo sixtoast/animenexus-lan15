@@ -1,8 +1,16 @@
 /**
- * Mood → AniList query mapping (genres / tags / sort).
+ * Mood routes → Viewing Intent (Recommendation Engine V2).
+ * UI still lives at /mood/[slug]; underlying model is experiential intent,
+ * not "sad = drama".
  */
 
 import type { AnimeFilters } from "./types";
+import {
+  EXPERIENCE_INTENTS,
+  getExperienceIntent,
+  resolveIntentSlug,
+  type ExperienceIntent,
+} from "./viewing-intent";
 
 export type MoodDef = {
   slug: string;
@@ -14,94 +22,31 @@ export type MoodDef = {
   minScore?: number;
 };
 
-export const MOODS: MoodDef[] = [
-  {
-    slug: "chill",
-    label: "Chill",
-    emoji: "🍃",
-    blurb: "Soft slice-of-life and gentle days.",
-    genres: ["Slice of Life"],
-    sort: "score",
-    minScore: 65,
-  },
-  {
-    slug: "hype",
-    label: "Hype",
-    emoji: "⚡",
-    blurb: "Action, shonen energy, peak fights.",
-    genres: ["Action"],
-    sort: "popularity",
-  },
-  {
-    slug: "cry",
-    label: "Cry",
-    emoji: "💧",
-    blurb: "Drama that hits where it hurts.",
-    genres: ["Drama"],
-    sort: "score",
-    minScore: 70,
-  },
-  {
-    slug: "laugh",
-    label: "Laugh",
-    emoji: "😂",
-    blurb: "Comedy and pure silliness.",
-    genres: ["Comedy"],
-    sort: "popularity",
-  },
-  {
-    slug: "romance",
-    label: "Romance",
-    emoji: "💗",
-    blurb: "Butterflies, slow burns, confessions.",
-    genres: ["Romance"],
-    sort: "score",
-  },
-  {
-    slug: "spooky",
-    label: "Spooky",
-    emoji: "👻",
-    blurb: "Horror, dread, late-night thrills.",
-    genres: ["Horror"],
-    sort: "popularity",
-  },
-  {
-    slug: "fantasy",
-    label: "Fantasy",
-    emoji: "✨",
-    blurb: "Magic, isekai, other worlds.",
-    genres: ["Fantasy"],
-    sort: "popularity",
-  },
-  {
-    slug: "mind",
-    label: "Mind-bender",
-    emoji: "🧠",
-    blurb: "Psychological twists and mysteries.",
-    genres: ["Psychological"],
-    sort: "score",
-    minScore: 70,
-  },
-  {
-    slug: "scifi",
-    label: "Sci-Fi",
-    emoji: "🚀",
-    blurb: "Mechs, space, near-future visions.",
-    genres: ["Sci-Fi"],
-    sort: "score",
-  },
-  {
-    slug: "masterpiece",
-    label: "Masterpiece",
-    emoji: "👑",
-    blurb: "Highest-rated signal — pure quality.",
-    genres: [],
-    sort: "score",
-    minScore: 85,
-  },
-];
+function toMood(e: ExperienceIntent): MoodDef {
+  const sort =
+    e.sort === "trending"
+      ? "popularity"
+      : e.sort === "score"
+        ? "score"
+        : "popularity";
+  return {
+    slug: e.slug,
+    label: e.label,
+    emoji: e.emoji,
+    blurb: e.blurb,
+    genres: e.genreHints,
+    sort,
+    minScore: e.minScore,
+  };
+}
+
+/** Primary chips — experiential Viewing Intent. */
+export const MOODS: MoodDef[] = EXPERIENCE_INTENTS.map(toMood);
 
 export function getMood(slug: string): MoodDef | undefined {
+  const resolved = resolveIntentSlug(slug);
+  const exp = getExperienceIntent(resolved);
+  if (exp) return toMood(exp);
   return MOODS.find((m) => m.slug === slug);
 }
 
@@ -112,3 +57,6 @@ export function moodToFilters(mood: MoodDef): AnimeFilters {
     adultFilter: "exclude",
   };
 }
+
+/** @deprecated use getExperienceIntent — kept for imports */
+export { EXPERIENCE_INTENTS, getExperienceIntent, resolveIntentSlug };
