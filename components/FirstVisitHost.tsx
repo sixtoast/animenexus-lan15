@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { playCue } from "@/lib/sound-engine";
 
 const INTRO_KEY = "animenexus.intro.dismissed.v1";
 const SESSION_KEY = "animenexus.session_touch.v1";
@@ -49,8 +50,8 @@ function dismissIntro() {
 }
 
 /**
- * One-time first light sequence (master plan · Sprint 13).
- * Short, skippable, no forced speech, respects reduced motion.
+ * One-time first light (Sprint 45 quality).
+ * CSS → soft SFX → copy. No forced Rive/3D intro movie.
  */
 export function FirstVisitHost() {
   const [open, setOpen] = useState(false);
@@ -64,7 +65,6 @@ export function FirstVisitHost() {
   useEffect(() => {
     if (introDismissed()) return;
     const touch = readSessionTouch();
-    // Show only on true first visit (or first open before touch was recorded)
     if (touch && !touch.isFirstVisit && touch.sessionOpens > 1) return;
 
     const reduced =
@@ -79,11 +79,28 @@ export function FirstVisitHost() {
     }
 
     setPhase(0);
+    // Soft ignition (touch only — not a success fanfare)
+    const s0 = window.setTimeout(() => {
+      try {
+        playCue("ui_tap");
+      } catch {
+        /* sound opt-in / blocked */
+      }
+    }, 350);
     const t1 = window.setTimeout(() => setPhase(1), 400);
+    const s1 = window.setTimeout(() => {
+      try {
+        playCue("seal");
+      } catch {
+        /* */
+      }
+    }, 1000);
     const t2 = window.setTimeout(() => setPhase(2), 1100);
     const t3 = window.setTimeout(() => setPhase(3), 1800);
     const t4 = window.setTimeout(close, 3600);
     return () => {
+      window.clearTimeout(s0);
+      window.clearTimeout(s1);
       window.clearTimeout(t1);
       window.clearTimeout(t2);
       window.clearTimeout(t3);
@@ -108,6 +125,7 @@ export function FirstVisitHost() {
       role="dialog"
       aria-modal="true"
       aria-label="Welcome to AnimeNexus"
+      data-first-visit-phase={phase}
     >
       <div className="first-visit-inner">
         <div
