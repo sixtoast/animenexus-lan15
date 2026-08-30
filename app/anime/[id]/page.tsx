@@ -1,5 +1,6 @@
 import "./detail.css";
 import "../../detail-trailer.css";
+import "../../watchlist-queue.css";
 import "./sprint-b-detail.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -30,6 +31,7 @@ import { ViewingContextPanel } from "@/components/ViewingContextPanel";
 import { RewatchPanel } from "@/components/RewatchPanel";
 import { MangaSourcePanel } from "@/components/MangaSourcePanel";
 import { DetailTrailer } from "@/components/DetailTrailer";
+import { DetailDeferred } from "@/components/DetailDeferred";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -268,15 +270,25 @@ export default async function AnimeDetailPage({ params }: Props) {
           sourceNote={deep?.tags?.length ? "AniDB" : undefined}
         />
 
-        <CreativeDnaPanel slots={dnaSlots} fullCredits={dnaFull} />
+        <DetailDeferred
+          title="Creative DNA"
+          note="Staff, production roles — expand when you want depth."
+        >
+          <CreativeDnaPanel slots={dnaSlots} fullCredits={dnaFull} />
+        </DetailDeferred>
 
         <CreativeConnectionsPanel dna={dnaSlots} currentId={anime.id} />
 
         {fanart?.assets?.length ? (
-          <ArtworkGallery
-            assets={fanart.assets}
-            sourceNote="fanart.tv (TVDB)"
-          />
+          <DetailDeferred
+            title="Artwork gallery"
+            note="Fan art & key visuals — expand on demand."
+          >
+            <ArtworkGallery
+              assets={fanart.assets}
+              sourceNote="fanart.tv (TVDB)"
+            />
+          </DetailDeferred>
         ) : null}
 
         {external.length > 0 ? (
@@ -315,13 +327,20 @@ export default async function AnimeDetailPage({ params }: Props) {
           centerTitle={anime.title}
         />
 
-        <AncestryGraph
-          centerTitle={anime.title}
-          centerId={anime.id}
-          centerImage={anime.image}
-          centerYear={anime.year}
-          relations={relations}
-        />
+        <div id="ancestry">
+          <DetailDeferred
+            title="Ancestry graph"
+            note="Relations map — expand when exploring the franchise."
+          >
+            <AncestryGraph
+              centerTitle={anime.title}
+              centerId={anime.id}
+              centerImage={anime.image}
+              centerYear={anime.year}
+              relations={relations}
+            />
+          </DetailDeferred>
+        </div>
 
         {anime.trailer?.site?.toLowerCase() === "youtube" && anime.trailer.id ? (
           <DetailTrailer
@@ -451,12 +470,17 @@ export default async function AnimeDetailPage({ params }: Props) {
           </section>
         ) : null}
 
-        <DetailAI
-          title={anime.title}
-          synopsis={anime.description || ""}
-          genres={anime.tags || []}
-          relationsSummary={relationsSummary}
-        />
+        <DetailDeferred
+          title="Lantern AI notes"
+          note="Optional AI panel — expand on demand."
+        >
+          <DetailAI
+            title={anime.title}
+            synopsis={anime.description || ""}
+            genres={anime.tags || []}
+            relationsSummary={relationsSummary}
+          />
+        </DetailDeferred>
 
         {anime.characters && anime.characters.length > 0 ? (
           <section className="detail-section">
