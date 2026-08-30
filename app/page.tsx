@@ -5,11 +5,16 @@ import { QuoteBanner } from "@/components/QuoteBanner";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
 import { MoodChips } from "@/components/MoodChips";
 import { HomeDashboard } from "@/components/HomeDashboard";
+import { TonightDesk } from "@/components/TonightDesk";
+import { DiscoveryShelves } from "@/components/DiscoveryShelves";
+import { ProviderHealth } from "@/components/ProviderHealth";
+import { WhatLanternLearned } from "@/components/WhatLanternLearned";
 import { RitualLine } from "@/components/RitualLine";
 import { fetchDiscover } from "@/lib/anilist";
 import "./mood-home.css";
 import "./home-dash.css";
 import "./home-v2.css";
+import "./tonight-desk.css";
 
 export const dynamic = "force-dynamic";
 
@@ -65,7 +70,7 @@ export default async function HomePage() {
           </div>
 
           <div className="mood-home-block home-mood">
-            <p className="mood-home-label">Tune by mood</p>
+            <p className="mood-home-label">What kind of night</p>
             <MoodChips />
           </div>
         </div>
@@ -78,7 +83,11 @@ export default async function HomePage() {
           data-mascot-id="home-desk"
           data-mascot-priority="4"
         >
-          <HomeDashboard trending={[]} />
+          <ProviderHealth />
+          <TonightDesk candidates={items} />
+          <WhatLanternLearned />
+          <HomeDashboard trending={items} />
+          <DiscoveryShelves candidates={items} />
         </div>
 
         <QuoteBanner />
@@ -106,7 +115,7 @@ export default async function HomePage() {
             data-mascot-id="trending-grid"
             data-mascot-priority="5"
           >
-            <AnimeGrid items={items} />
+            <AnimeGrid items={items} trackBehaviour />
           </div>
         )}
       </section>
