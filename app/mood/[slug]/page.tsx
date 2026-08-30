@@ -16,7 +16,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const mood = getMood(slug);
-  if (!mood) return { title: "Mood · AnimeNexus" };
+  if (!mood) return { title: "Tonight · AnimeNexus" };
   return {
     title: `${mood.emoji} ${mood.label} · AnimeNexus`,
     description: mood.blurb,
@@ -38,7 +38,10 @@ export default async function MoodPage({ params }: Props) {
       items = page.data;
       total = page.pagination.total;
       if (mood.minScore) {
-        items = items.filter((a) => a.score * 10 >= mood.minScore!);
+        items = items.filter((a) => {
+          const s = a.score > 10 ? a.score : a.score * 10;
+          return s >= mood.minScore!;
+        });
       }
     } else {
       const filters = moodToFilters(mood);
@@ -46,7 +49,10 @@ export default async function MoodPage({ params }: Props) {
       items = page.data;
       total = page.pagination.total;
       if (mood.minScore) {
-        items = items.filter((a) => a.score * 10 >= mood.minScore!);
+        items = items.filter((a) => {
+          const s = a.score > 10 ? a.score : a.score * 10;
+          return s >= mood.minScore!;
+        });
       }
     }
   } catch (e) {
@@ -58,12 +64,15 @@ export default async function MoodPage({ params }: Props) {
       <section className="hero" style={{ paddingBottom: 16 }}>
         <div className="container">
           <div className="hero-badge">
-            Mood · {mood.emoji} {mood.label}
+            Viewing intent · {mood.emoji} {mood.label}
           </div>
           <h1>
-            Tonight feels like <span>{mood.label}</span>
+            What kind of night · <span>{mood.label}</span>
           </h1>
           <p>{mood.blurb}</p>
+          <p className="meta" style={{ marginTop: 8 }}>
+            Intent steers ranking — it is not a genre filter alone.
+          </p>
           <div style={{ marginTop: 20 }}>
             <MoodChips active={mood.slug} />
           </div>
@@ -73,7 +82,8 @@ export default async function MoodPage({ params }: Props) {
       <section className="container" style={{ paddingBottom: 48 }}>
         <div className="section-head">
           <h2>
-            <span className="accent">{mood.emoji}</span> Picks for this mood
+            <span className="accent">{mood.emoji}</span> Candidates for this
+            intent
           </h2>
           <span className="meta">
             {error
@@ -84,12 +94,12 @@ export default async function MoodPage({ params }: Props) {
 
         {error ? (
           <div className="state-box error">
-            <p>Could not load this mood feed.</p>
+            <p>Could not load this feed.</p>
             <p style={{ marginTop: 8, fontSize: "0.85rem" }}>{error}</p>
           </div>
         ) : items.length === 0 ? (
           <div className="state-box">
-            <p>No titles matched this mood right now.</p>
+            <p>No titles matched this intent right now.</p>
             <p style={{ marginTop: 12 }}>
               <Link href="/browse" className="btn btn-accent btn-sm">
                 Browse catalog
@@ -97,7 +107,11 @@ export default async function MoodPage({ params }: Props) {
             </p>
           </div>
         ) : (
-          <MoodFeedClient items={items} moodLabel={mood.label} />
+          <MoodFeedClient
+            items={items}
+            moodLabel={mood.label}
+            experienceSlug={mood.slug}
+          />
         )}
 
         <p style={{ marginTop: 28, textAlign: "center" }}>
