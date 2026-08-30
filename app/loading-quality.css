@@ -1,0 +1,69 @@
+/**
+ * Creative Sprint 41 — loading quality (no layout shift / soft resolve).
+ */
+
+/* Poster skeleton occupies real card footprint */
+.poster-skel {
+  aspect-ratio: 2 / 3;
+  width: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--surface, #1a1614) 100%, transparent) 0%,
+    color-mix(in srgb, var(--accent, #f0a090) 12%, transparent) 45%,
+    color-mix(in srgb, var(--surface, #1a1614) 100%, transparent) 90%
+  );
+  background-size: 200% 100%;
+  min-height: 0;
+}
+
+.poster-skel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-4, 16px);
+}
+
+/* Image frame: always reserve aspect before decode */
+.anime-card .poster,
+.anime-card [data-poster] {
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+}
+
+/* Avoid blank flash while Next/img settles */
+.anime-img--wait {
+  background: color-mix(in srgb, var(--surface, #1a1614) 95%, transparent);
+}
+
+/* Rive/Lottie/fallback share box — no collapse */
+.nx-rive-fallback,
+.nx-lottie,
+[data-nexus-rive-pending] {
+  min-height: 1.5rem;
+  box-sizing: border-box;
+}
+
+/* Shelf staging */
+.shelf-canvas-loading {
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+}
+
+/* Spinner: prefer small, labeled, not full-viewport */
+.spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-width: 2px;
+}
+
+.state-box .spinner {
+  margin-inline: auto;
+}
+
+html[data-reduce-motion="true"] .poster-skel {
+  animation: none !important;
+  background: color-mix(in srgb, var(--surface, #1a1614) 100%, transparent);
+}
