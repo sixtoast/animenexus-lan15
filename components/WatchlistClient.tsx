@@ -31,6 +31,7 @@ import {
   withViewTransition,
 } from "@/lib/view-transition";
 import { playCue } from "@/lib/sound-engine";
+import { WatchlistQueue } from "@/components/WatchlistQueue";
 
 type SortMode = "recent" | "signal" | "progress";
 
@@ -168,6 +169,7 @@ export function WatchlistClient() {
 
       {presentation === "manage" ? (
         <>
+          <WatchlistQueue />
           <div className="feed-tabs" role="tablist" aria-label="Watchlist status">
             {WATCH_STATUS_TABS.map((t) => (
               <button
