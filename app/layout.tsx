@@ -62,6 +62,7 @@ import "./memory-chapters.css";
 import "./editorial.css";
 import "./micro-interactions.css";
 import "./micro-density.css";
+import "./reduced-motion-eq.css";
 import "./sound-settings.css";
 import "./browse-micro.css";
 import "./load-choreography.css";
