@@ -12,7 +12,7 @@ type Props = {
   personality?: ToolPersonalityId;
 };
 
-/** Shared Night Desk chrome for tool pages — personality is atmosphere only. */
+/** Shared Night Desk chrome — personality is atmosphere + creative identity. */
 export function DeskShell({
   title,
   children,
@@ -26,6 +26,7 @@ export function DeskShell({
       className="desk"
       data-desk-personality={p.accent}
       data-desk-tool={p.id}
+      data-tool-identity={p.id}
     >
       <div className="desk-band">
         <span className="desk-band-left">
