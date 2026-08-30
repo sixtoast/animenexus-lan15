@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { creativeAllowsLottie } from "@/lib/creative-runtime";
+import { onPageVisibility } from "@/lib/creative-visibility";
 
 export type NexusLottieProps = {
   /** public path to .lottie or .json — optional */
@@ -35,6 +36,7 @@ export function NexusLottie({
 }: NexusLottieProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
+  const [pageVisible, setPageVisible] = useState(true);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -48,12 +50,15 @@ export function NexusLottie({
     return () => io.disconnect();
   }, []);
 
+  useEffect(() => onPageVisibility(setPageVisible), []);
+
   const allow =
     creativeAllowsLottie() &&
     play &&
     !!src &&
     !failed &&
-    visible;
+    visible &&
+    pageVisible;
 
   // Soft probe: if src 404s we stay on fallback (no hard error)
   useEffect(() => {
