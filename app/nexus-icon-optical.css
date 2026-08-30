@@ -1,0 +1,74 @@
+/**
+ * Creative Sprint 42 — optical size / alignment QA.
+ * Targets: 16 · 20 · 24 px perceived size.
+ */
+
+.nx-icon--sm {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+
+.nx-icon--md {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
+.nx-icon--lg {
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
+}
+
+/* Optical: thin strokes read lighter at 16px */
+.nx-icon--sm .nx-icon-svg {
+  stroke-width: 1.25;
+}
+
+.nx-icon--md .nx-icon-svg,
+.nx-icon--lg .nx-icon-svg {
+  stroke-width: 1.1;
+}
+
+.nx-icon-svg {
+  stroke: currentColor;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Filled marks (when path uses fill) */
+.nx-icon-svg [data-fill="1"],
+.nx-icon-svg path[fill]:not([fill="none"]) {
+  stroke: none;
+}
+
+/* Button / nav centre */
+.btn .nx-icon,
+.btn-icon .nx-icon,
+.nav-link .nx-icon,
+.feed-tab .nx-icon {
+  vertical-align: -0.125em;
+  position: relative;
+  top: 0;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon .nx-icon {
+  margin: 0;
+}
+
+/* Mobile nav: never smaller than 20px perceived */
+@media (max-width: 720px) {
+  .nav-link .nx-icon--sm {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+}
