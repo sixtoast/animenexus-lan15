@@ -1,5 +1,5 @@
 /**
- * Cloudinary URL helpers (Creative Sprints 12–13).
+ * Cloudinary URL helpers (Creative Sprints 12–13 + 43 consistency).
  *
  * Site-owned / ingested media only. Named transforms include f_auto, q_auto,
  * and dpr_auto where appropriate so Next/Image should NOT re-optimise.
@@ -19,11 +19,11 @@ export const CLOUDINARY_TRANSFORMS: Record<
   CloudinaryNamedTransform,
   string
 > = {
-  "nexus-card": "c_fill,g_auto,w_360,h_540,q_auto,f_auto,dpr_auto",
-  "nexus-hero": "c_fill,g_auto,w_960,h_540,q_auto,f_auto,dpr_auto",
+  "nexus-card": "c_fill,g_auto:subject,w_360,h_540,q_auto,f_auto,dpr_auto",
+  "nexus-hero": "c_fill,g_auto:subject,w_1280,h_720,q_auto,f_auto,dpr_auto",
   "nexus-avatar": "c_fill,g_face,w_96,h_96,q_auto,f_auto,dpr_auto,r_max",
   "nexus-session-cover": "c_fill,g_auto,w_1200,h_630,q_auto,f_auto",
-  "nexus-thumbnail": "c_fill,g_auto,w_160,h_240,q_auto,f_auto,dpr_auto",
+  "nexus-thumbnail": "c_fill,g_auto:subject,w_160,h_240,q_auto,f_auto,dpr_auto",
   "nexus-social": "c_fill,g_auto,w_1200,h_630,q_auto,f_auto",
   "nexus-sauce-preview": "c_limit,w_720,h_720,q_auto,f_auto",
 };
@@ -63,7 +63,6 @@ export function buildCloudinaryUrl(
     transform = CLOUDINARY_TRANSFORMS[transform as CloudinaryNamedTransform];
   }
   if (opts.width && opts.width > 0) {
-    // Responsive width override while keeping quality/format
     if (!/\bw_\d+/.test(transform)) {
       transform = `${transform},w_${Math.round(opts.width)}`;
     } else {
@@ -93,7 +92,7 @@ export function isCloudinaryUrl(src: string): boolean {
 export function cloudinarySrcSet(
   publicId: string,
   widths: number[] = [240, 360, 480, 720, 960],
-  baseTransform = "c_fill,g_auto,q_auto,f_auto,dpr_auto",
+  baseTransform = "c_fill,g_auto:subject,q_auto,f_auto,dpr_auto",
 ): string | null {
   const parts: string[] = [];
   for (const w of widths) {
