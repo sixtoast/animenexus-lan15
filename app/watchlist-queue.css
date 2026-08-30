@@ -1,0 +1,100 @@
+.wl-queue {
+  margin: 0 0 1.25rem;
+  padding: 0.9rem 1rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 220, 200, 0.12);
+  background: rgba(20, 14, 12, 0.35);
+}
+
+.wl-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.wl-queue-card {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.4rem 0.5rem;
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid transparent;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.wl-queue-card:hover,
+.wl-queue-card:focus-visible {
+  border-color: rgba(240, 160, 144, 0.35);
+}
+
+.wl-queue-card img {
+  width: 48px;
+  height: 68px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.wl-queue-kind {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
+
+.wl-queue-card--resume .wl-queue-kind {
+  color: var(--color-accent, #f0a090);
+}
+
+.wl-queue-card--stale_planning .wl-queue-kind {
+  color: rgba(220, 180, 100, 0.95);
+}
+
+.wl-queue-title {
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.wl-queue-reason {
+  font-size: 0.78rem;
+  opacity: 0.75;
+  margin-top: 0.15rem;
+}
+
+.detail-deferred {
+  margin: 1.25rem 0;
+  border: 1px solid rgba(255, 220, 200, 0.12);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.detail-deferred-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.detail-deferred-chevron {
+  opacity: 0.7;
+  font-size: 1.1rem;
+}
+
+.detail-deferred-note {
+  margin: 0;
+  padding: 0 1rem 0.75rem;
+}
+
+.detail-deferred-body {
+  padding: 0.5rem 1rem 1rem;
+  border-top: 1px solid rgba(255, 220, 200, 0.08);
+}
