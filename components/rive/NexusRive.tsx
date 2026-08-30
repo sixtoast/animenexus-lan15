@@ -25,22 +25,16 @@ import {
 } from "./RiveStateBridge";
 
 export type NexusRiveProps = {
-  /** Path under public/ or absolute URL to .riv */
   src: string;
   stateMachines?: string | string[];
   artboard?: string;
   animations?: string | string[];
   className?: string;
   style?: CSSProperties;
-  /** Semantic app state → Rive inputs (Sprint 3 convention) */
   appState?: RiveInputState;
-  /** When false, do not autoplay */
   autoplay?: boolean;
-  /** Above-the-fold: load immediately; else wait for visibility */
   priority?: boolean;
-  /** Accessible name for the canvas region */
   label?: string;
-  /** Static children when Rive blocked / RM / error */
   fallback?: ReactNode;
   width?: number | string;
   height?: number | string;
@@ -61,7 +55,6 @@ type UseRiveResult = {
   } | null;
 };
 
-/** Lazy: do not pull Rive WASM into the main bundle until needed. */
 const LazyRiveInner = lazy(() =>
   import("@rive-app/react-canvas").then((mod) => {
     const useRive = mod.useRive as (opts: Record<string, unknown>) => UseRiveResult;
@@ -239,11 +232,6 @@ function useInView(enabled: boolean) {
   return { setNode, visible };
 }
 
-/**
- * AnimeNexus Rive host — gated by creative runtime, RM-safe, lazy WASM.
- * Native controls stay outside this component (presentation only).
- * Continuous in-view + tab visibility: pause rather than burn GPU off-screen.
- */
 export function NexusRive(props: NexusRiveProps) {
   const {
     priority = false,
@@ -275,10 +263,9 @@ export function NexusRive(props: NexusRiveProps) {
     if (!mounted) return { allow: false, reason: "loading" as const };
     if (prefersReducedMotion()) return { allow: false, reason: "reduced" as const };
     if (!creativeAllowsRive()) {
-      const tier = detectCreativeCapabilities().tier;
       return {
         allow: false,
-        reason: (tier === "MINIMAL" ? "blocked" : "blocked") as const,
+        reason: "blocked" as const,
       };
     }
     return { allow: true, reason: "loading" as const };
