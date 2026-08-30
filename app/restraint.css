@@ -1,0 +1,33 @@
+/**
+ * Creative Sprint 52 — restraint: do not stack every effect.
+ * Soft caps; reduced motion already zeros transforms.
+ */
+
+/* Cards: one primary motion channel — lift OR subtle scale, not both exaggerated */
+.anime-card:hover .poster img,
+.anime-card:focus-within .poster img {
+  /* keep existing parallax small; do not add extra scale here */
+  filter: none;
+}
+
+/* No hover SFX affordance markers — silence is intentional */
+.anime-card[data-hover-sfx] {
+  /* reserved — do not wire */
+}
+
+/* Prefer border/background change over multi-layer glow stacks */
+.anime-card:hover {
+  box-shadow: var(--card-shadow-hover, 0 8px 24px rgba(0, 0, 0, 0.35));
+}
+
+/* Tool pages: avoid competing continuous animations */
+[data-tool-identity="stats"] .motion-pulse,
+[data-tool-identity="taste"] .motion-pulse {
+  animation: none;
+}
+
+/* MINIMAL tier: strip residual ornament */
+html[data-creative-tier="MINIMAL"] .ix-highlight::before,
+html[data-creative-tier="MINIMAL"] .poster-skel {
+  animation: none !important;
+}
