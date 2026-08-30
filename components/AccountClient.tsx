@@ -30,6 +30,7 @@ export function AccountClient() {
   } = useSession();
   const { replaceAll, entries } = useWatchlist();
   const [username, setUsername] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [malUser, setMalUser] = useState("");
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const [malBusy, setMalBusy] = useState(false);
@@ -152,7 +153,7 @@ export function AccountClient() {
     clearError();
     const timer = startProgress();
     try {
-      await connectQuick(username);
+      await connectQuick(username, rememberMe);
       finishProgress(true);
     } catch {
       finishProgress(false);
@@ -322,7 +323,36 @@ export function AccountClient() {
                   Sign in with AniList to authorize this app. Token is stored in
                   an httpOnly cookie on the server.
                 </p>
-                <a href="/api/anilist/auth" className="btn btn-accent btn-sm">
+                <label
+                  className="account-remember"
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "center",
+                    marginBottom: 10,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
+                  Remember me on this device
+                </label>
+                <a
+                  href="/api/anilist/auth"
+                  className="btn btn-accent btn-sm"
+                  onClick={() => {
+                    try {
+                      localStorage.setItem(
+                        "animenexus.session.remember.v1",
+                        rememberMe ? "1" : "0",
+                      );
+                    } catch {
+                      /* */
+                    }
+                  }}
+                >
                   Log in with AniList
                 </a>
               </>
@@ -366,6 +396,22 @@ export function AccountClient() {
                 {connecting ? "Connecting…" : "Quick login"}
               </button>
             </div>
+            <label
+              className="account-remember"
+              style={{
+                marginTop: 12,
+                display: "flex",
+                gap: 8,
+                alignItems: "center",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              Remember me on this device
+            </label>
           </form>
         </>
       ) : (
@@ -422,7 +468,7 @@ export function AccountClient() {
               className="btn btn-outline btn-sm"
               onClick={onDisconnect}
             >
-              Disconnect
+              Log out
             </button>
           </div>
         </div>
