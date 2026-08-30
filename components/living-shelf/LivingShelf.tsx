@@ -69,7 +69,8 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
   useEffect(() => {
     const b = siteBudgetFor(detectSitePerfTier());
     setBudget(b);
-    setGl(webglOk() && !b.shelfPreferFallback);
+    const rm = reducedMotionNow();
+    setGl(webglOk() && !b.shelfPreferFallback && !rm);
     getCinematography().setFocus("watchlist");
   }, []);
 
