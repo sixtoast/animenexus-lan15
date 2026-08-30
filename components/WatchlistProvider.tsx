@@ -18,13 +18,13 @@ import { fireSeal } from "@/components/SealMoment";
 import { recordCompletion } from "@/lib/lantern-memory";
 import { emitNexus } from "@/lib/nexus";
 import { markRecAccepted } from "@/lib/recommend-feedback";
+import { noteWatchlistOutcome, logOutcome } from "@/lib/outcome-events";
 
 type Ctx = {
   entries: WatchlistEntry[];
   ready: boolean;
   getEntry: (id: number) => WatchlistEntry | undefined;
   isInList: (id: number) => boolean;
-  /** Returns false if persistence failed — do not show seal. */
   add: (anime: Anime, status?: WatchStatus) => boolean;
   remove: (id: number) => boolean;
   setStatus: (id: number, status: WatchStatus) => boolean;
@@ -52,7 +52,6 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  /** Write first; only commit React state on success. */
   const commit = useCallback((next: WatchlistEntry[]): boolean => {
     const ok = writeWatchlist(next);
     if (ok) setEntries(next);
@@ -103,8 +102,10 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
           title: anime.title,
         });
         markRecAccepted(anime.id);
+        logOutcome(anime.id, "watchlisted", { surface: "watchlist_add" });
         if (status === "watching") {
           emitNexus({ type: "anime_started", animeId: anime.id });
+          logOutcome(anime.id, "started", { surface: "watchlist_add" });
           fireSeal(anime.title, "watching");
         } else if (status === "completed") {
           emitNexus({
@@ -112,6 +113,7 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
             animeId: anime.id,
             title: anime.title,
           });
+          logOutcome(anime.id, "completed", { surface: "watchlist_add" });
           recordCompletion({ id: anime.id, title: anime.title });
           fireSeal(anime.title, "completed");
         } else {
@@ -147,6 +149,20 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
       const ok = commit(next);
       if (!ok) return false;
 
+      if (current) {
+        queueMicrotask(() => {
+          noteWatchlistOutcome(
+            id,
+            {
+              status,
+              progress: current.progress,
+              episodes: current.episodes,
+            },
+            { status: current.watchStatus, progress: current.progress },
+          );
+        });
+      }
+
       if (
         status === "dropped" &&
         current &&
@@ -180,6 +196,7 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
 
   const setProgress = useCallback(
     (id: number, progress: number): boolean => {
+      const current = entries.find((e) => e.id === id);
       const next = entries.map((e) =>
         e.id === id
           ? {
@@ -189,7 +206,21 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
             }
           : e,
       );
-      return commit(next);
+      const ok = commit(next);
+      if (ok && current) {
+        queueMicrotask(() => {
+          noteWatchlistOutcome(
+            id,
+            {
+              status: current.watchStatus,
+              progress: Math.max(0, progress),
+              episodes: current.episodes,
+            },
+            { status: current.watchStatus, progress: current.progress },
+          );
+        });
+      }
+      return ok;
     },
     [entries, commit],
   );
