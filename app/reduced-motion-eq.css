@@ -1,0 +1,33 @@
+/**
+ * Sprint 39 — reduced-motion equivalents (visible, not blank).
+ */
+
+.nx-rive-fallback--reduced {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface, #1a1614) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, #f0a090) 22%, transparent);
+}
+
+.nx-rive-fallback--reduced .nx-rive-fallback-mark {
+  font-size: 1.15rem;
+  opacity: 0.85;
+  color: var(--accent, #f0a090);
+}
+
+.nx-rive-fallback--reduced[data-static-state="success"] .nx-rive-fallback-mark {
+  color: color-mix(in srgb, #7dcea0 80%, white);
+}
+
+.nx-rive-fallback--reduced[data-static-state="error"] .nx-rive-fallback-mark {
+  color: color-mix(in srgb, #e07070 85%, white);
+}
+
+/* View transitions already nulled under data-reduce-motion — keep opacity swap readable */
+html[data-reduce-motion="true"] .room-enter,
+html[data-reduce-motion="true"] .motion-enter {
+  animation: none !important;
+  opacity: 1;
+}

@@ -11,11 +11,24 @@ export type RiveFallbackProps = {
   children?: ReactNode;
   /** loading | reduced | error | blocked */
   reason?: "loading" | "reduced" | "error" | "blocked" | "empty";
+  /** Semantic static frame when reduced (idle / success / error) */
+  staticState?: "idle" | "success" | "error" | "pressed";
+};
+
+const STATIC_GLYPH: Record<
+  NonNullable<RiveFallbackProps["staticState"]>,
+  string
+> = {
+  idle: "○",
+  success: "✓",
+  error: "!",
+  pressed: "●",
 };
 
 /**
- * Non-animated stand-in when Rive is loading, disabled, or fails.
+ * Non-animated stand-in when Rive is loading, reduced-motion, or fails.
  * Presentation only — never owns focus or click handlers of the real control.
+ * Sprint 39: reduced path is a static state frame, not an empty hole.
  */
 export function RiveFallback({
   label,
@@ -23,7 +36,19 @@ export function RiveFallback({
   style,
   children,
   reason = "empty",
+  staticState = "idle",
 }: RiveFallbackProps) {
+  const glyph =
+    reason === "loading"
+      ? "…"
+      : reason === "error"
+        ? "!"
+        : reason === "reduced"
+          ? STATIC_GLYPH[staticState]
+          : reason === "blocked"
+            ? STATIC_GLYPH.idle
+            : "·";
+
   return (
     <div
       className={`nx-rive-fallback nx-rive-fallback--${reason} ${className}`.trim()}
@@ -32,10 +57,11 @@ export function RiveFallback({
       aria-label={label || undefined}
       aria-hidden={label ? undefined : true}
       data-rive-fallback={reason}
+      data-static-state={reason === "reduced" ? staticState : undefined}
     >
       {children ?? (
         <span className="nx-rive-fallback-mark" aria-hidden>
-          {reason === "loading" ? "…" : reason === "error" ? "!" : "·"}
+          {glyph}
         </span>
       )}
     </div>
