@@ -1,10 +1,11 @@
 /**
  * Preference Engine V2 — blends long-term clusters, drift, session intent,
- * and optional experiential Viewing Intent into ranking signals.
+ * Viewing Intent, and completion-weighted outcomes into ranking signals.
  */
 
 import type { Anime, WatchlistEntry } from "./types";
 import { sessionEvents, affinityForAnime } from "./behaviour-events";
+import { outcomeBoost } from "./outcome-events";
 import {
   buildTasteClusters,
   clusterAffinity,
@@ -54,7 +55,6 @@ export function buildPreferenceProfile(
   };
 }
 
-/** Infer short-term intent from last session behaviours + recent shelf touches. */
 function inferSessionIntent(entries: WatchlistEntry[]): IntentVector {
   let v = emptyIntent();
   const evs = sessionEvents().filter((e) => e.weight > 0);
@@ -89,7 +89,6 @@ export function scoreCandidate(
   profile: PreferenceProfile,
   opts?: {
     experienceSlug?: string;
-    /** already-exposed penalty */
     exposedRecently?: boolean;
   },
 ): RankSignals {
@@ -109,8 +108,8 @@ export function scoreCandidate(
   const intentScore = intentSimilarity(target, animeIntent);
 
   const affinity = anime.id ? Math.tanh(affinityForAnime(anime.id) / 8) : 0;
+  const outcomes = anime.id ? outcomeBoost(anime.id) : 0;
 
-  // Community quality prior
   const community =
     anime.score > 0
       ? anime.score > 10
@@ -118,7 +117,6 @@ export function scoreCandidate(
         : anime.score / 10
       : 0.45;
 
-  // Trend boost: if anime tags match upward drift dims
   let trendBoost = 0;
   const reasons: string[] = [];
   for (const t of profile.trends.slice(0, 4)) {
@@ -128,24 +126,22 @@ export function scoreCandidate(
     ) {
       trendBoost += 0.08 * t.strength * t.confidence;
       if (reasons.length < 2) {
-        reasons.push(
-          `Matches your recent lean into ${t.dimension}`,
-        );
+        reasons.push(`Matches your recent lean into ${t.dimension}`);
       }
     }
   }
 
   let score =
-    ca.score * 0.28 +
-    sim * 0.22 +
-    intentScore * 0.22 +
-    community * 0.18 +
+    ca.score * 0.26 +
+    sim * 0.2 +
+    intentScore * 0.2 +
+    community * 0.16 +
     Math.max(0, affinity) * 0.05 +
+    Math.max(0, outcomes) * 0.08 +
     trendBoost;
 
   if (opts?.exposedRecently) score -= 0.08;
 
-  // Fatigue: many recent high-affinity same-cluster opens → slight dampen
   if (ca.score > 0.7 && profile.clusters[0]?.id === ca.clusterId) {
     const topShare = profile.clusters[0]?.weight ?? 0;
     if (topShare > 0.55) score -= 0.04;
@@ -159,6 +155,9 @@ export function scoreCandidate(
   }
   if (sim > 0.55) {
     reasons.push("Resonance overlap with your shelf");
+  }
+  if (outcomes > 0.35) {
+    reasons.push("Prior outcomes with similar titles went somewhere");
   }
   if (profile.trendLine && reasons.length < 3) {
     reasons.push(profile.trendLine);
