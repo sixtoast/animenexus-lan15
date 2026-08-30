@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { OnAir } from "@/components/ui/OnAir";
 import { playCue } from "@/lib/sound-engine";
 import { NexusIcon } from "@/components/ui/NexusIcon";
+import { useSession } from "@/components/SessionProvider";
 
 const LINKS = [
   { href: "/", label: "Home", poetic: "Signal" },
@@ -39,6 +40,7 @@ export function Navbar() {
   const [closing, setClosing] = useState(false);
   const [logoPulse, setLogoPulse] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { session, ready, disconnect } = useSession();
   const listRef = useRef<HTMLUListElement>(null);
   const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const [indicator, setIndicator] = useState({
@@ -75,7 +77,6 @@ export function Navbar() {
     return () => window.removeEventListener("resize", measureIndicator);
   }, [measureIndicator]);
 
-  // Home return / first mount — subtle logo accent pulse
   useEffect(() => {
     if (pathname === "/") {
       setLogoPulse(true);
@@ -84,7 +85,6 @@ export function Navbar() {
     }
   }, [pathname]);
 
-  // Route change: light nav tick (not on every hover)
   useEffect(() => {
     if (prevPath.current !== pathname) {
       playCue("nav_tick");
@@ -198,6 +198,21 @@ export function Navbar() {
               <NexusIcon name="theme-dark" size="sm" />
             )}
           </Button>
+          {ready && session ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="nav-logout"
+              title={`Log out ${session.username}`}
+              aria-label="Log out"
+              onClick={() => {
+                disconnect();
+                playCue("filter_select");
+              }}
+            >
+              Log out
+            </Button>
+          ) : null}
           <Button
             variant="outline"
             size="sm"
@@ -266,6 +281,19 @@ export function Navbar() {
               })}
             </ul>
             <div className="nav-mobile-foot">
+              {ready && session ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    disconnect();
+                    playCue("filter_select");
+                    closeMenu();
+                  }}
+                >
+                  Log out · {session.username}
+                </Button>
+              ) : null}
               <Button
                 variant="ghost"
                 size="sm"
