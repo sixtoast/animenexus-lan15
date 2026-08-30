@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "generate:sfx": "node scripts/generate-ui-sfx.mjs",
+    "postinstall": "node scripts/generate-ui-sfx.mjs",
     "visual:routes": "node scripts/visual-routes.mjs"
   },
   "dependencies": {
