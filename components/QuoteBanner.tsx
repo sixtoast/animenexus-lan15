@@ -37,6 +37,43 @@ const FALLBACKS: Quote[] = [
   },
 ];
 
+function asName(v: unknown): string | undefined {
+  if (typeof v === "string" && v.trim()) return v.trim();
+  if (v && typeof v === "object" && "name" in v) {
+    const n = (v as { name?: unknown }).name;
+    if (typeof n === "string" && n.trim()) return n.trim();
+  }
+  return undefined;
+}
+
+function parseQuotePayload(data: unknown): Quote | null {
+  if (!data || typeof data !== "object") return null;
+  const root = data as Record<string, unknown>;
+  const nested =
+    root.data && typeof root.data === "object"
+      ? (root.data as Record<string, unknown>)
+      : root;
+
+  const qRaw =
+    nested.quote ?? nested.content ?? root.quote ?? root.content;
+  if (typeof qRaw !== "string" || !qRaw.trim()) return null;
+
+  const character =
+    asName(nested.character) ||
+    asName(root.character) ||
+    asName(nested.characterName);
+  const anime =
+    asName(nested.anime) ||
+    asName(root.anime) ||
+    asName(nested.animeName);
+
+  return {
+    quote: qRaw.trim(),
+    character,
+    anime,
+  };
+}
+
 async function fetchQuoteChain(): Promise<Quote> {
   const endpoints = [
     "https://api.animechan.io/v1/quotes/random",
@@ -47,21 +84,8 @@ async function fetchQuoteChain(): Promise<Quote> {
       const res = await fetch(url, { signal: AbortSignal.timeout(3500) });
       if (!res.ok) continue;
       const data = await res.json();
-      const q =
-        data?.quote ||
-        data?.content ||
-        data?.data?.content ||
-        data?.data?.quote;
-      const character =
-        data?.character?.name || data?.character || data?.data?.character;
-      const anime = data?.anime?.name || data?.anime || data?.data?.anime;
-      if (typeof q === "string" && q.trim()) {
-        return {
-          quote: q.trim(),
-          character: typeof character === "string" ? character : undefined,
-          anime: typeof anime === "string" ? anime : undefined,
-        };
-      }
+      const parsed = parseQuotePayload(data);
+      if (parsed) return parsed;
     } catch {
       /* try next */
     }
@@ -78,101 +102,70 @@ export function QuoteBanner() {
   const { showToast } = useToast();
 
   const accumulated = useRef(0);
-  const segmentStart = useRef(Date.now());
-  const pausedRef = useRef(false);
-  const reduceMotion = useRef(false);
+  const lastTs = useRef<number | null>(null);
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
 
-  useEffect(() => {
-    reduceMotion.current =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  }, []);
-
-  const resetTimer = () => {
-    accumulated.current = 0;
-    segmentStart.current = Date.now();
-    setProgress(0);
-  };
-
-  const load = useCallback(async (opts?: { soft?: boolean }) => {
-    if (!opts?.soft) setBusy(true);
+  const load = useCallback(async () => {
+    setBusy(true);
     setFade(true);
     try {
       const next = await fetchQuoteChain();
-      await new Promise((r) => setTimeout(r, reduceMotion.current ? 0 : 160));
       setQ(next);
-      resetTimer();
     } finally {
-      setFade(false);
       setBusy(false);
+      window.setTimeout(() => setFade(false), 40);
+      accumulated.current = 0;
+      setProgress(0);
     }
   }, []);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   useEffect(() => {
-    if (!q || busy) return;
-
     let raf = 0;
-    const tick = () => {
+    const tick = (ts: number) => {
+      if (lastTs.current == null) lastTs.current = ts;
+      const dt = ts - lastTs.current;
+      lastTs.current = ts;
       if (!pausedRef.current) {
-        const elapsed =
-          accumulated.current + (Date.now() - segmentStart.current);
-        const p = Math.min(1, elapsed / CYCLE_MS);
+        accumulated.current += dt;
+        const p = Math.min(1, accumulated.current / CYCLE_MS);
         setProgress(p);
         if (p >= 1) {
-          load({ soft: true });
-          return;
+          accumulated.current = 0;
+          void load();
         }
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [q, busy, load]);
-
-  function setPause(next: boolean) {
-    if (next === pausedRef.current) return;
-    if (next) {
-      accumulated.current += Date.now() - segmentStart.current;
-      pausedRef.current = true;
-      setPaused(true);
-    } else {
-      segmentStart.current = Date.now();
-      pausedRef.current = false;
-      setPaused(false);
-    }
-  }
-
-  async function copy() {
-    if (!q) return;
-    const line = q.character
-      ? `“${q.quote}” — ${q.character}${q.anime ? ` (${q.anime})` : ""}`
-      : `“${q.quote}”`;
-    try {
-      await navigator.clipboard.writeText(line);
-      showToast("Quote copied", "📖");
-    } catch {
-      showToast("Could not copy", "😅");
-    }
-  }
+  }, [load]);
 
   const pct = Math.round(progress * 100);
   const secsLeft = Math.max(0, Math.ceil((1 - progress) * (CYCLE_MS / 1000)));
 
+  function copy() {
+    if (!q) return;
+    const line =
+      q.character || q.anime
+        ? `“${q.quote}” — ${q.character || "Unknown"}${q.anime ? ` (${q.anime})` : ""}`
+        : `“${q.quote}”`;
+    void navigator.clipboard.writeText(line).then(() => {
+      showToast("Quote copied", "📖");
+    });
+  }
+
   return (
     <div
       className={"quote-banner" + (paused ? " is-paused" : "")}
-      onMouseEnter={() => setPause(true)}
-      onMouseLeave={() => setPause(false)}
-      onFocusCapture={() => setPause(true)}
-      onBlurCapture={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-          setPause(false);
-        }
-      }}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
     >
       <div className="quote-signal-row">
         <span className="quote-kicker">
@@ -180,7 +173,7 @@ export function QuoteBanner() {
           Signal quote
         </span>
         <span className="quote-timer-label" aria-live="polite">
-          {paused ? "Paused" : busy ? "Tuning…" : `${secsLeft}s`}
+          {paused ? "Paused" : `${secsLeft}s`}
         </span>
       </div>
 
@@ -215,10 +208,19 @@ export function QuoteBanner() {
         </div>
       </div>
 
-      {q?.character || q?.anime ? (
+      {q ? (
         <p className="quote-source">
-          — {q.character}
-          {q.anime ? ` · ${q.anime}` : ""}
+          <span className="quote-character">
+            {q.character || "Unknown speaker"}
+          </span>
+          {q.anime ? (
+            <>
+              <span className="quote-source-sep" aria-hidden>
+                {" · "}
+              </span>
+              <span className="quote-anime">{q.anime}</span>
+            </>
+          ) : null}
         </p>
       ) : null}
 
