@@ -1,11 +1,11 @@
 /**
- * Preference Engine V2 — blends long-term clusters, drift, session intent,
- * Viewing Intent, and completion-weighted outcomes into ranking signals.
+ * Preference Engine V2 — clusters, drift, session intent, outcomes, drop signatures.
  */
 
 import type { Anime, WatchlistEntry } from "./types";
 import { sessionEvents, affinityForAnime } from "./behaviour-events";
 import { outcomeBoost } from "./outcome-events";
+import { buildDropSignatures, dropPenalty } from "./drop-signatures";
 import {
   buildTasteClusters,
   clusterAffinity,
@@ -38,6 +38,7 @@ export type PreferenceProfile = {
   trendLine: string | null;
   sessionIntent: IntentVector;
   userResonance: ResonanceVector;
+  dropSignatures: ReturnType<typeof buildDropSignatures>;
 };
 
 export function buildPreferenceProfile(
@@ -52,6 +53,7 @@ export function buildPreferenceProfile(
     trendLine: trendSummary(trends),
     sessionIntent,
     userResonance: userResonance(entries),
+    dropSignatures: buildDropSignatures(entries),
   };
 }
 
@@ -141,6 +143,17 @@ export function scoreCandidate(
     trendBoost;
 
   if (opts?.exposedRecently) score -= 0.08;
+
+  const drop = dropPenalty(
+    profile.dropSignatures,
+    tags,
+    anime.format,
+    anime.episodes,
+  );
+  score -= drop.penalty;
+  for (const r of drop.reasons) {
+    if (reasons.length < 4) reasons.push(r);
+  }
 
   if (ca.score > 0.7 && profile.clusters[0]?.id === ca.clusterId) {
     const topShare = profile.clusters[0]?.weight ?? 0;

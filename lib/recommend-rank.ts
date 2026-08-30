@@ -1,6 +1,6 @@
 /**
  * Recommendation ranking (V2).
- * Similarity is one signal among: clusters, session intent, drift, quality, fatigue.
+ * Similarity is one signal among: clusters, session intent, drift, quality, fatigue, drops.
  */
 
 import type { Anime, WatchlistEntry } from "./types";
@@ -46,7 +46,6 @@ export function rankRecommendations(
   opts?: {
     excludeIds?: Set<number> | number[];
     resonanceWeight?: number;
-    /** Viewing Intent slug from /mood/[slug] */
     experienceSlug?: string;
   },
 ): RankedRecommendation[] {
@@ -68,7 +67,6 @@ export function rankRecommendations(
       experienceSlug: opts?.experienceSlug,
     });
 
-    // Optional legacy blend if caller still passes resonanceWeight
     let score = signals.score;
     if (opts?.resonanceWeight != null) {
       const rw = opts.resonanceWeight;
@@ -97,7 +95,6 @@ export function rankRecommendations(
 
   ranked.sort((a, b) => b.score - a.score);
 
-  // Light diversity: demote near-duplicates of top genres in the first 12
   const seenGenres = new Map<string, number>();
   for (let i = 0; i < Math.min(ranked.length, 24); i++) {
     const g = (ranked[i].anime.tags?.[0] || "").toLowerCase();
@@ -108,6 +105,28 @@ export function rankRecommendations(
   }
   ranked.sort((a, b) => b.score - a.score);
 
+  if (ranked.length >= 8) {
+    const n = ranked.length;
+    const topN = Math.ceil(n * 0.75);
+    const midN = Math.ceil(n * 0.9);
+    const top = ranked.slice(0, topN);
+    const mid = ranked.slice(topN, midN);
+    const tail = ranked.slice(midN);
+    const blended = [...top];
+    if (mid[0]) blended.splice(Math.min(5, blended.length), 0, mid[0]);
+    if (tail[0]) {
+      blended.splice(Math.min(7, blended.length), 0, {
+        ...tail[0],
+        confidence: "exploratory" as const,
+        reasons: [
+          ...tail[0].reasons,
+          "Exploration slot — adjacent, not random",
+        ].slice(0, 4),
+      });
+    }
+    return [...blended, ...mid.slice(1), ...tail.slice(1)];
+  }
+
   return ranked;
 }
 
@@ -117,7 +136,6 @@ export function whyThisIsHere(r: RankedRecommendation): string {
   return `${head}. ${body}`;
 }
 
-/** Expose trend line for UI intros. */
 export function preferenceTrendLine(entries: WatchlistEntry[]): string | null {
   return buildPreferenceProfile(entries).trendLine;
 }
@@ -128,7 +146,6 @@ export function preferenceClusterLabels(
   return buildPreferenceProfile(entries).clusters.map((c) => c.label);
 }
 
-// Keep resonance helpers available for explainers
 export function topUserResonanceLabels(entries: WatchlistEntry[], n = 3) {
   return topResonanceDims(userResonance(entries), n).map((d) =>
     resonanceLabel(d.dim),
