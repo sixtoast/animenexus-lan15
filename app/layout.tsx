@@ -84,6 +84,7 @@ import "./nexus-icon.css";
 import "./nexus-icon-optical.css";
 import "./rive.css";
 import "./tool-identity.css";
+import "./restraint.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus — Lantern",
