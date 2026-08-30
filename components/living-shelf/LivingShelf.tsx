@@ -6,6 +6,10 @@ import type { WatchlistEntry } from "@/lib/types";
 import { projectShelfObjects, type ShelfObject } from "@/lib/living-shelf";
 import { describeShelfPair, type ShelfRelationship } from "@/lib/shelf-resonance";
 import { detectSitePerfTier, siteBudgetFor } from "@/lib/perf-budgets";
+import {
+  creativeAllowsR3F,
+  creativeR3FDprCap,
+} from "@/lib/creative-runtime";
 import { getCinematography } from "@/lib/cinematography-store";
 import { ShelfFallback } from "./ShelfFallback";
 import { ShelfHUD } from "./ShelfHUD";
@@ -70,7 +74,12 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
     const b = siteBudgetFor(detectSitePerfTier());
     setBudget(b);
     const rm = reducedMotionNow();
-    setGl(webglOk() && !b.shelfPreferFallback && !rm);
+    setGl(
+      webglOk() &&
+        !b.shelfPreferFallback &&
+        !rm &&
+        creativeAllowsR3F(),
+    );
     getCinematography().setFocus("watchlist");
   }, []);
 
@@ -285,7 +294,7 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
           compareId={compareId}
           onSelect={onSelect}
           reducedMotion={reducedMotionNow()}
-          dprMax={budget.shelfDprMax}
+          dprMax={Math.min(budget.shelfDprMax, creativeR3FDprCap())}
           antialias={budget.shelfAntialias}
         />
       </div>
