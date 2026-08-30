@@ -227,14 +227,10 @@ function useInView(enabled: boolean) {
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
-          if (e.isIntersecting) {
-            setVisible(true);
-            io.disconnect();
-            break;
-          }
+          setVisible(!!e.isIntersecting);
         }
       },
-      { rootMargin: "80px" },
+      { rootMargin: "48px", threshold: 0.05 },
     );
     io.observe(node);
     return () => io.disconnect();
@@ -246,6 +242,7 @@ function useInView(enabled: boolean) {
 /**
  * AnimeNexus Rive host — gated by creative runtime, RM-safe, lazy WASM.
  * Native controls stay outside this component (presentation only).
+ * Continuous in-view + tab visibility: pause rather than burn GPU off-screen.
  */
 export function NexusRive(props: NexusRiveProps) {
   const {
@@ -269,6 +266,10 @@ export function NexusRive(props: NexusRiveProps) {
   }, []);
 
   const { setNode, visible } = useInView(mounted && !priority);
+  const [hasBeenVisible, setHasBeenVisible] = useState(priority);
+  useEffect(() => {
+    if (visible || priority) setHasBeenVisible(true);
+  }, [visible, priority]);
 
   const gate = useMemo(() => {
     if (!mounted) return { allow: false, reason: "loading" as const };
@@ -316,7 +317,7 @@ export function NexusRive(props: NexusRiveProps) {
     );
   }
 
-  if (!visible && !priority) {
+  if (!hasBeenVisible) {
     return (
       <div
         ref={setNode as (n: HTMLDivElement | null) => void}
@@ -337,7 +338,7 @@ export function NexusRive(props: NexusRiveProps) {
         <Suspense fallback={fallbackNode}>
           <LazyRiveInner
             {...props}
-            active={pageVisible}
+            active={pageVisible && (visible || priority)}
             width={width}
             height={height}
           />
