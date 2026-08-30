@@ -1,7 +1,7 @@
 /**
- * Session Cover Generator 2.0 (Creative Sprint 16).
+ * Session Cover Generator 2.0 (Creative Sprints 16 + 44).
  * Curated editorial layouts, deterministic from session data.
- * Canvas composition — Cloudinary optional for artwork fetch only.
+ * Each social ratio uses intentional padding/type scale — not one stretched layout.
  */
 
 import type { WatchlistEntry } from "./types";
@@ -13,10 +13,13 @@ import {
 } from "./resonance";
 
 export type SessionCoverRatio =
+  | "story"
   | "portrait"
   | "square"
+  | "x"
   | "landscape"
-  | "og";
+  | "og"
+  | "mobile";
 
 export type SessionCoverLayout =
   | "desk"
@@ -29,18 +32,19 @@ export const COVER_SIZES: Record<
   SessionCoverRatio,
   { width: number; height: number; label: string }
 > = {
-  portrait: { width: 1080, height: 1350, label: "Portrait social" },
+  story: { width: 1080, height: 1920, label: "Story (9:16)" },
+  portrait: { width: 1080, height: 1350, label: "Portrait (4:5)" },
   square: { width: 1080, height: 1080, label: "Square" },
+  x: { width: 1600, height: 900, label: "X / Twitter" },
   landscape: { width: 1920, height: 1080, label: "Landscape" },
   og: { width: 1200, height: 630, label: "Open Graph" },
+  mobile: { width: 1080, height: 1920, label: "Mobile save" },
 };
 
 export type SessionCoverInput = {
   entries: WatchlistEntry[];
-  /** Optional observation line from Lantern */
   observation?: string;
   date?: Date;
-  /** Minutes if known */
   durationMinutes?: number;
 };
 
@@ -53,7 +57,6 @@ export type SessionCoverModel = {
   statsLine: string;
   observation: string;
   resonanceLine: string;
-  /** Up to 3 cover image URLs for shelf layout */
   coverUrls: string[];
   accent: string;
 };
@@ -66,7 +69,6 @@ const LAYOUTS: SessionCoverLayout[] = [
   "minimal",
 ];
 
-/** Deterministic layout from shelf fingerprint */
 export function pickSessionCoverLayout(
   entries: WatchlistEntry[],
 ): SessionCoverLayout {
@@ -201,9 +203,17 @@ export async function renderSessionCover(
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, width, height);
 
-  const pad = Math.round(width * 0.06);
-  const titleSize = Math.round(width * 0.055);
-  const bodySize = Math.round(width * 0.028);
+  const tall =
+    model.ratio === "story" ||
+    model.ratio === "mobile" ||
+    model.ratio === "portrait";
+  const wide =
+    model.ratio === "x" ||
+    model.ratio === "landscape" ||
+    model.ratio === "og";
+  const pad = Math.round(width * (tall ? 0.08 : wide ? 0.05 : 0.06));
+  const titleSize = Math.round(width * (tall ? 0.07 : wide ? 0.042 : 0.055));
+  const bodySize = Math.round(width * (tall ? 0.032 : wide ? 0.024 : 0.028));
 
   ctx.fillStyle = model.accent;
   ctx.font = `600 ${Math.round(bodySize * 0.85)}px Georgia, "Times New Roman", serif`;
@@ -227,9 +237,9 @@ export async function renderSessionCover(
     const slotW =
       model.layout === "shelf"
         ? Math.round((width - pad * 2 - 24) / Math.max(urls.length, 1))
-        : Math.round(width * 0.28);
+        : Math.round(width * (wide ? 0.22 : 0.28));
     const slotH = Math.round(slotW * 1.5);
-    const top = Math.round(height * 0.32);
+    const top = Math.round(height * (tall ? 0.28 : 0.32));
     imgs.forEach((img, i) => {
       if (!img) return;
       const x = pad + i * (slotW + 12);
@@ -249,7 +259,7 @@ export async function renderSessionCover(
   }
 
   if (model.layout === "signal") {
-    const barTop = Math.round(height * 0.38);
+    const barTop = Math.round(height * (tall ? 0.42 : 0.38));
     const dims = model.resonanceLine.split(" · ").slice(0, 4);
     dims.forEach((label, i) => {
       const y = barTop + i * Math.round(bodySize * 2.2);
