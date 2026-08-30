@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate:sfx": "node scripts/generate-ui-sfx.mjs"
+    "generate:sfx": "node scripts/generate-ui-sfx.mjs",
+    "visual:routes": "node scripts/visual-routes.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.6",
