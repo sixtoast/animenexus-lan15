@@ -1,0 +1,33 @@
+/**
+ * Creative Sprint 48 — subtle personality per tool (one language, different accent).
+ */
+
+[data-tool-identity="radar"] .tools-hint,
+[data-tool-identity="radar"] .page-title {
+  letter-spacing: 0.04em;
+}
+
+[data-tool-identity="oracle"] .page-title {
+  font-family: var(--font-display, "Cormorant Garamond", Georgia, serif);
+}
+
+[data-tool-identity="challenge"] .state-box.ok {
+  border-color: color-mix(in srgb, #7dcea0 40%, transparent);
+}
+
+[data-tool-identity="challenge"] .state-box.bad {
+  border-color: color-mix(in srgb, #e07070 40%, transparent);
+}
+
+[data-tool-identity="taste"] .page-title,
+[data-tool-identity="stats"] .page-title {
+  letter-spacing: 0.02em;
+}
+
+[data-tool-identity="stats"] .tools-hint {
+  opacity: 0.85;
+}
+
+[data-tool-identity="sauce"] .sauce-drop {
+  border-style: dashed;
+}
