@@ -1,0 +1,65 @@
+/**
+ * Session Viewing Intent controls: intensity + energy tolerance.
+ * Stored locally; used as ranking constraints.
+ */
+
+export type IntentIntensity = "light" | "moderate" | "maximum";
+export type IntentEnergy = "low" | "medium" | "high";
+
+export type IntentSession = {
+  slug: string | null;
+  intensity: IntentIntensity;
+  energy: IntentEnergy;
+  minutesAvailable: number | null;
+};
+
+const KEY = "anime_nexus_intent_session_v1";
+
+const DEFAULT: IntentSession = {
+  slug: null,
+  intensity: "moderate",
+  energy: "medium",
+  minutesAvailable: null,
+};
+
+export function readIntentSession(): IntentSession {
+  if (typeof window === "undefined") return { ...DEFAULT };
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return { ...DEFAULT };
+    return { ...DEFAULT, ...JSON.parse(raw) };
+  } catch {
+    return { ...DEFAULT };
+  }
+}
+
+export function writeIntentSession(partial: Partial<IntentSession>): IntentSession {
+  const next = { ...readIntentSession(), ...partial };
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(next));
+    } catch {
+      /* */
+    }
+  }
+  return next;
+}
+
+/** Map intensity/energy onto intent fingerprint deltas. */
+export function intentControlOverlay(session: IntentSession): {
+  intensityScale: number;
+  cognitiveScale: number;
+  pacingBias: number;
+} {
+  const intensityScale =
+    session.intensity === "light"
+      ? 0.65
+      : session.intensity === "maximum"
+        ? 1.25
+        : 1;
+  const cognitiveScale =
+    session.energy === "low" ? 0.55 : session.energy === "high" ? 1.2 : 1;
+  const pacingBias =
+    session.energy === "low" ? -0.15 : session.energy === "high" ? 0.12 : 0;
+  return { intensityScale, cognitiveScale, pacingBias };
+}
