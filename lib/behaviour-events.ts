@@ -3,8 +3,6 @@
  * Not observing ≠ dislike. Exposure is tracked separately from engagement.
  */
 
-import { emitNexus } from "./nexus";
-
 const KEY = "anime_nexus_behaviour_v1";
 const MAX = 400;
 
@@ -32,7 +30,6 @@ export type BehaviourEvent = {
   at: string;
   kind: BehaviourKind;
   animeId?: number;
-  /** 0–1 relative strength hint for this event type */
   weight: number;
   meta?: {
     visibleMs?: number;
@@ -44,7 +41,6 @@ export type BehaviourEvent = {
   };
 };
 
-/** Heuristic interaction strengths (learnable later). */
 export const KIND_WEIGHT: Record<BehaviourKind, number> = {
   exposure: 0.05,
   hover: 0.15,
@@ -103,15 +99,6 @@ export function logBehaviour(
     meta: opts?.meta,
   };
   writeAll([ev, ...readAll()]);
-  try {
-    emitNexus({
-      type: "behaviour",
-      kind,
-      animeId: opts?.animeId,
-    } as never);
-  } catch {
-    /* soft */
-  }
 }
 
 export function readBehaviourEvents(opts?: {
@@ -134,7 +121,6 @@ export function readBehaviourEvents(opts?: {
   return list;
 }
 
-/** Session window ~ current browser session interactions (last 2h). */
 export function sessionEvents(): BehaviourEvent[] {
   return readBehaviourEvents({ sinceMs: 2 * 60 * 60 * 1000 });
 }
@@ -143,7 +129,6 @@ export function recentEvents(days: number): BehaviourEvent[] {
   return readBehaviourEvents({ sinceMs: days * 24 * 60 * 60 * 1000 });
 }
 
-/** Aggregate affinity score for an anime from implicit events. */
 export function affinityForAnime(animeId: number): number {
   const evs = readBehaviourEvents({ animeId });
   let score = 0;

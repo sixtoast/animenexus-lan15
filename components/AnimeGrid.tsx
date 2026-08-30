@@ -1,11 +1,14 @@
 import type { Anime } from "@/lib/types";
 import { AnimeCard } from "./AnimeCard";
+import { BehaviourTracker } from "./BehaviourTracker";
 
 type Props = {
   items: Anime[];
+  /** Log exposure / dwell for Preference Engine V2 */
+  trackBehaviour?: boolean;
 };
 
-export function AnimeGrid({ items }: Props) {
+export function AnimeGrid({ items, trackBehaviour }: Props) {
   if (!items.length) {
     return (
       <div className="state-box">
@@ -16,9 +19,15 @@ export function AnimeGrid({ items }: Props) {
 
   return (
     <div className="anime-grid">
-      {items.map((a, i) => (
-        <AnimeCard key={a.id} anime={a} index={i} />
-      ))}
+      {items.map((a, i) => {
+        const card = <AnimeCard key={a.id} anime={a} index={i} />;
+        if (!trackBehaviour) return card;
+        return (
+          <BehaviourTracker key={a.id} animeId={a.id} position={i}>
+            <AnimeCard anime={a} index={i} />
+          </BehaviourTracker>
+        );
+      })}
     </div>
   );
 }

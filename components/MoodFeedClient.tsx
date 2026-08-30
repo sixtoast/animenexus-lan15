@@ -3,20 +3,24 @@
 import { useMemo } from "react";
 import { AnimeGrid } from "@/components/AnimeGrid";
 import { useWatchlist } from "@/components/WatchlistProvider";
-import { rankRecommendations } from "@/lib/recommend-rank";
+import {
+  preferenceTrendLine,
+  rankRecommendations,
+} from "@/lib/recommend-rank";
 import { rejectedAnimeIds } from "@/lib/recommend-feedback";
 import type { Anime } from "@/lib/types";
 
 type Props = {
   items: Anime[];
   moodLabel: string;
+  /** Viewing Intent slug (e.g. comfort, destroy) */
+  experienceSlug?: string;
 };
 
 /**
- * Mood / seasonal catalog from the server, optionally re-ordered by shelf resonance.
- * Cold shelf → original API order (no disruption).
+ * Catalog from the server, re-ordered by Preference Engine V2 when shelf is warm.
  */
-export function MoodFeedClient({ items, moodLabel }: Props) {
+export function MoodFeedClient({ items, moodLabel, experienceSlug }: Props) {
   const { entries, ready } = useWatchlist();
 
   const ordered = useMemo(() => {
@@ -27,15 +31,19 @@ export function MoodFeedClient({ items, moodLabel }: Props) {
     ]);
     const ranked = rankRecommendations(items, entries, {
       excludeIds: exclude,
-      resonanceWeight: 0.6,
+      experienceSlug,
     });
     if (!ranked.length) return items;
     const rankedIds = new Set(ranked.map((r) => r.anime.id));
     const tail = items.filter((a) => !rankedIds.has(a.id));
     return [...ranked.map((r) => r.anime), ...tail];
-  }, [ready, entries, items]);
+  }, [ready, entries, items, experienceSlug]);
 
   const personalized = ready && entries.length >= 2;
+  const trend =
+    personalized && typeof window !== "undefined"
+      ? preferenceTrendLine(entries)
+      : null;
 
   return (
     <div>
@@ -46,11 +54,12 @@ export function MoodFeedClient({ items, moodLabel }: Props) {
           role="status"
           aria-live="polite"
         >
-          Ordered for your shelf within {moodLabel} — soft ranks, not a
-          scoreboard.
+          Ranked for your interest modes within {moodLabel}
+          {trend ? ` · ${trend}` : ""} — preference prediction, not pure
+          similarity.
         </p>
       ) : null}
-      <AnimeGrid items={ordered} />
+      <AnimeGrid items={ordered} trackBehaviour />
     </div>
   );
 }
