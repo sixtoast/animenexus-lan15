@@ -64,3 +64,17 @@
   flex-wrap: wrap;
   gap: 10px;
 }
+
+.account-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.account-remember input {
+  accent-color: var(--color-accent);
+}
