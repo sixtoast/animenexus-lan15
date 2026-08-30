@@ -1,6 +1,6 @@
 /**
  * AnimeNexus Sound Engine (Sprints 1 + 16 + 23).
- * Real AudioBuffer samples — not runtime oscillator beeps as primary path.
+ * Real AudioBuffer samples — synth fallback if WAV 404.
  */
 
 import {
@@ -88,22 +88,18 @@ function applyGains() {
   }
 }
 
-/** Brief duck of UI/nav when a celebration cue fires */
 function softDuck() {
   if (!ctx) return;
   for (const cat of ["ui", "navigation"] as SoundCategory[]) {
     const node = categoryGain.get(cat);
     if (!node) continue;
-    const base = prefs[cat] ?? 1;
     const t = ctx.currentTime;
-    node.gain.cancelScheduledValues(t);
     node.gain.setValueAtTime(node.gain.value, t);
-    node.gain.linearRampToValueAtTime(base * 0.35, t + 0.04);
-    node.gain.linearRampToValueAtTime(base, t + 0.35);
+    node.gain.linearRampToValueAtTime(node.gain.value * 0.35, t + 0.04);
+    node.gain.linearRampToValueAtTime(prefs[cat] ?? 1, t + 0.35);
   }
 }
 
-/** Must run from a user gesture. */
 export async function unlockSound(): Promise<void> {
   if (!ensureGraph() || !ctx) return;
   if (ctx.state === "suspended") {
@@ -200,7 +196,35 @@ export function playCue(id: SoundCueId, opts: PlayOptions = {}): void {
   }
   void fetchBuffer(id).then((b) => {
     if (b) run(b);
+    else synthFallback(id);
   });
+}
+
+/** When WAV is missing (404), still give a short click so UI is not silent. */
+function synthFallback(id: SoundCueId) {
+  if (!ctx || !masterGain) return;
+  const cat = categoryGain.get(SOUND_CUES[id]?.category || "ui");
+  if (!cat) return;
+  try {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    const t0 = ctx.currentTime;
+    osc.type = "sine";
+    osc.frequency.value = id.includes("error")
+      ? 180
+      : id.includes("success") || id === "complete"
+        ? 520
+        : 420;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.06, t0 + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.07);
+    osc.connect(g);
+    g.connect(cat);
+    osc.start(t0);
+    osc.stop(t0 + 0.08);
+  } catch {
+    /* */
+  }
 }
 
 export function initSoundEngine(): void {
