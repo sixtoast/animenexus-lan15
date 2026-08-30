@@ -2,9 +2,8 @@
  * Living watchlist queue: next-up, stale planning, resume, why-next.
  */
 
-import type { WatchlistEntry } from "./types";
+import type { Anime, WatchlistEntry } from "./types";
 import { buildPreferenceProfile, scoreCandidate } from "./preference-engine";
-import type { Anime } from "./types";
 
 export type QueueItem = {
   entry: WatchlistEntry;
@@ -17,15 +16,20 @@ function entryAsAnime(e: WatchlistEntry): Anime {
   return {
     id: e.id,
     title: e.title,
-    image: e.image,
-    score: e.score || 0,
+    description: "",
+    genre: (e.genres || e.tags || [])[0] || "",
     tags: e.tags || e.genres || [],
-    format: e.format || "TV",
+    status: "FINISHED",
+    format: (e.format as Anime["format"]) || "TV",
+    year: e.year || 0,
+    score: e.score || 0,
+    popularity: 0,
+    image: e.image,
+    anilist_id: e.id,
     episodes: typeof e.episodes === "number" ? e.episodes : 0,
     duration: e.duration || 24,
-    status: "FINISHED",
-    year: typeof e.year === "number" ? e.year : 0,
-  } as Anime;
+    studios: e.studios,
+  };
 }
 
 function daysSince(iso: string): number {
@@ -42,7 +46,6 @@ export function buildWatchlistQueue(
   const profile = buildPreferenceProfile(entries);
   const items: QueueItem[] = [];
 
-  // Resume: watching / paused with progress
   for (const e of entries) {
     if (
       e.watchStatus === "watching" ||
@@ -65,7 +68,6 @@ export function buildWatchlistQueue(
     }
   }
 
-  // Next-up: planning ranked by preference engine
   const planning = entries.filter((e) => e.watchStatus === "planning");
   for (const e of planning) {
     const signals = scoreCandidate(entryAsAnime(e), profile);
@@ -81,8 +83,6 @@ export function buildWatchlistQueue(
   }
 
   items.sort((a, b) => b.score - a.score);
-
-  // Prefer one resume first if any
   const resume = items.filter((i) => i.kind === "resume");
   const rest = items.filter((i) => i.kind !== "resume");
   return [...resume, ...rest].slice(0, limit);
