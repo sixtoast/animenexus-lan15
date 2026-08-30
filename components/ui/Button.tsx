@@ -6,7 +6,7 @@ import {
   type ButtonHTMLAttributes,
   type ReactNode,
 } from "react";
-import { playCue } from "@/lib/sound-engine";
+import { playCue, unlockSound } from "@/lib/sound-engine";
 import { getRiveAsset, type RiveAssetKey } from "@/lib/rive-assets";
 import { NexusRive } from "@/components/rive/NexusRive";
 import { resolveRiveState } from "@/components/rive/RiveStateBridge";
@@ -25,16 +25,11 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
-  /** Optional leading icon / emoji */
   leading?: ReactNode;
   fullWidth?: boolean;
-  /** Skip default ui_tap (seal / error / radar own their cues) */
   silent?: boolean;
-  /** Brief success flash after async work */
   success?: boolean;
-  /** Optional high-value Rive mark (Sprint 4) — missing .riv → CSS only */
   riveKey?: RiveAssetKey;
-  /** Real error from parent — drives Rive error state */
   error?: boolean;
 };
 
@@ -80,7 +75,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       (e: React.MouseEvent<HTMLButtonElement>) => {
         if (disabled || loading) return;
         if (!silent && !isDanger) {
-          playCue("ui_tap");
+          void unlockSound().then(() => playCue("ui_tap"));
         }
         onClick?.(e);
       },
