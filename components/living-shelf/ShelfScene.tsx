@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import type { ShelfObject } from "@/lib/living-shelf";
 import { groupShelfByCluster } from "@/lib/living-shelf";
+import { onPageVisibility } from "@/lib/creative-visibility";
 import { ShelfObjectMesh } from "./ShelfObjectMesh";
 
 function ClusterObjects({
@@ -57,10 +58,21 @@ export function ShelfScene({
   dprMax?: number;
   antialias?: boolean;
 }) {
+  const [pageVisible, setPageVisible] = useState(true);
+
+  useEffect(() => {
+    return onPageVisibility(setPageVisible);
+  }, []);
+
+  // demand = no continuous render when tab hidden or reduced motion
+  const frameloop =
+    !pageVisible || reducedMotion ? ("demand" as const) : ("always" as const);
+
   return (
     <Canvas
       className="shelf-canvas"
       dpr={[1, dprMax]}
+      frameloop={frameloop}
       camera={{ position: [0.2, 0.4, 5.2], fov: 42, near: 0.1, far: 40 }}
       gl={{
         antialias,
@@ -101,7 +113,7 @@ export function ShelfScene({
 
       <OrbitControls
         enablePan={false}
-        enableDamping={!reducedMotion}
+        enableDamping={!reducedMotion && pageVisible}
         dampingFactor={0.08}
         minDistance={3.2}
         maxDistance={9}
