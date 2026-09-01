@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MoodChips } from "@/components/MoodChips";
 import { MoodFeedClient } from "@/components/MoodFeedClient";
+import { MoodSessionBoot } from "@/components/MoodSessionBoot";
+import { BrowseSessionStrip } from "@/components/BrowseSessionStrip";
 import { fetchDiscover, fetchFiltered } from "@/lib/anilist";
 import { getMood, moodToFilters } from "@/lib/moods";
 import type { Metadata } from "next";
@@ -38,59 +40,42 @@ export default async function MoodPage({ params }: Props) {
       items = page.data;
       total = page.pagination.total;
       if (mood.minScore) {
-        items = items.filter((a) => {
-          const s = a.score > 10 ? a.score : a.score * 10;
-          return s >= mood.minScore!;
-        });
+        items = items.filter((a) => (a.score || 0) >= (mood.minScore || 0));
       }
     } else {
-      const filters = moodToFilters(mood);
-      const page = await fetchFiltered(filters, 1, 24);
+      const page = await fetchFiltered(moodToFilters(mood), 1, 24);
       items = page.data;
       total = page.pagination.total;
-      if (mood.minScore) {
-        items = items.filter((a) => {
-          const s = a.score > 10 ? a.score : a.score * 10;
-          return s >= mood.minScore!;
-        });
-      }
     }
   } catch (e) {
-    error = e instanceof Error ? e.message : "Failed to reach AniList";
+    error = e instanceof Error ? e.message : "Failed to load";
   }
 
   return (
     <main>
-      <section className="hero" style={{ paddingBottom: 16 }}>
+      <MoodSessionBoot slug={mood.slug} />
+      <section className="hero" style={{ paddingBottom: 8 }}>
         <div className="container">
-          <div className="hero-badge">
-            Viewing intent · {mood.emoji} {mood.label}
-          </div>
+          <div className="hero-badge">Tonight · viewing intent</div>
           <h1>
-            What kind of night · <span>{mood.label}</span>
+            {mood.emoji} {mood.label}
           </h1>
           <p>{mood.blurb}</p>
-          <p className="meta" style={{ marginTop: 8 }}>
-            Intent steers ranking — it is not a genre filter alone.
-          </p>
-          <div style={{ marginTop: 20 }}>
-            <MoodChips active={mood.slug} />
-          </div>
+          <MoodChips active={mood.slug} />
         </div>
       </section>
 
       <section className="container" style={{ paddingBottom: 48 }}>
         <div className="section-head">
           <h2>
-            <span className="accent">{mood.emoji}</span> Candidates for this
-            intent
+            <span className="accent">📡</span> Feed
           </h2>
           <span className="meta">
-            {error
-              ? "—"
-              : `${items.length} shown${total ? ` · ${total.toLocaleString()} match` : ""}`}
+            {error ? "—" : `${items.length} shown${total ? ` · ${total.toLocaleString()} total` : ""}`}
           </span>
         </div>
+
+        <BrowseSessionStrip />
 
         {error ? (
           <div className="state-box error">
