@@ -38,6 +38,7 @@ import { StudioLinks } from "@/components/StudioLinks";
 import { FranchisePathPanel } from "@/components/FranchisePathPanel";
 import { DeskNoteEditor } from "@/components/DeskNoteEditor";
 import { ShareTitleButton } from "@/components/ShareTitleButton";
+import { QuickOutcomeControls } from "@/components/QuickOutcomeControls";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -237,6 +238,7 @@ export default async function AnimeDetailPage({ params }: Props) {
             ) : null}
 
             <AddToWatchlist anime={anime} />
+            <QuickOutcomeControls animeId={anime.id} surface="detail" />
             <div className="detail-actions" style={{ marginTop: 12 }}>
               <Link href="/watchlist" className="btn btn-outline btn-sm">
                 Open watchlist
