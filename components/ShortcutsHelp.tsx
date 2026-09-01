@@ -18,6 +18,7 @@ const ROWS: { keys: string; action: string }[] = [
   { keys: "?", action: "This shortcuts panel" },
   { keys: "Esc", action: "Close overlays / palette" },
   { keys: "FAB ✦", action: "Tonight, Break, Flashback, theme, tools" },
+  { keys: "Home packs", action: "Tonight feel chips → experience browse" },
 ];
 
 export function ShortcutsHelp() {

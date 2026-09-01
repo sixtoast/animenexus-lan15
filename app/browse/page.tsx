@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { BrowseClient } from "@/components/BrowseClient";
 import { fetchDiscover, fetchFiltered, searchAnime } from "@/lib/anilist";
 import type { AnimeFilters, DiscoverFeed } from "@/lib/types";
+import { getExperienceIntent } from "@/lib/viewing-intent";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +16,20 @@ function one(v: string | string[] | undefined): string {
 
 async function loadInitial(sp: Record<string, string | string[] | undefined>) {
   const q = one(sp.q).trim();
-  const genre = one(sp.genre);
+  let genre = one(sp.genre);
   const status = one(sp.status);
   const format = one(sp.format);
   const year = one(sp.year);
-  const sort = (one(sp.sort) || "score") as AnimeFilters["sort"];
+  let sort = (one(sp.sort) || "score") as AnimeFilters["sort"];
   const feed = (one(sp.feed) || "trending") as DiscoverFeed;
+  const experience = one(sp.experience);
+  const exp = experience ? getExperienceIntent(experience) : undefined;
+
+  // Soft seed from experiential pack when user didn't set hard filters
+  if (exp && !q) {
+    if (!genre && exp.genreHints[0]) genre = exp.genreHints[0];
+    if (!one(sp.sort) && exp.sort) sort = exp.sort as AnimeFilters["sort"];
+  }
 
   try {
     if (q) {
@@ -32,7 +41,7 @@ async function loadInitial(sp: Record<string, string | string[] | undefined>) {
         error: null as string | null,
       };
     }
-    if (genre || status || format || year) {
+    if (genre || status || format || year || exp) {
       const filters: AnimeFilters = {
         genre: genre || undefined,
         status: status || undefined,
@@ -78,25 +87,26 @@ export default async function BrowsePage({
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">Browse · catalog</div>
-          <h1>
-            Find a <span>signal</span>
-          </h1>
-          <p>
-            Search titles or describe a night — e.g. “something funny and short”.
-            Filters stay soft; shelf blend ranks when you have a list.
+          <p className="kicker">Catalog</p>
+          <h1>Browse the signal</h1>
+          <p className="hero-lead">
+            Search, filters, and feeds — shelf blend ranks results for you when
+            you have a list.
           </p>
         </div>
       </section>
-      <section className="container" style={{ paddingBottom: 48 }}>
-        <Suspense fallback={<p className="meta">Opening catalog…</p>}>
-          <BrowseClient
-            initialItems={items}
-            initialTotal={total}
-            initialHasNext={hasNext}
-            initialError={error}
-          />
-        </Suspense>
+
+      <section className="section" style={{ paddingTop: 0 }}>
+        <div className="container">
+          <Suspense fallback={null}>
+            <BrowseClient
+              initialItems={items}
+              initialTotal={total}
+              initialHasNext={hasNext}
+              initialError={error}
+            />
+          </Suspense>
+        </div>
       </section>
     </main>
   );
