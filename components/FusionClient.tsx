@@ -12,7 +12,7 @@ import { rejectedAnimeIds } from "@/lib/recommend-feedback";
 import { emitNexus } from "@/lib/nexus";
 import { readIntentSession } from "@/lib/intent-session";
 import { useSessionRevision } from "@/lib/use-session-revision";
-import { getExperienceIntent } from "@/lib/viewing-intent";
+import { SessionRankHint } from "@/components/SessionRankHint";
 
 export function FusionClient() {
   const { entries, ready } = useWatchlist();
@@ -83,18 +83,6 @@ export function FusionClient() {
   }, [raw, ready, entries, a, b, sessionKey]);
 
   const shelfTuned = ready && entries.length >= 2 && recs.length > 0;
-  const session = useMemo(() => readIntentSession(), [sessionKey]);
-  const sessionLine = useMemo(() => {
-    const bits: string[] = [];
-    if (session.slug) {
-      const exp = getExperienceIntent(session.slug);
-      bits.push(exp?.label || session.slug);
-    }
-    if (session.intensity !== "moderate") bits.push(session.intensity);
-    if (session.energy !== "medium") bits.push(session.energy);
-    if (session.minutesAvailable) bits.push(`${session.minutesAvailable}m`);
-    return bits.join(" · ");
-  }, [session]);
 
   return (
     <div className="tools-panel">
@@ -137,22 +125,16 @@ export function FusionClient() {
             <h3 style={{ fontSize: "1rem", marginBottom: 12 }}>
               Catalog children (genre blend)
             </h3>
-            {sessionLine ? (
-              <p className="tools-hint" role="status" aria-live="polite">
-                Ranking with · {sessionLine}{" · "}
-                <Link
-                  href="/"
-                  className="btn btn-ghost btn-sm"
-                  style={{ display: "inline", padding: "0 4px", minHeight: 0 }}
-                >
-                  Edit on home
-                </Link>
-              </p>
-            ) : shelfTuned ? (
-              <p className="tools-hint" role="status" aria-live="polite">
-                Soft-ranked for your shelf within this blend — not a scoreboard.
-              </p>
-            ) : null}
+            <SessionRankHint
+              fallback={
+                shelfTuned ? (
+                  <p className="tools-hint" role="status" aria-live="polite">
+                    Soft-ranked for your shelf within this blend — not a
+                    scoreboard.
+                  </p>
+                ) : null
+              }
+            />
             {loading ? (
               <p className="tools-hint">Scanning AniList…</p>
             ) : recs.length ? (
