@@ -1,6 +1,7 @@
 import "../cold-start.css";
 import { Suspense } from "react";
 import { BrowseClient } from "@/components/BrowseClient";
+import { BrowseSessionStrip } from "@/components/BrowseSessionStrip";
 import { fetchDiscover, fetchFiltered, searchAnime } from "@/lib/anilist";
 import type { AnimeFilters, DiscoverFeed } from "@/lib/types";
 import { getExperienceIntent } from "@/lib/viewing-intent";
@@ -98,6 +99,9 @@ export default async function BrowsePage({
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
+        <Suspense fallback={null}>
+          <BrowseSessionStrip />
+        </Suspense>
         <Suspense fallback={<p className="meta">Opening catalog…</p>}>
           <BrowseClient
             initialItems={items}
