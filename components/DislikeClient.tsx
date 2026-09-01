@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import type { Anime } from "@/lib/types";
 import { AnimeSearchPicker } from "@/components/AnimeSearchPicker";
 import { AnimeCard } from "@/components/AnimeCard";
@@ -19,6 +20,9 @@ import {
   REJECT_REASON_LABELS,
   type RejectReason,
 } from "@/lib/recommend-feedback";
+import { readIntentSession } from "@/lib/intent-session";
+import { useSessionRevision } from "@/lib/use-session-revision";
+import { getExperienceIntent } from "@/lib/viewing-intent";
 
 const ALT: Record<string, string[]> = {
   Action: ["Slice of Life", "Romance", "Comedy"],
@@ -33,6 +37,7 @@ const ALT: Record<string, string[]> = {
 
 export function DislikeClient() {
   const { entries } = useWatchlist();
+  const sessionKey = useSessionRevision();
   const [anime, setAnime] = useState<Anime | null>(null);
   const [raw, setRaw] = useState<Anime[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,8 +52,25 @@ export function DislikeClient() {
       ...rejectedAnimeIds(),
       ...(anime ? [anime.id] : []),
     ]);
-    return rankRecommendations(raw, entries, { excludeIds: exclude });
-  }, [raw, entries, anime]);
+    const sess = readIntentSession();
+    return rankRecommendations(raw, entries, {
+      excludeIds: exclude,
+      experienceSlug: sess.slug || undefined,
+    });
+  }, [raw, entries, anime, sessionKey]);
+
+  const session = useMemo(() => readIntentSession(), [sessionKey]);
+  const sessionLine = useMemo(() => {
+    const bits: string[] = [];
+    if (session.slug) {
+      const exp = getExperienceIntent(session.slug);
+      bits.push(exp?.label || session.slug);
+    }
+    if (session.intensity !== "moderate") bits.push(session.intensity);
+    if (session.energy !== "medium") bits.push(session.energy);
+    if (session.minutesAvailable) bits.push(`${session.minutesAvailable}m`);
+    return bits.join(" · ");
+  }, [session]);
 
   useEffect(() => {
     for (const r of ranked.slice(0, 12)) {
@@ -117,6 +139,18 @@ export function DislikeClient() {
       {alts.length > 0 ? (
         <p className="tools-hint" style={{ marginTop: 12 }}>
           Steering toward: {alts.join(" · ")}
+        </p>
+      ) : null}
+      {sessionLine ? (
+        <p className="tools-hint" role="status" style={{ marginTop: 8 }}>
+          Ranking with · {sessionLine}{" · "}
+          <Link
+            href="/"
+            className="btn btn-ghost btn-sm"
+            style={{ display: "inline", padding: "0 4px", minHeight: 0 }}
+          >
+            Edit on home
+          </Link>
         </p>
       ) : null}
 
