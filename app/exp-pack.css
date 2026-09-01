@@ -1,0 +1,50 @@
+.exp-pack-strip {
+  margin: 0.75rem 0 1.25rem;
+}
+
+.exp-pack-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.exp-pack-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 220, 200, 0.14);
+  background: rgba(28, 18, 16, 0.55);
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.exp-pack-chip:hover,
+.exp-pack-chip:focus-visible {
+  border-color: rgba(240, 160, 144, 0.45);
+  background: rgba(40, 24, 20, 0.7);
+}
+
+.exp-pack-emoji {
+  font-size: 1.05rem;
+}
+
+.exp-pack-label {
+  font-weight: 500;
+}
+
+.nav-sound-toggle {
+  min-width: 40px;
+  min-height: 40px;
+}
+
+@media (max-width: 640px) {
+  .exp-pack-chip {
+    flex: 1 1 calc(50% - 8px);
+    justify-content: center;
+  }
+}
