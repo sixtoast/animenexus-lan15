@@ -17,6 +17,7 @@ import { ConfettiHost } from "@/components/ConfettiBurst";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { SoftBtnSounds } from "@/components/SoftBtnSounds";
 import { GlobalNavKeys } from "@/components/GlobalNavKeys";
+import { RouteAnnouncer } from "@/components/RouteAnnouncer";
 import { LoadingTheater } from "@/components/LoadingTheater";
 import { RoomEnter } from "@/components/RoomEnter";
 import { RouteTune } from "@/components/RouteTune";
@@ -44,6 +45,7 @@ import "./ai-panel.css";
 import "./cmdk.css";
 import "./cmdk-intent.css";
 import "./quick-outcome.css";
+import "./exp-pack.css";
 import "./ancestry.css";
 import "./session-tools.css";
 import "./oracle-vibe.css";
@@ -186,6 +188,7 @@ export default function RootLayout({
                       <ShortcutsHelp />
                       <SoftBtnSounds />
                       <GlobalNavKeys />
+                      <RouteAnnouncer />
                       <LoadingTheater />
                       <footer className="site-footer">
                         <div className="container site-footer-inner">
