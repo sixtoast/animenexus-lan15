@@ -1,3 +1,4 @@
+import "../cold-start.css";
 import { Suspense } from "react";
 import { BrowseClient } from "@/components/BrowseClient";
 import { fetchDiscover, fetchFiltered, searchAnime } from "@/lib/anilist";
@@ -14,22 +15,12 @@ function one(v: string | string[] | undefined): string {
 
 async function loadInitial(sp: Record<string, string | string[] | undefined>) {
   const q = one(sp.q).trim();
-  const feed = (one(sp.feed) as DiscoverFeed) || "trending";
-  const filters: AnimeFilters = {
-    genre: one(sp.genre) || undefined,
-    status: one(sp.status) || undefined,
-    format: one(sp.format) || undefined,
-    year: one(sp.year) || undefined,
-    sort: (one(sp.sort) as AnimeFilters["sort"]) || "score",
-    adultFilter: "exclude",
-    search: q || undefined,
-  };
-
-  const hasFilter =
-    Boolean(filters.genre) ||
-    Boolean(filters.status) ||
-    Boolean(filters.format) ||
-    Boolean(filters.year);
+  const genre = one(sp.genre);
+  const status = one(sp.status);
+  const format = one(sp.format);
+  const year = one(sp.year);
+  const sort = (one(sp.sort) || "score") as AnimeFilters["sort"];
+  const feed = (one(sp.feed) || "trending") as DiscoverFeed;
 
   try {
     if (q) {
@@ -41,7 +32,15 @@ async function loadInitial(sp: Record<string, string | string[] | undefined>) {
         error: null as string | null,
       };
     }
-    if (hasFilter) {
+    if (genre || status || format || year) {
+      const filters: AnimeFilters = {
+        genre: genre || undefined,
+        status: status || undefined,
+        format: format || undefined,
+        year: year || undefined,
+        sort: sort || "score",
+        adultFilter: "exclude",
+      };
       const page = await fetchFiltered(filters, 1, 24);
       return {
         items: page.data,
@@ -62,7 +61,7 @@ async function loadInitial(sp: Record<string, string | string[] | undefined>) {
       items: [],
       total: 0,
       hasNext: false,
-      error: e instanceof Error ? e.message : "Failed to reach AniList",
+      error: e instanceof Error ? e.message : "Failed to load catalog",
     };
   }
 }
@@ -73,38 +72,29 @@ export default async function BrowsePage({
   searchParams: SearchParams;
 }) {
   const sp = await searchParams;
-  const initial = await loadInitial(sp);
+  const { items, total, hasNext, error } = await loadInitial(sp);
 
   return (
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">Browse · Sprint 2</div>
+          <div className="hero-badge">Browse · catalog</div>
           <h1>
-            Discover <span>catalog</span>
+            Find a <span>signal</span>
           </h1>
           <p>
-            Search, filter by genre and year, or switch feeds. Results stay in
-            the URL so you can share a frequency.
+            Search titles or describe a night — e.g. “something funny and short”.
+            Filters stay soft; shelf blend ranks when you have a list.
           </p>
         </div>
       </section>
-
       <section className="container" style={{ paddingBottom: 48 }}>
-        <Suspense
-          fallback={
-            <div className="state-box">
-              <div className="spinner" />
-              <p>Tuning the antenna…</p>
-            </div>
-          }
-        >
+        <Suspense fallback={<p className="meta">Opening catalog…</p>}>
           <BrowseClient
-            key={JSON.stringify(sp)}
-            initialItems={initial.items}
-            initialTotal={initial.total}
-            initialHasNext={initial.hasNext}
-            initialError={initial.error}
+            initialItems={items}
+            initialTotal={total}
+            initialHasNext={hasNext}
+            initialError={error}
           />
         </Suspense>
       </section>
