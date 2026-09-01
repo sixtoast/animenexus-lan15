@@ -32,6 +32,7 @@ export function HomeDashboard({ trending = [] }: Props) {
   const [recent, setRecent] = useState<RecentView[]>([]);
   const [hiddenIds, setHiddenIds] = useState<Set<number>>(() => new Set());
   const [intentSlug, setIntentSlug] = useState<string | null>(null);
+  const [sessionKey, setSessionKey] = useState(0);
   const shownRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
@@ -44,12 +45,14 @@ export function HomeDashboard({ trending = [] }: Props) {
     }
     setRecent(readMemory().recentViews.slice(0, 10));
     setIntentSlug(readIntentSession().slug);
+    setSessionKey((k) => k + 1);
   }, [showToast]);
 
   useEffect(() => {
     const refresh = () => {
       setRecent(readMemory().recentViews.slice(0, 10));
       setIntentSlug(readIntentSession().slug);
+      setSessionKey((k) => k + 1);
     };
     window.addEventListener("focus", refresh);
     window.addEventListener("animenexus:intent", refresh);
@@ -90,12 +93,46 @@ export function HomeDashboard({ trending = [] }: Props) {
       ...rejectedAnimeIds(),
       ...hiddenIds,
     ]);
-    return rankRecommendations(trending, entries, {
+    const sess = readIntentSession();
+    let list = rankRecommendations(trending, entries, {
       excludeIds: exclude,
       resonanceWeight: 0.7,
       experienceSlug: intentSlug || undefined,
-    }).slice(0, 8);
-  }, [ready, entries, trending, hiddenIds, intentSlug]);
+    });
+    const minutes = sess.minutesAvailable;
+    if (minutes != null && minutes > 0) {
+      list = [...list].sort((a, b) => {
+        const da = a.anime.duration || 24;
+        const db = b.anime.duration || 24;
+        const fitA = Math.abs(da - minutes) + (da > minutes + 5 ? 40 : 0);
+        const fitB = Math.abs(db - minutes) + (db > minutes + 5 ? 40 : 0);
+        return fitA - fitB || b.score - a.score;
+      });
+    }
+    if (sess.energy === "low") {
+      list = list.map((r) => {
+        const tags = (r.anime.tags || []).map((t) => t.toLowerCase());
+        const heavy = tags.some((t) =>
+          ["psychological", "thriller", "mecha", "horror"].some((x) =>
+            t.includes(x),
+          ),
+        );
+        return heavy ? { ...r, score: r.score * 0.88 } : r;
+      });
+      list.sort((a, b) => b.score - a.score);
+    }
+    if (sess.intensity === "light") {
+      list = list.map((r) => {
+        const tags = (r.anime.tags || []).map((t) => t.toLowerCase());
+        const intense = tags.some((t) =>
+          ["horror", "thriller", "psychological"].some((x) => t.includes(x)),
+        );
+        return intense ? { ...r, score: r.score * 0.9 } : r;
+      });
+      list.sort((a, b) => b.score - a.score);
+    }
+    return list.slice(0, 8);
+  }, [ready, entries, trending, hiddenIds, intentSlug, sessionKey]);
 
   useEffect(() => {
     for (const r of forYou) {
