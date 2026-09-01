@@ -100,6 +100,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         type={type}
+        data-nx-button
         disabled={disabled || loading}
         aria-busy={loading || undefined}
         data-success={success || undefined}
