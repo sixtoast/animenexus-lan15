@@ -22,6 +22,9 @@ import { Button } from "@/components/ui/Button";
 import { RadarInstrument } from "@/components/rive/RadarInstrument";
 import { WhyThisIsHere } from "@/components/WhyThisIsHere";
 import { playCue } from "@/lib/sound-engine";
+import { readIntentSession } from "@/lib/intent-session";
+import { useSessionRevision } from "@/lib/use-session-revision";
+import { getExperienceIntent } from "@/lib/viewing-intent";
 import {
   formatAirTime,
   groupContactsByWindow,
@@ -89,6 +92,7 @@ const WINDOW_LABEL: Record<TimeWindow, string> = {
 const BAND_LABEL = { raw: "RAW", sub: "SUB", dub: "DUB" } as const;
 
 export function RadarClient() {
+  const sessionKey = useSessionRevision();
   const { entries, ready } = useWatchlist();
   const [prefs, setPrefs] = useState<Prefs>({ genre: "", studio: "" });
   const [alerts, setAlerts] = useState(false);
@@ -213,13 +217,27 @@ export function RadarClient() {
       ...entries.map((e) => e.id),
       ...rejectedAnimeIds(),
     ]);
+    const sess = readIntentSession();
     return rankRecommendations(raw, entries, {
       excludeIds: exclude,
       resonanceWeight: 0.5,
+      experienceSlug: sess.slug || undefined,
     });
-  }, [raw, ready, entries]);
+  }, [raw, ready, entries, sessionKey]);
 
   const shelfTuned = ready && entries.length >= 2 && ranked.length > 0;
+  const session = useMemo(() => readIntentSession(), [sessionKey]);
+  const sessionLine = useMemo(() => {
+    const bits: string[] = [];
+    if (session.slug) {
+      const exp = getExperienceIntent(session.slug);
+      bits.push(exp?.label || session.slug);
+    }
+    if (session.intensity !== "moderate") bits.push(session.intensity);
+    if (session.energy !== "medium") bits.push(session.energy);
+    if (session.minutesAvailable) bits.push(`${session.minutesAvailable}m`);
+    return bits.join(" · ");
+  }, [session]);
   const scanning =
     phase === "scanning" || phase === "signal" || phase === "identify";
   const phaseMeta =
@@ -236,7 +254,6 @@ export function RadarClient() {
     try {
       localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
 
-      // Phase advances with real work — no fixed theatre delays
       setPhase("signal");
       playCue("radar_ping");
 
@@ -499,6 +516,9 @@ export function RadarClient() {
               role="status"
               aria-live="polite"
             >
+              {sessionLine
+                ? `Ranking with · ${sessionLine}. `
+                : ""}
               Contacts soft-ranked for your shelf — still a radar, not a
               scoreboard.
             </p>
