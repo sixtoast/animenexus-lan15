@@ -2,6 +2,7 @@ import "./detail.css";
 import "../../detail-trailer.css";
 import "../../watchlist-queue.css";
 import "../../franchise-path.css";
+import "../../desk-notes.css";
 import "./sprint-b-detail.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -35,6 +36,7 @@ import { DetailTrailer } from "@/components/DetailTrailer";
 import { DetailDeferred } from "@/components/DetailDeferred";
 import { StudioLinks } from "@/components/StudioLinks";
 import { FranchisePathPanel } from "@/components/FranchisePathPanel";
+import { DeskNoteEditor } from "@/components/DeskNoteEditor";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -373,6 +375,8 @@ export default async function AnimeDetailPage({ params }: Props) {
           title={anime.title}
           image={anime.image}
         />
+
+        <DeskNoteEditor animeId={anime.id} title={anime.title} />
 
         {hasThemes ? (
           <section className="detail-section">
