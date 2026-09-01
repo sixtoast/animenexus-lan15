@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import { EXPERIENCE_INTENTS } from "@/lib/viewing-intent";
-import { writeIntentSession } from "@/lib/intent-session";
+import { readIntentSession, writeIntentSession } from "@/lib/intent-session";
 import { playCue } from "@/lib/sound-engine";
+import { sessionToSearchParams } from "@/lib/session-url";
 
 /** Experiential packs — steers browse/ranker without genre-only thinking. */
 export function ExperiencePackStrip() {
   const packs = EXPERIENCE_INTENTS.slice(0, 8);
+
+  function hrefFor(slug: string) {
+    const sess = { ...readIntentSession(), slug };
+    const q = sessionToSearchParams(sess);
+    q.set("experience", slug);
+    return `/browse?${q.toString()}`;
+  }
 
   return (
     <section className="exp-pack-strip" aria-label="Experience packs">
@@ -19,7 +27,7 @@ export function ExperiencePackStrip() {
         {packs.map((p) => (
           <Link
             key={p.slug}
-            href={`/browse?experience=${encodeURIComponent(p.slug)}`}
+            href={hrefFor(p.slug)}
             className="exp-pack-chip"
             title={p.blurb}
             onClick={() => {
