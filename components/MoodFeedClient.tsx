@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { AnimeGrid } from "@/components/AnimeGrid";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import {
@@ -9,12 +9,12 @@ import {
 } from "@/lib/recommend-rank";
 import { rejectedAnimeIds } from "@/lib/recommend-feedback";
 import { readIntentSession } from "@/lib/intent-session";
+import { useSessionRevision } from "@/lib/use-session-revision";
 import type { Anime } from "@/lib/types";
 
 type Props = {
   items: Anime[];
   moodLabel: string;
-  /** Viewing Intent slug (e.g. comfort, destroy) */
   experienceSlug?: string;
 };
 
@@ -24,17 +24,7 @@ type Props = {
  */
 export function MoodFeedClient({ items, moodLabel, experienceSlug }: Props) {
   const { entries, ready } = useWatchlist();
-  const [sessionKey, setSessionKey] = useState(0);
-
-  useEffect(() => {
-    const refresh = () => setSessionKey((k) => k + 1);
-    window.addEventListener("animenexus:intent", refresh);
-    window.addEventListener("focus", refresh);
-    return () => {
-      window.removeEventListener("animenexus:intent", refresh);
-      window.removeEventListener("focus", refresh);
-    };
-  }, []);
+  const sessionKey = useSessionRevision();
 
   const ordered = useMemo(() => {
     if (!ready || entries.length < 2 || items.length < 2) return items;
@@ -50,8 +40,6 @@ export function MoodFeedClient({ items, moodLabel, experienceSlug }: Props) {
     const rankedIds = new Set(ranked.map((r) => r.anime.id));
     const tail = items.filter((a) => !rankedIds.has(a.id));
     return [...ranked.map((r) => r.anime), ...tail];
-    // sessionKey forces re-score when dials change (engine reads session live)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, entries, items, experienceSlug, sessionKey]);
 
   const personalized = ready && entries.length >= 2;
