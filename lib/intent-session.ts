@@ -33,11 +33,16 @@ export function readIntentSession(): IntentSession {
   }
 }
 
-export function writeIntentSession(partial: Partial<IntentSession>): IntentSession {
+export function writeIntentSession(
+  partial: Partial<IntentSession>,
+): IntentSession {
   const next = { ...readIntentSession(), ...partial };
   if (typeof window !== "undefined") {
     try {
       localStorage.setItem(KEY, JSON.stringify(next));
+      window.dispatchEvent(
+        new CustomEvent("animenexus:intent", { detail: next }),
+      );
     } catch {
       /* */
     }
