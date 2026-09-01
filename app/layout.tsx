@@ -19,6 +19,7 @@ import { SoftBtnSounds } from "@/components/SoftBtnSounds";
 import { GlobalNavKeys } from "@/components/GlobalNavKeys";
 import { RouteAnnouncer } from "@/components/RouteAnnouncer";
 import { OfflineBanner } from "@/components/OfflineBanner";
+import { BackToTop } from "@/components/BackToTop";
 import { LoadingTheater } from "@/components/LoadingTheater";
 import { RoomEnter } from "@/components/RoomEnter";
 import { RouteTune } from "@/components/RouteTune";
@@ -191,6 +192,7 @@ export default function RootLayout({
                       <SoftBtnSounds />
                       <GlobalNavKeys />
                       <RouteAnnouncer />
+                      <BackToTop />
                       <LoadingTheater />
                       <footer className="site-footer">
                         <div className="container site-footer-inner">
