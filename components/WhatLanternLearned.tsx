@@ -6,7 +6,7 @@ import {
   preferenceClusterLabels,
   preferenceTrendLine,
 } from "@/lib/recommend-rank";
-import { outcomeStats } from "@/lib/outcome-events";
+import { outcomeStats, readOutcomeCounts } from "@/lib/outcome-events";
 import { readBehaviourEvents } from "@/lib/behaviour-events";
 
 /** Privacy-transparent summary of local learning. */
@@ -18,16 +18,23 @@ export function WhatLanternLearned() {
     clusters: [] as string[],
     trend: null as string | null,
     completionRate: null as number | null,
+    completed: 0,
+    dropped: 0,
+    started: 0,
   });
 
   useEffect(() => {
     if (!ready) return;
     const o = outcomeStats();
+    const counts = readOutcomeCounts();
     setStats({
       events: readBehaviourEvents().length,
       clusters: preferenceClusterLabels(entries),
       trend: preferenceTrendLine(entries),
       completionRate: o.completionRate,
+      completed: counts.completed,
+      dropped: counts.dropped,
+      started: counts.started,
     });
   }, [ready, entries, open]);
 
@@ -50,6 +57,10 @@ export function WhatLanternLearned() {
         <li>{stats.trend || "No strong recent drift detected"}</li>
         <li>
           Behaviour events stored here: {stats.events} (this browser)
+        </li>
+        <li>
+          Outcomes · started {stats.started} · finished {stats.completed} ·
+          dropped {stats.dropped}
         </li>
         <li>
           Completion-weighted outcomes:{" "}

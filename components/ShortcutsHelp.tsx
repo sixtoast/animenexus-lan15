@@ -4,14 +4,20 @@ import { useEffect, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 
 const ROWS: { keys: string; action: string }[] = [
-  { keys: "Ctrl/⌘ + K", action: "Command palette — search & jump" },
+  { keys: "Ctrl/⌘ + K", action: "Command palette — search, intent, jump" },
   { keys: "A", action: "AI desk" },
   { keys: "Q", action: "Tonight queue" },
   { keys: "B", action: "Break timer" },
+  { keys: "H", action: "Home" },
+  { keys: "W", action: "Watchlist" },
+  { keys: "R", action: "Browse" },
+  { keys: "T", action: "Taste" },
+  { keys: "D", action: "Daily pick" },
+  { keys: "S", action: "Seasonal" },
+  { keys: "M", action: "Account / services" },
   { keys: "?", action: "This shortcuts panel" },
   { keys: "Esc", action: "Close overlays / palette" },
   { keys: "FAB ✦", action: "Tonight, Break, Flashback, theme, tools" },
-  { keys: "🤖 panel", action: "AI assistant + API keys" },
 ];
 
 export function ShortcutsHelp() {
@@ -21,9 +27,11 @@ export function ShortcutsHelp() {
     const onKey = (e: KeyboardEvent) => {
       if (
         e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
+        e.target instanceof HTMLTextAreaElement ||
+        e.target instanceof HTMLSelectElement
       )
         return;
+      if ((e.target as HTMLElement)?.isContentEditable) return;
       if (e.key === "?" || (e.shiftKey && e.key === "/")) {
         e.preventDefault();
         setOpen((v) => !v);
@@ -55,7 +63,7 @@ export function ShortcutsHelp() {
         </tbody>
       </table>
       <p className="tools-hint" style={{ marginTop: 12 }}>
-        Press <kbd>?</kbd> again or Esc to close.
+        Press <kbd>?</kbd> again or Esc to close. Keys are ignored while typing.
       </p>
     </Modal>
   );
