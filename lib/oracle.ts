@@ -1,4 +1,6 @@
 import type { WatchlistEntry } from "./types";
+import type { IntentSession } from "./intent-session";
+import { getExperienceIntent } from "./viewing-intent";
 import { MOODS } from "./moods";
 import { readMemory } from "./lantern-memory";
 import { buildTonightFromList } from "./tonight";
@@ -19,8 +21,32 @@ function bestWatching(entries: WatchlistEntry[]): WatchlistEntry {
   })[0];
 }
 
+export function sessionAppendix(session?: IntentSession | null): string {
+  if (!session) return "";
+  const bits: string[] = [];
+  if (session.slug) {
+    const exp = getExperienceIntent(session.slug);
+    bits.push(
+      exp ? `Tonight lean: ${exp.label}` : `Tonight pack: ${session.slug}`,
+    );
+  }
+  if (session.intensity && session.intensity !== "moderate") {
+    bits.push(`intensity ${session.intensity}`);
+  }
+  if (session.energy && session.energy !== "medium") {
+    bits.push(`energy ${session.energy}`);
+  }
+  if (session.minutesAvailable) {
+    bits.push(`~${session.minutesAvailable}m window`);
+  }
+  return bits.length ? ` Session dials · ${bits.join(" · ")}.` : "";
+}
+
 /** Local Lantern reading — on-device, memory-aware */
-export function consultOracle(entries: WatchlistEntry[]): OracleReading {
+export function consultOracle(
+  entries: WatchlistEntry[],
+  session?: IntentSession | null,
+): OracleReading {
   const n = entries.length;
   const mem =
     typeof window !== "undefined"
@@ -70,60 +96,29 @@ export function consultOracle(entries: WatchlistEntry[]): OracleReading {
 
   if (mem.completedLog[0] && planning.length === 0) {
     return {
-      headline: "After the close",
-      body: `You recently finished “${mem.completedLog[0].title}”. The shelf has room again. Browse a mood or accept today’s daily signal before the queue rebuilds.`,
-      moodSlug: "chill",
-      moodLabel: "Chill",
+      headline: "Afterglow",
+      body: `You finished “${mem.completedLog[0].title}” recently. The shelf has no next-up planning titles — open Browse or seal a soft follow-up so the desk isn’t empty after a high.`,
+      moodSlug: "comfort",
+      moodLabel: "Comfort",
     };
   }
 
-  if (planning.length >= 1) {
-    const ranked = buildTonightFromList(entries);
-    const pick =
-      ranked.find((r) => planning.some((p) => p.id === r.id)) ||
-      ranked[0] ||
-      null;
-    const title = pick?.title || planning[0].title;
-    const why = pick?.why ? ` (${pick.why})` : "";
-    return {
-      headline:
-        planning.length >= 3 ? "The queue is stacking" : "One channel ready",
-      body: `${planning.length} title${planning.length === 1 ? "" : "s"} in Planning. Tonight’s ranked draw: “${title}”${why}. Move it to Watching and log the first episode.`,
-      moodSlug: "chill",
-      moodLabel: "Chill",
-    };
-  }
-
-  if (completed.length > 0 && planning.length === 0) {
-    const mood = MOODS[Math.floor(Math.random() * MOODS.length)];
-    return {
-      headline: "Between seasons",
-      body: `You’ve closed ${completed.length} titles. Try a mood feed — ${mood.emoji} ${mood.label}: ${mood.blurb}`,
-      moodSlug: mood.slug,
-      moodLabel: mood.label,
-    };
-  }
-
-  const rated = entries.filter((e) => e.userRating > 0);
-  if (rated.length > 0) {
-    const avg = rated.reduce((s, e) => s + e.userRating, 0) / rated.length;
-    return {
-      headline: "Your calibration",
-      body: `Across ${rated.length} rated titles your average is ${avg.toFixed(1)}. ${
-        avg >= 8
-          ? "You run a high bar — Masterpiece mood may fit."
-          : avg >= 6
-            ? "Balanced palate — mix Hype and Chill."
-            : "You’re open to experiments — try Mind-bender or Spooky."
-      }`,
-      moodSlug: avg >= 8 ? "masterpiece" : "mind",
-      moodLabel: avg >= 8 ? "Masterpiece" : "Mind-bender",
-    };
+  if (planning.length > 0) {
+    const pick = buildTonightFromList(entries);
+    if (pick) {
+      return {
+        headline: "One from the planning stack",
+        body: `Lantern points at “${pick.title}” from your planning list. ${planning.length} waiting · ${completed.length} completed · ~${hours.toFixed(1)} hours logged.`,
+        moodSlug: "comfort",
+        moodLabel: "Comfort",
+      };
+    }
   }
 
   const topGenre = Object.entries(mem.genreCounts).sort(
     (a, b) => b[1] - a[1],
   )[0];
+
   if (topGenre) {
     return {
       headline: "Genre gravity",
@@ -131,6 +126,24 @@ export function consultOracle(entries: WatchlistEntry[]): OracleReading {
       moodSlug: "fantasy",
       moodLabel: "Fantasy",
     };
+  }
+
+  // Prefer session pack mood when set
+  if (session?.slug) {
+    const exp = getExperienceIntent(session.slug);
+    const mood =
+      MOODS.find((m) => m.slug === session.slug) ||
+      (exp
+        ? { slug: exp.slug, label: exp.label }
+        : null);
+    if (mood) {
+      return {
+        headline: `Aligned to ${mood.label}`,
+        body: `Your session pack is set to ${mood.label}. ${n} titles on the list · ~${hours.toFixed(1)} hours logged. Draw a cloud band if you want a spoken reading on this frequency.`,
+        moodSlug: mood.slug,
+        moodLabel: mood.label,
+      };
+    }
   }
 
   return {
