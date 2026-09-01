@@ -87,26 +87,25 @@ export default async function BrowsePage({
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <p className="kicker">Catalog</p>
-          <h1>Browse the signal</h1>
-          <p className="hero-lead">
-            Search, filters, and feeds — shelf blend ranks results for you when
-            you have a list.
+          <div className="hero-badge">Browse · catalog</div>
+          <h1>
+            Find a <span>signal</span>
+          </h1>
+          <p>
+            Search titles or describe a night — e.g. “something funny and short”.
+            Filters stay soft; shelf blend ranks when you have a list.
           </p>
         </div>
       </section>
-
-      <section className="section" style={{ paddingTop: 0 }}>
-        <div className="container">
-          <Suspense fallback={null}>
-            <BrowseClient
-              initialItems={items}
-              initialTotal={total}
-              initialHasNext={hasNext}
-              initialError={error}
-            />
-          </Suspense>
-        </div>
+      <section className="container" style={{ paddingBottom: 48 }}>
+        <Suspense fallback={<p className="meta">Opening catalog…</p>}>
+          <BrowseClient
+            initialItems={items}
+            initialTotal={total}
+            initialHasNext={hasNext}
+            initialError={error}
+          />
+        </Suspense>
       </section>
     </main>
   );
