@@ -32,6 +32,7 @@ import { RewatchPanel } from "@/components/RewatchPanel";
 import { MangaSourcePanel } from "@/components/MangaSourcePanel";
 import { DetailTrailer } from "@/components/DetailTrailer";
 import { DetailDeferred } from "@/components/DetailDeferred";
+import { StudioLinks } from "@/components/StudioLinks";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -227,10 +228,7 @@ export default async function AnimeDetailPage({ params }: Props) {
             ) : null}
 
             {anime.studios?.length ? (
-              <p className="detail-studios">
-                Studio{anime.studios.length > 1 ? "s" : ""}:{" "}
-                <strong>{anime.studios.join(", ")}</strong>
-              </p>
+              <StudioLinks studios={anime.studios} />
             ) : null}
 
             <AddToWatchlist anime={anime} />
