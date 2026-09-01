@@ -22,6 +22,7 @@ import { SignalError, signalErrorBody } from "@/components/SignalError";
 import { SignalEmpty } from "@/components/SignalEmpty";
 import { playCue } from "@/lib/sound-engine";
 import { BrowseIntentHint } from "@/components/BrowseIntentHint";
+import { parseIntentSearch } from "@/lib/intent-search";
 import { logBehaviour } from "@/lib/behaviour-events";
 
 type Props = {
@@ -218,15 +219,17 @@ export function BrowseClient({
       ...entries.map((e) => e.id),
       ...rejectedAnimeIds(),
     ]);
+    const intent = q.trim().length >= 3 ? parseIntentSearch(q) : null;
     const ranked = rankRecommendations(items, entries, {
       excludeIds: exclude,
       resonanceWeight: 0.45,
+      experienceSlug: intent?.experienceSlug,
     });
     if (!ranked.length) return items;
     const rankedIds = new Set(ranked.map((r) => r.anime.id));
     const tail = items.filter((a) => !rankedIds.has(a.id));
     return [...ranked.map((r) => r.anime), ...tail];
-  }, [shelfBlend, canBlend, items, entries]);
+  }, [shelfBlend, canBlend, items, entries, q]);
 
   useEffect(() => {
     if (!pending && displayItems.length === 0 && !error) {
