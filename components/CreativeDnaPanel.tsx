@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { CreativeDnaSlot } from "@/lib/creative-dna";
 
 type CreditLine = { name: string; role: string; source: string };
@@ -27,7 +28,17 @@ export function CreativeDnaPanel({ slots, fullCredits = [] }: Props) {
             <li key={s.role}>
               <strong>{s.label}</strong>
               {" · "}
-              {s.names.join(", ")}
+              {s.names.map((name, i) => (
+                <span key={name}>
+                  {i > 0 ? ", " : null}
+                  <Link
+                    href={`/staff/${encodeURIComponent(name)}`}
+                    className="detail-studio-link"
+                  >
+                    {name}
+                  </Link>
+                </span>
+              ))}
               <span className="tools-hint">
                 {" "}
                 ({s.sources.join(", ")})
@@ -38,28 +49,35 @@ export function CreativeDnaPanel({ slots, fullCredits = [] }: Props) {
       ) : (
         <p className="tools-hint">No key roles resolved yet.</p>
       )}
+
       {fullCredits.length > 0 ? (
-        <>
+        <div style={{ marginTop: 12 }}>
           <button
             type="button"
             className="btn btn-outline btn-sm"
-            style={{ marginTop: 10 }}
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
           >
-            {open ? "Hide full credits" : "Full credits"}
+            {open ? "Hide full credits" : "Show full credits"}
           </button>
           {open ? (
             <ul className="theme-ul" style={{ marginTop: 10 }}>
-              {fullCredits.slice(0, 40).map((c, i) => (
+              {fullCredits.map((c, i) => (
                 <li key={`${c.name}-${c.role}-${i}`}>
-                  <strong>{c.name}</strong> · {c.role}
-                  <span className="tools-hint"> · {c.source}</span>
+                  <Link
+                    href={`/staff/${encodeURIComponent(c.name)}`}
+                    className="detail-studio-link"
+                  >
+                    {c.name}
+                  </Link>
+                  {" · "}
+                  {c.role}
+                  <span className="tools-hint"> ({c.source})</span>
                 </li>
               ))}
             </ul>
           ) : null}
-        </>
+        </div>
       ) : null}
     </section>
   );
