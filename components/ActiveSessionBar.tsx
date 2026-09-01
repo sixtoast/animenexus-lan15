@@ -11,6 +11,7 @@ import {
 } from "@/lib/intent-session";
 import { getExperienceIntent } from "@/lib/viewing-intent";
 import { playCue } from "@/lib/sound-engine";
+import { sessionShareUrl } from "@/lib/session-url";
 
 const INTENSITIES: IntentIntensity[] = ["light", "moderate", "maximum"];
 const ENERGIES: IntentEnergy[] = ["low", "medium", "high"];
@@ -42,6 +43,30 @@ export function ActiveSessionBar() {
     const next = writeIntentSession(partial);
     setSession(next);
     playCue("filter_select");
+  }
+
+  async function shareSession() {
+    const url = sessionShareUrl();
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "AnimeNexus session",
+          text: "Tonight's desk intent",
+          url,
+        });
+        playCue("success");
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        playCue("success");
+      }
+    } catch {
+      try {
+        await navigator.clipboard.writeText(url);
+        playCue("success");
+      } catch {
+        /* */
+      }
+    }
   }
 
   const nonDefault =
@@ -100,6 +125,13 @@ export function ActiveSessionBar() {
           onClick={() => setOpenControls((v) => !v)}
         >
           {openControls ? "Hide dials" : "Dials"}
+        </button>
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={() => void shareSession()}
+        >
+          Share
         </button>
         {hasPack || nonDefault ? (
           <button
