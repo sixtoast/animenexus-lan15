@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Anime } from "@/lib/types";
 import { Modal } from "@/components/ui/Modal";
+import { parseIntentSearch } from "@/lib/intent-search";
 
 const NAV = [
   { href: "/", label: "Home", group: "Navigate" },
@@ -21,6 +22,10 @@ const NAV = [
   { href: "/tools/radar", label: "Radar", group: "Tools" },
   { href: "/tools/completionist", label: "Completionist", group: "Tools" },
   { href: "/account", label: "Account / AniList", group: "Navigate" },
+  { href: "/mood/comfort", label: "Intent · Comfort me", group: "Tonight" },
+  { href: "/mood/destroy", label: "Intent · Destroy me", group: "Tonight" },
+  { href: "/mood/think", label: "Intent · Make me think", group: "Tonight" },
+  { href: "/mood/laugh", label: "Intent · Make me laugh", group: "Tonight" },
 ];
 
 export function CommandPalette() {
@@ -29,6 +34,7 @@ export function CommandPalette() {
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<Anime[]>([]);
   const [searching, setSearching] = useState(false);
+  const [parsedSummary, setParsedSummary] = useState<string | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -45,14 +51,20 @@ export function CommandPalette() {
     if (!open) {
       setQ("");
       setHits([]);
+      setParsedSummary(null);
     }
   }, [open]);
 
   useEffect(() => {
     if (q.trim().length < 2) {
       setHits([]);
+      setParsedSummary(null);
       return;
     }
+    const intent = parseIntentSearch(q.trim());
+    setParsedSummary(
+      intent.isIntentQuery ? intent.summary : null,
+    );
     let cancelled = false;
     const t = setTimeout(() => {
       setSearching(true);
@@ -77,8 +89,17 @@ export function CommandPalette() {
   const nav = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return NAV;
-    return NAV.filter((n) => n.label.toLowerCase().includes(needle));
+    return NAV.filter(
+      (n) =>
+        n.label.toLowerCase().includes(needle) ||
+        n.group.toLowerCase().includes(needle),
+    );
   }, [q]);
+
+  const intent = useMemo(
+    () => (q.trim().length >= 3 ? parseIntentSearch(q.trim()) : null),
+    [q],
+  );
 
   function go(href: string) {
     setOpen(false);
@@ -101,17 +122,47 @@ export function CommandPalette() {
           data-autofocus
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search anime or jump…"
+          placeholder="Search anime, intent, or jump…"
         />
         <span className="cmdk-esc">esc</span>
       </div>
+      {parsedSummary ? (
+        <p className="cmdk-intent-hint" role="status">
+          Understood as · {parsedSummary}
+        </p>
+      ) : null}
       <div className="cmdk-results">
+        {intent?.isIntentQuery ? (
+          <>
+            <div className="cmdk-section-label">Intent</div>
+            <button
+              type="button"
+              className="cmdk-item"
+              onClick={() =>
+                go(`/browse?q=${encodeURIComponent(q.trim())}`)
+              }
+            >
+              Browse as “{q.trim()}”
+              <span className="cmdk-item-meta">catalog + shelf blend</span>
+            </button>
+            {intent.experienceSlug ? (
+              <button
+                type="button"
+                className="cmdk-item"
+                onClick={() => go(`/mood/${intent.experienceSlug}`)}
+              >
+                Open intent desk · {intent.experienceSlug}
+                <span className="cmdk-item-meta">Tonight</span>
+              </button>
+            ) : null}
+          </>
+        ) : null}
         {nav.length > 0 ? (
           <>
             <div className="cmdk-section-label">Navigate</div>
             {nav.map((n) => (
               <button
-                key={n.href}
+                key={n.href + n.label}
                 type="button"
                 className="cmdk-item"
                 onClick={() => go(n.href)}

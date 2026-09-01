@@ -1,0 +1,42 @@
+.cmdk-intent-hint {
+  margin: 0;
+  padding: 0.35rem 1rem 0.5rem;
+  font-size: 0.78rem;
+  opacity: 0.75;
+  border-bottom: 1px solid rgba(255, 220, 200, 0.08);
+}
+
+.share-title-wrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .detail-mobile-sticky {
+    position: sticky;
+    bottom: 0;
+    z-index: 30;
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px max(10px, env(safe-area-inset-bottom));
+    margin: 16px -12px 0;
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(12, 10, 9, 0.94) 24%
+    );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .detail-mobile-sticky .btn {
+    flex: 1;
+    min-height: 46px;
+  }
+}
+
+@media (min-width: 641px) {
+  .detail-mobile-sticky {
+    display: none;
+  }
+}
