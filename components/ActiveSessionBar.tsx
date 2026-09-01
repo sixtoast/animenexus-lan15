@@ -11,7 +11,7 @@ import {
 } from "@/lib/intent-session";
 import { getExperienceIntent } from "@/lib/viewing-intent";
 import { playCue } from "@/lib/sound-engine";
-import { sessionShareUrl } from "@/lib/session-url";
+import { sessionShareUrl, sessionToSearchParams } from "@/lib/session-url";
 import { useToast } from "@/components/ToastProvider";
 
 const INTENSITIES: IntentIntensity[] = ["light", "moderate", "maximum"];
@@ -117,7 +117,7 @@ export function ActiveSessionBar() {
       <div className="active-session-actions">
         {hasPack ? (
           <Link
-            href={`/browse?experience=${encodeURIComponent(session.slug!)}`}
+            href={`/browse?${sessionToSearchParams(session).toString()}`}
             className="btn btn-outline btn-sm"
           >
             Browse this
