@@ -10,6 +10,8 @@ import { DiscoveryShelves } from "@/components/DiscoveryShelves";
 import { ProviderHealth } from "@/components/ProviderHealth";
 import { WhatLanternLearned } from "@/components/WhatLanternLearned";
 import { ColdStartStrip } from "@/components/ColdStartStrip";
+import { AvailableNowStrip } from "@/components/AvailableNowStrip";
+import { DeskNotesStrip } from "@/components/DeskNotesStrip";
 import { RitualLine } from "@/components/RitualLine";
 import { fetchDiscover } from "@/lib/anilist";
 import "./mood-home.css";
@@ -17,6 +19,7 @@ import "./home-dash.css";
 import "./home-v2.css";
 import "./tonight-desk.css";
 import "./cold-start.css";
+import "./desk-notes.css";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +89,8 @@ export default async function HomePage() {
           data-mascot-priority="4"
         >
           <ColdStartStrip />
+          <DeskNotesStrip />
+          <AvailableNowStrip candidates={items} />
           <ProviderHealth />
           <TonightDesk candidates={items} />
           <WhatLanternLearned />

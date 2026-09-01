@@ -9,6 +9,9 @@ import {
   scoreCandidate,
 } from "./preference-engine";
 import { resonanceLabel, topResonanceDims, userResonance } from "./resonance";
+import { deskNoteBoost } from "./desk-notes";
+import { getCachedAvailability } from "./available-to-me";
+import { readMyServices } from "./my-services";
 
 export type RankedRecommendation = {
   anime: Anime;
@@ -75,6 +78,31 @@ export function rankRecommendations(
     }
 
     const reasons = [...signals.reasons];
+
+    // Soft availability (client cache only — never hard-exclude)
+    if (typeof window !== "undefined") {
+      try {
+        const prefs = readMyServices();
+        if (prefs.services.length) {
+          const region = (prefs.region || "US").toUpperCase().slice(0, 2);
+          const cached = getCachedAvailability(anime.id, region);
+          if (cached?.onMyServices) {
+            score = Math.min(1, score + 0.06);
+            if (reasons.length < 4) {
+              reasons.push("Cached as available on a service you marked");
+            }
+          }
+        }
+      } catch {
+        /* soft-fail */
+      }
+    }
+
+    const note = deskNoteBoost(anime.id);
+    if (note.boost > 0) {
+      score = Math.min(1, score + note.boost);
+      if (note.reason && reasons.length < 4) reasons.push(note.reason);
+    }
     if (anime.score > 0 && reasons.length < 3) {
       const display =
         anime.score > 10 ? anime.score.toFixed(0) : anime.score.toFixed(1);
