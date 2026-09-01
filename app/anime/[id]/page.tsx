@@ -37,6 +37,7 @@ import { DetailDeferred } from "@/components/DetailDeferred";
 import { StudioLinks } from "@/components/StudioLinks";
 import { FranchisePathPanel } from "@/components/FranchisePathPanel";
 import { DeskNoteEditor } from "@/components/DeskNoteEditor";
+import { ShareTitleButton } from "@/components/ShareTitleButton";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -240,6 +241,7 @@ export default async function AnimeDetailPage({ params }: Props) {
               <Link href="/watchlist" className="btn btn-outline btn-sm">
                 Open watchlist
               </Link>
+              <ShareTitleButton title={anime.title} animeId={anime.id} />
               <a href="#episodes" className="btn btn-outline btn-sm">
                 Episodes
               </a>
@@ -540,6 +542,13 @@ export default async function AnimeDetailPage({ params }: Props) {
             </div>
           </section>
         ) : null}
+
+        <div className="detail-mobile-sticky" aria-label="Quick actions">
+          <ShareTitleButton title={anime.title} animeId={anime.id} />
+          <Link href="/watchlist" className="btn btn-accent btn-sm">
+            Watchlist
+          </Link>
+        </div>
       </div>
     </main>
   );
