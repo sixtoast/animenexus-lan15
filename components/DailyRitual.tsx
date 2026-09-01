@@ -24,6 +24,9 @@ import {
   REJECT_REASON_LABELS,
   type RejectReason,
 } from "@/lib/recommend-feedback";
+import { readIntentSession } from "@/lib/intent-session";
+import { useSessionRevision } from "@/lib/use-session-revision";
+import { logOutcome } from "@/lib/outcome-events";
 
 type Props = {
   pool: Anime[];
@@ -63,6 +66,7 @@ export function DailyRitual({ pool, seed, dateLabel }: Props) {
   const [accepted, setAccepted] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [showReject, setShowReject] = useState(false);
+  const sessionKey = useSessionRevision();
 
   const rankedList = useMemo(() => {
     if (!ready) return [] as RankedRecommendation[];
@@ -71,11 +75,13 @@ export function DailyRitual({ pool, seed, dateLabel }: Props) {
       ...entries.map((e) => e.id),
       ...rejectedAnimeIds(),
     ]);
+    const sess = readIntentSession();
     return rankRecommendations(pool, entries, {
       excludeIds: exclude,
       resonanceWeight: 0.7,
+      experienceSlug: sess.slug || undefined,
     });
-  }, [ready, entries, pool]);
+  }, [ready, entries, pool, sessionKey]);
 
   const anime = useMemo(() => {
     if (rankedList.length > 0) {
@@ -94,6 +100,7 @@ export function DailyRitual({ pool, seed, dateLabel }: Props) {
   useEffect(() => {
     if (!anime) return;
     markRecShown(anime.id);
+    logOutcome(anime.id, "shown", { surface: "daily" });
   }, [anime]);
 
   if (!anime) {
@@ -109,7 +116,9 @@ export function DailyRitual({ pool, seed, dateLabel }: Props) {
     return (
       <div className="state-box lantern-empty">
         <h3>Signal passed</h3>
-        <p>Lantern noted the pass. The seed still holds — a new channel tomorrow.</p>
+        <p>
+          Lantern noted the pass. The seed still holds — a new channel tomorrow.
+        </p>
         <p style={{ marginTop: 12 }}>
           <Link href="/browse" className="btn btn-outline btn-sm">
             Browse instead
@@ -120,125 +129,94 @@ export function DailyRitual({ pool, seed, dateLabel }: Props) {
   }
 
   function accept() {
+    if (!anime) return;
+    add(anime, { watchStatus: "planning" });
+    markRecAccepted(anime.id);
+    logOutcome(anime.id, "started", { surface: "daily" });
     recordView({
       id: anime.id,
       title: anime.title,
       image: anime.image,
-      genres: anime.tags,
-      studios: anime.studios,
     });
-    markRecAccepted(anime.id);
-    if (ready && !isInList(anime.id)) {
-      add(anime, "planning");
-      fireSeal(anime.title, "seal");
-      showToast("Daily signal sealed", "🕯️", true);
-    } else {
-      showToast("Signal noted", "📡");
-    }
+    fireSeal();
     setAccepted(true);
+    showToast(`Sealed · ${anime.title}`, "✦", true);
   }
 
   function reject(reason: RejectReason) {
+    if (!anime) return;
     markRecRejected(anime.id, reason);
-    setDismissed(true);
+    logOutcome(anime.id, "dropped", { surface: "daily" });
     setShowReject(false);
-    showToast("Passed for today", "📡");
+    setDismissed(true);
+    showToast("Pass noted", "·", true);
   }
 
   return (
-    <div className="daily-ritual">
-      <div className="daily-ritual-line">
-        <span className="daily-ritual-kicker">Lantern · {dateLabel}</span>
-        <p>{line}</p>
-      </div>
+    <article className="daily-ritual">
+      <header className="daily-ritual-head">
+        <span className="daily-kicker">{dateLabel}</span>
+        <h2>Today’s signal</h2>
+      </header>
 
-      <article className="daily-card">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="daily-cover" src={anime.image} alt="" />
-        <div className="daily-body">
-          <p className="daily-kicker">Today’s signal</p>
-          <h2 className="daily-title">{anime.title}</h2>
-          {anime.titleNative ? (
-            <p className="daily-native">{anime.titleNative}</p>
+      <div className="daily-ritual-body">
+        <Link
+          href={`/anime/${anime.id}`}
+          className="daily-poster"
+          onClick={() => markRecOpened(anime.id)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={anime.image} alt="" />
+        </Link>
+        <div className="daily-copy">
+          <h3>
+            <Link href={`/anime/${anime.id}`} onClick={() => markRecOpened(anime.id)}>
+              {anime.title}
+            </Link>
+          </h3>
+          <p className="daily-obs">{line}</p>
+          {rankedMeta ? (
+            <p className="meta" style={{ marginTop: 8 }}>
+              {confidenceCopy(rankedMeta.confidence)}
+              {rankedMeta.reasons[0] ? ` · ${rankedMeta.reasons[0]}` : ""}
+            </p>
           ) : null}
-          <div className="daily-meta">
-            {anime.score > 0 ? (
-              <span className="detail-pill score">
-                ★ {anime.score.toFixed(1)}
-              </span>
-            ) : null}
-            <span className="detail-pill">{anime.format}</span>
-            {anime.year ? (
-              <span className="detail-pill">{anime.year}</span>
-            ) : null}
-            {anime.tags?.slice(0, 3).map((g) => (
-              <span key={g} className="detail-pill">
-                {g}
-              </span>
-            ))}
-            {rankedMeta ? (
-              <span className="detail-pill">
-                {confidenceCopy(rankedMeta.confidence)}
-              </span>
-            ) : null}
-          </div>
-          <p className="daily-desc">
-            {(anime.description || "").slice(0, 320)}
-            {(anime.description || "").length > 320 ? "…" : ""}
-          </p>
           <div className="daily-actions">
-            <Button
-              variant="accent"
-              size="sm"
-              onClick={accept}
-              disabled={accepted}
-            >
-              {accepted ? "Signal accepted" : "Accept signal"}
-            </Button>
-            <Link
-              href={`/anime/${anime.id}`}
-              className="btn btn-outline btn-sm"
-              onClick={() => markRecOpened(anime.id)}
-            >
-              Open detail
-            </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowReject((v) => !v)}
-              disabled={accepted}
-            >
-              Not for me
-            </Button>
-            <Link href="/browse" className="btn btn-outline btn-sm">
-              Browse instead
-            </Link>
+            {!accepted ? (
+              <>
+                <Button type="button" variant="accent" onClick={accept}>
+                  {isInList(anime.id) ? "Already on shelf" : "Seal to list"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowReject((v) => !v)}
+                >
+                  Pass
+                </Button>
+              </>
+            ) : (
+              <p className="meta">Sealed for later — the desk remembers.</p>
+            )}
           </div>
           {showReject ? (
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 6,
-                marginTop: 10,
-              }}
-            >
+            <div className="daily-reject" role="group" aria-label="Why pass">
               {(Object.keys(REJECT_REASON_LABELS) as RejectReason[]).map(
-                (reason) => (
+                (r) => (
                   <button
-                    key={reason}
+                    key={r}
                     type="button"
-                    className="btn btn-outline btn-sm"
-                    onClick={() => reject(reason)}
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => reject(r)}
                   >
-                    {REJECT_REASON_LABELS[reason]}
+                    {REJECT_REASON_LABELS[r]}
                   </button>
                 ),
               )}
             </div>
           ) : null}
         </div>
-      </article>
-    </div>
+      </div>
+    </article>
   );
 }
