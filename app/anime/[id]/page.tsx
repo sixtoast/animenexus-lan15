@@ -1,6 +1,7 @@
 import "./detail.css";
 import "../../detail-trailer.css";
 import "../../watchlist-queue.css";
+import "../../franchise-path.css";
 import "./sprint-b-detail.css";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -33,6 +34,7 @@ import { MangaSourcePanel } from "@/components/MangaSourcePanel";
 import { DetailTrailer } from "@/components/DetailTrailer";
 import { DetailDeferred } from "@/components/DetailDeferred";
 import { StudioLinks } from "@/components/StudioLinks";
+import { FranchisePathPanel } from "@/components/FranchisePathPanel";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -323,6 +325,14 @@ export default async function AnimeDetailPage({ params }: Props) {
         <DetailRelatedClient
           relations={relations}
           centerTitle={anime.title}
+        />
+
+        <FranchisePathPanel
+          centerId={anime.id}
+          centerTitle={anime.title}
+          centerYear={anime.year}
+          centerFormat={String(anime.format || "")}
+          relations={relations}
         />
 
         <div id="ancestry">
