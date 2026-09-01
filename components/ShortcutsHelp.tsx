@@ -21,6 +21,7 @@ const ROWS: { keys: string; action: string }[] = [
   { keys: "Home packs", action: "Tonight feel chips → experience browse" },
   { keys: "Dials", action: "Intensity / energy / time on home session bar" },
   { keys: "Share session", action: "Copy home URL with intent + dials" },
+  { keys: "Cmd+K → dials", action: "Type light / energy / 30 to set session" },
 ];
 
 export function ShortcutsHelp() {
