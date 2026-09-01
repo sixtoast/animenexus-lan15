@@ -11,6 +11,7 @@ import { WatchlistQueue } from "@/components/WatchlistQueue";
 import { ExperiencePackStrip } from "@/components/ExperiencePackStrip";
 import { ActiveSessionBar } from "@/components/ActiveSessionBar";
 import { readIntentSession } from "@/lib/intent-session";
+import { useSessionRevision } from "@/lib/use-session-revision";
 import { touchStreak, readStreak } from "@/lib/streak";
 import { readMemory, type RecentView } from "@/lib/lantern-memory";
 import { useToast } from "@/components/ToastProvider";
@@ -19,7 +20,11 @@ import {
   rankRecommendations,
   type RankedRecommendation,
 } from "@/lib/recommend-rank";
-import { markRecShown, markRecOpened, rejectedAnimeIds } from "@/lib/recommend-feedback";
+import {
+  markRecShown,
+  markRecOpened,
+  rejectedAnimeIds,
+} from "@/lib/recommend-feedback";
 
 type Props = {
   trending?: Anime[];
@@ -32,7 +37,7 @@ export function HomeDashboard({ trending = [] }: Props) {
   const [recent, setRecent] = useState<RecentView[]>([]);
   const [hiddenIds, setHiddenIds] = useState<Set<number>>(() => new Set());
   const [intentSlug, setIntentSlug] = useState<string | null>(null);
-  const [sessionKey, setSessionKey] = useState(0);
+  const sessionKey = useSessionRevision();
   const shownRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
@@ -45,14 +50,12 @@ export function HomeDashboard({ trending = [] }: Props) {
     }
     setRecent(readMemory().recentViews.slice(0, 10));
     setIntentSlug(readIntentSession().slug);
-    setSessionKey((k) => k + 1);
   }, [showToast]);
 
   useEffect(() => {
     const refresh = () => {
       setRecent(readMemory().recentViews.slice(0, 10));
       setIntentSlug(readIntentSession().slug);
-      setSessionKey((k) => k + 1);
     };
     window.addEventListener("focus", refresh);
     window.addEventListener("animenexus:intent", refresh);
@@ -97,7 +100,7 @@ export function HomeDashboard({ trending = [] }: Props) {
     let list = rankRecommendations(trending, entries, {
       excludeIds: exclude,
       resonanceWeight: 0.7,
-      experienceSlug: intentSlug || undefined,
+      experienceSlug: intentSlug || sess.slug || undefined,
     });
     const minutes = sess.minutesAvailable;
     if (minutes != null && minutes > 0) {
