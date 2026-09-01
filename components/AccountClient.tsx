@@ -6,6 +6,7 @@ import { useSession } from "@/components/SessionProvider";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { SoundSettings } from "@/components/SoundSettings";
 import { MyServicesSettings } from "@/components/MyServicesSettings";
+import { DeskPackPanel } from "@/components/DeskPackPanel";
 import { NotificationPrefs } from "@/components/NotificationPrefs";
 import type { WatchlistEntry } from "@/lib/types";
 import { playCue } from "@/lib/sound-engine";
@@ -561,6 +562,15 @@ export function AccountClient() {
           My services
         </h2>
         <MyServicesSettings />
+      </section>
+
+      <hr style={{ margin: "28px 0", borderColor: "var(--color-border)" }} />
+
+      <section aria-labelledby="desk-pack-heading">
+        <h2 id="desk-pack-heading" className="nx-kicker">
+          Desk pack
+        </h2>
+        <DeskPackPanel />
       </section>
 
       <hr style={{ margin: "28px 0", borderColor: "var(--color-border)" }} />
