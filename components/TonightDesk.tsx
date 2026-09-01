@@ -19,6 +19,7 @@ import {
   type IntentEnergy,
   type IntentIntensity,
 } from "@/lib/intent-session";
+import { useSessionRevision } from "@/lib/use-session-revision";
 import type { Anime } from "@/lib/types";
 
 type Props = {
@@ -36,6 +37,7 @@ function hourLabel(d = new Date()) {
 
 export function TonightDesk({ candidates }: Props) {
   const { entries, ready } = useWatchlist();
+  const sessionKey = useSessionRevision();
   const [intensity, setIntensity] = useState<IntentIntensity>("moderate");
   const [energy, setEnergy] = useState<IntentEnergy>("medium");
   const [minutes, setMinutes] = useState<number | null>(null);
@@ -45,7 +47,7 @@ export function TonightDesk({ candidates }: Props) {
     setIntensity(s.intensity);
     setEnergy(s.energy);
     setMinutes(s.minutesAvailable);
-  }, []);
+  }, [sessionKey]);
 
   function persist(partial: Parameters<typeof writeIntentSession>[0]) {
     const next = writeIntentSession(partial);
@@ -65,7 +67,6 @@ export function TonightDesk({ candidates }: Props) {
       experienceSlug: readIntentSession().slug || undefined,
     });
 
-    // Time budget: prefer shorter total runtime when minutes set
     if (minutes != null && minutes > 0) {
       list = [...list].sort((a, b) => {
         const da = a.anime.duration || 24;
@@ -76,16 +77,14 @@ export function TonightDesk({ candidates }: Props) {
       });
     }
 
-    // Energy: prefer lower cognitive / slower when energy low — soft via score tweak
     if (energy === "low") {
       list = list.map((r) => {
         const tags = (r.anime.tags || []).map((t) => t.toLowerCase());
-        const heavy =
-          tags.some((t) =>
-            ["psychological", "thriller", "mecha", "horror"].some((x) =>
-              t.includes(x),
-            ),
-          );
+        const heavy = tags.some((t) =>
+          ["psychological", "thriller", "mecha", "horror"].some((x) =>
+            t.includes(x),
+          ),
+        );
         return heavy ? { ...r, score: r.score * 0.88 } : r;
       });
       list.sort((a, b) => b.score - a.score);
@@ -103,7 +102,7 @@ export function TonightDesk({ candidates }: Props) {
     }
 
     return list.slice(0, 8);
-  }, [ready, entries, candidates, intensity, energy, minutes]);
+  }, [ready, entries, candidates, intensity, energy, minutes, sessionKey]);
 
   useEffect(() => {
     for (const r of ranked) {
