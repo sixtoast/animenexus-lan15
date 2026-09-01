@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import { MotionToggle } from "@/components/MotionToggle";
+import { NavSoundToggle } from "@/components/NavSoundToggle";
 import { Button } from "@/components/ui/Button";
 import { OnAir } from "@/components/ui/OnAir";
 import { playCue } from "@/lib/sound-engine";
@@ -183,6 +184,7 @@ export function Navbar() {
         <div className="nav-right">
           <OnAir className="nav-on-air" />
           <MotionToggle />
+          <NavSoundToggle />
           <Button
             variant="icon"
             size="sm"
