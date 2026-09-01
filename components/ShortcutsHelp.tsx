@@ -19,6 +19,8 @@ const ROWS: { keys: string; action: string }[] = [
   { keys: "Esc", action: "Close overlays / palette" },
   { keys: "FAB ✦", action: "Tonight, Break, Flashback, theme, tools" },
   { keys: "Home packs", action: "Tonight feel chips → experience browse" },
+  { keys: "Dials", action: "Intensity / energy / time on home session bar" },
+  { keys: "Share session", action: "Copy home URL with intent + dials" },
 ];
 
 export function ShortcutsHelp() {
