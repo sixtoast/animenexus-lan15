@@ -146,3 +146,32 @@
     min-height: 44px;
   }
 }
+
+.back-to-top {
+  position: fixed;
+  right: 16px;
+  bottom: 88px;
+  z-index: 60;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 220, 200, 0.2);
+  background: rgba(28, 16, 14, 0.9);
+  color: #ffe8d8;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.back-to-top:hover,
+.back-to-top:focus-visible {
+  border-color: rgba(240, 160, 144, 0.5);
+  background: rgba(48, 24, 20, 0.95);
+}
+
+@media (max-width: 640px) {
+  .back-to-top {
+    right: 12px;
+    bottom: 100px;
+  }
+}
