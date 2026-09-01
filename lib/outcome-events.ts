@@ -173,3 +173,20 @@ export function noteWatchlistOutcome(
     else if (ratio >= 0.25) logOutcome(animeId, "progress_25");
   }
 }
+
+export function readOutcomeCounts(): {
+  started: number;
+  completed: number;
+  dropped: number;
+  rewatched: number;
+} {
+  const all = readAll();
+  const tally = (stage: OutcomeStage) =>
+    all.filter((r) => r.stage === stage).length;
+  return {
+    started: tally("started"),
+    completed: tally("completed"),
+    dropped: tally("dropped"),
+    rewatched: tally("rewatched"),
+  };
+}
