@@ -9,6 +9,8 @@ import { LanternInsights } from "@/components/LanternInsights";
 import { HomeSignalsToday } from "@/components/HomeSignalsToday";
 import { WatchlistQueue } from "@/components/WatchlistQueue";
 import { ExperiencePackStrip } from "@/components/ExperiencePackStrip";
+import { ActiveSessionBar } from "@/components/ActiveSessionBar";
+import { readIntentSession } from "@/lib/intent-session";
 import { touchStreak, readStreak } from "@/lib/streak";
 import { readMemory, type RecentView } from "@/lib/lantern-memory";
 import { useToast } from "@/components/ToastProvider";
@@ -29,6 +31,7 @@ export function HomeDashboard({ trending = [] }: Props) {
   const [streak, setStreak] = useState(0);
   const [recent, setRecent] = useState<RecentView[]>([]);
   const [hiddenIds, setHiddenIds] = useState<Set<number>>(() => new Set());
+  const [intentSlug, setIntentSlug] = useState<string | null>(null);
   const shownRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
@@ -40,12 +43,20 @@ export function HomeDashboard({ trending = [] }: Props) {
       setStreak(readStreak().count);
     }
     setRecent(readMemory().recentViews.slice(0, 10));
+    setIntentSlug(readIntentSession().slug);
   }, [showToast]);
 
   useEffect(() => {
-    const refresh = () => setRecent(readMemory().recentViews.slice(0, 10));
+    const refresh = () => {
+      setRecent(readMemory().recentViews.slice(0, 10));
+      setIntentSlug(readIntentSession().slug);
+    };
     window.addEventListener("focus", refresh);
-    return () => window.removeEventListener("focus", refresh);
+    window.addEventListener("animenexus:intent", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("animenexus:intent", refresh);
+    };
   }, []);
 
   const continueList = useMemo(() => {
@@ -82,8 +93,9 @@ export function HomeDashboard({ trending = [] }: Props) {
     return rankRecommendations(trending, entries, {
       excludeIds: exclude,
       resonanceWeight: 0.7,
+      experienceSlug: intentSlug || undefined,
     }).slice(0, 8);
-  }, [ready, entries, trending, hiddenIds]);
+  }, [ready, entries, trending, hiddenIds, intentSlug]);
 
   useEffect(() => {
     for (const r of forYou) {
@@ -119,6 +131,8 @@ export function HomeDashboard({ trending = [] }: Props) {
       </div>
 
       <WatchlistQueue />
+
+      <ActiveSessionBar />
 
       <ExperiencePackStrip />
 
