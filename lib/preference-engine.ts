@@ -45,23 +45,6 @@ export type PreferenceProfile = {
   dropSignatures: ReturnType<typeof buildDropSignatures>;
 };
 
-export type RankSignals = {
-  score: number;
-  resonanceSim: number;
-  reasons: string[];
-};
-
-function inferSessionIntent(entries: WatchlistEntry[]): IntentVector {
-  const evs = sessionEvents().filter((e) => e.weight > 0);
-  if (!evs.length && !entries.length) return emptyIntent();
-  const recent = entries
-    .filter((e) => e.watchStatus === "watching" || e.watchStatus === "completed")
-    .slice(0, 12);
-  const tags = recent.flatMap((e) => e.tags || []);
-  if (!tags.length) return emptyIntent();
-  return animeIntentFingerprint(tags);
-}
-
 export function buildPreferenceProfile(
   entries: WatchlistEntry[],
 ): PreferenceProfile {
@@ -77,6 +60,35 @@ export function buildPreferenceProfile(
     dropSignatures: buildDropSignatures(entries),
   };
 }
+
+function inferSessionIntent(entries: WatchlistEntry[]): IntentVector {
+  let v = emptyIntent();
+  const evs = sessionEvents().filter((e) => e.weight > 0);
+  if (!evs.length) return v;
+
+  let n = 0;
+  for (const e of evs) {
+    if (!e.animeId) continue;
+    const entry = entries.find((x) => x.id === e.animeId);
+    if (!entry) continue;
+    const fp = animeIntentFingerprint(entry.tags || []);
+    const w = Math.min(1, Math.abs(e.weight) / 5);
+    v = blendIntent(v, fp, w);
+    n += 1;
+  }
+  if (n === 0) return emptyIntent();
+  return v;
+}
+
+export type RankSignals = {
+  score: number;
+  clusterScore: number;
+  intentScore: number;
+  resonanceSim: number;
+  affinity: number;
+  reasons: string[];
+  activeCluster?: string;
+};
 
 export function scoreCandidate(
   anime: Anime,
@@ -207,7 +219,11 @@ export function scoreCandidate(
 
   return {
     score: Math.max(0, Math.min(1, score)),
+    clusterScore: ca.score,
+    intentScore,
     resonanceSim: sim,
-    reasons: reasons.slice(0, 5),
+    affinity,
+    reasons: reasons.slice(0, 4),
+    activeCluster: ca.label,
   };
 }
