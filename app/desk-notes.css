@@ -1,0 +1,36 @@
+.available-now,
+.desk-notes-strip {
+  margin: 0 0 1.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 220, 200, 0.1);
+  background: rgba(16, 12, 10, 0.35);
+}
+
+.available-now-list,
+.desk-notes-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.available-now-list a,
+.desk-notes-list a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.available-now-list a:hover,
+.desk-notes-list a:hover {
+  color: var(--color-accent, #f0a090);
+}
+
+.desk-note-editor textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 64px;
+}
