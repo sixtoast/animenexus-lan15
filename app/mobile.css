@@ -1,5 +1,5 @@
 /**
- * Mobile experience (Sprint 33 + Awwwards 16 + Micro 17).
+ * Mobile experience (Sprint 33 + Awwwards 16 + Micro 17 + V2.1 desks).
  * Safe areas · min touch targets · sticky CTAs · Shelf / Frequency.
  */
 
@@ -208,7 +208,6 @@ body {
     min-width: 40px;
   }
 
-  /* Micro-programme surfaces (Sprint 17) */
   .feed-tabs {
     display: flex;
     flex-wrap: nowrap;
@@ -276,7 +275,28 @@ body {
     min-height: 44px;
   }
 
-  /* Soften hover-only lifts on touch (no sticky :hover lift) */
+  /* V2.1 desks */
+  .tonight-ctrl select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .wl-queue-card {
+    min-height: 72px;
+  }
+
+  .franchise-path-tabs .btn {
+    min-height: 44px;
+  }
+
+  .home-chip {
+    min-height: 48px;
+  }
+
+  .cold-start-actions .btn {
+    min-height: 44px;
+  }
+
   .ix-hover:hover:not(:disabled) {
     transform: none;
   }
@@ -315,7 +335,6 @@ body {
   }
 }
 
-/* Prefer reduced motion on small screens when system asks */
 @media (max-width: 899px) and (prefers-reduced-motion: reduce) {
   .anime-img--wait,
   .anime-img--in,
