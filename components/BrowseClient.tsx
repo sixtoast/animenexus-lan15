@@ -67,6 +67,7 @@ export function BrowseClient({
   const [format, setFormat] = useState(searchParams.get("format") || "");
   const [year, setYear] = useState(searchParams.get("year") || "");
   const [sort, setSort] = useState(searchParams.get("sort") || "score");
+  const experience = searchParams.get("experience") || "";
   const feed = parsed.feed;
 
   useEffect(() => {
@@ -223,13 +224,13 @@ export function BrowseClient({
     const ranked = rankRecommendations(items, entries, {
       excludeIds: exclude,
       resonanceWeight: 0.45,
-      experienceSlug: intent?.experienceSlug,
+      experienceSlug: intent?.experienceSlug || experience || undefined,
     });
     if (!ranked.length) return items;
     const rankedIds = new Set(ranked.map((r) => r.anime.id));
     const tail = items.filter((a) => !rankedIds.has(a.id));
     return [...ranked.map((r) => r.anime), ...tail];
-  }, [shelfBlend, canBlend, items, entries, q]);
+  }, [shelfBlend, canBlend, items, entries, q, experience]);
 
   useEffect(() => {
     if (!pending && displayItems.length === 0 && !error) {
@@ -305,6 +306,11 @@ export function BrowseClient({
           </button>
         </div>
         <BrowseIntentHint query={q} />
+      {experience ? (
+        <p className="intent-search-hint" role="status">
+          Experience pack · {experience}
+        </p>
+      ) : null}
 
         <div className="filter-row">
           <label
