@@ -138,6 +138,7 @@ export async function consultOracleCloud(
   mode: OracleMode,
   entries: WatchlistEntry[],
   userNote?: string,
+  sessionLine?: string,
 ): Promise<string> {
   if (!isAIConfigured()) {
     throw new Error("Add an API key in the AI panel first");
@@ -156,6 +157,7 @@ export async function consultOracleCloud(
   const user = [
     `Mode: ${mode}`,
     userNote ? `Viewer note: ${userNote}` : "",
+    sessionLine ? `Session dials: ${sessionLine}` : "",
     mem,
     "Watchlist sample:",
     digest,
