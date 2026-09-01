@@ -129,94 +129,127 @@ export function DailyRitual({ pool, seed, dateLabel }: Props) {
   }
 
   function accept() {
-    if (!anime) return;
-    add(anime, { watchStatus: "planning" });
-    markRecAccepted(anime.id);
-    logOutcome(anime.id, "started", { surface: "daily" });
     recordView({
       id: anime.id,
       title: anime.title,
       image: anime.image,
+      genres: anime.tags,
+      studios: anime.studios,
     });
-    fireSeal();
+    markRecAccepted(anime.id);
+    logOutcome(anime.id, "started", { surface: "daily" });
+    if (ready && !isInList(anime.id)) {
+      add(anime, "planning");
+      fireSeal(anime.title, "seal");
+      showToast("Daily signal sealed", "🕯️", true);
+    } else {
+      showToast("Signal noted", "📡");
+    }
     setAccepted(true);
-    showToast(`Sealed · ${anime.title}`, "✦", true);
   }
 
   function reject(reason: RejectReason) {
-    if (!anime) return;
     markRecRejected(anime.id, reason);
     logOutcome(anime.id, "dropped", { surface: "daily" });
-    setShowReject(false);
     setDismissed(true);
-    showToast("Pass noted", "·", true);
+    setShowReject(false);
+    showToast("Passed for today", "📡");
   }
 
   return (
-    <article className="daily-ritual">
-      <header className="daily-ritual-head">
-        <span className="daily-kicker">{dateLabel}</span>
-        <h2>Today’s signal</h2>
-      </header>
+    <div className="daily-ritual">
+      <div className="daily-ritual-line">
+        <span className="daily-ritual-kicker">Lantern · {dateLabel}</span>
+        <p>{line}</p>
+      </div>
 
-      <div className="daily-ritual-body">
-        <Link
-          href={`/anime/${anime.id}`}
-          className="daily-poster"
-          onClick={() => markRecOpened(anime.id)}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={anime.image} alt="" />
-        </Link>
-        <div className="daily-copy">
-          <h3>
-            <Link href={`/anime/${anime.id}`} onClick={() => markRecOpened(anime.id)}>
-              {anime.title}
-            </Link>
-          </h3>
-          <p className="daily-obs">{line}</p>
-          {rankedMeta ? (
-            <p className="meta" style={{ marginTop: 8 }}>
-              {confidenceCopy(rankedMeta.confidence)}
-              {rankedMeta.reasons[0] ? ` · ${rankedMeta.reasons[0]}` : ""}
-            </p>
+      <article className="daily-card">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="daily-cover" src={anime.image} alt="" />
+        <div className="daily-body">
+          <p className="daily-kicker">Today’s signal</p>
+          <h2 className="daily-title">{anime.title}</h2>
+          {anime.titleNative ? (
+            <p className="daily-native">{anime.titleNative}</p>
           ) : null}
+          <div className="daily-meta">
+            {anime.score > 0 ? (
+              <span className="detail-pill score">
+                ★ {anime.score.toFixed(1)}
+              </span>
+            ) : null}
+            <span className="detail-pill">{anime.format}</span>
+            {anime.year ? (
+              <span className="detail-pill">{anime.year}</span>
+            ) : null}
+            {anime.tags?.slice(0, 3).map((g) => (
+              <span key={g} className="detail-pill">
+                {g}
+              </span>
+            ))}
+            {rankedMeta ? (
+              <span className="detail-pill">
+                {confidenceCopy(rankedMeta.confidence)}
+              </span>
+            ) : null}
+          </div>
+          <p className="daily-desc">
+            {(anime.description || "").slice(0, 320)}
+            {(anime.description || "").length > 320 ? "…" : ""}
+          </p>
           <div className="daily-actions">
-            {!accepted ? (
-              <>
-                <Button type="button" variant="accent" onClick={accept}>
-                  {isInList(anime.id) ? "Already on shelf" : "Seal to list"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowReject((v) => !v)}
-                >
-                  Pass
-                </Button>
-              </>
-            ) : (
-              <p className="meta">Sealed for later — the desk remembers.</p>
-            )}
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={accept}
+              disabled={accepted}
+            >
+              {accepted ? "Signal accepted" : "Accept signal"}
+            </Button>
+            <Link
+              href={`/anime/${anime.id}`}
+              className="btn btn-outline btn-sm"
+              onClick={() => markRecOpened(anime.id)}
+            >
+              Open detail
+            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowReject((v) => !v)}
+              disabled={accepted}
+            >
+              Not for me
+            </Button>
+            <Link href="/browse" className="btn btn-outline btn-sm">
+              Browse instead
+            </Link>
           </div>
           {showReject ? (
-            <div className="daily-reject" role="group" aria-label="Why pass">
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 6,
+                marginTop: 10,
+              }}
+            >
               {(Object.keys(REJECT_REASON_LABELS) as RejectReason[]).map(
-                (r) => (
+                (reason) => (
                   <button
-                    key={r}
+                    key={reason}
                     type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => reject(r)}
+                    className="btn btn-outline btn-sm"
+                    onClick={() => reject(reason)}
                   >
-                    {REJECT_REASON_LABELS[r]}
+                    {REJECT_REASON_LABELS[reason]}
                   </button>
                 ),
               )}
             </div>
           ) : null}
         </div>
-      </div>
-    </article>
+      </article>
+    </div>
   );
 }
