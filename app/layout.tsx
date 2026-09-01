@@ -18,6 +18,7 @@ import { ShortcutsHelp } from "@/components/ShortcutsHelp";
 import { SoftBtnSounds } from "@/components/SoftBtnSounds";
 import { GlobalNavKeys } from "@/components/GlobalNavKeys";
 import { RouteAnnouncer } from "@/components/RouteAnnouncer";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { LoadingTheater } from "@/components/LoadingTheater";
 import { RoomEnter } from "@/components/RoomEnter";
 import { RouteTune } from "@/components/RouteTune";
@@ -172,6 +173,7 @@ export default function RootLayout({
                       <ScrollProgress />
                       <PwaRegister />
                       <RouteTune />
+                      <OfflineBanner />
                       <Navbar />
                       <div className="app-shell" id="main-content" tabIndex={-1}>
                         <RoomEnter>{children}</RoomEnter>
