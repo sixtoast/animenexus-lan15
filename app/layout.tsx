@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Navbar } from "@/components/Navbar";
 import { SkipToContent } from "@/components/SkipToContent";
 import { WatchlistProvider } from "@/components/WatchlistProvider";
@@ -20,6 +21,7 @@ import { GlobalNavKeys } from "@/components/GlobalNavKeys";
 import { RouteAnnouncer } from "@/components/RouteAnnouncer";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { BackToTop } from "@/components/BackToTop";
+import { SessionUrlHydrate } from "@/components/SessionUrlHydrate";
 import { LoadingTheater } from "@/components/LoadingTheater";
 import { RoomEnter } from "@/components/RoomEnter";
 import { RouteTune } from "@/components/RouteTune";
@@ -168,6 +170,9 @@ export default function RootLayout({
                     <SessionProvider>
                       <SkipToContent />
                       <LanternMemoryBoot />
+                      <Suspense fallback={null}>
+                        <SessionUrlHydrate />
+                      </Suspense>
                       <NexusRouteBeacon />
                       <EnvironmentController />
                       <CinematographyController />
