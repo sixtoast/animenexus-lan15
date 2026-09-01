@@ -7,7 +7,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useWatchlist } from "@/components/WatchlistProvider";
-import { consultOracle } from "@/lib/oracle";
+import { consultOracle, sessionAppendix } from "@/lib/oracle";
+import { readIntentSession } from "@/lib/intent-session";
+import { useSessionRevision } from "@/lib/use-session-revision";
+import { getExperienceIntent } from "@/lib/viewing-intent";
 import {
   consultOracleCloud,
   ORACLE_MODES,
@@ -36,6 +39,7 @@ type ResolvedPick = VibecastPick & {
 export function OracleClient() {
   const { entries, ready } = useWatchlist();
   const { showToast } = useToast();
+  const sessionKey = useSessionRevision();
   const [seed, setSeed] = useState(0);
   const [mode, setMode] = useState<OracleMode>("pick");
   const [note, setNote] = useState("");
@@ -62,10 +66,26 @@ export function OracleClient() {
     emitNexus({ type: "tool_opened", tool: "oracle" });
   }, []);
 
+  const session = useMemo(() => readIntentSession(), [sessionKey]);
+  const sessionLine = useMemo(() => {
+    const bits: string[] = [];
+    if (session.slug) {
+      const exp = getExperienceIntent(session.slug);
+      bits.push(exp?.label || session.slug);
+    }
+    if (session.intensity !== "moderate") bits.push(session.intensity);
+    if (session.energy !== "medium") bits.push(session.energy);
+    if (session.minutesAvailable) bits.push(`${session.minutesAvailable}m`);
+    return bits.join(" · ");
+  }, [session]);
+
   const local = useMemo(() => {
     void seed;
-    return consultOracle(entries);
-  }, [entries, seed]);
+    const base = consultOracle(entries, session);
+    const extra = sessionAppendix(session);
+    if (!extra) return base;
+    return { ...base, body: base.body + extra };
+  }, [entries, seed, session]);
 
   function switchMode(id: OracleMode) {
     if (id === mode) return;
@@ -131,7 +151,12 @@ export function OracleClient() {
     playCue("oracle_tune");
     loadingStart("oracle");
     try {
-      const text = await consultOracleCloud(mode, entries, note || undefined);
+      const text = await consultOracleCloud(
+        mode,
+        entries,
+        note || undefined,
+        sessionLine || undefined,
+      );
       setUseCloud(true);
       setLocked(true);
       playCue("signal_acquired");
@@ -209,6 +234,23 @@ export function OracleClient() {
           )}
         </div>
       </div>
+
+      {sessionLine ? (
+        <p
+          className="meta oracle-session-line"
+          role="status"
+          style={{ marginBottom: 10 }}
+        >
+          Ranking with · {sessionLine}{" · "}
+          <Link
+            href="/"
+            className="btn btn-ghost btn-sm"
+            style={{ display: "inline", padding: "0 4px", minHeight: 0 }}
+          >
+            Edit on home
+          </Link>
+        </p>
+      ) : null}
 
       <div
         className="feed-tabs oracle-bands"
