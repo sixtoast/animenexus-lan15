@@ -11,12 +11,15 @@ import { rankRecommendations } from "@/lib/recommend-rank";
 import { emitNexus } from "@/lib/nexus";
 import { playCue } from "@/lib/sound-engine";
 import { CountTick } from "@/components/ui/CountTick";
+import { readIntentSession } from "@/lib/intent-session";
+import { useSessionRevision } from "@/lib/use-session-revision";
 
 type Mode = "silhouette" | "hard";
 
 export function ChallengeClient() {
   const { showToast } = useToast();
   const { entries, ready } = useWatchlist();
+  const sessionKey = useSessionRevision();
   const [mode, setMode] = useState<Mode>("silhouette");
   const [pool, setPool] = useState<Anime[]>([]);
   const [anime, setAnime] = useState<Anime | null>(null);
@@ -34,15 +37,17 @@ export function ChallengeClient() {
   const tunedPool = useMemo(() => {
     if (!pool.length) return pool;
     if (!ready || entries.length < 2) return pool;
+    const sess = readIntentSession();
     const ranked = rankRecommendations(pool, entries, {
       excludeIds: [],
       resonanceWeight: 0.55,
+      experienceSlug: sess.slug || undefined,
     });
     if (!ranked.length) return pool;
     const rankedIds = new Set(ranked.map((r) => r.anime.id));
     const tail = pool.filter((a) => !rankedIds.has(a.id));
     return [...ranked.map((r) => r.anime), ...tail];
-  }, [pool, ready, entries]);
+  }, [pool, ready, entries, sessionKey]);
 
   const buildRound = useCallback(
     (list: Anime[], extraSeed = 0) => {
