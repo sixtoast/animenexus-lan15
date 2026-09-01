@@ -21,6 +21,8 @@ import { rejectedAnimeIds } from "@/lib/recommend-feedback";
 import { SignalError, signalErrorBody } from "@/components/SignalError";
 import { SignalEmpty } from "@/components/SignalEmpty";
 import { playCue } from "@/lib/sound-engine";
+import { BrowseIntentHint } from "@/components/BrowseIntentHint";
+import { logBehaviour } from "@/lib/behaviour-events";
 
 type Props = {
   initialItems: Anime[];
@@ -81,7 +83,6 @@ export function BrowseClient({
     setLeaving(false);
   }, [searchParams, initialItems, initialTotal, initialHasNext, initialError]);
 
-  // Animate total count when it changes
   useEffect(() => {
     if (total === prevTotal.current) {
       setDisplayTotal(total);
@@ -145,6 +146,7 @@ export function BrowseClient({
     });
     if (query) {
       emitNexus({ type: "search_performed", query });
+      logBehaviour("search", { meta: { query } });
     }
     if (genre) emitNexus({ type: "filter_used", filter: `genre:${genre}` });
     if (status) emitNexus({ type: "filter_used", filter: `status:${status}` });
@@ -226,7 +228,6 @@ export function BrowseClient({
     return [...ranked.map((r) => r.anime), ...tail];
   }, [shelfBlend, canBlend, items, entries]);
 
-  // When results empty after load, brief leave on previous grid if any
   useEffect(() => {
     if (!pending && displayItems.length === 0 && !error) {
       setLeaving(true);
@@ -237,11 +238,7 @@ export function BrowseClient({
 
   return (
     <div className="browse-desk">
-      <div
-        className="feed-tabs"
-        role="tablist"
-        aria-label="Discover feeds"
-      >
+      <div className="feed-tabs" role="tablist" aria-label="Discover feeds">
         {FEED_TABS.map((t) => {
           const active = feed === t.value && parsed.mode === "feed";
           return (
@@ -264,8 +261,7 @@ export function BrowseClient({
 
       <div
         className={
-          "filter-panel" +
-          (searchFocus ? " filter-panel--search-focus" : "")
+          "filter-panel" + (searchFocus ? " filter-panel--search-focus" : "")
         }
       >
         <div className="filter-row search-row">
@@ -275,14 +271,16 @@ export function BrowseClient({
               "filter-input filter-search" +
               (queryValid ? " filter-search--valid" : "")
             }
-            placeholder="Search titles…"
+            placeholder="Search titles or a night — e.g. funny and short"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onFocus={() => setSearchFocus(true)}
             onBlur={() => setSearchFocus(false)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                (e.target as HTMLInputElement).classList.add("filter-search--pulse");
+                (e.target as HTMLInputElement).classList.add(
+                  "filter-search--pulse",
+                );
                 window.setTimeout(() => {
                   (e.target as HTMLInputElement).classList.remove(
                     "filter-search--pulse",
@@ -296,14 +294,14 @@ export function BrowseClient({
           <button
             type="button"
             className={
-              "btn btn-accent btn-sm" +
-              (queryValid ? " btn-search-ready" : "")
+              "btn btn-accent btn-sm" + (queryValid ? " btn-search-ready" : "")
             }
             onClick={applyFilters}
           >
             Search
           </button>
         </div>
+        <BrowseIntentHint query={q} />
 
         <div className="filter-row">
           <label
@@ -438,11 +436,6 @@ export function BrowseClient({
               onClick={() => setShelfBlend((v) => !v)}
               title="Blend catalog order with your shelf resonance"
               aria-pressed={shelfBlend}
-              aria-label={
-                shelfBlend
-                  ? "Shelf blend on — results ordered with your taste"
-                  : "Shelf blend off — catalog order only"
-              }
             >
               {shelfBlend ? "Shelf blend on" : "Shelf blend off"}
             </button>
@@ -494,7 +487,7 @@ export function BrowseClient({
         </div>
       ) : (
         <>
-          <AnimeGrid items={displayItems} />
+          <AnimeGrid items={displayItems} trackBehaviour />
           {hasNext ? (
             <div style={{ textAlign: "center", marginTop: 28 }}>
               <button
