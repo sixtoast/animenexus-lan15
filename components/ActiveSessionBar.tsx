@@ -12,6 +12,7 @@ import {
 import { getExperienceIntent } from "@/lib/viewing-intent";
 import { playCue } from "@/lib/sound-engine";
 import { sessionShareUrl } from "@/lib/session-url";
+import { useToast } from "@/components/ToastProvider";
 
 const INTENSITIES: IntentIntensity[] = ["light", "moderate", "maximum"];
 const ENERGIES: IntentEnergy[] = ["low", "medium", "high"];
@@ -21,6 +22,7 @@ const MINUTES = [null, 20, 30, 45, 60, 90] as const;
 export function ActiveSessionBar() {
   const [session, setSession] = useState<IntentSession | null>(null);
   const [openControls, setOpenControls] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     setSession(readIntentSession());
@@ -55,16 +57,19 @@ export function ActiveSessionBar() {
           url,
         });
         playCue("success");
+        showToast("Session shared", "✦", true);
       } else if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(url);
         playCue("success");
+        showToast("Session link copied", "✦", true);
       }
     } catch {
       try {
         await navigator.clipboard.writeText(url);
         playCue("success");
+        showToast("Session link copied", "✦", true);
       } catch {
-        /* */
+        showToast("Could not share session", "⚠", true);
       }
     }
   }
