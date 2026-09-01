@@ -1,0 +1,54 @@
+.cold-start-strip {
+  position: relative;
+  margin: 0 0 1.25rem;
+  padding: 0.9rem 2.25rem 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(240, 160, 144, 0.28);
+  background: linear-gradient(
+    120deg,
+    rgba(60, 36, 28, 0.55),
+    rgba(20, 14, 12, 0.4)
+  );
+}
+
+.cold-start-body strong {
+  display: block;
+  font-size: 0.92rem;
+  margin-bottom: 0.25rem;
+}
+
+.cold-start-body p {
+  margin: 0 0 0.65rem;
+  font-size: 0.88rem;
+  opacity: 0.9;
+  line-height: 1.35;
+}
+
+.cold-start-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cold-start-dismiss {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.55rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  font-size: 1.25rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.cold-start-dismiss:hover {
+  opacity: 1;
+}
+
+.intent-search-hint {
+  font-size: 0.8rem;
+  opacity: 0.75;
+  margin: 0.35rem 0 0.5rem;
+}
