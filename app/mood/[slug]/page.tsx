@@ -40,38 +40,58 @@ export default async function MoodPage({ params }: Props) {
       items = page.data;
       total = page.pagination.total;
       if (mood.minScore) {
-        items = items.filter((a) => (a.score || 0) >= (mood.minScore || 0));
+        items = items.filter((a) => {
+          const s = a.score > 10 ? a.score : a.score * 10;
+          return s >= mood.minScore!;
+        });
       }
     } else {
-      const page = await fetchFiltered(moodToFilters(mood), 1, 24);
+      const filters = moodToFilters(mood);
+      const page = await fetchFiltered(filters, 1, 24);
       items = page.data;
       total = page.pagination.total;
+      if (mood.minScore) {
+        items = items.filter((a) => {
+          const s = a.score > 10 ? a.score : a.score * 10;
+          return s >= mood.minScore!;
+        });
+      }
     }
   } catch (e) {
-    error = e instanceof Error ? e.message : "Failed to load";
+    error = e instanceof Error ? e.message : "Failed to reach AniList";
   }
 
   return (
     <main>
       <MoodSessionBoot slug={mood.slug} />
-      <section className="hero" style={{ paddingBottom: 8 }}>
+      <section className="hero" style={{ paddingBottom: 16 }}>
         <div className="container">
-          <div className="hero-badge">Tonight · viewing intent</div>
+          <div className="hero-badge">
+            Viewing intent · {mood.emoji} {mood.label}
+          </div>
           <h1>
-            {mood.emoji} {mood.label}
+            What kind of night · <span>{mood.label}</span>
           </h1>
           <p>{mood.blurb}</p>
-          <MoodChips active={mood.slug} />
+          <p className="meta" style={{ marginTop: 8 }}>
+            Intent steers ranking — it is not a genre filter alone.
+          </p>
+          <div style={{ marginTop: 20 }}>
+            <MoodChips active={mood.slug} />
+          </div>
         </div>
       </section>
 
       <section className="container" style={{ paddingBottom: 48 }}>
         <div className="section-head">
           <h2>
-            <span className="accent">📡</span> Feed
+            <span className="accent">{mood.emoji}</span> Candidates for this
+            intent
           </h2>
           <span className="meta">
-            {error ? "—" : `${items.length} shown${total ? ` · ${total.toLocaleString()} total` : ""}`}
+            {error
+              ? "—"
+              : `${items.length} shown${total ? ` · ${total.toLocaleString()} total` : ""}`}
           </span>
         </div>
 
