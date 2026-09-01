@@ -11,24 +11,14 @@ import {
   encodeDeskShareLite,
   parseDeskPack,
 } from "@/lib/desk-pack";
-import { parseWatchlistImport } from "@/lib/watchlist-io";
 import { playCue } from "@/lib/sound-engine";
 
-/**
- * Soft cross-device: export/import desk pack (notes, intent, services, optional shelf).
- */
 export function DeskPackPanel() {
-  const { entries, ready, replaceAll } = useWatchlist() as {
-    entries: import("@/lib/types").WatchlistEntry[];
-    ready: boolean;
-    replaceAll?: (e: import("@/lib/types").WatchlistEntry[]) => void;
-    setEntries?: (e: import("@/lib/types").WatchlistEntry[]) => void;
-  };
+  const { entries, ready, replaceAll } = useWatchlist();
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [includeShelf, setIncludeShelf] = useState(true);
 
-  // Absorb #desk= share tokens once on load
   useEffect(() => {
     if (typeof window === "undefined") return;
     const hash = window.location.hash || "";
@@ -39,7 +29,11 @@ export function DeskPackPanel() {
     const n = applyDeskShareLite(decoded);
     setMsg(`Imported desk share · ${n} note(s)`);
     playCue("success");
-    history.replaceState(null, "", window.location.pathname + window.location.search);
+    history.replaceState(
+      null,
+      "",
+      window.location.pathname + window.location.search,
+    );
   }, []);
 
   function downloadPack() {
@@ -76,24 +70,16 @@ export function DeskPackPanel() {
         const raw = String(reader.result || "");
         const pack = parseDeskPack(raw);
         const report = applyDeskPackMeta(pack);
-        if (pack.watchlist?.length && typeof replaceAll === "function") {
+        if (pack.watchlist?.length) {
           replaceAll(pack.watchlist);
-        } else if (pack.watchlist?.length) {
-          // Fallback: try classic import merge via local event
-          try {
-            const normalized = parseWatchlistImport(JSON.stringify(pack.watchlist));
-            window.dispatchEvent(
-              new CustomEvent("animenexus:import-watchlist", {
-                detail: normalized,
-              }),
-            );
-          } catch {
-            /* */
-          }
         }
         playCue("success");
         setMsg(
-          `Applied pack · ${report.notes} notes · intent ${report.intent ? "yes" : "no"} · services ${report.services ? "yes" : "no"} · shelf ids ${report.watchlistIds}`,
+          `Applied pack · ${report.notes} notes · intent ${
+            report.intent ? "yes" : "no"
+          } · services ${report.services ? "yes" : "no"} · shelf ${
+            report.watchlistIds
+          }`,
         );
       } catch (e) {
         playCue("error");
@@ -111,7 +97,15 @@ export function DeskPackPanel() {
         streaming prefs, and optionally your shelf as JSON. Share link carries
         notes + intent only.
       </p>
-      <label className="tools-hint" style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
+      <label
+        className="tools-hint"
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "center",
+          marginBottom: 10,
+        }}
+      >
         <input
           type="checkbox"
           checked={includeShelf}
@@ -120,10 +114,18 @@ export function DeskPackPanel() {
         Include watchlist in full pack
       </label>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        <button type="button" className="btn btn-accent btn-sm" onClick={downloadPack}>
+        <button
+          type="button"
+          className="btn btn-accent btn-sm"
+          onClick={downloadPack}
+        >
           Download pack
         </button>
-        <button type="button" className="btn btn-outline btn-sm" onClick={copyShareLink}>
+        <button
+          type="button"
+          className="btn btn-outline btn-sm"
+          onClick={copyShareLink}
+        >
           Copy share link
         </button>
         <button

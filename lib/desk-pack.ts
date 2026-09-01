@@ -68,7 +68,10 @@ export function applyDeskPackMeta(pack: DeskPack): DeskPackApplyReport {
     writeIntentSession(pack.intent);
   }
   if (pack.services) {
-    writeMyServices(pack.services);
+    writeMyServices({
+      services: pack.services.services || [],
+      region: pack.services.region || "US",
+    });
   }
   return {
     notes,
