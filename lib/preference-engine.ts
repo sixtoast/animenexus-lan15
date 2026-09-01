@@ -31,6 +31,10 @@ import {
   userResonance,
   type ResonanceVector,
 } from "./resonance";
+import {
+  intentControlOverlay,
+  readIntentSession,
+} from "./intent-session";
 
 export type PreferenceProfile = {
   clusters: TasteCluster[];
@@ -40,6 +44,23 @@ export type PreferenceProfile = {
   userResonance: ResonanceVector;
   dropSignatures: ReturnType<typeof buildDropSignatures>;
 };
+
+export type RankSignals = {
+  score: number;
+  resonanceSim: number;
+  reasons: string[];
+};
+
+function inferSessionIntent(entries: WatchlistEntry[]): IntentVector {
+  const evs = sessionEvents().filter((e) => e.weight > 0);
+  if (!evs.length && !entries.length) return emptyIntent();
+  const recent = entries
+    .filter((e) => e.watchStatus === "watching" || e.watchStatus === "completed")
+    .slice(0, 12);
+  const tags = recent.flatMap((e) => e.tags || []);
+  if (!tags.length) return emptyIntent();
+  return animeIntentFingerprint(tags);
+}
 
 export function buildPreferenceProfile(
   entries: WatchlistEntry[],
@@ -56,35 +77,6 @@ export function buildPreferenceProfile(
     dropSignatures: buildDropSignatures(entries),
   };
 }
-
-function inferSessionIntent(entries: WatchlistEntry[]): IntentVector {
-  let v = emptyIntent();
-  const evs = sessionEvents().filter((e) => e.weight > 0);
-  if (!evs.length) return v;
-
-  let n = 0;
-  for (const e of evs) {
-    if (!e.animeId) continue;
-    const entry = entries.find((x) => x.id === e.animeId);
-    if (!entry) continue;
-    const fp = animeIntentFingerprint(entry.genres || entry.tags);
-    const w = Math.min(1, Math.abs(e.weight) / 5);
-    v = blendIntent(v, fp, w);
-    n += 1;
-  }
-  if (n === 0) return emptyIntent();
-  return v;
-}
-
-export type RankSignals = {
-  score: number;
-  clusterScore: number;
-  intentScore: number;
-  resonanceSim: number;
-  affinity: number;
-  reasons: string[];
-  activeCluster?: string;
-};
 
 export function scoreCandidate(
   anime: Anime,
@@ -144,6 +136,43 @@ export function scoreCandidate(
 
   if (opts?.exposedRecently) score -= 0.08;
 
+  // Session dials (client-only): intensity / energy soft constraints
+  if (typeof window !== "undefined") {
+    try {
+      const sess = readIntentSession();
+      const overlay = intentControlOverlay(sess);
+      const tagsL = tags.map((g) => String(g).toLowerCase());
+      const heavy = tagsL.some((t) =>
+        ["psychological", "thriller", "mecha", "horror"].some((x) =>
+          t.includes(x),
+        ),
+      );
+      const intense = tagsL.some((t) =>
+        ["horror", "thriller", "psychological", "gore"].some((x) =>
+          t.includes(x),
+        ),
+      );
+      if (overlay.intensityScale < 1 && intense) {
+        score *= 0.9 + 0.1 * overlay.intensityScale;
+      }
+      if (overlay.cognitiveScale < 1 && heavy) {
+        score *= 0.88 + 0.12 * overlay.cognitiveScale;
+      }
+      if (overlay.pacingBias < 0 && (anime.duration || 24) > 28) {
+        score -= 0.03;
+      }
+      if (
+        sess.minutesAvailable != null &&
+        sess.minutesAvailable > 0 &&
+        (anime.duration || 24) > sess.minutesAvailable + 8
+      ) {
+        score -= 0.06;
+      }
+    } catch {
+      /* */
+    }
+  }
+
   const drop = dropPenalty(
     profile.dropSignatures,
     tags,
@@ -178,11 +207,7 @@ export function scoreCandidate(
 
   return {
     score: Math.max(0, Math.min(1, score)),
-    clusterScore: ca.score,
-    intentScore,
     resonanceSim: sim,
-    affinity,
-    reasons: reasons.slice(0, 4),
-    activeCluster: ca.label,
+    reasons: reasons.slice(0, 5),
   };
 }
