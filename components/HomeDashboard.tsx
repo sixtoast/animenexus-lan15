@@ -8,6 +8,7 @@ import { RecFeedbackControls } from "@/components/RecFeedbackControls";
 import { LanternInsights } from "@/components/LanternInsights";
 import { HomeSignalsToday } from "@/components/HomeSignalsToday";
 import { WatchlistQueue } from "@/components/WatchlistQueue";
+import { ExperiencePackStrip } from "@/components/ExperiencePackStrip";
 import { touchStreak, readStreak } from "@/lib/streak";
 import { readMemory, type RecentView } from "@/lib/lantern-memory";
 import { useToast } from "@/components/ToastProvider";
@@ -118,6 +119,8 @@ export function HomeDashboard({ trending = [] }: Props) {
       </div>
 
       <WatchlistQueue />
+
+      <ExperiencePackStrip />
 
       <LanternInsights />
 
