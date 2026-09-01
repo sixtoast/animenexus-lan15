@@ -10,9 +10,13 @@ import { useWatchlist } from "@/components/WatchlistProvider";
 import { rankRecommendations } from "@/lib/recommend-rank";
 import { rejectedAnimeIds } from "@/lib/recommend-feedback";
 import { emitNexus } from "@/lib/nexus";
+import { readIntentSession } from "@/lib/intent-session";
+import { useSessionRevision } from "@/lib/use-session-revision";
+import { getExperienceIntent } from "@/lib/viewing-intent";
 
 export function FusionClient() {
   const { entries, ready } = useWatchlist();
+  const sessionKey = useSessionRevision();
   const [a, setA] = useState<Anime | null>(null);
   const [b, setB] = useState<Anime | null>(null);
   const [raw, setRaw] = useState<Anime[]>([]);
@@ -66,17 +70,31 @@ export function FusionClient() {
       ...(a ? [a.id] : []),
       ...(b ? [b.id] : []),
     ]);
+    const sess = readIntentSession();
     const ranked = rankRecommendations(raw, entries, {
       excludeIds: exclude,
       resonanceWeight: 0.55,
+      experienceSlug: sess.slug || undefined,
     });
     if (!ranked.length) return raw;
     const ids = new Set(ranked.map((r) => r.anime.id));
     const tail = raw.filter((x) => !ids.has(x.id));
     return [...ranked.map((r) => r.anime), ...tail];
-  }, [raw, ready, entries, a, b]);
+  }, [raw, ready, entries, a, b, sessionKey]);
 
   const shelfTuned = ready && entries.length >= 2 && recs.length > 0;
+  const session = useMemo(() => readIntentSession(), [sessionKey]);
+  const sessionLine = useMemo(() => {
+    const bits: string[] = [];
+    if (session.slug) {
+      const exp = getExperienceIntent(session.slug);
+      bits.push(exp?.label || session.slug);
+    }
+    if (session.intensity !== "moderate") bits.push(session.intensity);
+    if (session.energy !== "medium") bits.push(session.energy);
+    if (session.minutesAvailable) bits.push(`${session.minutesAvailable}m`);
+    return bits.join(" · ");
+  }, [session]);
 
   return (
     <div className="tools-panel">
@@ -119,7 +137,18 @@ export function FusionClient() {
             <h3 style={{ fontSize: "1rem", marginBottom: 12 }}>
               Catalog children (genre blend)
             </h3>
-            {shelfTuned ? (
+            {sessionLine ? (
+              <p className="tools-hint" role="status" aria-live="polite">
+                Ranking with · {sessionLine}{" · "}
+                <Link
+                  href="/"
+                  className="btn btn-ghost btn-sm"
+                  style={{ display: "inline", padding: "0 4px", minHeight: 0 }}
+                >
+                  Edit on home
+                </Link>
+              </p>
+            ) : shelfTuned ? (
               <p className="tools-hint" role="status" aria-live="polite">
                 Soft-ranked for your shelf within this blend — not a scoreboard.
               </p>
