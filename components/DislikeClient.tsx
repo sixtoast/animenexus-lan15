@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import type { Anime } from "@/lib/types";
 import { AnimeSearchPicker } from "@/components/AnimeSearchPicker";
 import { AnimeCard } from "@/components/AnimeCard";
@@ -22,7 +21,7 @@ import {
 } from "@/lib/recommend-feedback";
 import { readIntentSession } from "@/lib/intent-session";
 import { useSessionRevision } from "@/lib/use-session-revision";
-import { getExperienceIntent } from "@/lib/viewing-intent";
+import { SessionRankHint } from "@/components/SessionRankHint";
 
 const ALT: Record<string, string[]> = {
   Action: ["Slice of Life", "Romance", "Comedy"],
@@ -58,19 +57,6 @@ export function DislikeClient() {
       experienceSlug: sess.slug || undefined,
     });
   }, [raw, entries, anime, sessionKey]);
-
-  const session = useMemo(() => readIntentSession(), [sessionKey]);
-  const sessionLine = useMemo(() => {
-    const bits: string[] = [];
-    if (session.slug) {
-      const exp = getExperienceIntent(session.slug);
-      bits.push(exp?.label || session.slug);
-    }
-    if (session.intensity !== "moderate") bits.push(session.intensity);
-    if (session.energy !== "medium") bits.push(session.energy);
-    if (session.minutesAvailable) bits.push(`${session.minutesAvailable}m`);
-    return bits.join(" · ");
-  }, [session]);
 
   useEffect(() => {
     for (const r of ranked.slice(0, 12)) {
@@ -141,18 +127,9 @@ export function DislikeClient() {
           Steering toward: {alts.join(" · ")}
         </p>
       ) : null}
-      {sessionLine ? (
-        <p className="tools-hint" role="status" style={{ marginTop: 8 }}>
-          Ranking with · {sessionLine}{" · "}
-          <Link
-            href="/"
-            className="btn btn-ghost btn-sm"
-            style={{ display: "inline", padding: "0 4px", minHeight: 0 }}
-          >
-            Edit on home
-          </Link>
-        </p>
-      ) : null}
+      <div style={{ marginTop: 8 }}>
+        <SessionRankHint />
+      </div>
 
       {ranked.length > 0 ? (
         <div style={{ marginTop: 20, display: "grid", gap: 20 }}>
