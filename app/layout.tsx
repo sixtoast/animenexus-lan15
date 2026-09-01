@@ -40,6 +40,7 @@ import "./mascot.css";
 import "./sprint-a.css";
 import "./ai-panel.css";
 import "./cmdk.css";
+import "./cmdk-intent.css";
 import "./ancestry.css";
 import "./session-tools.css";
 import "./oracle-vibe.css";
