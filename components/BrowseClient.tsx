@@ -23,6 +23,7 @@ import { SignalEmpty } from "@/components/SignalEmpty";
 import { playCue } from "@/lib/sound-engine";
 import { BrowseIntentHint } from "@/components/BrowseIntentHint";
 import { parseIntentSearch } from "@/lib/intent-search";
+import { getExperienceIntent } from "@/lib/viewing-intent";
 import { logBehaviour } from "@/lib/behaviour-events";
 
 type Props = {
@@ -72,11 +73,15 @@ export function BrowseClient({
 
   useEffect(() => {
     setQ(searchParams.get("q") || "");
-    setGenre(searchParams.get("genre") || "");
+    const g = searchParams.get("genre") || "";
+    const expSlug = searchParams.get("experience") || "";
+    const exp = expSlug ? getExperienceIntent(expSlug) : undefined;
+    setGenre(g || (exp?.genreHints[0] ?? ""));
     setStatus(searchParams.get("status") || "");
     setFormat(searchParams.get("format") || "");
     setYear(searchParams.get("year") || "");
-    setSort(searchParams.get("sort") || "score");
+    const sortParam = searchParams.get("sort");
+    setSort(sortParam || exp?.sort || "score");
     setItems(initialItems);
     setTotal(initialTotal);
     setHasNext(initialHasNext);
@@ -120,6 +125,7 @@ export function BrowseClient({
         next.delete("status");
         next.delete("format");
         next.delete("year");
+        next.delete("experience");
       }
       const qs = next.toString();
       startTransition(() => {
@@ -145,6 +151,7 @@ export function BrowseClient({
       year: year || undefined,
       sort: sort || "score",
       feed: query || genre || status || format || year ? undefined : feed,
+      experience: experience || undefined,
     });
     if (query) {
       emitNexus({ type: "search_performed", query });
@@ -306,11 +313,24 @@ export function BrowseClient({
           </button>
         </div>
         <BrowseIntentHint query={q} />
-      {experience ? (
-        <p className="intent-search-hint" role="status">
-          Experience pack · {experience}
-        </p>
-      ) : null}
+        {experience ? (
+          <p className="intent-search-hint" role="status">
+            Experience pack ·{" "}
+            {getExperienceIntent(experience)?.label || experience}
+            {" · "}
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              style={{ display: "inline", padding: "0 4px", minHeight: 0 }}
+              onClick={() => {
+                playCue("filter_select");
+                pushParams({ experience: undefined });
+              }}
+            >
+              Clear
+            </button>
+          </p>
+        ) : null}
 
         <div className="filter-row">
           <label
