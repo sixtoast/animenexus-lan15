@@ -296,6 +296,7 @@ export function Navbar() {
                   Log out · {session.username}
                 </Button>
               ) : null}
+              <NavSoundToggle />
               <Button
                 variant="ghost"
                 size="sm"
