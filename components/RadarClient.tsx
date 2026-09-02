@@ -24,7 +24,7 @@ import { WhyThisIsHere } from "@/components/WhyThisIsHere";
 import { playCue } from "@/lib/sound-engine";
 import { readIntentSession } from "@/lib/intent-session";
 import { useSessionRevision } from "@/lib/use-session-revision";
-import { getExperienceIntent } from "@/lib/viewing-intent";
+import { formatSessionLine } from "@/lib/session-line";
 import {
   formatAirTime,
   groupContactsByWindow,
@@ -226,18 +226,10 @@ export function RadarClient() {
   }, [raw, ready, entries, sessionKey]);
 
   const shelfTuned = ready && entries.length >= 2 && ranked.length > 0;
-  const session = useMemo(() => readIntentSession(), [sessionKey]);
-  const sessionLine = useMemo(() => {
-    const bits: string[] = [];
-    if (session.slug) {
-      const exp = getExperienceIntent(session.slug);
-      bits.push(exp?.label || session.slug);
-    }
-    if (session.intensity !== "moderate") bits.push(session.intensity);
-    if (session.energy !== "medium") bits.push(session.energy);
-    if (session.minutesAvailable) bits.push(`${session.minutesAvailable}m`);
-    return bits.join(" · ");
-  }, [session]);
+  const sessionLine = useMemo(
+    () => formatSessionLine(readIntentSession()),
+    [sessionKey],
+  );
   const scanning =
     phase === "scanning" || phase === "signal" || phase === "identify";
   const phaseMeta =
