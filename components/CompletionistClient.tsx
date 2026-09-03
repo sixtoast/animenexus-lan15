@@ -21,24 +21,34 @@ function episodeCount(e: WatchlistEntry): number {
   return Number.isFinite(n) && n > 0 ? n : 12;
 }
 
-function scoreQueue(e: WatchlistEntry, user: ReturnType<typeof userResonance>): number {
-  const res = resonanceFromGenres(e.genres || []);
-  const sim = cosineSimilarity(user, res);
-  const progress =
-    e.progress > 0 ? Math.min(1, e.progress / Math.max(episodeCount(e), 1)) : 0;
-  const eng = interactionWeight(e);
-  const score = (e.score || 0) / 10;
-  return sim * 0.45 + progress * 0.2 + eng * 0.2 + score * 0.15;
+function scoreWatching(e: WatchlistEntry, user: ReturnType<typeof userResonance>) {
+  const w = interactionWeight(e);
+  const sim = cosineSimilarity(user, resonanceFromGenres(e.genres));
+  const progressHint = Math.min(1, (e.progress || 0) / episodeCount(e));
+  return 0.35 * w + 0.35 * sim + 0.3 * progressHint;
+}
+
+function scoreQueue(e: WatchlistEntry, user: ReturnType<typeof userResonance>) {
+  const w = interactionWeight(e);
+  const sim = cosineSimilarity(user, resonanceFromGenres(e.genres));
+  const community =
+    e.score && e.score > 0
+      ? e.score > 10
+        ? e.score / 100
+        : e.score / 10
+      : 0.45;
+  return 0.4 * w + 0.4 * sim + 0.2 * community;
 }
 
 export function CompletionistClient() {
   const { entries, ready } = useWatchlist();
+
   const user = useMemo(() => userResonance(entries), [entries]);
 
   const watching = useMemo(() => {
     return entries
       .filter((e) => e.watchStatus === "watching")
-      .map((e) => ({ e, s: scoreQueue(e, user) }))
+      .map((e) => ({ e, s: scoreWatching(e, user) }))
       .sort((a, b) => b.s - a.s)
       .map((x) => x.e);
   }, [entries, user]);
