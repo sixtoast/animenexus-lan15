@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { withViewTransition } from "@/lib/view-transition";
 
 function isTypingTarget(t: EventTarget | null): boolean {
   if (!(t instanceof HTMLElement)) return false;
@@ -35,7 +36,9 @@ export function GlobalNavKeys() {
       const href = map[k];
       if (!href) return;
       e.preventDefault();
-      router.push(href);
+      withViewTransition(() => {
+        router.push(href);
+      });
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
