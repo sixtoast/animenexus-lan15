@@ -8,6 +8,7 @@ import { parseIntentSearch } from "@/lib/intent-search";
 import { readIntentSession, writeIntentSession } from "@/lib/intent-session";
 import { sessionToSearchParams } from "@/lib/session-url";
 import { playCue } from "@/lib/sound-engine";
+import { withViewTransition } from "@/lib/view-transition";
 
 const NAV = [
   { href: "/", label: "Home", group: "Navigate" },
@@ -28,52 +29,46 @@ const NAV = [
   { href: "/mood/comfort", label: "Intent · Comfort me", group: "Tonight" },
   { href: "/mood/destroy", label: "Intent · Destroy me", group: "Tonight" },
   { href: "/mood/think", label: "Intent · Make me think", group: "Tonight" },
-  { href: "/mood/laugh", label: "Intent · Make me laugh", group: "Tonight" },
 ];
 
 const DIAL_ACTIONS: {
+  id: string;
   label: string;
-  meta: string;
   partial: Parameters<typeof writeIntentSession>[0];
 }[] = [
-  { label: "Intensity · light", meta: "Dials", partial: { intensity: "light" } },
+  { id: "int-light", label: "Intensity · light", partial: { intensity: "light" } },
   {
+    id: "int-mod",
     label: "Intensity · moderate",
-    meta: "Dials",
     partial: { intensity: "moderate" },
   },
   {
+    id: "int-max",
     label: "Intensity · maximum",
-    meta: "Dials",
     partial: { intensity: "maximum" },
   },
-  { label: "Energy · low", meta: "Dials", partial: { energy: "low" } },
-  { label: "Energy · medium", meta: "Dials", partial: { energy: "medium" } },
-  { label: "Energy · high", meta: "Dials", partial: { energy: "high" } },
+  { id: "en-low", label: "Energy · low", partial: { energy: "low" } },
+  { id: "en-med", label: "Energy · medium", partial: { energy: "medium" } },
+  { id: "en-high", label: "Energy · high", partial: { energy: "high" } },
   {
-    label: "Time · 20 minutes",
-    meta: "Dials",
-    partial: { minutesAvailable: 20 },
+    id: "min-25",
+    label: "Time budget · 25m",
+    partial: { minutesAvailable: 25 },
   },
   {
-    label: "Time · 30 minutes",
-    meta: "Dials",
-    partial: { minutesAvailable: 30 },
-  },
-  {
-    label: "Time · 45 minutes",
-    meta: "Dials",
+    id: "min-45",
+    label: "Time budget · 45m",
     partial: { minutesAvailable: 45 },
   },
   {
-    label: "Clear session dials",
-    meta: "Dials",
-    partial: {
-      slug: null,
-      intensity: "moderate",
-      energy: "medium",
-      minutesAvailable: null,
-    },
+    id: "min-90",
+    label: "Time budget · 90m",
+    partial: { minutesAvailable: 90 },
+  },
+  {
+    id: "min-clear",
+    label: "Time budget · clear",
+    partial: { minutesAvailable: null },
   },
 ];
 
@@ -82,40 +77,37 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<Anime[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [parsedSummary, setParsedSummary] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setOpen((v) => !v);
+        setOpen((o) => !o);
+        setQ("");
+        setHits([]);
       }
+      if (e.key === "Escape") setOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   useEffect(() => {
-    if (!open) {
-      setQ("");
+    if (!open || !q.trim()) {
       setHits([]);
-      setParsedSummary(null);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (q.trim().length < 2) {
-      setHits([]);
-      setParsedSummary(null);
       return;
     }
-    const intent = parseIntentSearch(q.trim());
-    setParsedSummary(intent.isIntentQuery ? intent.summary : null);
+    const parsed = parseIntentSearch(q);
+    const term = parsed.filters.search || q.trim();
+    if (term.length < 2) {
+      setHits([]);
+      return;
+    }
     let cancelled = false;
-    const t = setTimeout(() => {
-      setSearching(true);
-      fetch(`/api/search?q=${encodeURIComponent(q.trim())}&perPage=6`)
+    setLoading(true);
+    const t = window.setTimeout(() => {
+      fetch(`/api/search?q=${encodeURIComponent(term)}&perPage=8`)
         .then((r) => r.json())
         .then((j) => {
           if (!cancelled) setHits((j.data || []) as Anime[]);
@@ -124,35 +116,41 @@ export function CommandPalette() {
           if (!cancelled) setHits([]);
         })
         .finally(() => {
-          if (!cancelled) setSearching(false);
+          if (!cancelled) setLoading(false);
         });
     }, 220);
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      window.clearTimeout(t);
     };
-  }, [q]);
+  }, [q, open]);
 
-  const nav = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    if (!needle) return NAV;
+  const filteredNav = useMemo(() => {
+    const qq = q.trim().toLowerCase();
+    if (!qq) return NAV;
     return NAV.filter(
       (n) =>
-        n.label.toLowerCase().includes(needle) ||
-        n.group.toLowerCase().includes(needle),
+        n.label.toLowerCase().includes(qq) ||
+        n.href.toLowerCase().includes(qq) ||
+        n.group.toLowerCase().includes(qq),
     );
   }, [q]);
 
-  const intent = useMemo(
-    () => (q.trim().length >= 3 ? parseIntentSearch(q.trim()) : null),
-    [q],
-  );
-
   const dialHits = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    if (!needle) return DIAL_ACTIONS.slice(0, 4);
-    return DIAL_ACTIONS.filter((d) => d.label.toLowerCase().includes(needle));
+    const qq = q.trim().toLowerCase();
+    if (!qq) return DIAL_ACTIONS.slice(0, 6);
+    return DIAL_ACTIONS.filter((d) => d.label.toLowerCase().includes(qq));
   }, [q]);
+
+  const sessionLine = useMemo(() => {
+    const s = readIntentSession();
+    const bits: string[] = [];
+    if (s.slug) bits.push(s.slug);
+    if (s.intensity !== "moderate") bits.push(s.intensity);
+    if (s.energy !== "medium") bits.push(s.energy);
+    if (s.minutesAvailable) bits.push(`${s.minutesAvailable}m`);
+    return bits.join(" · ");
+  }, [open, q]);
 
   function go(href: string) {
     const moodMatch = href.match(/\/mood\/([^/?#]+)/);
@@ -166,14 +164,18 @@ export function CommandPalette() {
       playCue("filter_select");
     }
     setOpen(false);
-    router.push(href);
+    withViewTransition(() => {
+      router.push(href);
+    });
   }
 
   function applyDial(partial: Parameters<typeof writeIntentSession>[0]) {
     writeIntentSession(partial);
     playCue("filter_select");
     setOpen(false);
-    router.push("/");
+    withViewTransition(() => {
+      router.push("/");
+    });
   }
 
   return (
@@ -189,109 +191,86 @@ export function CommandPalette() {
       <div className="cmdk-input-row">
         <span aria-hidden>⌘</span>
         <input
-          data-autofocus
+          className="cmdk-input"
+          autoFocus
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search anime, intent, or jump…"
+          placeholder="Jump, search, dial intensity…"
+          aria-label="Command palette search"
         />
-        <span className="cmdk-esc">esc</span>
       </div>
-      {parsedSummary ? (
-        <p className="cmdk-intent-hint" role="status">
-          Understood as · {parsedSummary}
+      {sessionLine ? (
+        <p className="tools-hint" style={{ margin: "8px 12px 0" }}>
+          Session · {sessionLine}
         </p>
       ) : null}
-      <div className="cmdk-results">
-        {intent?.isIntentQuery ? (
-          <>
-            <div className="cmdk-section-label">Intent</div>
-            <button
-              type="button"
-              className="cmdk-item"
-              onClick={() => {
-                if (intent.experienceSlug) {
-                  writeIntentSession({ slug: intent.experienceSlug });
-                }
-                playCue("filter_select");
-                go(`/browse?q=${encodeURIComponent(q.trim())}`);
-              }}
-            >
-              Browse as “{q.trim()}”
-              <span className="cmdk-item-meta">catalog + shelf blend</span>
-            </button>
-            {intent.experienceSlug ? (
-              <button
-                type="button"
-                className="cmdk-item"
-                onClick={() => {
-                  writeIntentSession({ slug: intent.experienceSlug });
-                  playCue("filter_select");
-                  const qs = sessionToSearchParams({
-                    ...readIntentSession(),
-                    slug: intent.experienceSlug,
-                  }).toString();
-                  go(`/browse?${qs}`);
-                }}
-              >
-                Open intent · {intent.experienceSlug}
-                <span className="cmdk-item-meta">Tonight + dials</span>
-              </button>
-            ) : null}
-          </>
-        ) : null}
+      <div className="cmdk-list" role="listbox">
         {dialHits.length > 0 ? (
           <>
-            <div className="cmdk-section-label">Session dials</div>
+            <p className="cmdk-group">Session dials</p>
             {dialHits.map((d) => (
               <button
-                key={d.label}
+                key={d.id}
                 type="button"
                 className="cmdk-item"
+                role="option"
                 onClick={() => applyDial(d.partial)}
               >
                 {d.label}
-                <span className="cmdk-item-meta">{d.meta}</span>
               </button>
             ))}
           </>
         ) : null}
-        {nav.length > 0 ? (
+        {filteredNav.length > 0 ? (
           <>
-            <div className="cmdk-section-label">Navigate</div>
-            {nav.map((n) => (
+            <p className="cmdk-group">Navigate</p>
+            {filteredNav.map((n) => (
               <button
                 key={n.href + n.label}
                 type="button"
                 className="cmdk-item"
+                role="option"
                 onClick={() => go(n.href)}
               >
-                {n.label}
-                <span className="cmdk-item-meta">{n.group}</span>
+                <span>{n.label}</span>
+                <span className="cmdk-meta">{n.group}</span>
               </button>
             ))}
           </>
         ) : null}
         {q.trim().length >= 2 ? (
           <>
-            <div className="cmdk-section-label">
-              Catalog {searching ? "…" : ""}
-            </div>
+            <p className="cmdk-group">
+              Search{loading ? " …" : ""}
+            </p>
             {hits.map((a) => (
               <button
                 key={a.id}
                 type="button"
                 className="cmdk-item"
+                role="option"
                 onClick={() => go(`/anime/${a.id}`)}
               >
                 {a.title}
-                <span className="cmdk-item-meta">
-                  {a.year || a.format || "title"}
-                </span>
               </button>
             ))}
-            {!searching && hits.length === 0 ? (
-              <p className="cmdk-empty">No titles matched.</p>
+            {!loading && hits.length === 0 ? (
+              <p className="tools-hint" style={{ padding: "8px 12px" }}>
+                No titles — try another query
+              </p>
             ) : null}
+            <button
+              type="button"
+              className="cmdk-item"
+              onClick={() => {
+                const params = sessionToSearchParams(readIntentSession());
+                const qs = new URLSearchParams(params);
+                qs.set("q", q.trim());
+                go(`/browse?${qs.toString()}`);
+              }}
+            >
+              Open “{q.trim()}” in browse
+            </button>
           </>
         ) : null}
       </div>
