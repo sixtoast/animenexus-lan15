@@ -31,9 +31,9 @@ function windowDims(
     const updated = e.updatedAt ? new Date(e.updatedAt).getTime() : 0;
     if (days < 9999 && updated && updated < cut) continue;
     const w =
-      e.status === "completed" || e.status === "rewatching"
+      e.watchStatus === "completed" || e.watchStatus === "rewatching"
         ? 3
-        : e.status === "watching"
+        : e.watchStatus === "watching"
           ? 2
           : 1;
     for (const g of e.genres || e.tags || []) {
