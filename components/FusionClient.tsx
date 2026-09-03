@@ -13,6 +13,7 @@ import { emitNexus } from "@/lib/nexus";
 import { readIntentSession } from "@/lib/intent-session";
 import { useSessionRevision } from "@/lib/use-session-revision";
 import { SessionRankHint } from "@/components/SessionRankHint";
+import { SignalEmpty } from "@/components/SignalEmpty";
 
 export function FusionClient() {
   const { entries, ready } = useWatchlist();
@@ -144,15 +145,20 @@ export function FusionClient() {
                 ))}
               </div>
             ) : (
-              <p className="tools-hint">No strong children found for this blend.</p>
+              <SignalEmpty
+                kind="search"
+                title="No strong children for this blend"
+                body="Try parents with more shared genres, or a wider pair — catalog children appear when the signal overlaps."
+              />
             )}
           </section>
         </div>
       ) : (
-        <p className="tools-hint">
-          Fuse two signals — shared genres raise compatibility and unlock
-          catalog recommendations.
-        </p>
+        <SignalEmpty
+          kind="generic"
+          title="Fuse two signals"
+          body="Pick two parents. Shared genres raise compatibility and unlock catalog recommendations ranked for your shelf and session."
+        />
       )}
     </div>
   );
