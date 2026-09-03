@@ -70,7 +70,7 @@ export function buildTasteClusters(
 
   for (const e of entries) {
     const w =
-      statusWeight(String(e.status || "")) +
+      statusWeight(String(e.watchStatus || "")) +
       (e.id ? Math.max(0, affinityForAnime(e.id)) * 0.15 : 0);
     for (const g of e.genres || e.tags || []) {
       const key = String(g).toLowerCase();
