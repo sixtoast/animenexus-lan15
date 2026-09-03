@@ -36,12 +36,12 @@ body {
   }
 
   .mood-chip {
-    min-height: 40px;
-    padding: 8px 14px;
+    min-height: 44px;
+    padding: 10px 14px;
   }
 
   .view-toggle-bar button {
-    min-height: 40px;
+    min-height: 44px;
     min-width: 4.5rem;
   }
 
@@ -169,12 +169,12 @@ body {
   }
 
   .home-hero-actions .btn {
-    min-height: 42px;
+    min-height: 44px;
   }
 
   .taste-list-link,
   .journey-event-title {
-    min-height: 40px;
+    min-height: 44px;
     display: flex;
     align-items: center;
   }
@@ -204,8 +204,8 @@ body {
 
   .mascot-hide,
   .mascot-enable {
-    min-height: 40px;
-    min-width: 40px;
+    min-height: 44px;
+    min-width: 44px;
   }
 
   .feed-tabs {
@@ -224,8 +224,8 @@ body {
 
   .feed-tab {
     flex: 0 0 auto;
-    min-height: 40px;
-    padding: 8px 14px;
+    min-height: 44px;
+    padding: 10px 14px;
   }
 
   .filter-panel .filter-row {
@@ -264,11 +264,11 @@ body {
   }
 
   .sound-preview-row .btn {
-    min-height: 40px;
+    min-height: 44px;
   }
 
   .oracle-bands .feed-tab {
-    min-height: 42px;
+    min-height: 44px;
   }
 
   .radar-prefs .btn {
@@ -295,6 +295,60 @@ body {
 
   .cold-start-actions .btn {
     min-height: 44px;
+  }
+
+  /* Session + experience strips: swipe, don’t wrap into a tall stack */
+  .exp-pack-strip,
+  .browse-session-strip,
+  .active-session-bar,
+  .session-dials,
+  .tonight-desk-controls {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .exp-pack-strip::-webkit-scrollbar,
+  .browse-session-strip::-webkit-scrollbar,
+  .active-session-bar::-webkit-scrollbar,
+  .session-dials::-webkit-scrollbar,
+  .tonight-desk-controls::-webkit-scrollbar {
+    display: none;
+  }
+
+  .exp-pack-chip,
+  .browse-session-strip .btn,
+  .active-session-bar .btn,
+  .session-dials select,
+  .session-dials .btn {
+    flex: 0 0 auto;
+    min-height: 44px;
+  }
+
+  /* Keep main content clear of floating chrome */
+  main#main-content,
+  .page-main,
+  .site-main {
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+
+  .back-to-top {
+    bottom: max(16px, env(safe-area-inset-bottom));
+    right: max(16px, env(safe-area-inset-right));
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Prefer tap highlight off for polished chrome; keep focus-visible rings */
+  .btn,
+  .feed-tab,
+  .mood-chip,
+  .exp-pack-chip {
+    -webkit-tap-highlight-color: transparent;
   }
 
   .ix-hover:hover:not(:disabled) {
@@ -340,8 +394,17 @@ body {
   .anime-img--in,
   .vibe-deal,
   .radar-item.radar-ping,
-  .challenge-medal-badge {
+  .challenge-medal-badge,
+  .home-rail-card,
+  .oracle-card,
+  .taste-story-chapter,
+  .nx-empty-illust,
+  .signal-empty {
     animation: none !important;
     transition: none !important;
+  }
+
+  .ix-hover:active:not(:disabled) {
+    transform: none;
   }
 }
