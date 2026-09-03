@@ -19,19 +19,30 @@ import {
   pushDeskCloud,
   readDeskDeviceKey,
   writeDeskDeviceKey,
+  isDeskCloudAutoPushEnabled,
+  setDeskCloudAutoPushEnabled,
+  linkDeskKeyToAniList,
 } from "@/lib/desk-cloud";
+import { useSession } from "@/components/SessionProvider";
 
 export function DeskPackPanel() {
   const { entries, ready, replaceAll } = useWatchlist();
+  const { session } = useSession();
   const fileRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [includeShelf, setIncludeShelf] = useState(true);
   const [deviceKey, setDeviceKey] = useState("");
   const [cloudBusy, setCloudBusy] = useState(false);
+  const [autoPush, setAutoPush] = useState(false);
 
   useEffect(() => {
-    setDeviceKey(getOrCreateDeskDeviceKey());
-  }, []);
+    setAutoPush(isDeskCloudAutoPushEnabled());
+    if (session?.userId) {
+      setDeviceKey(linkDeskKeyToAniList(session.userId));
+    } else {
+      setDeviceKey(getOrCreateDeskDeviceKey());
+    }
+  }, [session?.userId]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -199,6 +210,31 @@ export function DeskPackPanel() {
           onChange={(e) => setIncludeShelf(e.target.checked)}
         />
         Include watchlist in full pack
+      </label>
+      <label
+        className="tools-hint"
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "center",
+          marginBottom: 10,
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={autoPush}
+          onChange={(e) => {
+            const on = e.target.checked;
+            setAutoPush(on);
+            setDeskCloudAutoPushEnabled(on);
+            setMsg(
+              on
+                ? "Auto-push on · desk mirrors to cloud ~8s after changes (min 45s gap)"
+                : "Auto-push off",
+            );
+          }}
+        />
+        Auto-push desk to cloud when this browser changes session dials / shelf
       </label>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
         <button
