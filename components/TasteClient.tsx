@@ -24,11 +24,82 @@ const STATUS_ORDER: WatchStatus[] = [
   "completed",
   "paused",
   "dropped",
-  "repeating",
 ];
+
+function growthNotes(opts: {
+  total: number;
+  completionRate: number;
+  topGenre?: string;
+  recentGenre?: string;
+  completedRecent?: string;
+  visitDays: number;
+}): string[] {
+  const notes: string[] = [];
+  if (opts.total < 5) {
+    notes.push(
+      "Early signal — the portrait is still forming. A few more seals and patterns will appear.",
+    );
+  } else if (opts.total < 20) {
+    notes.push(
+      "Growing shelf. Lantern can already see habits, not only isolated titles.",
+    );
+  } else {
+    notes.push(
+      "Deep catalog. Your list is dense enough for honest comparisons and taste DNA.",
+    );
+  }
+
+  if (opts.completionRate >= 0.55) {
+    notes.push(
+      "You finish more than you abandon — the desk treats you as a finisher.",
+    );
+  } else if (opts.total >= 8 && opts.completionRate < 0.3) {
+    notes.push(
+      "You explore widely and complete selectively. That’s a valid frequency, not a flaw.",
+    );
+  }
+
+  if (opts.topGenre && opts.recentGenre && opts.topGenre !== opts.recentGenre) {
+    notes.push(
+      `List gravity sits toward ${opts.topGenre}, while recent browsing leans ${opts.recentGenre}. Orbit may be shifting.`,
+    );
+  } else if (opts.topGenre) {
+    notes.push(`Strong pull toward ${opts.topGenre} across the shelf.`);
+  }
+
+  if (opts.completedRecent) {
+    notes.push(`Recently closed: “${opts.completedRecent}”.`);
+  }
+
+  if (opts.visitDays >= 5) {
+    notes.push(
+      `You’ve opened the console on ${opts.visitDays} different days. The room is becoming familiar.`,
+    );
+  }
+
+  return notes.slice(0, 4);
+}
 
 export function TasteClient() {
   const { entries, ready } = useWatchlist();
+
+  const memNotes = useMemo(() => {
+    if (!ready || entries.length === 0) return [] as string[];
+    const s = computeTaste(entries);
+    const m = readMemory();
+    const topMem = Object.entries(m.genreCounts).sort((a, b) => b[1] - a[1])[0];
+    const secondMem = Object.entries(m.genreCounts).sort(
+      (a, b) => b[1] - a[1],
+    )[1];
+    return growthNotes({
+      total: s.total,
+      completionRate: s.completionRate,
+      topGenre: topMem?.[0],
+      recentGenre: secondMem?.[0],
+      completedRecent: m.completedLog[0]?.title,
+      visitDays: m.visitDays.length,
+    });
+  }, [ready, entries]);
 
   const story = useMemo(() => {
     if (!ready) return null;
@@ -58,85 +129,326 @@ export function TasteClient() {
   }
 
   const s = computeTaste(entries);
-  const user = userResonance(entries);
-  const dims = topResonanceDims(user, 6);
-  const maxDim = Math.max(...dims.map((d) => d.value), 0.01);
-  const memory = readMemory();
+  const maxStatus = Math.max(...STATUS_ORDER.map((k) => s.byStatus[k]), 1);
+  const maxFormat = Math.max(...s.byFormat.map((f) => f.count), 1);
+  const top = s.topRated[0];
+  const decadeLead = s.byDecade[0];
+  const portraitLine = [
+    s.total >= 50
+      ? "Deep catalog"
+      : s.total >= 20
+        ? "Growing shelf"
+        : "Early signal",
+    s.completionRate >= 0.5 ? "finisher" : "explorer",
+    decadeLead ? `${decadeLead.decade}s lean` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const resonance = userResonance(entries);
+  const resonanceLine = describeUserResonance(resonance);
+  const resonanceTop = topResonanceDims(resonance, 6);
 
   return (
-    <div className="taste-page">
+    <div className="taste">
       {story ? (
-        <section className="taste-portrait" aria-labelledby="taste-story-title">
-          <p className="taste-portrait-kicker">Taste story</p>
-          <h2 id="taste-story-title" className="taste-portrait-title">
+        <section className="taste-story" aria-labelledby="taste-story-heading">
+          <p className="taste-growth-kicker">Your taste story</p>
+          <h2 id="taste-story-heading" className="taste-portrait-title">
             {story.headline}
           </h2>
-          <p className="taste-portrait-body">{story.body}</p>
-          {story.bullets?.length ? (
-            <ul className="taste-story-bullets">
-              {story.bullets.map((b) => (
-                <li key={b}>{b}</li>
-              ))}
-            </ul>
+          <div className="taste-story-chapters">
+            {story.chapters.map((ch, i) => (
+              <article
+                key={ch.id}
+                className="taste-story-chapter"
+                style={{ "--ch-i": i } as React.CSSProperties}
+              >
+                <h3>{ch.title}</h3>
+                <p>{ch.summary}</p>
+                {ch.genres.length ? (
+                  <div className="taste-chips" style={{ marginTop: 8 }}>
+                    {ch.genres.map((g) => (
+                      <span key={g} className="taste-chip">
+                        {g}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+                {ch.evidence.length ? (
+                  <details style={{ marginTop: 10 }}>
+                    <summary className="meta" style={{ cursor: "pointer" }}>
+                      View evidence · conf {ch.confidence.toFixed(2)}
+                    </summary>
+                    <ul
+                      style={{
+                        margin: "8px 0 0",
+                        paddingLeft: 18,
+                        fontSize: "0.85rem",
+                        opacity: 0.9,
+                      }}
+                    >
+                      {ch.evidence.map((e) => (
+                        <li key={e}>{e}</li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
+              </article>
+            ))}
+          </div>
+          {!story.hasEnoughSignal ? (
+            <p className="meta" style={{ marginTop: 10 }}>
+              Seal and finish more titles for a sharper story.
+            </p>
           ) : null}
         </section>
       ) : null}
 
-      <section className="taste-portrait" style={{ marginTop: 20 }}>
-        <p className="taste-portrait-kicker">How you watch</p>
-        <h2 className="taste-portrait-title">{describeUserResonance(user)}</h2>
-        <p className="taste-portrait-body">
-          Soft resonance from sealed titles — relative bars, not a scoreboard.
-        </p>
-        {dims.length > 0 ? (
-          <div className="stats-bar-container" style={{ marginTop: 16 }}>
-            {dims.map(({ dim, value }) => (
-              <div key={dim} className="stats-bar-row">
-                <div className="bar-label">{resonanceLabel(dim)}</div>
-                <div className="bar-track">
-                  <div
-                    className="bar-fill"
-                    style={{ width: `${(value / maxDim) * 100}%` }}
-                  />
-                </div>
-              </div>
+      {memNotes.length > 0 ? (
+        <div className="taste-growth">
+          <p className="taste-growth-kicker">Lantern observes</p>
+          <ul>
+            {memNotes.map((n) => (
+              <li key={n}>{n}</li>
             ))}
-          </div>
-        ) : null}
-      </section>
+          </ul>
+        </div>
+      ) : null}
 
-      <div className="stats-grid" style={{ marginTop: 24 }}>
-        <div className="stats-card">
-          <div className="stat-number">
+      <div className="taste-portrait">
+        <p className="taste-portrait-kicker">Taste portrait</p>
+        <h2 className="taste-portrait-title">{portraitLine}</h2>
+        <p className="taste-portrait-body">
+          <CountTick value={s.hoursLogged} /> hours on the desk ·{" "}
+          <CountTick value={s.episodesLogged} /> episodes tracked
+          {s.avgUserRating != null
+            ? ` · avg score ${s.avgUserRating.toFixed(1)}`
+            : ""}
+          {top ? ` · peak: ${top.title}` : ""}
+        </p>
+        {top ? (
+          <Link href={`/anime/${top.id}`} className="taste-portrait-peak">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={top.image} alt="" />
+            <span>Highest rated on your list</span>
+          </Link>
+        ) : null}
+      </div>
+
+      <div className="taste-growth" style={{ marginTop: 16 }}>
+        <p className="taste-growth-kicker">Resonance profile</p>
+        <p className="taste-portrait-body" style={{ marginBottom: 10 }}>
+          {resonanceLine}
+        </p>
+        {resonanceTop.length ? (
+          <ul
+            className="taste-resonance-list"
+            style={{ listStyle: "none", padding: 0, margin: 0 }}
+          >
+            {resonanceTop.map(({ dim, value }) => (
+              <li
+                key={dim}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  marginBottom: 6,
+                  fontSize: "0.9rem",
+                }}
+              >
+                <span style={{ minWidth: 120 }}>{resonanceLabel(dim)}</span>
+                <span
+                  style={{
+                    flex: 1,
+                    height: 6,
+                    borderRadius: 3,
+                    background: "rgba(255,255,255,0.08)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <span
+                    className="taste-bar-fill"
+                    style={{
+                      display: "block",
+                      height: "100%",
+                      width: `${Math.round(value * 100)}%`,
+                      background: "var(--accent, #c9a227)",
+                      borderRadius: 3,
+                    }}
+                  />
+                </span>
+                <span
+                  className="meta"
+                  style={{ minWidth: 36, textAlign: "right" }}
+                >
+                  <CountTick value={Math.round(value * 100)} />
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <p className="meta" style={{ marginTop: 8, opacity: 0.75 }}>
+          Heuristic emotional space from your shelf + memory — not a factual claim
+          about each title.
+        </p>
+      </div>
+
+      <div className="taste-grid">
+        <div className="taste-stat">
+          <div className="taste-stat-value">
             <CountTick value={s.total} />
           </div>
-          <div className="stat-label">On shelf</div>
+          <div className="taste-stat-label">Titles on list</div>
         </div>
-        <div className="stats-card">
-          <div className="stat-number">
-            <CountTick value={s.byStatus.watching || 0} />
+        <div className="taste-stat">
+          <div className="taste-stat-value">
+            <CountTick value={s.hoursLogged} />
           </div>
-          <div className="stat-label">Watching</div>
+          <div className="taste-stat-label">Hours logged (progress)</div>
         </div>
-        <div className="stats-card">
-          <div className="stat-number">
-            <CountTick value={s.byStatus.completed || 0} />
+        <div className="taste-stat">
+          <div className="taste-stat-value">
+            <CountTick value={s.episodesLogged} />
           </div>
-          <div className="stat-label">Completed</div>
+          <div className="taste-stat-label">Episodes tracked</div>
         </div>
-        <div className="stats-card">
-          <div className="stat-number">
-            <CountTick value={s.byStatus.planning || 0} />
+        <div className="taste-stat">
+          <div className="taste-stat-value">
+            {s.avgUserRating != null ? (
+              <CountTick value={s.avgUserRating} decimals={1} />
+            ) : (
+              "—"
+            )}
           </div>
-          <div className="stat-label">Planning</div>
+          <div className="taste-stat-label">
+            Avg your score{s.ratedCount ? ` (${s.ratedCount})` : ""}
+          </div>
+        </div>
+        <div className="taste-stat">
+          <div className="taste-stat-value">
+            {s.avgCommunityScore != null ? (
+              <CountTick value={s.avgCommunityScore} decimals={1} />
+            ) : (
+              "—"
+            )}
+          </div>
+          <div className="taste-stat-label">Avg community score</div>
+        </div>
+        <div className="taste-stat">
+          <div className="taste-stat-value">
+            <CountTick value={Math.round(s.completionRate * 100)} suffix="%" />
+          </div>
+          <div className="taste-stat-label">Completion rate</div>
         </div>
       </div>
 
-      <TasteExtras entries={entries} memory={memory} />
+      <section className="taste-section">
+        <h2>Status breakdown</h2>
+        <ul className="taste-bars">
+          {STATUS_ORDER.map((st) => {
+            const n = s.byStatus[st];
+            const pct = (n / maxStatus) * 100;
+            return (
+              <li key={st}>
+                <div className="taste-bar-label">
+                  <span>{statusLabel(st)}</span>
+                  <span>
+                    <CountTick value={n} />
+                  </span>
+                </div>
+                <div className="taste-bar-track">
+                  <div
+                    className="taste-bar-fill"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
 
-      <p className="taste-footnote" style={{ marginTop: 28 }}>
-        Counts and resonance stay on this device. Sync AniList from Account when
-        you want cloud list alignment.
+      {s.byFormat.length > 0 ? (
+        <section className="taste-section">
+          <h2>Formats</h2>
+          <ul className="taste-bars">
+            {s.byFormat.slice(0, 8).map((f) => (
+              <li key={f.format}>
+                <div className="taste-bar-label">
+                  <span>{f.format}</span>
+                  <span>
+                    <CountTick value={f.count} />
+                  </span>
+                </div>
+                <div className="taste-bar-track">
+                  <div
+                    className="taste-bar-fill accent"
+                    style={{ width: `${(f.count / maxFormat) * 100}%` }}
+                  />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {s.byDecade.length > 0 ? (
+        <section className="taste-section">
+          <h2>By decade</h2>
+          <div className="taste-chips">
+            {s.byDecade.map((d) => (
+              <span key={d.decade} className="taste-chip">
+                {d.decade} · {d.count}
+              </span>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {s.topRated.length > 0 ? (
+        <section className="taste-section">
+          <h2>Your highest scores</h2>
+          <ul className="taste-list">
+            {s.topRated.map((e) => (
+              <li key={e.id}>
+                <Link href={`/anime/${e.id}`} className="taste-list-link">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={e.image} alt="" />
+                  <span className="taste-list-title">{e.title}</span>
+                  <span className="taste-list-score">{e.userRating}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {s.recentlyUpdated.length > 0 ? (
+        <section className="taste-section">
+          <h2>Recently updated</h2>
+          <ul className="taste-list">
+            {s.recentlyUpdated.map((e) => (
+              <li key={e.id}>
+                <Link href={`/anime/${e.id}`} className="taste-list-link">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={e.image} alt="" />
+                  <span className="taste-list-title">{e.title}</span>
+                  <span className="taste-list-meta">
+                    {statusLabel(e.watchStatus)}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <TasteExtras />
+
+      <p className="taste-footnote">
+        Hours use progress × episode length (default 24 min). Completed hours
+        use full episode count when known. Stats stay on this device.
       </p>
     </div>
   );
