@@ -4,6 +4,7 @@ import { Navbar } from "@/components/Navbar";
 import { SkipToContent } from "@/components/SkipToContent";
 import { WatchlistProvider } from "@/components/WatchlistProvider";
 import { SessionProvider } from "@/components/SessionProvider";
+import { DeskCloudAutoSync } from "@/components/DeskCloudAutoSync";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { MotionProvider } from "@/components/MotionProvider";
 import { CreativeRuntimeProvider } from "@/components/CreativeRuntimeProvider";
@@ -168,6 +169,7 @@ export default function RootLayout({
                 <SoundProvider>
                   <WatchlistProvider>
                     <SessionProvider>
+                      <DeskCloudAutoSync />
                       <SkipToContent />
                       <LanternMemoryBoot />
                       <Suspense fallback={null}>
