@@ -1,5 +1,7 @@
 "use client";
 
+import { SignalEmpty } from "@/components/SignalEmpty";
+
 import Link from "next/link";
 import { useMemo } from "react";
 import { useWatchlist } from "@/components/WatchlistProvider";
@@ -19,34 +21,24 @@ function episodeCount(e: WatchlistEntry): number {
   return Number.isFinite(n) && n > 0 ? n : 12;
 }
 
-function scoreWatching(e: WatchlistEntry, user: ReturnType<typeof userResonance>) {
-  const w = interactionWeight(e);
-  const sim = cosineSimilarity(user, resonanceFromGenres(e.genres));
-  const progressHint = Math.min(1, (e.progress || 0) / episodeCount(e));
-  return 0.35 * w + 0.35 * sim + 0.3 * progressHint;
-}
-
-function scoreQueue(e: WatchlistEntry, user: ReturnType<typeof userResonance>) {
-  const w = interactionWeight(e);
-  const sim = cosineSimilarity(user, resonanceFromGenres(e.genres));
-  const community =
-    e.score && e.score > 0
-      ? e.score > 10
-        ? e.score / 100
-        : e.score / 10
-      : 0.45;
-  return 0.4 * w + 0.4 * sim + 0.2 * community;
+function scoreQueue(e: WatchlistEntry, user: ReturnType<typeof userResonance>): number {
+  const res = resonanceFromGenres(e.genres || []);
+  const sim = cosineSimilarity(user, res);
+  const progress =
+    e.progress > 0 ? Math.min(1, e.progress / Math.max(episodeCount(e), 1)) : 0;
+  const eng = interactionWeight(e);
+  const score = (e.score || 0) / 10;
+  return sim * 0.45 + progress * 0.2 + eng * 0.2 + score * 0.15;
 }
 
 export function CompletionistClient() {
   const { entries, ready } = useWatchlist();
-
   const user = useMemo(() => userResonance(entries), [entries]);
 
   const watching = useMemo(() => {
     return entries
       .filter((e) => e.watchStatus === "watching")
-      .map((e) => ({ e, s: scoreWatching(e, user) }))
+      .map((e) => ({ e, s: scoreQueue(e, user) }))
       .sort((a, b) => b.s - a.s)
       .map((x) => x.e);
   }, [entries, user]);
@@ -69,12 +61,13 @@ export function CompletionistClient() {
 
   if (entries.length === 0) {
     return (
-      <div className="state-box">
-        <p>Empty list — nothing to complete yet.</p>
-        <Link href="/browse" className="btn btn-accent btn-sm">
-          Browse →
-        </Link>
-      </div>
+      <SignalEmpty
+        kind="shelf"
+        title="Nothing to complete yet"
+        body="Seal titles to your shelf, mark a few as Watching or Planning, and this queue fills with soft ranks."
+        action={{ label: "Browse catalog →", href: "/browse" }}
+        secondary={{ label: "Open watchlist", href: "/watchlist" }}
+      />
     );
   }
 
@@ -86,7 +79,13 @@ export function CompletionistClient() {
           Ordered by progress, engagement, and shelf resonance — soft ranks.
         </p>
         {watching.length === 0 ? (
-          <p className="tools-hint">No active Watching titles.</p>
+          <SignalEmpty
+            kind="shelf"
+            title="No active Watching titles"
+            body="Move something from Planning into Watching, or seal a new title and set progress."
+            action={{ label: "Open watchlist", href: "/watchlist" }}
+            secondary={{ label: "Browse", href: "/browse" }}
+          />
         ) : (
           <ul className="taste-list">
             {watching.map((e) => (
@@ -109,7 +108,12 @@ export function CompletionistClient() {
           Ranked by resonance + engagement + community score — not a rigid order.
         </p>
         {queue.length === 0 ? (
-          <p className="tools-hint">Planning / Paused is empty.</p>
+          <SignalEmpty
+            kind="shelf"
+            title="Planning queue is quiet"
+            body="Add titles as Planning or Paused and they’ll rank here by resonance and engagement."
+            action={{ label: "Browse catalog", href: "/browse" }}
+          />
         ) : (
           <ul className="taste-list">
             {queue.map((e, i) => (
