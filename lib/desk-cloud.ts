@@ -12,6 +12,7 @@ import {
 import type { WatchlistEntry } from "@/lib/types";
 
 const DEVICE_KEY = "animenexus.desk_cloud.device_key.v1";
+const AUTO_KEY = "animenexus.desk_cloud.auto_push.v1";
 
 export function getOrCreateDeskDeviceKey(): string {
   if (typeof window === "undefined") return "";
@@ -138,4 +139,36 @@ export async function pullDeskCloud(): Promise<DeskCloudPullResult> {
 /** Apply pulled pack meta; watchlist merge left to caller. */
 export function applyPulledDeskPack(pack: DeskPack) {
   return applyDeskPackMeta(pack);
+}
+
+export function isDeskCloudAutoPushEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(AUTO_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setDeskCloudAutoPushEnabled(on: boolean): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(AUTO_KEY, on ? "1" : "0");
+  } catch {
+    /* */
+  }
+}
+
+/**
+ * Prefer a stable AniList-linked key when signed in (quick or OAuth).
+ * Format: al_<userId> — falls back to random device key.
+ */
+export function linkDeskKeyToAniList(userId: number | string | null | undefined): string {
+  const base = getOrCreateDeskDeviceKey();
+  if (userId == null || userId === "") return base;
+  const id = String(userId).replace(/\D/g, "").slice(0, 16);
+  if (!id) return base;
+  const linked = `al_${id}`;
+  writeDeskDeviceKey(linked);
+  return linked;
 }
