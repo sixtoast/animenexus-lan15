@@ -13,6 +13,8 @@ import { ColdStartStrip } from "@/components/ColdStartStrip";
 import { AvailableNowStrip } from "@/components/AvailableNowStrip";
 import { DeskNotesStrip } from "@/components/DeskNotesStrip";
 import { RitualLine } from "@/components/RitualLine";
+import { HomePrimaryMoment } from "@/components/HomePrimaryMoment";
+import { HomeYourWorld } from "@/components/HomeYourWorld";
 import {
   generateCandidatePool,
   poolToAnimeList,
@@ -73,14 +75,11 @@ export default async function HomePage() {
             data-mascot-id="home-ctas"
             data-mascot-priority="3"
           >
-            <Link href="/daily" className="btn btn-accent btn-sm">
-              Today’s signal
-            </Link>
             <Link href="/browse" className="btn btn-outline btn-sm">
-              Browse catalog
+              Discover
             </Link>
             <Link href="/watchlist" className="btn btn-ghost btn-sm">
-              Watchlist
+              Shelf
             </Link>
           </div>
 
@@ -93,26 +92,40 @@ export default async function HomePage() {
 
       <section className="container home-body">
         <div
-          className="home-panel"
+          className="home-panel home-panel-selective"
           data-mascot-landmark="rail"
           data-mascot-id="home-desk"
           data-mascot-priority="4"
         >
+          {/* Layer 1 — one decision */}
+          <HomePrimaryMoment candidates={items} />
+
+          {/* Layer 2 — your world */}
+          <HomeYourWorld />
+
+          {/* Soft utility — not equal prominence */}
           <ColdStartStrip />
           <DeskNotesStrip />
           <AvailableNowStrip candidates={items} />
-          <ProviderHealth />
-          <TonightDesk candidates={items} />
-          <WhatLanternLearned />
-          <HomeDashboard trending={items} />
+
+          {/* Layer 3 — discover */}
           <DiscoveryShelves candidates={items} />
+
+          {/* Deeper tools: still available, not the first impression */}
+          <details className="home-more-desk">
+            <summary>More desk</summary>
+            <TonightDesk candidates={items} />
+            <WhatLanternLearned />
+            <HomeDashboard trending={items} />
+            <ProviderHealth />
+          </details>
         </div>
 
         <QuoteBanner />
 
         <div className="home-trending-head">
           <div className="section-head">
-            <h2>Trending now</h2>
+            <h2>On the air</h2>
             <span className="meta">
               {error
                 ? "—"
