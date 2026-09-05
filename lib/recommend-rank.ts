@@ -12,6 +12,8 @@ import { resonanceLabel, topResonanceDims, userResonance } from "./resonance";
 import { deskNoteBoost } from "./desk-notes";
 import { getCachedAvailability } from "./available-to-me";
 import { readMyServices } from "./my-services";
+import { buildFatigueProfile } from "./taste-fatigue";
+import { rerankRecommendations, RERANKER_VERSION } from "./recommend-rerank";
 
 export type RankedRecommendation = {
   anime: Anime;
@@ -123,40 +125,16 @@ export function rankRecommendations(
 
   ranked.sort((a, b) => b.score - a.score);
 
-  const seenGenres = new Map<string, number>();
-  for (let i = 0; i < Math.min(ranked.length, 24); i++) {
-    const g = (ranked[i].anime.tags?.[0] || "").toLowerCase();
-    if (!g) continue;
-    const n = seenGenres.get(g) || 0;
-    if (n >= 3) ranked[i].score *= 0.92;
-    seenGenres.set(g, n + 1);
-  }
-  ranked.sort((a, b) => b.score - a.score);
-
-  if (ranked.length >= 8) {
-    const n = ranked.length;
-    const topN = Math.ceil(n * 0.75);
-    const midN = Math.ceil(n * 0.9);
-    const top = ranked.slice(0, topN);
-    const mid = ranked.slice(topN, midN);
-    const tail = ranked.slice(midN);
-    const blended = [...top];
-    if (mid[0]) blended.splice(Math.min(5, blended.length), 0, mid[0]);
-    if (tail[0]) {
-      blended.splice(Math.min(7, blended.length), 0, {
-        ...tail[0],
-        confidence: "exploratory" as const,
-        reasons: [
-          ...tail[0].reasons,
-          "Exploration slot — adjacent, not random",
-        ].slice(0, 4),
-      });
-    }
-    return [...blended, ...mid.slice(1), ...tail.slice(1)];
-  }
-
-  return ranked;
+  // R5: diversity + fatigue + exploration budget
+  const fatigue = buildFatigueProfile(entries);
+  return rerankRecommendations(ranked, entries, {
+    fatigue,
+    limit: ranked.length,
+    exploitationRatio: 0.75,
+  });
 }
+
+export { RERANKER_VERSION };
 
 export function whyThisIsHere(r: RankedRecommendation): string {
   const head = confidenceCopy(r.confidence);
