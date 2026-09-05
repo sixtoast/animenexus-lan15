@@ -1,15 +1,18 @@
 /**
- * Session Viewing Intent controls: intensity + energy tolerance.
+ * Session Viewing Intent controls: intensity + energy + attention.
  * Stored locally; used as ranking constraints.
  */
 
 export type IntentIntensity = "light" | "moderate" | "maximum";
 export type IntentEnergy = "low" | "medium" | "high";
+export type IntentAttention = "easy" | "medium" | "demanding";
 
 export type IntentSession = {
   slug: string | null;
   intensity: IntentIntensity;
   energy: IntentEnergy;
+  /** Cognitive / attention demand */
+  attention: IntentAttention;
   minutesAvailable: number | null;
 };
 
@@ -19,6 +22,7 @@ const DEFAULT: IntentSession = {
   slug: null,
   intensity: "moderate",
   energy: "medium",
+  attention: "medium",
   minutesAvailable: null,
 };
 
@@ -50,7 +54,7 @@ export function writeIntentSession(
   return next;
 }
 
-/** Map intensity/energy onto intent fingerprint deltas. */
+/** Map intensity/energy/attention onto intent fingerprint deltas. */
 export function intentControlOverlay(session: IntentSession): {
   intensityScale: number;
   cognitiveScale: number;
@@ -62,8 +66,15 @@ export function intentControlOverlay(session: IntentSession): {
       : session.intensity === "maximum"
         ? 1.25
         : 1;
-  const cognitiveScale =
-    session.energy === "low" ? 0.55 : session.energy === "high" ? 1.2 : 1;
+  const attentionScale =
+    session.attention === "easy"
+      ? 0.55
+      : session.attention === "demanding"
+        ? 1.25
+        : 1;
+  const energyScale =
+    session.energy === "low" ? 0.7 : session.energy === "high" ? 1.15 : 1;
+  const cognitiveScale = attentionScale * 0.65 + energyScale * 0.35;
   const pacingBias =
     session.energy === "low" ? -0.15 : session.energy === "high" ? 0.12 : 0;
   return { intensityScale, cognitiveScale, pacingBias };
