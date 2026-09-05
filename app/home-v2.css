@@ -192,3 +192,104 @@
     gap: 32px;
   }
 }
+
+/* R7 — selective Home */
+.home-primary {
+  margin: 0 0 1.75rem;
+  padding: 1.25rem 0 1.5rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--border, #333) 55%, transparent);
+}
+.home-primary-kicker {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.65;
+  margin: 0 0 0.5rem;
+}
+.home-primary-row {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+.home-primary-art {
+  width: 96px;
+  height: 136px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.home-primary-title {
+  font-family: var(--font-display, "Cormorant Garamond", Georgia, serif);
+  font-size: clamp(1.75rem, 4vw, 2.35rem);
+  line-height: 1.15;
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+}
+.home-primary-sub {
+  margin: 0 0 0.35rem;
+  opacity: 0.85;
+  font-size: 0.95rem;
+}
+.home-primary-reason {
+  margin: 0 0 1rem;
+  opacity: 0.6;
+  font-size: 0.85rem;
+}
+.home-primary-cta {
+  display: inline-flex;
+}
+.home-world {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin: 0 0 2rem;
+}
+.home-world-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.85rem 0.5rem;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+.home-world-item:hover {
+  background: color-mix(in oklab, var(--surface, #1a1a1a) 80%, transparent);
+}
+.home-world-label {
+  font-family: var(--font-display, "Cormorant Garamond", Georgia, serif);
+  font-size: 1.15rem;
+}
+.home-world-meta {
+  font-size: 0.75rem;
+  opacity: 0.55;
+}
+@media (max-width: 560px) {
+  .home-primary-row {
+    flex-direction: row;
+  }
+  .home-world {
+    gap: 0.35rem;
+  }
+}
+.home-more-desk {
+  margin-top: 2rem;
+  opacity: 0.85;
+}
+.home-more-desk > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin-bottom: 1rem;
+  list-style: none;
+}
+.home-more-desk > summary::-webkit-details-marker {
+  display: none;
+}
+.home-panel-selective {
+  max-width: 52rem;
+}
