@@ -88,3 +88,42 @@ html[data-reduce-motion="true"] .browse-leave {
   transform: none;
   animation: none;
 }
+
+/* R8 Discover — intent first */
+.discover-heard {
+  margin: 0.35rem 0 0.75rem;
+}
+.discover-heard-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+}
+.discover-heard-chips li {
+  font-size: 0.72rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(240, 160, 144, 0.22);
+  opacity: 0.85;
+}
+.discover-refine {
+  margin-top: 0.75rem;
+}
+.discover-refine > summary {
+  cursor: pointer;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  margin-bottom: 0.65rem;
+  list-style: none;
+}
+.discover-refine > summary::-webkit-details-marker {
+  display: none;
+}
+.filter-row.search-row input[type="search"] {
+  font-size: 1.05rem;
+  min-height: 44px;
+}
