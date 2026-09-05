@@ -3,7 +3,7 @@ import { AnimeGrid } from "@/components/AnimeGrid";
 import { HeroGreeting } from "@/components/HeroGreeting";
 import { QuoteBanner } from "@/components/QuoteBanner";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
-import { MoodChips } from "@/components/MoodChips";
+import { TonightIntentPanel } from "@/components/TonightIntentPanel";
 import { HomeDashboard } from "@/components/HomeDashboard";
 import { TonightDesk } from "@/components/TonightDesk";
 import { DiscoveryShelves } from "@/components/DiscoveryShelves";
@@ -25,6 +25,7 @@ import "./home-v2.css";
 import "./tonight-desk.css";
 import "./cold-start.css";
 import "./desk-notes.css";
+import "./tonight-intent.css";
 
 export const dynamic = "force-dynamic";
 
@@ -84,8 +85,7 @@ export default async function HomePage() {
           </div>
 
           <div className="mood-home-block home-mood">
-            <p className="mood-home-label">What kind of night</p>
-            <MoodChips />
+            <TonightIntentPanel compact />
           </div>
         </div>
       </section>
