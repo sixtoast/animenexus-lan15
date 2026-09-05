@@ -13,7 +13,10 @@ import { ColdStartStrip } from "@/components/ColdStartStrip";
 import { AvailableNowStrip } from "@/components/AvailableNowStrip";
 import { DeskNotesStrip } from "@/components/DeskNotesStrip";
 import { RitualLine } from "@/components/RitualLine";
-import { fetchDiscover } from "@/lib/anilist";
+import {
+  generateCandidatePool,
+  poolToAnimeList,
+} from "@/lib/recommend-candidates";
 import "./mood-home.css";
 import "./home-dash.css";
 import "./home-v2.css";
@@ -25,15 +28,22 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   let error: string | null = null;
-  let items: Awaited<ReturnType<typeof fetchDiscover>>["data"] = [];
+  let items: import("@/lib/types").Anime[] = [];
   let total = 0;
+  let poolVersion = "candidate_v1";
 
   try {
-    const page = await fetchDiscover("trending", 1, 24, "exclude");
-    items = page.data;
-    total = page.pagination.total;
+    // R4: multi-source pool (no shelf on SSR — still trending+popular+top+exploration)
+    const pool = await generateCandidatePool({
+      entries: [],
+      perSource: 36,
+      maxPool: 180,
+    });
+    items = poolToAnimeList(pool);
+    total = items.length;
+    poolVersion = pool.version;
   } catch (e) {
-    error = e instanceof Error ? e.message : "Failed to reach AniList";
+    error = e instanceof Error ? e.message : "Failed to reach catalog";
   }
 
   return (
@@ -106,7 +116,7 @@ export default async function HomePage() {
             <span className="meta">
               {error
                 ? "—"
-                : `${items.length} shown · ${total.toLocaleString()} in catalog`}
+                : `${items.length} candidates · ${poolVersion}`}
             </span>
           </div>
           <ViewModeToggle />
@@ -123,7 +133,12 @@ export default async function HomePage() {
             data-mascot-id="trending-grid"
             data-mascot-priority="5"
           >
-            <AnimeGrid items={items} trackBehaviour />
+            <AnimeGrid
+              items={items.slice(0, 24)}
+              trackBehaviour
+              shelf="home_trending"
+              source="candidate_pool"
+            />
           </div>
         )}
       </section>
