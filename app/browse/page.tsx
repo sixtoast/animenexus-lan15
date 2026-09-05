@@ -5,6 +5,7 @@ import { BrowseSessionStrip } from "@/components/BrowseSessionStrip";
 import { fetchDiscover, fetchFiltered, searchAnime } from "@/lib/anilist";
 import type { AnimeFilters, DiscoverFeed } from "@/lib/types";
 import { getExperienceIntent } from "@/lib/viewing-intent";
+import { parseIntentSearch } from "@/lib/intent-search";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,25 @@ async function loadInitial(sp: Record<string, string | string[] | undefined>) {
 
   try {
     if (q) {
-      const page = await searchAnime(q, 1, 24);
+      const intent = parseIntentSearch(q);
+      // Intent-first: pure intent language → filtered catalog; else title search
+      if (intent.isIntentQuery && !intent.keyword) {
+        const filters: AnimeFilters = {
+          ...intent.filters,
+          genre: intent.filters.genre || genre || undefined,
+          adultFilter: "exclude",
+          sort: intent.filters.sort || sort || "score",
+        };
+        const page = await fetchFiltered(filters, 1, 24);
+        return {
+          items: page.data,
+          total: page.pagination.total,
+          hasNext: page.pagination.hasNextPage,
+          error: null as string | null,
+        };
+      }
+      const searchQ = intent.keyword || q;
+      const page = await searchAnime(searchQ, 1, 24);
       return {
         items: page.data,
         total: page.pagination.total,
@@ -88,13 +107,13 @@ export default async function BrowsePage({
     <main>
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
-          <div className="hero-badge">Browse · catalog</div>
+          <div className="hero-badge">Discover</div>
           <h1>
-            Find a <span>signal</span>
+            What are you <span>looking for?</span>
           </h1>
           <p>
-            Search titles or describe a night — e.g. “something funny and short”.
-            Filters stay soft; shelf blend ranks when you have a list.
+            Title search or natural language — “tragic under 24 episodes”,
+            “smart romance without too much drama”. Refine only when you need it.
           </p>
         </div>
       </section>
