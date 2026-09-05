@@ -5,6 +5,7 @@
  */
 
 import { logBehaviour } from "./behaviour-events";
+import { recommendationIdForAnime } from "./recommendation-attribution";
 
 const KEY = "anime_nexus_outcomes_v1";
 const MAX = 200;
@@ -96,6 +97,7 @@ export function logOutcome(
   if (kind) {
     logBehaviour(kind, {
       animeId,
+      recommendationId: recommendationIdForAnime(animeId),
       weight: STAGE_WEIGHT[stage],
       meta: { reason: stage },
     });
