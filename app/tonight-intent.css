@@ -1,0 +1,102 @@
+.tonight-intent {
+  width: 100%;
+  margin-top: 8px;
+}
+.tonight-intent-q {
+  font-family: var(--font-display, "Cormorant Garamond", Georgia, serif);
+  font-size: clamp(1.15rem, 2.8vw, 1.4rem);
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+.tonight-intent-passive {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin: 0 0 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+}
+.tonight-intent-adjust {
+  background: transparent;
+  border: 1px solid rgba(240, 160, 144, 0.25);
+  color: inherit;
+  border-radius: 999px;
+  padding: 0.15rem 0.65rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  opacity: 0.9;
+}
+.tonight-intent-adjust:hover {
+  border-color: rgba(240, 160, 144, 0.5);
+}
+.tonight-intent-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.tonight-intent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(240, 160, 144, 0.18);
+  background: rgba(18, 14, 12, 0.45);
+  color: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.tonight-intent-chip:hover {
+  border-color: rgba(240, 160, 144, 0.4);
+}
+.tonight-intent-chip.active {
+  border-color: rgba(240, 160, 144, 0.65);
+  background: rgba(240, 160, 144, 0.12);
+}
+.tonight-intent-dials {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(240, 160, 144, 0.12);
+}
+.tonight-dial {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+.tonight-dial-label {
+  min-width: 5.5rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+.tonight-dial-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.tonight-dial-btn {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: inherit;
+  border-radius: 6px;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.tonight-dial-btn.active {
+  border-color: rgba(240, 160, 144, 0.55);
+  background: rgba(240, 160, 144, 0.1);
+}
+.tonight-intent-go {
+  margin: 0.35rem 0 0;
+}
+.tonight-intent-compact .tonight-intent-q {
+  font-size: 1.1rem;
+}
