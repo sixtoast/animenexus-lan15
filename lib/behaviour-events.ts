@@ -6,6 +6,22 @@
 const KEY = "anime_nexus_behaviour_v1";
 const MAX = 400;
 
+const SESSION_KEY = "anime_nexus_behaviour_session_v1";
+
+/** Stable for the tab lifetime; soft-fail empty on SSR. */
+export function getBehaviourSessionId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    let s = sessionStorage.getItem(SESSION_KEY);
+    if (s && s.length >= 8) return s;
+    s = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    sessionStorage.setItem(SESSION_KEY, s);
+    return s;
+  } catch {
+    return `s_${Date.now().toString(36)}`;
+  }
+}
+
 export type BehaviourKind =
   | "exposure"
   | "hover"
@@ -31,6 +47,12 @@ export type BehaviourEvent = {
   kind: BehaviourKind;
   animeId?: number;
   weight: number;
+  /** Browser session bucket for attribution (not auth user id) */
+  sessionId?: string;
+  /** Links outcomes back to a ranked recommendation set when known */
+  recommendationId?: string;
+  /** Candidate / shelf source label when known */
+  source?: string;
   meta?: {
     visibleMs?: number;
     position?: number;
@@ -38,6 +60,8 @@ export type BehaviourEvent = {
     filter?: string;
     progress?: number;
     reason?: string;
+    shelf?: string;
+    intersectionRatio?: number;
   };
 };
 
@@ -86,7 +110,13 @@ function uid() {
 
 export function logBehaviour(
   kind: BehaviourKind,
-  opts?: { animeId?: number; meta?: BehaviourEvent["meta"]; weight?: number },
+  opts?: {
+    animeId?: number;
+    meta?: BehaviourEvent["meta"];
+    weight?: number;
+    recommendationId?: string;
+    source?: string;
+  },
 ): void {
   if (typeof window === "undefined") return;
   const weight = opts?.weight ?? KIND_WEIGHT[kind];
@@ -96,9 +126,50 @@ export function logBehaviour(
     kind,
     animeId: opts?.animeId,
     weight,
+    sessionId: getBehaviourSessionId() || undefined,
+    recommendationId: opts?.recommendationId,
+    source: opts?.source,
     meta: opts?.meta,
   };
   writeAll([ev, ...readAll()]);
+}
+
+/**
+ * Meaningful exposure only — caller should gate on visibility threshold + dwell.
+ * Non-exposure is never treated as dislike.
+ */
+export function logMeaningfulExposure(opts: {
+  animeId: number;
+  visibleMs: number;
+  position?: number;
+  shelf?: string;
+  recommendationId?: string;
+  source?: string;
+  intersectionRatio?: number;
+}): void {
+  if (opts.visibleMs < 1500) return;
+  logBehaviour("exposure", {
+    animeId: opts.animeId,
+    recommendationId: opts.recommendationId,
+    source: opts.source,
+    meta: {
+      visibleMs: opts.visibleMs,
+      position: opts.position,
+      shelf: opts.shelf,
+      intersectionRatio: opts.intersectionRatio,
+    },
+  });
+  logBehaviour("rec_shown", {
+    animeId: opts.animeId,
+    recommendationId: opts.recommendationId,
+    source: opts.source,
+    weight: 0.12,
+    meta: {
+      visibleMs: opts.visibleMs,
+      position: opts.position,
+      shelf: opts.shelf,
+    },
+  });
 }
 
 export function readBehaviourEvents(opts?: {

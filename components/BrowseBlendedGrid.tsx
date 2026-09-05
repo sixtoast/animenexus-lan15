@@ -1,11 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimeGrid } from "@/components/AnimeGrid";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { blendShelfItems } from "@/lib/browse-shelf-blend";
 import { useSessionRevision } from "@/lib/use-session-revision";
 import type { Anime } from "@/lib/types";
+import {
+  mintRecommendationId,
+  rememberRecommendationSet,
+} from "@/lib/recommendation-attribution";
 
 type Props = {
   items: Anime[];
@@ -24,11 +28,33 @@ export function BrowseBlendedGrid({
 }: Props) {
   const { entries, ready } = useWatchlist();
   const sessionKey = useSessionRevision();
+  const [recId, setRecId] = useState("");
 
   const display = useMemo(() => {
     if (!blend || !ready || entries.length < 2) return items;
     return blendShelfItems(items, entries, { q, experience });
   }, [blend, ready, entries, items, q, experience, sessionKey]);
 
-  return <AnimeGrid items={display} trackBehaviour />;
+  useEffect(() => {
+    if (!display.length) return;
+    const id = mintRecommendationId();
+    setRecId(id);
+    rememberRecommendationSet({
+      recommendationId: id,
+      at: new Date().toISOString(),
+      animeIds: display.map((a) => a.id),
+      source: "browse_blend",
+      versions: { rankerVersion: "blend_v1" },
+    });
+  }, [display]);
+
+  return (
+    <AnimeGrid
+      items={display}
+      trackBehaviour
+      shelf="browse"
+      recommendationId={recId || undefined}
+      source="browse_blend"
+    />
+  );
 }
