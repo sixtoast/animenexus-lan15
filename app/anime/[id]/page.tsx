@@ -39,6 +39,7 @@ import { FranchisePathPanel } from "@/components/FranchisePathPanel";
 import { DeskNoteEditor } from "@/components/DeskNoteEditor";
 import { ShareTitleButton } from "@/components/ShareTitleButton";
 import { QuickOutcomeControls } from "@/components/QuickOutcomeControls";
+import { YourMatchPanel } from "@/components/YourMatchPanel";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
 
@@ -263,6 +264,8 @@ export default async function AnimeDetailPage({ params }: Props) {
             {anime.description || "No description available."}
           </p>
         </section>
+
+        <YourMatchPanel anime={anime} />
 
         <ViewingContextPanel context={viewingContext} />
 
@@ -545,10 +548,12 @@ export default async function AnimeDetailPage({ params }: Props) {
           </section>
         ) : null}
 
-        <div className="detail-mobile-sticky" aria-label="Quick actions">
-          <ShareTitleButton title={anime.title} animeId={anime.id} />
-          <Link href="/watchlist" className="btn btn-accent btn-sm">
-            Watchlist
+        <div className="detail-footer-nav">
+          <Link href="/browse" className="btn btn-outline">
+            Back to catalog
+          </Link>
+          <Link href="/watchlist" className="btn btn-accent">
+            Open Watchlist
           </Link>
         </div>
       </div>
