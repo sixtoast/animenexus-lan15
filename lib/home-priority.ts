@@ -128,11 +128,22 @@ export function chooseHomePrimary(
     };
   }
 
+  if (entries.length === 0) {
+    return {
+      type: "empty",
+      title: "Light the lantern",
+      subtitle: "Seal a few titles or pick a mood — the desk wakes up from use.",
+      reason: "No questionnaire. Your shelf and opens are the signal.",
+      href: "/browse?feed=trending",
+      cta: "Start Discover",
+    };
+  }
+
   return {
     type: "empty",
     title: "Your room is quiet",
-    subtitle: "Browse a few titles or import a list.",
-    reason: "Lantern needs a little history to choose well.",
+    subtitle: "Browse a few more titles or set tonight’s intent.",
+    reason: "Lantern needs a little more history to choose well.",
     href: "/browse",
     cta: "Discover",
   };
