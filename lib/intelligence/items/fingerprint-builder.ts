@@ -9,7 +9,11 @@ import {
   type AnimePreferenceFingerprint,
   type FingerprintSource,
 } from "./anime-preference-fingerprint";
-import { evidenceFromLabel, mergePatches, type DimPatch } from "./fingerprint-sources";
+import {
+  evidenceFromLabel,
+  mergePatches,
+  type DimPatch,
+} from "./fingerprint-sources";
 import { computeFingerprintConfidence } from "./fingerprint-confidence";
 import {
   getCachedFingerprint,
@@ -51,7 +55,8 @@ function applyStructure(anime: Anime): {
     else commitment = 0.9;
   }
   if (format === "MOVIE") commitment = Math.min(commitment, 0.4);
-  if (format === "ONA" || format === "OVA") commitment = Math.min(commitment, 0.5);
+  if (format === "ONA" || format === "OVA")
+    commitment = Math.min(commitment, 0.5);
 
   experience.commitment = clamp01(commitment);
   experience.episodicVsSerialised = clamp01(
@@ -109,6 +114,12 @@ export function buildAnimePreferenceFingerprint(
   }
 
   const patches: DimPatch[] = [];
+  const deepSet = new Set(
+    (options?.deepTagNames || []).map((x) => String(x).toLowerCase().trim()),
+  );
+  const tagSet = new Set(
+    (anime.tags || []).map((x) => String(x).toLowerCase().trim()),
+  );
   const labels = [
     ...(anime.tags || []),
     anime.genre,
@@ -118,20 +129,22 @@ export function buildAnimePreferenceFingerprint(
   for (const lab of labels) {
     const p = evidenceFromLabel(String(lab));
     if (!p) continue;
+    const key = String(lab).toLowerCase().trim();
+    const isDeep = deepSet.has(key);
     const isGenreOnly =
-      String(lab).toLowerCase() === String(anime.genre || "").toLowerCase() &&
-      !(anime.tags || []).some(
-        (x) => String(x).toLowerCase() === String(lab).toLowerCase(),
-      );
-    patches.push({
-      ...p,
-      source: isGenreOnly
-        ? "genre-fallback"
-        : p.source === "genre-fallback"
-          ? "anilist-genres"
-          : p.source,
-      weight: isGenreOnly ? p.weight * 0.7 : p.weight,
-    });
+      key === String(anime.genre || "").toLowerCase().trim() && !tagSet.has(key);
+    let source = p.source;
+    let weight = p.weight;
+    if (isDeep) {
+      source = "deep-tags";
+      weight = Math.max(weight, 0.72);
+    } else if (isGenreOnly) {
+      source = "genre-fallback";
+      weight = weight * 0.7;
+    } else if (p.source === "genre-fallback" && tagSet.has(key)) {
+      source = "anilist-tags";
+    }
+    patches.push({ ...p, source, weight });
   }
 
   if (options?.allowSemanticInference !== false && anime.description) {
