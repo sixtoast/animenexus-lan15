@@ -12,6 +12,7 @@ import { WhatLanternLearned } from "@/components/WhatLanternLearned";
 import { ColdStartStrip } from "@/components/ColdStartStrip";
 import { ColdStartPath } from "@/components/ColdStartPath";
 import { ReturningRecap } from "@/components/ReturningRecap";
+import { SessionQuietNote } from "@/components/SessionQuietNote";
 import { AvailableNowStrip } from "@/components/AvailableNowStrip";
 import { DeskNotesStrip } from "@/components/DeskNotesStrip";
 import { RitualLine } from "@/components/RitualLine";
@@ -158,6 +159,8 @@ export default async function HomePage() {
             />
           </div>
         )}
+
+        <SessionQuietNote />
       </section>
     </main>
   );
