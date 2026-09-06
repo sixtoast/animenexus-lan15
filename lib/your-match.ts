@@ -1,5 +1,5 @@
 /**
- * Per-title “Your Match” — score + reasons vs local shelf.
+ * Per-title "Your Match" — signals + friction, no fake precision %.
  */
 
 import type { Anime, WatchlistEntry } from "./types";
@@ -12,15 +12,28 @@ import {
   type RankedRecommendation,
 } from "./recommend-rank";
 import { readIntentSession } from "./intent-session";
+import {
+  rankRecommendationsV3,
+  confidenceLabelV3,
+  type MatchSignal,
+  type RankedRecommendationV3,
+} from "./intelligence/recommendation/ranker-v3";
+import type { FrictionSignal } from "./intelligence/recommendation/friction";
 
 export type YourMatch = {
+  /** Internal 0–1 score — do not display as percentage */
   score: number;
-  confidence: RankedRecommendation["confidence"];
+  confidence:
+    | RankedRecommendation["confidence"]
+    | RankedRecommendationV3["confidence"];
   confidenceLabel: string;
   reasons: string[];
   activeCluster: string | null;
   onShelf: boolean;
   shelfStatus?: string;
+  strongSignals?: MatchSignal[];
+  frictionSignals?: FrictionSignal[];
+  explorationLevel?: RankedRecommendationV3["explorationLevel"];
 };
 
 function confidenceFromScore(
@@ -39,6 +52,41 @@ export function computeYourMatch(
   if (entries.length < 2) return null;
 
   const onShelf = entries.find((e) => e.id === anime.id);
+
+  try {
+    const v3 = rankRecommendationsV3([anime], entries, {
+      excludeIds: [],
+    });
+    const hit = v3[0];
+    if (hit) {
+      const reasons = [...hit.reasons];
+      if (onShelf && reasons.length < 4) {
+        reasons.unshift(
+          onShelf.watchStatus === "completed"
+            ? "Already on your completed shelf"
+            : onShelf.watchStatus === "watching"
+              ? "You're watching this now"
+              : `On your list · ${onShelf.watchStatus}`,
+        );
+      }
+      return {
+        score: hit.score,
+        confidence: hit.confidence,
+        confidenceLabel: confidenceLabelV3(hit.confidence),
+        reasons: reasons.slice(0, 5),
+        activeCluster:
+          hit.strongSignals.find((s) => s.key === "cluster")?.label ?? null,
+        onShelf: !!onShelf,
+        shelfStatus: onShelf?.watchStatus,
+        strongSignals: hit.strongSignals,
+        frictionSignals: hit.frictionSignals,
+        explorationLevel: hit.explorationLevel,
+      };
+    }
+  } catch {
+    /* fall back to V2 */
+  }
+
   const profile = buildPreferenceProfile(entries);
   let experienceSlug: string | undefined;
   try {
@@ -56,7 +104,7 @@ export function computeYourMatch(
       onShelf.watchStatus === "completed"
         ? "Already on your completed shelf"
         : onShelf.watchStatus === "watching"
-          ? "You’re watching this now"
+          ? "You're watching this now"
           : `On your list · ${onShelf.watchStatus}`,
     );
   }
@@ -84,7 +132,9 @@ export function computeYourMatch(
       animeG.some((a) => a === g || a.includes(g) || g.includes(a)),
     );
     if (overlap[0]) {
-      reasons.push(`Shares “${overlap[0]}” with titles you already care about`);
+      reasons.push(
+        `Shares "${overlap[0]}" with titles you already care about`,
+      );
     }
   }
 
