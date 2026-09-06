@@ -1,7 +1,6 @@
 /**
  * Multi-source recommendation candidate generation (R4).
- * Ranker should never only see a single trending page of 24.
- *
+ * Soft path: candidate_v3 when isRecV3Enabled().
  * Soft-fail: any generator may return []; pool still usable.
  */
 
@@ -13,6 +12,8 @@ import {
   getExperienceIntent,
   type ExperienceIntent,
 } from "./viewing-intent";
+import { isRecV3Enabled } from "./intelligence/recommendation/feature-flag";
+import { generateCandidatePoolV3 } from "./intelligence/recommendation/candidates-v3";
 
 export type CandidateSource =
   | "trending"
@@ -22,7 +23,8 @@ export type CandidateSource =
   | "emerging_taste"
   | "viewing_intent"
   | "exploration"
-  | "unfinished";
+  | "unfinished"
+  | string;
 
 export type RecommendationCandidate = {
   anime: Anime;
@@ -47,7 +49,6 @@ function capitalGenre(g: string): string {
     .join(" ");
 }
 
-/** Top genre labels from clusters for catalog queries. */
 export function genresFromClusters(
   entries: WatchlistEntry[],
   limit = 4,
@@ -65,7 +66,10 @@ export function genresFromClusters(
     .map(([g]) => capitalGenre(g));
 }
 
-export function genresFromEmerging(entries: WatchlistEntry[], limit = 3): string[] {
+export function genresFromEmerging(
+  entries: WatchlistEntry[],
+  limit = 3,
+): string[] {
   const trends = detectTasteTrends(entries, 2);
   return trends
     .filter((t) => t.direction === "up")
@@ -112,18 +116,43 @@ async function safePage(
 export type GeneratePoolOptions = {
   entries: WatchlistEntry[];
   experienceSlug?: string | null;
-  /** Cap unique titles in the merged pool */
   maxPool?: number;
   perSource?: number;
 };
 
-/**
- * Pull independent candidate streams, merge + dedupe.
- * Target ~200–400 uniques when APIs cooperate.
- */
 export async function generateCandidatePool(
   opts: GeneratePoolOptions,
 ): Promise<CandidatePool> {
+  if (isRecV3Enabled()) {
+    try {
+      const v3 = await generateCandidatePoolV3({
+        entries: opts.entries,
+        experienceSlug: opts.experienceSlug,
+        maxPool: opts.maxPool,
+        perSource: opts.perSource,
+      });
+      const byId = new Map<number, RecommendationCandidate>();
+      for (const c of v3.candidates) {
+        byId.set(c.anime.id, {
+          anime: c.anime,
+          sources: c.sources as CandidateSource[],
+          rawScore: c.rawScore,
+          reason: c.reason,
+        });
+      }
+      return {
+        candidates: [...byId.values()],
+        byId,
+        version: v3.version,
+        generatedAt: v3.generatedAt,
+      };
+    } catch (e) {
+      if (typeof console !== "undefined") {
+        console.warn("[recommend] candidate_v3 failed, using v1", e);
+      }
+    }
+  }
+
   const per = opts.perSource ?? 40;
   const maxPool = opts.maxPool ?? 400;
   const entries = opts.entries || [];
@@ -229,7 +258,6 @@ export async function generateCandidatePool(
           fetchFiltered(
             {
               genre,
-              // viewing-intent may use "trending"; catalog filter only allows score|popularity|title|year
               sort:
                 exp?.sort === "popularity" || exp?.sort === "trending"
                   ? "popularity"
@@ -301,13 +329,13 @@ export function poolToAnimeList(pool: CandidatePool): Anime[] {
 }
 
 export function describeCandidateSources(sources: CandidateSource[]): string {
-  const labels: Record<CandidateSource, string> = {
+  const labels: Record<string, string> = {
     trending: "trending",
     popular: "popular",
     top: "highly rated",
     long_term_taste: "your taste",
     emerging_taste: "emerging interest",
-    viewing_intent: "tonight’s intent",
+    viewing_intent: "tonight's intent",
     exploration: "exploration",
     unfinished: "your shelf",
   };
