@@ -1,10 +1,17 @@
 /**
  * Rich single-title fetch (studios, trailer, characters, relations + recommendations).
+ * Relations soft-fall back to Kitsu when AniList GraphQL is unavailable.
  */
 import { mapAniListMedia, ANILIST_ENDPOINT } from "./anilist";
 import { CACHE_TTL, cacheKey, dedupedFetch } from "./api-cache";
 import { withProviderLimit } from "./provider-rate-limit";
 import type { Anime, AnimeRelation, GraphEdge, GraphNode } from "./types";
+import { KITSU_ID_OFFSET } from "./providers/kitsu";
+import {
+  fetchKitsuRelations,
+  resolveKitsuIdFromAnilist,
+} from "./providers/kitsu-relations";
+import { SHIKI_ID_OFFSET } from "./providers/shikimori";
 
 type GqlResponse<T> = {
   data?: T;
@@ -268,11 +275,36 @@ export async function fetchAnimeDetail(id: number): Promise<Anime | null> {
   return dedupedFetch(key, () => fetchAnimeDetailUncached(id), CACHE_TTL.medium);
 }
 
+async function relationsFromKitsu(
+  nativeKitsuId: number,
+): Promise<{ relations: AnimeRelation[]; recommendations: AnimeRelation[] }> {
+  const rows = await fetchKitsuRelations(nativeKitsuId);
+  const relations: AnimeRelation[] = rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    relationType: r.relationType,
+    format: r.format,
+    status: r.status,
+    image: r.image,
+    year: r.year ?? null,
+    score: r.score ?? null,
+  }));
+  return { relations, recommendations: [] };
+}
+
 async function fetchMediaLinks(id: number): Promise<{
   relations: AnimeRelation[];
   recommendations: AnimeRelation[];
 }> {
-  const query = `
+  if (id >= SHIKI_ID_OFFSET) {
+    return { relations: [], recommendations: [] };
+  }
+  if (id >= KITSU_ID_OFFSET) {
+    return relationsFromKitsu(id - KITSU_ID_OFFSET);
+  }
+
+  try {
+    const query = `
     query ($id: Int) {
       Media(id: $id, type: ANIME) {
         relations {
@@ -290,28 +322,46 @@ async function fetchMediaLinks(id: number): Promise<{
       }
     }
   `;
-  const data = await gql<{
-    Media: {
-      relations?: { edges?: { relationType?: string; node?: RelNode }[] };
-      recommendations?: {
-        nodes?: {
-          rating?: number;
-          mediaRecommendation?: RelNode | null;
-        }[];
-      };
-    } | null;
-  }>(query, { id });
+    const data = await gql<{
+      Media: {
+        relations?: { edges?: { relationType?: string; node?: RelNode }[] };
+        recommendations?: {
+          nodes?: {
+            rating?: number;
+            mediaRecommendation?: RelNode | null;
+          }[];
+        };
+      } | null;
+    }>(query, { id });
 
-  if (!data.Media) return { relations: [], recommendations: [] };
+    if (data.Media) {
+      const relations = mapRelationEdges(data.Media.relations?.edges || []);
+      const seen = new Set(relations.map((r) => r.id));
+      seen.add(id);
+      const recommendations = mapRecommendations(
+        data.Media.recommendations?.nodes || [],
+        seen,
+      );
+      if (relations.length || recommendations.length) {
+        return { relations, recommendations };
+      }
+    }
+  } catch (e) {
+    if (typeof console !== "undefined") {
+      console.warn("[relations] AniList failed, trying Kitsu", e);
+    }
+  }
 
-  const relations = mapRelationEdges(data.Media.relations?.edges || []);
-  const seen = new Set(relations.map((r) => r.id));
-  seen.add(id);
-  const recommendations = mapRecommendations(
-    data.Media.recommendations?.nodes || [],
-    seen,
-  );
-  return { relations, recommendations };
+  try {
+    const kitsuId = await resolveKitsuIdFromAnilist(id);
+    if (kitsuId) {
+      return relationsFromKitsu(kitsuId);
+    }
+  } catch {
+    /* soft */
+  }
+
+  return { relations: [], recommendations: [] };
 }
 
 export async function fetchRelationsOnly(id: number): Promise<AnimeRelation[]> {
@@ -345,7 +395,11 @@ export async function fetchAncestryGraph(
     edges.push({ from, to, kind, label });
   };
 
-  const addNode = (n: AnimeRelation, depth: number, layer: GraphNode["layer"]) => {
+  const addNode = (
+    n: AnimeRelation,
+    depth: number,
+    layer: GraphNode["layer"],
+  ) => {
     if (nodeMap.has(n.id)) return false;
     if (nodeMap.size >= maxNodes) return false;
     nodeMap.set(n.id, { ...n, depth, layer });
@@ -372,7 +426,10 @@ export async function fetchAncestryGraph(
         const links = await fetchMediaLinks(rec.id);
         return { parentId: rec.id, links };
       } catch {
-        return { parentId: rec.id, links: { relations: [], recommendations: [] } };
+        return {
+          parentId: rec.id,
+          links: { relations: [], recommendations: [] },
+        };
       }
     }),
   );
@@ -381,7 +438,8 @@ export async function fetchAncestryGraph(
     for (const r of links.relations.slice(0, 2)) {
       if (r.id === rootId) continue;
       if (!nodeMap.has(r.id)) {
-        if (!addNode({ ...r, relationType: r.relationType }, 1, "official")) continue;
+        if (!addNode({ ...r, relationType: r.relationType }, 1, "official"))
+          continue;
       }
       addEdge(parentId, r.id, "official", r.relationType);
     }
