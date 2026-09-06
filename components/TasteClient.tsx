@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { TasteExtras } from "@/components/TasteExtras";
+import { TasteForecast } from "@/components/TasteForecast";
 import { SignalBars } from "@/components/ui/SignalBars";
 import { SignalEmpty } from "@/components/SignalEmpty";
 import { CountTick } from "@/components/ui/CountTick";
@@ -443,6 +444,8 @@ export function TasteClient() {
           </ul>
         </section>
       ) : null}
+
+      <TasteForecast />
 
       <TasteExtras />
 
