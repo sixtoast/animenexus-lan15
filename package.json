@@ -10,7 +10,10 @@
     "lint": "next lint",
     "generate:sfx": "node scripts/generate-ui-sfx.mjs",
     "postinstall": "node scripts/generate-ui-sfx.mjs",
-    "visual:routes": "node scripts/visual-routes.mjs"
+    "visual:routes": "node scripts/visual-routes.mjs",
+    "typecheck": "tsc --noEmit",
+    "recommend:lab": "echo Open /dev/recommendation-lab in the running Next app",
+    "recommend:eval": "echo Use /dev/recommendation-lab personas + lib/intelligence/evaluation metrics"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.6",
