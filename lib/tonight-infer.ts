@@ -56,11 +56,7 @@ export function inferTonightGuess(entries: WatchlistEntry[]): TonightGuess {
   const bits = [
     exp?.label?.replace(/ me$/, "") || slug,
     `${energy} energy`,
-    intensity === "maximum"
-      ? "high intensity"
-      : intensity === "light"
-        ? "gentle"
-        : "steady",
+    intensity === "maximum" ? "high intensity" : "steady",
   ];
 
   return {
