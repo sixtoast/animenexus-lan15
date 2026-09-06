@@ -280,3 +280,71 @@ a.anime-card {
     grid-column: 2;
   }
 }
+
+/* Your Match */
+.your-match-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.your-match-head h2 {
+  margin: 0;
+}
+.your-match-badge {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(240, 160, 144, 0.3);
+}
+.your-match-strong {
+  border-color: rgba(160, 200, 160, 0.45);
+  color: #b8d4b0;
+}
+.your-match-good {
+  border-color: rgba(240, 160, 144, 0.4);
+  color: var(--color-accent, #f0a090);
+}
+.your-match-soft {
+  opacity: 0.85;
+}
+.your-match-exploratory {
+  opacity: 0.7;
+}
+.your-match-meter {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.your-match-meter-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--color-accent, #f0a090), #ff4d5a);
+  transition: width 0.4s ease;
+}
+.your-match-score {
+  margin: 0 0 0.75rem;
+}
+.your-match-reasons {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.your-match-reasons li {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+.your-match-note {
+  margin: 0.85rem 0 0;
+  font-size: 0.72rem;
+  opacity: 0.5;
+}
