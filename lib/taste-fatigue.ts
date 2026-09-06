@@ -33,7 +33,7 @@ export function buildFatigueProfile(
     const u = e.updatedAt ? new Date(e.updatedAt).getTime() : 0;
     if (u && u < cut) continue;
     const w =
-      e.watchStatus === "completed" || e.watchStatus === "rewatching"
+      e.watchStatus === "completed"
         ? 3
         : e.watchStatus === "watching"
           ? 2
