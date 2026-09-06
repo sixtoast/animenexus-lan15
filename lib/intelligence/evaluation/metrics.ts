@@ -79,6 +79,52 @@ export function intraListDiversity(
   return pairs ? diff / pairs : 0;
 }
 
+/** Fraction of top-K unique relative to catalogue size (coverage proxy). */
+export function catalogueCoverage(
+  ranked: RankedId[],
+  catalogueSize: number,
+  k = 20,
+): number {
+  if (catalogueSize <= 0) return 0;
+  const top = ranked.slice(0, k);
+  const unique = new Set(top.map((r) => r.id));
+  return unique.size / Math.min(k, catalogueSize);
+}
+
+/** Mean pairwise tag distance in top-K (alias of intraListDiversity). */
+export function noveltyOfList(
+  items: { id: number; tags?: string[] }[],
+  k = 10,
+): number {
+  return intraListDiversity(items, k);
+}
+
+/** Mean |predicted - outcome| on binary labels. Lower is better. */
+export function meanAbsoluteCalibrationError(
+  pairs: { predicted: number; outcome: 0 | 1 }[],
+): number {
+  if (!pairs.length) return 1;
+  let sum = 0;
+  for (const p of pairs) {
+    sum += Math.abs(Math.max(0, Math.min(1, p.predicted)) - p.outcome);
+  }
+  return sum / pairs.length;
+}
+
+/** Share of completed ids recovered in top-K (completion-weighted success). */
+export function completionWeightedHitRate(
+  ranked: RankedId[],
+  completedIds: Set<number>,
+  k = 10,
+): number {
+  if (!completedIds.size) return 0;
+  const top = ranked.slice(0, k);
+  if (!top.length) return 0;
+  let hits = 0;
+  for (const r of top) if (completedIds.has(r.id)) hits++;
+  return hits / Math.min(k, completedIds.size);
+}
+
 export type MetricReport = {
   recall5: number;
   recall10: number;
