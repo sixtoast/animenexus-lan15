@@ -10,6 +10,7 @@ import { DiscoveryShelves } from "@/components/DiscoveryShelves";
 import { ProviderHealth } from "@/components/ProviderHealth";
 import { WhatLanternLearned } from "@/components/WhatLanternLearned";
 import { ColdStartStrip } from "@/components/ColdStartStrip";
+import { ColdStartPath } from "@/components/ColdStartPath";
 import { AvailableNowStrip } from "@/components/AvailableNowStrip";
 import { DeskNotesStrip } from "@/components/DeskNotesStrip";
 import { RitualLine } from "@/components/RitualLine";
@@ -104,6 +105,7 @@ export default async function HomePage() {
           <HomeYourWorld />
 
           {/* Soft utility — not equal prominence */}
+          <ColdStartPath />
           <ColdStartStrip />
           <DeskNotesStrip />
           <AvailableNowStrip candidates={items} />
