@@ -52,3 +52,107 @@
   opacity: 0.75;
   margin: 0.35rem 0 0.5rem;
 }
+
+/* Cold-start path (empty / thin shelf) */
+.cold-start-path {
+  position: relative;
+  margin: 0 0 1.35rem;
+  padding: 1.1rem 1.15rem 1.15rem;
+  border-radius: 14px;
+  border: 1px solid rgba(240, 160, 144, 0.22);
+  background:
+    radial-gradient(ellipse 70% 80% at 0% 0%, rgba(240, 160, 144, 0.1), transparent 55%),
+    rgba(22, 18, 16, 0.72);
+}
+.cold-start-path-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 0.9rem;
+}
+.cold-start-path-kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent, #f0a090);
+}
+.cold-start-path-title {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1.15rem, 2.4vw, 1.35rem);
+  font-weight: 600;
+  line-height: 1.25;
+}
+.cold-start-path-lead {
+  margin: 0;
+  font-size: 0.88rem;
+  opacity: 0.78;
+  line-height: 1.4;
+  max-width: 36rem;
+}
+.cold-start-path-dismiss {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.5;
+  font-size: 1.25rem;
+  cursor: pointer;
+  line-height: 1;
+  align-self: flex-start;
+}
+.cold-start-path-dismiss:hover {
+  opacity: 1;
+}
+.cold-start-path-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+@media (min-width: 720px) {
+  .cold-start-path-steps {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.cold-start-path-step {
+  display: flex;
+  gap: 0.65rem;
+  padding: 0.75rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+}
+.cold-start-path-step.is-done {
+  border-color: rgba(160, 200, 160, 0.28);
+  opacity: 0.85;
+}
+.cold-start-path-num {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid rgba(240, 160, 144, 0.35);
+  color: var(--color-accent, #f0a090);
+}
+.cold-start-path-step.is-done .cold-start-path-num {
+  border-color: rgba(160, 200, 160, 0.5);
+  color: #b8d4b0;
+}
+.cold-start-path-step-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+.cold-start-path-step-hint {
+  margin: 0 0 0.55rem;
+  font-size: 0.78rem;
+  opacity: 0.7;
+  line-height: 1.35;
+}
