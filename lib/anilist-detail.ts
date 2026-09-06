@@ -1,6 +1,7 @@
 /**
  * Rich single-title fetch (studios, trailer, characters, relations + recommendations).
  * Relations soft-fall back to Kitsu when AniList GraphQL is unavailable.
+ * Recommendation chains soft-fall back to Shikimori similar / Jikan.
  */
 import { mapAniListMedia, ANILIST_ENDPOINT } from "./anilist";
 import { CACHE_TTL, cacheKey, dedupedFetch } from "./api-cache";
@@ -12,6 +13,11 @@ import {
   resolveKitsuIdFromAnilist,
 } from "./providers/kitsu-relations";
 import { SHIKI_ID_OFFSET } from "./providers/shikimori";
+import {
+  fetchFallbackRecommendations,
+  resolveMalIdFromAnilist,
+  resolveMalIdFromKitsu,
+} from "./providers/recommendation-fallback";
 
 type GqlResponse<T> = {
   data?: T;
@@ -289,7 +295,33 @@ async function relationsFromKitsu(
     year: r.year ?? null,
     score: r.score ?? null,
   }));
-  return { relations, recommendations: [] };
+
+  let recommendations: AnimeRelation[] = [];
+  try {
+    const malId = await resolveMalIdFromKitsu(nativeKitsuId);
+    if (malId) {
+      const recs = await fetchFallbackRecommendations(malId, 12);
+      const seen = new Set(relations.map((r) => r.id));
+      for (const r of recs) {
+        if (seen.has(r.id)) continue;
+        seen.add(r.id);
+        recommendations.push({
+          id: r.id,
+          title: r.title,
+          relationType: "RECOMMENDED",
+          format: r.format,
+          status: r.status,
+          image: r.image,
+          year: r.year ?? null,
+          score: r.score ?? null,
+        });
+      }
+    }
+  } catch {
+    /* soft */
+  }
+
+  return { relations, recommendations };
 }
 
 async function fetchMediaLinks(id: number): Promise<{
@@ -297,7 +329,25 @@ async function fetchMediaLinks(id: number): Promise<{
   recommendations: AnimeRelation[];
 }> {
   if (id >= SHIKI_ID_OFFSET) {
-    return { relations: [], recommendations: [] };
+    const malId = id - SHIKI_ID_OFFSET;
+    try {
+      const recs = await fetchFallbackRecommendations(malId, 10);
+      return {
+        relations: [],
+        recommendations: recs.map((r) => ({
+          id: r.id,
+          title: r.title,
+          relationType: "RECOMMENDED",
+          format: r.format,
+          status: r.status,
+          image: r.image,
+          year: r.year ?? null,
+          score: r.score ?? null,
+        })),
+      };
+    } catch {
+      return { relations: [], recommendations: [] };
+    }
   }
   if (id >= KITSU_ID_OFFSET) {
     return relationsFromKitsu(id - KITSU_ID_OFFSET);
@@ -338,11 +388,35 @@ async function fetchMediaLinks(id: number): Promise<{
       const relations = mapRelationEdges(data.Media.relations?.edges || []);
       const seen = new Set(relations.map((r) => r.id));
       seen.add(id);
-      const recommendations = mapRecommendations(
+      let recommendations = mapRecommendations(
         data.Media.recommendations?.nodes || [],
         seen,
       );
       if (relations.length || recommendations.length) {
+        if (!recommendations.length) {
+          try {
+            const malId = await resolveMalIdFromAnilist(id);
+            if (malId) {
+              const recs = await fetchFallbackRecommendations(malId, 12);
+              for (const r of recs) {
+                if (seen.has(r.id)) continue;
+                seen.add(r.id);
+                recommendations.push({
+                  id: r.id,
+                  title: r.title,
+                  relationType: "RECOMMENDED",
+                  format: r.format,
+                  status: r.status,
+                  image: r.image,
+                  year: r.year ?? null,
+                  score: r.score ?? null,
+                });
+              }
+            }
+          } catch {
+            /* soft */
+          }
+        }
         return { relations, recommendations };
       }
     }
