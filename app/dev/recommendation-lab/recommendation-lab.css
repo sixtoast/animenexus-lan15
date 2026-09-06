@@ -1,0 +1,44 @@
+.rec-lab-header {
+  margin-bottom: 1rem;
+}
+.rec-lab-versions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.rec-lab-versions code {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--surface, #1a1a22) 80%, transparent);
+}
+.rec-lab-source {
+  display: block;
+  margin-bottom: 1.25rem;
+}
+.rec-lab-source select {
+  margin-left: 0.5rem;
+  max-width: 100%;
+}
+.rec-lab-section {
+  margin-bottom: 1.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid color-mix(in oklab, currentColor 12%, transparent);
+}
+.rec-lab-section h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+.rec-lab-section h3 {
+  font-size: 0.95rem;
+  margin: 0.75rem 0 0.35rem;
+}
+.rec-lab-pre {
+  font-size: 0.75rem;
+  overflow: auto;
+  max-height: 320px;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: color-mix(in oklab, var(--surface, #121218) 90%, transparent);
+}
