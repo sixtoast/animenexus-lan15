@@ -6,6 +6,7 @@
 import type { Anime, WatchlistEntry } from "@/lib/types";
 import {
   buildAnimePreferenceFingerprint,
+  buildEnrichedFingerprint,
   fingerprintToVector,
   type AnimePreferenceFingerprint,
 } from "@/lib/intelligence/items";
@@ -162,7 +163,7 @@ export function rankRecommendationsV3(
     if (exclude.has(anime.id)) continue;
 
     let fp = opts?.fingerprints?.get(anime.id);
-    if (!fp) fp = buildAnimePreferenceFingerprint(anime);
+    if (!fp) fp = buildEnrichedFingerprint(anime);
 
     const stableSim = vectorSimilarity(user.stable, fp, WEIGHTS_LONG_TERM);
     const clusterSim = active
