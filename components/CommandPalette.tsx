@@ -215,7 +215,7 @@ export function CommandPalette() {
               className="cmdk-item"
               onClick={() => {
                 if (intent.experienceSlug) {
-                  writeIntentSession({ slug: intent.experienceSlug });
+                  writeIntentSession({ slug: intent.experienceSlug ?? null });
                 }
                 playCue("filter_select");
                 go(`/browse?q=${encodeURIComponent(q.trim())}`);
@@ -229,11 +229,11 @@ export function CommandPalette() {
                 type="button"
                 className="cmdk-item"
                 onClick={() => {
-                  writeIntentSession({ slug: intent.experienceSlug });
+                  writeIntentSession({ slug: intent.experienceSlug ?? null });
                   playCue("filter_select");
                   const qs = sessionToSearchParams({
                     ...readIntentSession(),
-                    slug: intent.experienceSlug,
+                    slug: intent.experienceSlug ?? null,
                   }).toString();
                   go(`/browse?${qs}`);
                 }}
