@@ -1,6 +1,7 @@
 /**
  * Recommendation ranking (V2).
  * Similarity is one signal among: clusters, session intent, drift, quality, fatigue, drops.
+ * Soft path: ranker_v3 when isRecV3Enabled().
  */
 
 import type { Anime, WatchlistEntry } from "./types";
@@ -14,6 +15,8 @@ import { getCachedAvailability } from "./available-to-me";
 import { readMyServices } from "./my-services";
 import { buildFatigueProfile } from "./taste-fatigue";
 import { rerankRecommendations, RERANKER_VERSION } from "./recommend-rerank";
+import { isRecV3Enabled } from "./intelligence/recommendation/feature-flag";
+import { rankRecommendationsV3AsLegacy } from "./intelligence/recommendation/adapt-v3";
 
 export type RankedRecommendation = {
   anime: Anime;
@@ -54,6 +57,20 @@ export function rankRecommendations(
     experienceSlug?: string;
   },
 ): RankedRecommendation[] {
+  // Soft V3 path — lab / localStorage / NEXT_PUBLIC_REC_V3
+  if (isRecV3Enabled()) {
+    try {
+      return rankRecommendationsV3AsLegacy(candidates, entries, {
+        excludeIds: opts?.excludeIds,
+        experienceSlug: opts?.experienceSlug,
+      });
+    } catch (e) {
+      if (typeof console !== "undefined") {
+        console.warn("[recommend] ranker_v3 failed, using v2", e);
+      }
+    }
+  }
+
   const exclude = new Set(
     opts?.excludeIds
       ? Array.isArray(opts.excludeIds)
@@ -81,7 +98,6 @@ export function rankRecommendations(
 
     const reasons = [...signals.reasons];
 
-    // Soft availability (client cache only — never hard-exclude)
     if (typeof window !== "undefined") {
       try {
         const prefs = readMyServices();
@@ -125,7 +141,6 @@ export function rankRecommendations(
 
   ranked.sort((a, b) => b.score - a.score);
 
-  // R5: diversity + fatigue + exploration budget
   const fatigue = buildFatigueProfile(entries);
   return rerankRecommendations(ranked, entries, {
     fatigue,
