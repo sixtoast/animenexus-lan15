@@ -11,6 +11,7 @@ import {
   type AnimePreferenceFingerprint,
   type FingerprintVector,
 } from "@/lib/intelligence/items";
+import { withSessionAnime } from "./session-signals";
 
 export const PREFERENCE_MODEL_VERSION = "preference_v3";
 
@@ -93,6 +94,8 @@ export function buildUserPreferenceVector(
   opts?: {
     fingerprints?: Map<number, AnimePreferenceFingerprint>;
     sessionAnime?: Anime[];
+    /** When true (default on client), merge behaviour-session opens into sessionAnime */
+    autoSession?: boolean;
   },
 ): UserPreferenceVector {
   const stableRaw = emptyFingerprintVector();
@@ -136,11 +139,27 @@ export function buildUserPreferenceVector(
     accumulate(recentRaw, fp, strength * recencyWeight(days, 30), rc);
   }
 
-  for (const a of opts?.sessionAnime || []) {
+  let sessionList = opts?.sessionAnime || [];
+  if (
+    opts?.autoSession !== false &&
+    typeof window !== "undefined" &&
+    sessionList.length < 12
+  ) {
+    try {
+      sessionList = withSessionAnime(entries, sessionList);
+    } catch {
+      /* soft */
+    }
+  }
+
+  for (const a of sessionList) {
+    if (!a?.id) continue;
     const fp =
       opts?.fingerprints?.get(a.id) || buildAnimePreferenceFingerprint(a);
-    accumulate(sessionRaw, fp, 0.35, sesc);
-    evidence += 0.2;
+    const onShelf = entries.some((e) => e.id === a.id);
+    const w = onShelf ? 0.28 : 0.42;
+    accumulate(sessionRaw, fp, w, sesc);
+    evidence += onShelf ? 0.15 : 0.28;
   }
 
   const confidence = Math.min(0.92, 0.15 + evidence * 0.08);
