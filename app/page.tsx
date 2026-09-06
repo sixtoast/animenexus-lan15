@@ -11,6 +11,7 @@ import { ProviderHealth } from "@/components/ProviderHealth";
 import { WhatLanternLearned } from "@/components/WhatLanternLearned";
 import { ColdStartStrip } from "@/components/ColdStartStrip";
 import { ColdStartPath } from "@/components/ColdStartPath";
+import { ReturningRecap } from "@/components/ReturningRecap";
 import { AvailableNowStrip } from "@/components/AvailableNowStrip";
 import { DeskNotesStrip } from "@/components/DeskNotesStrip";
 import { RitualLine } from "@/components/RitualLine";
@@ -106,6 +107,7 @@ export default async function HomePage() {
 
           {/* Soft utility — not equal prominence */}
           <ColdStartPath />
+          <ReturningRecap />
           <ColdStartStrip />
           <DeskNotesStrip />
           <AvailableNowStrip candidates={items} />
