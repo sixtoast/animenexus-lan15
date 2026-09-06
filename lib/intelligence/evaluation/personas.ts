@@ -19,7 +19,8 @@ function entry(
   genres: string[],
   opts?: Partial<WatchlistEntry>,
 ): WatchlistEntry {
-  const daysAgo = opts?.updatedAt ? 0 : (id % 180) + 10;
+  const daysAgo = (id % 180) + 10;
+  const ts = new Date(Date.now() - daysAgo * 86400000).toISOString();
   return {
     id,
     title,
@@ -35,8 +36,12 @@ function entry(
     notes: "",
     genres,
     tags: genres,
-    updatedAt: new Date(Date.now() - daysAgo * 86400000).toISOString(),
+    addedAt: ts,
+    updatedAt: ts,
     ...opts,
+    // Required fields must stay defined after Partial spread
+    addedAt: opts?.addedAt ?? ts,
+    updatedAt: opts?.updatedAt ?? ts,
   };
 }
 
@@ -51,10 +56,21 @@ export const SYNTHETIC_PERSONAS: SyntheticPersona[] = [
       "low pure-spectacle preference",
     ],
     entries: [
-      entry(1535, "Death Note", "completed", ["Psychological", "Mystery", "Thriller"]),
+      entry(1535, "Death Note", "completed", [
+        "Psychological",
+        "Mystery",
+        "Thriller",
+      ]),
       entry(19, "Monster", "completed", ["Psychological", "Mystery", "Drama"]),
-      entry(437, "Perfect Blue", "completed", ["Psychological", "Drama", "Horror"]),
-      entry(339, "Serial Experiments Lain", "completed", ["Psychological", "Sci-Fi"]),
+      entry(437, "Perfect Blue", "completed", [
+        "Psychological",
+        "Drama",
+        "Horror",
+      ]),
+      entry(339, "Serial Experiments Lain", "completed", [
+        "Psychological",
+        "Sci-Fi",
+      ]),
       entry(205, "Samurai Champloo", "planning", ["Action", "Adventure"]),
     ],
   },
@@ -80,7 +96,11 @@ export const SYNTHETIC_PERSONAS: SyntheticPersona[] = [
     expected: ["multiple clusters", "moderate novelty"],
     entries: [
       entry(16498, "Attack on Titan", "completed", ["Action", "Drama"]),
-      entry(5114, "Fullmetal Alchemist", "completed", ["Action", "Adventure", "Drama"]),
+      entry(5114, "Fullmetal Alchemist", "completed", [
+        "Action",
+        "Adventure",
+        "Drama",
+      ]),
       entry(9253, "Steins;Gate", "completed", ["Sci-Fi", "Thriller"]),
       entry(11061, "Hunter x Hunter", "completed", ["Action", "Adventure"], {
         episodes: 148,
@@ -147,10 +167,16 @@ export const SYNTHETIC_PERSONAS: SyntheticPersona[] = [
     description: "Seeks unusual, lower-score, high-complexity works.",
     expected: ["higher novelty", "cognitiveLoad tolerance"],
     entries: [
-      entry(339, "Lain", "completed", ["Psychological", "Sci-Fi"], { score: 72 }),
+      entry(339, "Lain", "completed", ["Psychological", "Sci-Fi"], {
+        score: 72,
+      }),
       entry(101, "FLCL", "completed", ["Comedy", "Sci-Fi"], { score: 78 }),
-      entry(226, "Elfen Lied", "completed", ["Drama", "Horror"], { score: 72 }),
-      entry(10087, "Fate/Zero", "completed", ["Action", "Fantasy"], { score: 82 }),
+      entry(226, "Elfen Lied", "completed", ["Drama", "Horror"], {
+        score: 72,
+      }),
+      entry(10087, "Fate/Zero", "completed", ["Action", "Fantasy"], {
+        score: 82,
+      }),
     ],
   },
 ];
