@@ -39,7 +39,7 @@ export function YourMatchPanel({ anime }: Props) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <p className="your-match-score meta">
+      <p className="your-match-score meta" aria-live="polite">
         {pct}% alignment with your shelf
         {match.activeCluster ? ` · mode “${match.activeCluster}”` : ""}
       </p>
