@@ -229,7 +229,11 @@ export async function generateCandidatePool(
           fetchFiltered(
             {
               genre,
-              sort: exp?.sort || "score",
+              // viewing-intent may use "trending"; catalog filter only allows score|popularity|title|year
+              sort:
+                exp?.sort === "popularity" || exp?.sort === "trending"
+                  ? "popularity"
+                  : "score",
               adultFilter: "exclude",
             },
             1,
