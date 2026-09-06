@@ -138,8 +138,6 @@
   place-items: center;
   font-size: 0.75rem;
   font-weight: 700;
-}
-.cold-start-path-num {
   border: 1px solid rgba(240, 160, 144, 0.35);
   color: var(--color-accent, #f0a090);
 }
@@ -223,4 +221,58 @@
   margin: 0.65rem 0 0;
   font-size: 0.72rem;
   opacity: 0.5;
+}
+
+/* Session quiet note + focus for soft panels */
+.session-quiet {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 1.5rem 0 0.5rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.18);
+}
+.session-quiet-line {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  line-height: 1.35;
+}
+.session-quiet-hide {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.session-quiet-hide:hover,
+.session-quiet-hide:focus-visible {
+  opacity: 1;
+}
+
+.cold-start-path-dismiss:focus-visible,
+.returning-recap-dismiss:focus-visible,
+.cold-start-dismiss:focus-visible,
+.session-quiet-hide:focus-visible {
+  outline: 2px solid rgba(240, 160, 144, 0.55);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.cold-start-path a:focus-visible,
+.returning-recap a:focus-visible,
+.your-match a:focus-visible {
+  outline: 2px solid rgba(240, 160, 144, 0.5);
+  outline-offset: 2px;
+}
+
+html[data-reduce-motion="true"] .your-match-meter-fill {
+  transition: none;
 }
