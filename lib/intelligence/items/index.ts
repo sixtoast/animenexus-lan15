@@ -5,3 +5,4 @@ export * from "./fingerprint-confidence";
 export * from "./fingerprint-sources";
 export * from "./fingerprint-similarity";
 export * from "./fingerprint-enrichment";
+export * from "./fingerprint-catalogue";
