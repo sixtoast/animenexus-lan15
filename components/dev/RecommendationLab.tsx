@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import {
   SYNTHETIC_PERSONAS,
@@ -31,12 +31,24 @@ import { CANDIDATE_GENERATOR_VERSION } from "@/lib/intelligence/recommendation/c
 import { FINGERPRINT_VERSION } from "@/lib/intelligence/items";
 import { PREFERENCE_MODEL_VERSION } from "@/lib/intelligence/preference/user-preference-vector";
 import type { WatchlistEntry } from "@/lib/types";
+import {
+  isRecV3Enabled,
+  setRecV3Enabled,
+} from "@/lib/intelligence/recommendation/feature-flag";
 
 type Source = "current" | string;
 
 export function RecommendationLab() {
   const { entries, ready } = useWatchlist();
   const [source, setSource] = useState<Source>("current");
+  const [v3On, setV3On] = useState(false);
+
+  useEffect(() => {
+    setV3On(isRecV3Enabled());
+    const on = () => setV3On(isRecV3Enabled());
+    window.addEventListener("animenexus:rec-v3", on);
+    return () => window.removeEventListener("animenexus:rec-v3", on);
+  }, []);
 
   const persona: SyntheticPersona | null =
     source === "current" ? null : getPersona(source) || null;
@@ -104,6 +116,19 @@ export function RecommendationLab() {
         </select>
       </label>
 
+      <label className="rec-lab-source">
+        <input
+          type="checkbox"
+          checked={v3On}
+          onChange={(e) => {
+            setRecV3Enabled(e.target.checked);
+            setV3On(e.target.checked);
+          }}
+        />{" "}
+        Enable ranker/candidates V3 in this browser (localStorage{" "}
+        <code>an_rec_v3</code>)
+      </label>
+
       {persona ? (
         <section className="rec-lab-section">
           <h2>Persona</h2>
@@ -135,7 +160,7 @@ export function RecommendationLab() {
             <ul>
               {model.peaks.map((p) => (
                 <li key={p.key}>
-                  {humanizeDimKey(p.key)} {p.high ? "\u2191" : "\u2193"}{" "}
+                  {humanizeDimKey(p.key)} {p.high ? "↑" : "↓"}{" "}
                   <span className="meta">{p.value.toFixed(2)}</span>
                 </li>
               ))}
@@ -163,7 +188,7 @@ export function RecommendationLab() {
               <ul>
                 {model.drift.map((t) => (
                   <li key={t.dimension}>
-                    {t.label} {t.direction === "up" ? "\u2191" : "\u2193"} · strength{" "}
+                    {t.label} {t.direction === "up" ? "↑" : "↓"} · strength{" "}
                     {t.strength.toFixed(2)} · conf {t.confidence.toFixed(2)}
                   </li>
                 ))}
