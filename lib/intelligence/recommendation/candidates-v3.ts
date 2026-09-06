@@ -9,6 +9,10 @@ import { fetchDiscover, fetchFiltered } from "@/lib/anilist";
 import {
   buildAnimePreferenceFingerprint,
   fingerprintToVector,
+  indexAnimeList,
+  indexFingerprint,
+  nearestFingerprints,
+  entryToAnime,
   type AnimePreferenceFingerprint,
   type FingerprintVector,
 } from "@/lib/intelligence/items";
@@ -50,7 +54,7 @@ export type CandidateSourceV3 =
   | "viewing_intent"
   | "exploration"
   | "unfinished"
-  | "semantic_placeholder";
+  | "fingerprint_nn";
 
 export type RecommendationCandidateV3 = {
   anime: Anime;
@@ -125,6 +129,7 @@ function ensureFp(
     fp = buildAnimePreferenceFingerprint(anime);
     fps.set(anime.id, fp);
   }
+  indexFingerprint(anime, fp);
   return fp;
 }
 
@@ -613,9 +618,44 @@ export async function generateCandidatePoolV3(
     }
   }
   diagnostics.generators.unfinished = unfinished;
-  diagnostics.generators.semantic_placeholder = 0;
 
   await Promise.all(jobs);
+
+  // Index pool + shelf, then nearest-neighbour retrieval (replaces semantic_placeholder)
+  try {
+    indexAnimeList(
+      [...byId.values()].map((c) => c.anime),
+      fps,
+    );
+    for (const e of entries) {
+      indexFingerprint(shelfAnime(e), fps.get(e.id));
+    }
+    const exclude = new Set(entries.map((e) => e.id));
+    const hits = nearestFingerprints(userVec, {
+      k: 28,
+      excludeIds: exclude,
+      minSimilarity: 0.38,
+      weights: WEIGHTS_LONG_TERM,
+    });
+    let nn = 0;
+    for (const hit of hits) {
+      const anime =
+        byId.get(hit.animeId)?.anime || entryToAnime(hit.entry);
+      mergeCandidate(
+        byId,
+        anime,
+        "fingerprint_nn",
+        0.35 + hit.similarity * 0.5,
+        `Fingerprint neighbour · sim ${hit.similarity.toFixed(2)}`,
+        hit.entry.fingerprint.confidence.overall,
+      );
+      nn++;
+    }
+    diagnostics.generators.fingerprint_nn = nn;
+  } catch {
+    diagnostics.generators.fingerprint_nn = 0;
+    diagnostics.degradation.push("fingerprint_nn_failed");
+  }
 
   let candidates = [...byId.values()].map((c) => ({
     ...c,
