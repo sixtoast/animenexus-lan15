@@ -21,6 +21,7 @@ function entry(
 ): WatchlistEntry {
   const daysAgo = (id % 180) + 10;
   const ts = new Date(Date.now() - daysAgo * 86400000).toISOString();
+  const { addedAt: _a, updatedAt: _u, ...rest } = opts || {};
   return {
     id,
     title,
@@ -36,10 +37,7 @@ function entry(
     notes: "",
     genres,
     tags: genres,
-    addedAt: ts,
-    updatedAt: ts,
-    ...opts,
-    // Required fields must stay defined after Partial spread
+    ...rest,
     addedAt: opts?.addedAt ?? ts,
     updatedAt: opts?.updatedAt ?? ts,
   };
