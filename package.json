@@ -12,8 +12,11 @@
     "postinstall": "node scripts/generate-ui-sfx.mjs",
     "visual:routes": "node scripts/visual-routes.mjs",
     "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test scripts/tests/*.test.ts",
+    "test:recommend": "node --experimental-strip-types --test scripts/tests/*.test.ts",
     "recommend:lab": "echo Open /dev/recommendation-lab in the running Next app",
-    "recommend:eval": "echo Use /dev/recommendation-lab personas + lib/intelligence/evaluation metrics"
+    "recommend:eval": "node --experimental-strip-types scripts/recommend-eval.ts",
+    "recommend:fingerprint-smoke": "node --experimental-strip-types --test scripts/tests/metrics.test.ts"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.6",
