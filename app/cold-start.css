@@ -138,6 +138,8 @@
   place-items: center;
   font-size: 0.75rem;
   font-weight: 700;
+}
+.cold-start-path-num {
   border: 1px solid rgba(240, 160, 144, 0.35);
   color: var(--color-accent, #f0a090);
 }
@@ -155,4 +157,70 @@
   font-size: 0.78rem;
   opacity: 0.7;
   line-height: 1.35;
+}
+
+/* Returning user recap */
+.returning-recap {
+  position: relative;
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.15rem 1.05rem;
+  border-radius: 14px;
+  border: 1px solid rgba(160, 180, 220, 0.22);
+  background:
+    radial-gradient(ellipse 60% 70% at 100% 0%, rgba(160, 180, 220, 0.08), transparent 50%),
+    rgba(18, 16, 22, 0.65);
+}
+.returning-recap-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 0.65rem;
+}
+.returning-recap-kicker {
+  margin: 0 0 0.2rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(180, 200, 230, 0.9);
+}
+.returning-recap-title {
+  margin: 0;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+  font-weight: 600;
+}
+.returning-recap-dismiss {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.5;
+  font-size: 1.25rem;
+  cursor: pointer;
+  line-height: 1;
+}
+.returning-recap-dismiss:hover {
+  opacity: 1;
+}
+.returning-recap-list {
+  margin: 0 0 0.75rem;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.returning-recap-list li {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+.returning-recap-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.returning-recap-note {
+  margin: 0.65rem 0 0;
+  font-size: 0.72rem;
+  opacity: 0.5;
 }
