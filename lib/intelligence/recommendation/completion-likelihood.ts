@@ -6,6 +6,7 @@ import type { Anime, WatchlistEntry } from "@/lib/types";
 import {
   buildCompletionProfile,
   lengthCompletionRate,
+  dimensionCompletionAdjust,
   type CompletionProfile,
 } from "@/lib/intelligence/outcomes/completion-profile";
 import {
@@ -19,7 +20,7 @@ import {
 } from "@/lib/intelligence/items/fingerprint-similarity";
 import { buildDropSignatures, dropPenalty } from "@/lib/drop-signatures";
 
-export const COMPLETION_LIKELIHOOD_VERSION = "completion_likelihood_v1";
+export const COMPLETION_LIKELIHOOD_VERSION = "completion_likelihood_v2";
 
 export type CompletionLikelihood = {
   probability: number;
@@ -90,6 +91,13 @@ export function estimateCompletionLikelihood(
   if ((fp.experience.commitment ?? 0.5) > 0.75) {
     p = Math.max(0.12, p - 0.08);
     reasons.push("High time commitment");
+  }
+
+  const dimAdj = dimensionCompletionAdjust(profile, fp);
+  if (dimAdj.delta !== 0) {
+    p = Math.max(0.08, Math.min(0.95, p + dimAdj.delta));
+    conf += 0.1;
+    reasons.push(...dimAdj.reasons);
   }
 
   conf = Math.min(0.9, conf);
