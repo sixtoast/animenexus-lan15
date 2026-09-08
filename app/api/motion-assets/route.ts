@@ -1,6 +1,6 @@
 /**
  * Gather motion-room assets for a title:
- * cover, AnimeThemes OP/ED, Fanart stills, title GIFs (Tenor/Giphy), trailer.
+ * cover, AnimeThemes OP/ED, Fanart stills, title GIFs (Gifukai/nekos.best + optional Tenor/Giphy), trailer.
  * Soft-fail individual sources.
  */
 
@@ -18,10 +18,7 @@ import {
 import { identityFromAnime, mapId } from "@/lib/anime-identity";
 import { searchAnime, fetchAnimeById } from "@/lib/anilist";
 import { fetchAnimeDetail } from "@/lib/anilist-detail";
-import {
-  searchAnimeGifs,
-  isGifSearchConfigured,
-} from "@/lib/providers/gif-search";
+import { searchAnimeGifs } from "@/lib/providers/gif-search";
 import type { Anime } from "@/lib/types";
 
 export type MotionAssetDto = {
@@ -142,28 +139,25 @@ export async function GET(req: NextRequest) {
     notes.push("AnimeThemes: failed");
   }
 
-  if (isGifSearchConfigured()) {
-    try {
-      const { hits, notes: gifNotes } = await searchAnimeGifs(displayTitle, {
-        limit: 12,
+  // Gifukai + nekos.best (no key); optional Tenor/Giphy if env set
+  try {
+    const { hits, notes: gifNotes } = await searchAnimeGifs(displayTitle, {
+      limit: 12,
+    });
+    notes.push(...gifNotes);
+    for (const h of hits) {
+      assets.push({
+        id: h.id,
+        kind: "gif",
+        url: h.url,
+        thumb: h.thumb,
+        label: h.label,
+        source: h.source,
+        animeTitle: displayTitle,
       });
-      notes.push(...gifNotes);
-      for (const h of hits) {
-        assets.push({
-          id: h.id,
-          kind: "gif",
-          url: h.url,
-          thumb: h.thumb,
-          label: h.label,
-          source: h.source,
-          animeTitle: displayTitle,
-        });
-      }
-    } catch {
-      notes.push("GIF search failed");
     }
-  } else {
-    notes.push("GIF search: set TENOR_API_KEY or GIPHY_API_KEY");
+  } catch {
+    notes.push("GIF search failed");
   }
 
   try {
@@ -214,6 +208,6 @@ export async function GET(req: NextRequest) {
     },
     assets,
     notes,
-    gifSearchConfigured: isGifSearchConfigured(),
+    gifSearchConfigured: true,
   });
 }
