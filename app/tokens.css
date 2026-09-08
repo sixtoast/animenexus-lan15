@@ -1,0 +1,134 @@
+/**
+ * AnimeNexus — foundation tokens (load FIRST, before globals).
+ * Single source for color, z-index, breakpoints, motion, space.
+ */
+
+:root {
+  --color-primary: #0c0a09;
+  --color-secondary: #161210;
+  --color-tertiary: #221c18;
+  --color-accent: #f0a090;
+  --color-accent-rgb: 240, 160, 144;
+  --color-accent-hover: #f8c4b8;
+  --color-accent-muted: #e8a598;
+  --color-accent-glow: rgba(var(--color-accent-rgb), 0.4);
+  --color-accent-soft: rgba(var(--color-accent-rgb), 0.14);
+  --color-accent-border: rgba(var(--color-accent-rgb), 0.12);
+  --color-accent-border-strong: rgba(var(--color-accent-rgb), 0.28);
+
+  --color-amber: #efc07a;
+  --color-amber-rgb: 239, 192, 122;
+  --color-amber-glow: rgba(var(--color-amber-rgb), 0.32);
+  --color-amber-soft: rgba(var(--color-amber-rgb), 0.1);
+
+  --color-text: #faf4ef;
+  --color-text-muted: #9e8e82;
+  --color-border: var(--color-accent-border);
+  --color-danger: #e07068;
+  --color-success: #7dcea0;
+  --color-warning: #c9a227;
+
+  --surface-0: var(--color-primary);
+  --surface-1: var(--color-secondary);
+  --surface-2: var(--color-tertiary);
+  --surface-glass: rgba(22, 18, 16, 0.72);
+  --surface-elevated: linear-gradient(
+    165deg,
+    rgba(34, 28, 24, 0.95),
+    rgba(12, 10, 9, 0.98)
+  );
+  --hairline: rgba(255, 235, 225, 0.07);
+  --border-soft: var(--color-accent-border);
+  --border-strong: var(--color-accent-border-strong);
+
+  --z-base: 1;
+  --z-raised: 5;
+  --z-dropdown: 50;
+  --z-sticky: 80;
+  --z-nav: 100;
+  --z-drawer: 200;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-mascot: 600;
+  --z-cmdk: 700;
+  --z-overlay-top: 800;
+
+  /* Breakpoint reference: xs 480 · sm 640 · md 900 · lg 1100 · xl 1400 */
+  --bp-xs: 480px;
+  --bp-sm: 640px;
+  --bp-md: 900px;
+  --bp-lg: 1100px;
+  --bp-xl: 1400px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --radius: 22px;
+  --radius-sm: 14px;
+  --radius-pill: 50px;
+  --shadow: 0 40px 80px rgba(0, 0, 0, 0.55);
+  --shadow-soft: 0 16px 48px rgba(0, 0, 0, 0.35);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 180ms;
+  --dur: 420ms;
+  --dur-slow: 720ms;
+  --duration-fast: var(--dur-fast);
+  --duration-med: var(--dur);
+  --duration-slow: var(--dur-slow);
+  --transition: var(--dur) var(--ease-out);
+  --font: "Outfit", "Noto Sans JP", system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", "Noto Sans JP", Georgia, serif;
+  --text-xs: 0.72rem;
+  --text-sm: 0.85rem;
+  --text-md: 0.95rem;
+  --focus-ring: 0 0 0 2px var(--color-primary), 0 0 0 4px var(--color-accent);
+
+  --body-wash-1: rgba(var(--color-accent-rgb), 0.14);
+  --body-wash-2: rgba(var(--color-amber-rgb), 0.1);
+  --body-wash-3: rgba(180, 90, 70, 0.08);
+}
+
+html[data-theme="light"] {
+  --color-primary: #f7f1eb;
+  --color-secondary: #efe6dc;
+  --color-tertiary: #e4d8cc;
+  --color-accent: #c45c4a;
+  --color-accent-rgb: 196, 92, 74;
+  --color-accent-hover: #a84838;
+  --color-accent-muted: #d4847a;
+  --color-accent-glow: rgba(var(--color-accent-rgb), 0.28);
+  --color-accent-soft: rgba(var(--color-accent-rgb), 0.12);
+  --color-accent-border: rgba(var(--color-accent-rgb), 0.18);
+  --color-accent-border-strong: rgba(var(--color-accent-rgb), 0.35);
+  --color-amber: #b8860b;
+  --color-amber-rgb: 184, 134, 11;
+  --color-amber-glow: rgba(var(--color-amber-rgb), 0.22);
+  --color-amber-soft: rgba(var(--color-amber-rgb), 0.1);
+  --color-text: #1a1410;
+  --color-text-muted: #6b5c52;
+  --color-border: var(--color-accent-border);
+  --color-danger: #c04040;
+  --surface-0: var(--color-primary);
+  --surface-1: var(--color-secondary);
+  --surface-2: var(--color-tertiary);
+  --surface-glass: rgba(255, 250, 245, 0.78);
+  --surface-elevated: linear-gradient(
+    165deg,
+    rgba(255, 252, 248, 0.98),
+    rgba(240, 232, 224, 0.96)
+  );
+  --hairline: rgba(40, 30, 24, 0.08);
+  --border-soft: var(--color-accent-border);
+  --border-strong: var(--color-accent-border-strong);
+  --shadow: 0 24px 48px rgba(40, 24, 16, 0.12);
+  --shadow-soft: 0 12px 28px rgba(40, 24, 16, 0.08);
+  --body-wash-1: rgba(var(--color-accent-rgb), 0.08);
+  --body-wash-2: rgba(var(--color-amber-rgb), 0.06);
+  --body-wash-3: rgba(180, 90, 70, 0.04);
+  --focus-ring: 0 0 0 2px var(--color-primary), 0 0 0 4px var(--color-accent);
+}
