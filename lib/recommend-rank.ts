@@ -55,10 +55,15 @@ export function rankRecommendations(
     excludeIds?: Set<number> | number[];
     resonanceWeight?: number;
     experienceSlug?: string;
+    /** Lab only: force engine regardless of feature flag */
+    forceVersion?: "v2" | "v3";
   },
 ): RankedRecommendation[] {
   // Soft V3 path — lab / localStorage / NEXT_PUBLIC_REC_V3
-  if (isRecV3Enabled()) {
+  const useV3 =
+    opts?.forceVersion === "v3" ||
+    (opts?.forceVersion !== "v2" && isRecV3Enabled());
+  if (useV3) {
     try {
       return rankRecommendationsV3AsLegacy(candidates, entries, {
         excludeIds: opts?.excludeIds,
