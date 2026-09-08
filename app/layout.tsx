@@ -34,6 +34,7 @@ import { CinematographyController } from "@/components/CinematographyController"
 import { NexusRouteBeacon } from "@/components/NexusRouteBeacon";
 import { MascotHost } from "@/components/mascot/MascotHost";
 import { MascotErrorBoundary } from "@/components/mascot/MascotErrorBoundary";
+import { ErrorReportingBoot } from "@/components/ErrorReportingBoot";
 import "./tokens.css";
 import "./globals.css";
 import "./button.css";
@@ -172,6 +173,7 @@ export default function RootLayout({
                   <WatchlistProvider>
                     <SessionProvider>
                       <DeskCloudAutoSync />
+                      <ErrorReportingBoot />
                       <SkipToContent />
                       <LanternMemoryBoot />
                       <Suspense fallback={null}>
