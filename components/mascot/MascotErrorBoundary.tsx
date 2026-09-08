@@ -1,6 +1,7 @@
 "use client";
 
 import { Component, type ReactNode } from "react";
+import { reportError } from "@/lib/report-error";
 
 type Props = {
   children: ReactNode;
@@ -30,7 +31,11 @@ export class MascotErrorBoundary extends Component<Props, State> {
     return { hasError: true, message };
   }
 
-  componentDidCatch(err: unknown) {
+  componentDidCatch(err: unknown, info: { componentStack?: string }) {
+    reportError(err, {
+      source: "MascotErrorBoundary",
+      componentStack: info?.componentStack,
+    });
     console.error("[Lantern-ko] 3D companion crashed:", err);
   }
 
@@ -48,7 +53,11 @@ export class MascotErrorBoundary extends Component<Props, State> {
         <div className="mascot-error" role="alert">
           <strong>3D companion failed</strong>
           <p>{this.state.message || "WebGL / R3F error"}</p>
-          <button type="button" className="mascot-error-retry" onClick={this.retry}>
+          <button
+            type="button"
+            className="mascot-error-retry"
+            onClick={this.retry}
+          >
             Retry 3D
           </button>
         </div>
