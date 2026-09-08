@@ -1,6 +1,6 @@
 /**
  * Multi-source recommendation candidate generation (R4).
- * Soft path: candidate_v3 when isRecV3Enabled().
+ * Soft path: candidate_v3 when isRecV3Enabled({ entries }).
  * Soft-fail: any generator may return []; pool still usable.
  */
 
@@ -123,7 +123,7 @@ export type GeneratePoolOptions = {
 export async function generateCandidatePool(
   opts: GeneratePoolOptions,
 ): Promise<CandidatePool> {
-  if (isRecV3Enabled()) {
+  if (isRecV3Enabled({ entries: opts.entries })) {
     try {
       const v3 = await generateCandidatePoolV3({
         entries: opts.entries,
