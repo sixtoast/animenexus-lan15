@@ -18,17 +18,14 @@ export type FieldNode = {
   title: string;
   image: string;
   status: WatchStatus;
-  /** 0–1 relative size */
   weight: number;
   progress: number;
   progressRatio: number;
   userRating: number;
   genres: string[];
   addedAt: string;
-  /** Normalized field coords (0–1000 plane + depth) */
   x: number;
   y: number;
-  /** Depth for 3D layouts */
   z: number;
   seed: number;
 };
@@ -162,9 +159,9 @@ function layoutConstellation(entries: WatchlistEntry[]): FieldNode[] {
   keys.forEach((key, bi) => {
     const list = buckets.get(key)!;
     const angle0 = (bi / Math.max(keys.length, 1)) * Math.PI * 2;
-    const clusterR = 120 + Math.min(180, list.length * 8);
-    const cx0 = 500 + Math.cos(angle0) * 280;
-    const cy0 = 500 + Math.sin(angle0) * 250;
+    const clusterR = 140 + Math.min(220, list.length * 10);
+    const cx0 = 500 + Math.cos(angle0) * 340;
+    const cy0 = 500 + Math.sin(angle0) * 300;
     list.forEach((e, i) => {
       const s = seed(e.id);
       const a = (i / Math.max(list.length, 1)) * Math.PI * 2 + s;
@@ -184,7 +181,7 @@ function layoutConstellation(entries: WatchlistEntry[]): FieldNode[] {
         addedAt: e.addedAt,
         x: cx0 + Math.cos(a) * Math.min(clusterR, rr * 2.2),
         y: cy0 + Math.sin(a) * Math.min(clusterR, rr * 2),
-        z: (s - 0.5) * 160 + Math.sin(a) * 30,
+        z: (bi - keys.length / 2) * 45 + (s - 0.5) * 90 + Math.sin(a) * 40,
         seed: s,
       });
     });
@@ -203,8 +200,8 @@ function layoutTimeline(entries: WatchlistEntry[]): FieldNode[] {
   sorted.forEach((e, i) => {
     const s = seed(e.id);
     const t = i / Math.max(sorted.length - 1, 1);
-    const angle = t * Math.PI * 6 + s * 0.4;
-    const radius = 40 + t * 380;
+    const angle = t * Math.PI * 8 + s * 0.4;
+    const radius = 60 + t * 320;
     const cap = episodeCap(e);
     const sim = cosineSimilarity(user, resonanceFromGenres(e.genres));
     out.push({
@@ -220,7 +217,7 @@ function layoutTimeline(entries: WatchlistEntry[]): FieldNode[] {
       addedAt: e.addedAt,
       x: 500 + Math.cos(angle) * radius,
       y: 500 + Math.sin(angle) * radius * 0.9,
-      z: (t - 0.5) * 280 + (s - 0.5) * 20,
+      z: (t - 0.5) * 520 + (s - 0.5) * 30,
       seed: s,
     });
   });
@@ -257,5 +254,5 @@ export function fieldToWorld(n: {
   y: number;
   z: number;
 }): [number, number, number] {
-  return [(n.x - 500) / 100, (500 - n.y) / 100, (n.z || 0) / 100];
+  return [(n.x - 500) / 85, (500 - n.y) / 85, (n.z || 0) / 85];
 }
