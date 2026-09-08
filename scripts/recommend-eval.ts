@@ -5,6 +5,8 @@
 
 import {
   SYNTHETIC_PERSONAS,
+  EVAL_CATALOGUE,
+  catalogueAsEntries,
   type SyntheticPersona,
 } from "../lib/intelligence/evaluation/personas.ts";
 import {
@@ -189,7 +191,7 @@ function chronologicalSplit(persona: SyntheticPersona): {
 
   const holdCount = Math.max(
     1,
-    Math.min(2, Math.floor(completed.length / 3) || 1),
+    Math.min(3, Math.max(1, Math.floor(completed.length / 3))),
   );
   const holdout = completed.slice(-holdCount);
   const holdIds = new Set(holdout.map((h) => h.id));
@@ -197,9 +199,12 @@ function chronologicalSplit(persona: SyntheticPersona): {
 
   const poolMap = new Map<number, Cand>();
   for (const e of persona.entries) poolMap.set(e.id, entryCand(e));
+  for (const e of catalogueAsEntries()) {
+    if (!poolMap.has(e.id)) poolMap.set(e.id, entryCand(e));
+  }
   for (const other of SYNTHETIC_PERSONAS) {
     if (other.id === persona.id) continue;
-    for (const e of other.entries.slice(0, 4)) {
+    for (const e of other.entries) {
       if (!poolMap.has(e.id)) poolMap.set(e.id, entryCand(e));
     }
   }
@@ -313,8 +318,40 @@ function main() {
     { predicted: 0.2, outcome: 0 },
   ]);
   console.log(`\n▸ Calibration MAE smoke: ${calib.toFixed(3)}`);
+
+  const byEng = (eng: string) => rows.filter((r) => r.engine === eng);
+  const meanR = (eng: string) => mean(byEng(eng).map((r) => r.recall5));
+  const meanN = (eng: string) => mean(byEng(eng).map((r) => r.ndcg5));
+  const meanM = (eng: string) => mean(byEng(eng).map((r) => r.mrr));
+  if (rows.length) {
+    const tagR = meanR("tag");
+    const v3R = meanR("v3_blend");
+    const tagN = meanN("tag");
+    const v3N = meanN("v3_blend");
+    const tagM = meanM("tag");
+    const v3M = meanM("v3_blend");
+    const wins =
+      v3R >= tagR - 0.02 &&
+      (v3N > tagN + 0.02 || v3M > tagM + 0.02 || v3R > tagR + 0.03);
+    console.log("\n▸ Default-on gate (synthetic offline)");
+    console.log(
+      `  tag  R@5=${tagR.toFixed(3)} nDCG=${tagN.toFixed(3)} MRR=${tagM.toFixed(3)}`,
+    );
+    console.log(
+      `  v3   R@5=${v3R.toFixed(3)} nDCG=${v3N.toFixed(3)} MRR=${v3M.toFixed(3)}`,
+    );
+    console.log(
+      wins
+        ? "  RESULT: PASS — multi-signal competitive; lab forceVersion compare still required before production default."
+        : "  RESULT: HOLD — keep V3 opt-in; expand catalogue / real outcomes before default-on.",
+    );
+  }
+
   console.log(
     "\nNote: v3_blend ≈ offline multi-signal stand-in. Full ranker_v3 → /dev/recommendation-lab",
+  );
+  console.log(
+    `Catalogue seeds: ${EVAL_CATALOGUE.length}. Personas: ${SYNTHETIC_PERSONAS.length}.`,
   );
   console.log("Done.");
 }
