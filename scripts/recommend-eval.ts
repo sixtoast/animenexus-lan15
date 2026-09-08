@@ -100,6 +100,72 @@ function rankEvidenceProxy(pool: Cand[], train: WatchlistEntry[]): RankedId[] {
   return ranked;
 }
 
+function rankFingerprintProxy(pool: Cand[], train: WatchlistEntry[]): RankedId[] {
+  const pref = new Map<string, number>();
+  let completedN = 0;
+  for (const e of train) {
+    const status = e.watchStatus;
+    let w = 0.5;
+    if (status === "completed") {
+      w = 1.5;
+      completedN++;
+    } else if (status === "watching") w = 0.9;
+    else if (status === "dropped") w = -0.4;
+    else if (status === "planning") w = 0.25;
+    for (const t of tagsOf(e)) {
+      const boost = SIGNAL[t] ?? 0.55;
+      pref.set(t, (pref.get(t) || 0) + w * boost);
+    }
+  }
+  const ranked = pool.map((c) => {
+    let s = 0;
+    for (const t of c.tags) s += pref.get(t) || 0;
+    s += (c.score || 0) / 180;
+    if (completedN < 2) s *= 0.85;
+    return { id: c.id, score: s };
+  });
+  ranked.sort((a, b) => b.score - a.score);
+  return ranked;
+}
+
+function rankV3Blend(pool: Cand[], train: WatchlistEntry[]): RankedId[] {
+  const tag = new Map(rankTagOverlap(pool, train).map((r) => [r.id, r.score]));
+  const ev = new Map(rankEvidenceProxy(pool, train).map((r) => [r.id, r.score]));
+  const fp = new Map(rankFingerprintProxy(pool, train).map((r) => [r.id, r.score]));
+  const max = (m: Map<number, number>) => Math.max(1e-6, ...m.values());
+  const mt = max(tag);
+  const me = max(ev);
+  const mf = max(fp);
+  const done = new Map<string, number>();
+  const drop = new Map<string, number>();
+  for (const e of train) {
+    for (const t of tagsOf(e)) {
+      if (e.watchStatus === "completed") done.set(t, (done.get(t) || 0) + 1);
+      if (e.watchStatus === "dropped") drop.set(t, (drop.get(t) || 0) + 1);
+    }
+  }
+  const ranked = pool.map((c) => {
+    const t = (tag.get(c.id) || 0) / mt;
+    const e = (ev.get(c.id) || 0) / me;
+    const f = (fp.get(c.id) || 0) / mf;
+    let completion = 0.5;
+    let n = 0;
+    for (const tg of c.tags) {
+      const d = done.get(tg) || 0;
+      const x = drop.get(tg) || 0;
+      if (d + x > 0) {
+        completion += d / (d + x);
+        n++;
+      }
+    }
+    if (n) completion = completion / (n + 1);
+    const score = t * 0.35 + e * 0.25 + f * 0.25 + completion * 0.15;
+    return { id: c.id, score };
+  });
+  ranked.sort((a, b) => b.score - a.score);
+  return ranked;
+}
+
 function chronologicalSplit(persona: SyntheticPersona): {
   train: WatchlistEntry[];
   holdout: WatchlistEntry[];
@@ -184,6 +250,8 @@ function main() {
     for (const [engine, rankFn] of [
       ["tag", rankTagOverlap],
       ["evidence", rankEvidenceProxy],
+      ["fp_proxy", rankFingerprintProxy],
+      ["v3_blend", rankV3Blend],
     ] as const) {
       const ranked = rankFn(poolOpen, train);
       const candById = new Map(pool.map((c) => [c.id, c]));
@@ -232,7 +300,7 @@ function main() {
       );
     }
 
-    for (const eng of ["tag", "evidence"] as const) {
+    for (const eng of ["tag", "evidence", "fp_proxy", "v3_blend"] as const) {
       const set = rows.filter((r) => r.engine === eng);
       console.log(
         `  mean ${eng}: R@5=${mean(set.map((r) => r.recall5)).toFixed(3)}  nDCG@5=${mean(set.map((r) => r.ndcg5)).toFixed(3)}  MRR=${mean(set.map((r) => r.mrr)).toFixed(3)}`,
@@ -246,7 +314,7 @@ function main() {
   ]);
   console.log(`\n▸ Calibration MAE smoke: ${calib.toFixed(3)}`);
   console.log(
-    "\nNote: full ranker_v3 vs V2 → /dev/recommendation-lab with an_rec_v3=1",
+    "\nNote: v3_blend ≈ offline multi-signal stand-in. Full ranker_v3 → /dev/recommendation-lab",
   );
   console.log("Done.");
 }
