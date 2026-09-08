@@ -1,9 +1,8 @@
 "use client";
 
 /**
- * Motion room — clip generator (not just a URL loader).
- * Sources: sample GIFs, AnimeThemes OP/ED, Fanart stills + Ken Burns, cover art, user URL.
- * Compose a short sequence and play it client-side. No fake AI upscale.
+ * Motion room — clip generator.
+ * GIFs (Tenor/Giphy), AnimeThemes OP/ED, trailers, fanart/cover stills, samples, compose.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -17,7 +16,7 @@ const COMPOSE_KEY = "anime_nexus_motion_compose_v1";
 
 export type MotionAsset = {
   id: string;
-  kind: "gif" | "video" | "still";
+  kind: "gif" | "video" | "still" | "youtube";
   url: string;
   thumb?: string;
   label: string;
@@ -26,7 +25,6 @@ export type MotionAsset = {
 };
 
 type Tab = "samples" | "anime" | "compose" | "url";
-
 type ComposeItem = MotionAsset & { dwellMs: number };
 
 const SAMPLE_ENDPOINTS = [
@@ -39,7 +37,9 @@ const SAMPLE_ENDPOINTS = [
 ];
 
 function assetThumb(a: MotionAsset): string {
-  return a.thumb || (a.kind === "still" || a.kind === "gif" ? a.url : "");
+  if (a.thumb) return a.thumb;
+  if (a.kind === "still" || a.kind === "gif") return a.url;
+  return "";
 }
 
 function Stage({
@@ -52,13 +52,28 @@ function Stage({
   if (!asset) {
     return (
       <div className="motion-stage motion-stage-empty">
-        <span className="meta">
-          Pick an asset or press Play on a composition
-        </span>
+        <span className="meta">Pick an asset or play a composition</span>
       </div>
     );
   }
-
+  if (asset.kind === "youtube") {
+    return (
+      <div className="motion-stage">
+        <iframe
+          key={asset.url}
+          src={asset.url + (playing ? "?autoplay=1" : "")}
+          title={asset.label}
+          className="motion-stage-media"
+          style={{ width: "100%", minHeight: 280, border: 0 }}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+        <div className="motion-stage-caption meta">
+          {asset.label} · {asset.source}
+        </div>
+      </div>
+    );
+  }
   if (asset.kind === "video") {
     return (
       <div className="motion-stage">
@@ -77,7 +92,6 @@ function Stage({
       </div>
     );
   }
-
   if (asset.kind === "gif") {
     return (
       <div className="motion-stage">
@@ -89,7 +103,6 @@ function Stage({
       </div>
     );
   }
-
   return (
     <div className="motion-stage motion-stage-kenburns">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -130,7 +143,7 @@ export function MotionClient() {
       const c = localStorage.getItem(COMPOSE_KEY);
       if (c) setCompose(JSON.parse(c) as ComposeItem[]);
     } catch {
-      /* ignore */
+      /* */
     }
   }, []);
 
@@ -139,7 +152,7 @@ export function MotionClient() {
     try {
       localStorage.setItem(COMPOSE_KEY, JSON.stringify(next.slice(0, 24)));
     } catch {
-      /* quota */
+      /* */
     }
   }, []);
 
@@ -187,10 +200,9 @@ export function MotionClient() {
           if (!res.ok) continue;
           const j = (await res.json()) as { url?: string };
           if (j.url) {
-            const kind = /\.gif(\?|$)/i.test(j.url) ? "gif" : "still";
             results.push({
-              id: `sample-${results.length}-${j.url.slice(-12)}`,
-              kind,
+              id: `sample-${results.length}`,
+              kind: /\.gif(\?|$)/i.test(j.url) ? "gif" : "still",
               url: j.url,
               thumb: j.url,
               label: ep.split("/").pop() || "sample",
@@ -198,7 +210,7 @@ export function MotionClient() {
             });
           }
         } catch {
-          /* skip */
+          /* */
         }
       }
       if (!results.length) throw new Error("Sample APIs returned nothing");
@@ -224,14 +236,17 @@ export function MotionClient() {
         assets?: MotionAsset[];
         notes?: string[];
         error?: string;
+        gifSearchConfigured?: boolean;
       };
       if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
       setAnimeAssets(json.assets || []);
-      setNotes(json.notes || []);
+      const n = [...(json.notes || [])];
+      if (json.gifSearchConfigured === false) {
+        n.push("Add TENOR_API_KEY (or GIPHY_API_KEY) for title GIFs");
+      }
+      setNotes(n);
       if (!(json.assets || []).length) {
-        setErr(
-          "No motion assets found for this title (try samples or paste a URL).",
-        );
+        setErr("No assets found — try samples or paste a URL.");
       }
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Asset fetch failed");
@@ -241,9 +256,7 @@ export function MotionClient() {
   }
 
   useEffect(() => {
-    if (selectedAnime) {
-      void loadForAnime(selectedAnime);
-    }
+    if (selectedAnime) void loadForAnime(selectedAnime);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAnime?.id]);
 
@@ -273,27 +286,17 @@ export function MotionClient() {
     };
   }, [composePlaying, composeIndex, compose]);
 
-  const shelfQuick = useMemo(() => {
-    return entries
-      .filter((e) => e.image)
-      .slice(0, 8)
-      .map((e) => ({
-        id: e.id,
-        title: e.title,
-        image: e.image!,
-      }));
-  }, [entries]);
+  const shelfQuick = useMemo(
+    () =>
+      entries
+        .filter((e) => e.image)
+        .slice(0, 8)
+        .map((e) => ({ id: e.id, title: e.title, image: e.image! })),
+    [entries],
+  );
 
-  function AssetGrid({
-    list,
-    empty,
-  }: {
-    list: MotionAsset[];
-    empty: string;
-  }) {
-    if (!list.length) {
-      return <p className="meta">{empty}</p>;
-    }
+  function AssetGrid({ list, empty }: { list: MotionAsset[]; empty: string }) {
+    if (!list.length) return <p className="meta">{empty}</p>;
     return (
       <div className="motion-grid">
         {list.map((a) => (
@@ -302,13 +305,12 @@ export function MotionClient() {
               type="button"
               className="motion-card-thumb"
               onClick={() => openAsset(a)}
-              title={a.label}
             >
               {assetThumb(a) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={assetThumb(a)} alt="" />
               ) : (
-                <span className="meta">▶ video</span>
+                <span className="meta">▶</span>
               )}
               <span className="motion-card-kind">{a.kind}</span>
             </button>
@@ -346,125 +348,34 @@ export function MotionClient() {
   return (
     <div className="tools-panel motion-room">
       <style>{`
-        .motion-room .motion-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
-        .motion-room .motion-tabs button[aria-pressed="true"] { outline:2px solid var(--accent, #c9a227); }
-        .motion-stage {
-          position: relative;
-          width: 100%;
-          min-height: 280px;
-          max-height: 420px;
-          background: #0c0c10;
-          border-radius: 12px;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 12px;
-        }
-        .motion-stage-empty { border: 1px dashed rgba(255,255,255,0.15); }
-        .motion-stage-media { max-width: 100%; max-height: 400px; object-fit: contain; }
-        .motion-stage-kenburns { overflow: hidden; }
-        .motion-kenburns {
-          width: 100%;
-          height: 100%;
-          min-height: 280px;
-          object-fit: cover;
-          transform: scale(1.05);
-        }
-        .motion-kenburns.is-playing {
-          animation: motionKenBurns 5s ease-in-out forwards;
-        }
-        @keyframes motionKenBurns {
-          from { transform: scale(1.05) translate(0, 0); }
-          to { transform: scale(1.18) translate(-2%, -1%); }
-        }
-        .motion-stage-caption {
-          position: absolute;
-          left: 0; right: 0; bottom: 0;
-          padding: 8px 12px;
-          background: linear-gradient(transparent, rgba(0,0,0,0.75));
-        }
-        .motion-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-          gap: 12px;
-        }
-        .motion-card {
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 10px;
-          overflow: hidden;
-          background: rgba(255,255,255,0.03);
-        }
-        .motion-card-thumb {
-          display: block;
-          width: 100%;
-          aspect-ratio: 16/10;
-          padding: 0;
-          border: 0;
-          background: #111;
-          cursor: pointer;
-          position: relative;
-        }
-        .motion-card-thumb img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        .motion-card-kind {
-          position: absolute;
-          top: 6px; right: 6px;
-          font-size: 10px;
-          text-transform: uppercase;
-          background: rgba(0,0,0,0.65);
-          padding: 2px 6px;
-          border-radius: 4px;
-        }
-        .motion-card-meta { padding: 8px; }
-        .motion-card-label {
-          font-size: 12px;
-          line-height: 1.3;
-          margin-bottom: 4px;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-        .motion-card-actions {
-          display: flex;
-          gap: 6px;
-          margin-top: 6px;
-          flex-wrap: wrap;
-        }
-        .motion-compose-list {
-          list-style: none;
-          padding: 0;
-          margin: 0 0 12px;
-        }
-        .motion-compose-list li {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 6px 0;
-          border-bottom: 1px solid rgba(255,255,255,0.06);
-        }
-        .motion-compose-list img {
-          width: 48px;
-          height: 32px;
-          object-fit: cover;
-          border-radius: 4px;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .motion-kenburns.is-playing { animation: none; }
-        }
-        :root[data-reduce-motion="true"] .motion-kenburns.is-playing {
-          animation: none;
-        }
+.motion-room .motion-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.motion-room .motion-tabs button[aria-pressed="true"]{outline:2px solid var(--accent,#c9a227)}
+.motion-stage{position:relative;width:100%;min-height:280px;max-height:420px;background:#0c0c10;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+.motion-stage-empty{border:1px dashed rgba(255,255,255,.15)}
+.motion-stage-media{max-width:100%;max-height:400px;object-fit:contain}
+.motion-kenburns{width:100%;height:100%;min-height:280px;object-fit:cover;transform:scale(1.05)}
+.motion-kenburns.is-playing{animation:motionKenBurns 5s ease-in-out forwards}
+@keyframes motionKenBurns{from{transform:scale(1.05)}to{transform:scale(1.18) translate(-2%,-1%)}}
+.motion-stage-caption{position:absolute;left:0;right:0;bottom:0;padding:8px 12px;background:linear-gradient(transparent,rgba(0,0,0,.75))}
+.motion-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.motion-card{border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden;background:rgba(255,255,255,.03)}
+.motion-card-thumb{display:block;width:100%;aspect-ratio:16/10;padding:0;border:0;background:#111;cursor:pointer;position:relative}
+.motion-card-thumb img{width:100%;height:100%;object-fit:cover}
+.motion-card-kind{position:absolute;top:6px;right:6px;font-size:10px;text-transform:uppercase;background:rgba(0,0,0,.65);padding:2px 6px;border-radius:4px}
+.motion-card-meta{padding:8px}
+.motion-card-label{font-size:12px;line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.motion-card-actions{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.motion-compose-list{list-style:none;padding:0;margin:0 0 12px}
+.motion-compose-list li{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.motion-compose-list img{width:48px;height:32px;object-fit:cover;border-radius:4px}
+@media (prefers-reduced-motion:reduce){.motion-kenburns.is-playing{animation:none}}
+:root[data-reduce-motion="true"] .motion-kenburns.is-playing{animation:none}
       `}</style>
 
       <p className="tools-hint" style={{ marginBottom: 16 }}>
-        Clip generator: pull OP/ED from AnimeThemes, stills from cover/fanart
-        (Ken Burns), sample GIFs, or paste a URL. Build a short composition and
-        play it here. No fake AI upscale — only real public media.
+        Title GIFs need <code>TENOR_API_KEY</code> or <code>GIPHY_API_KEY</code>.
+        Clips: AnimeThemes OP/ED + YouTube trailers. Stills: cover + fanart (
+        <code>FANART_API_KEY</code> + TVDB). Sample GIFs work without keys.
       </p>
 
       <Stage asset={stageAsset} playing={composePlaying || !!preview} />
@@ -492,10 +403,7 @@ export function MotionClient() {
       </div>
 
       {err ? (
-        <p
-          className="meta"
-          style={{ color: "var(--danger, #f88)", marginBottom: 12 }}
-        >
+        <p className="meta" style={{ color: "var(--danger,#f88)", marginBottom: 12 }}>
           {err}
         </p>
       ) : null}
@@ -544,9 +452,7 @@ export function MotionClient() {
               </div>
             </div>
           ) : null}
-          {busy ? (
-            <p className="meta">Gathering themes &amp; artwork…</p>
-          ) : null}
+          {busy ? <p className="meta">Gathering GIFs, themes & art…</p> : null}
           {notes.length ? (
             <p className="meta" style={{ marginBottom: 8 }}>
               {notes.join(" · ")}
@@ -556,7 +462,7 @@ export function MotionClient() {
             list={animeAssets}
             empty={
               selectedAnime
-                ? "No assets yet — try another title or Sample GIFs."
+                ? "No assets yet — add TENOR_API_KEY for GIFs, or try Sample GIFs."
                 : "Search a title or pick from your shelf."
             }
           />
@@ -574,10 +480,7 @@ export function MotionClient() {
           >
             {busy ? "Loading…" : "Load sample GIFs"}
           </button>
-          <AssetGrid
-            list={samples}
-            empty="Press Load sample GIFs (waifu.pics SFW)."
-          />
+          <AssetGrid list={samples} empty="Press Load sample GIFs (waifu.pics SFW)." />
         </div>
       ) : null}
 
@@ -585,7 +488,7 @@ export function MotionClient() {
         <div>
           {!compose.length ? (
             <p className="meta">
-              Add assets with <strong>+ Compose</strong> from anime or samples.
+              Add assets with <strong>+ Compose</strong>.
             </p>
           ) : (
             <>
@@ -664,9 +567,7 @@ export function MotionClient() {
               onClick={() => {
                 const u = url.trim();
                 if (!u) return;
-                const kind: MotionAsset["kind"] = /\.(mp4|webm|mov)(\?|$)/i.test(
-                  u,
-                )
+                const kind: MotionAsset["kind"] = /\.(mp4|webm|mov)(\?|$)/i.test(u)
                   ? "video"
                   : /\.gif(\?|$)/i.test(u)
                     ? "gif"
@@ -683,7 +584,7 @@ export function MotionClient() {
                 addToCompose(a);
               }}
             >
-              Preview &amp; add
+              Preview & add
             </button>
           </div>
           {recent.length ? (
@@ -722,9 +623,7 @@ export function MotionClient() {
       ) : null}
 
       <p className="meta" style={{ marginTop: 24 }}>
-        Rights: we stream remote URLs; we do not host episode rips. AnimeThemes
-        videos are their CDN. Fanart needs <code>FANART_API_KEY</code> + TVDB
-        mapping. <Link href="/tools">Back to tools</Link>
+        <Link href="/tools">Back to tools</Link>
       </p>
     </div>
   );
