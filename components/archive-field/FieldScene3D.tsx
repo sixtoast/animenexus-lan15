@@ -17,6 +17,7 @@ import {
   type FieldNode,
 } from "@/lib/archive-field";
 import { onPageVisibility } from "@/lib/creative-visibility";
+import { coverProxyUrl } from "@/lib/cover-url";
 
 type OrbitControlsHandle = {
   enabled: boolean;
@@ -36,11 +37,13 @@ function useSafeTexture(url: string) {
 
     let cancelled = false;
     let tex: THREE.Texture | null = null;
+    const src = coverProxyUrl(url);
 
     const apply = (img: HTMLImageElement) => {
       if (cancelled) return;
       tex = new THREE.Texture(img);
       tex.colorSpace = THREE.SRGBColorSpace;
+      tex.flipY = true;
       tex.minFilter = THREE.LinearFilter;
       tex.magFilter = THREE.LinearFilter;
       tex.generateMipmaps = false;
@@ -48,25 +51,33 @@ function useSafeTexture(url: string) {
       setMap(tex);
     };
 
-    const load = (crossOrigin: string | null) => {
-      const img = new Image();
-      if (crossOrigin) img.crossOrigin = crossOrigin;
-      img.onload = () => apply(img);
-      img.onerror = () => {
-        if (crossOrigin === "anonymous") {
-          load(null);
-        } else if (!cancelled) {
-          setMap(null);
-        }
-      };
-      img.src = url;
+    // Same-origin proxy → always safe for WebGL
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.decoding = "async";
+    img.onload = () => apply(img);
+    img.onerror = () => {
+      if (cancelled) return;
+      if (src !== url) {
+        const img2 = new Image();
+        img2.crossOrigin = "anonymous";
+        img2.onload = () => apply(img2);
+        img2.onerror = () => {
+          if (!cancelled) setMap(null);
+        };
+        img2.src = url;
+      } else {
+        setMap(null);
+      }
     };
-
-    load("anonymous");
+    img.src = src;
 
     return () => {
       cancelled = true;
-      if (tex) tex.dispose();
+      if (tex) {
+        tex.dispose();
+        tex = null;
+      }
     };
   }, [url]);
 
