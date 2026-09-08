@@ -6,7 +6,7 @@ import "../tools.css";
 
 export const metadata: Metadata = {
   title: "Provider status · AnimeNexus",
-  description: "Optional API gates — soft-fail configuration snapshot.",
+  description: "Live API health and optional provider configuration.",
 };
 
 export default function ProviderStatusPage() {
@@ -19,8 +19,8 @@ export default function ProviderStatusPage() {
             <span>Provider status</span>
           </h1>
           <p>
-            Expansion II enrichment layers. Unconfigured providers return empty
-            data — catalog never depends on them.
+            Live reachability for catalog APIs, plus optional key configuration.
+            Unconfigured providers soft-fail — the catalog never depends on them.
           </p>
         </div>
       </section>
