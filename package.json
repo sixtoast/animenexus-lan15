@@ -7,7 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "generate:sfx": "node scripts/generate-ui-sfx.mjs",
     "postinstall": "node scripts/generate-ui-sfx.mjs",
     "visual:routes": "node scripts/visual-routes.mjs",
@@ -31,11 +32,14 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@types/three": "^0.175.0",
     "@types/web-push": "^3.6.4",
+    "eslint": "^9.18.0",
+    "eslint-config-next": "15.5.7",
     "typescript": "^5.7.3"
   },
   "overrides": {
