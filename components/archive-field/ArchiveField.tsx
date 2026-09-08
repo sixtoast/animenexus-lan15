@@ -1,19 +1,12 @@
 "use client";
 
 /**
- * Archive Field — every sealed title as a node in a living map.
- * Not a shelf. Orbit / constellation / timeline layouts. No title cap.
+ * Archive Field — every sealed title as a 3D node.
+ * Practical list picker + Orbit / Constellation / Timeline scenes.
  */
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-  type WheelEvent as ReactWheelEvent,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { WatchlistEntry, WatchStatus } from "@/lib/types";
 import {
@@ -22,11 +15,22 @@ import {
   FIELD_STATUS_LABELS,
   projectFieldNodes,
   type FieldLayoutMode,
-  type FieldNode,
 } from "@/lib/archive-field";
 import { describeShelfPair } from "@/lib/shelf-resonance";
 import { playCue } from "@/lib/sound-engine";
 import { AnimeImage } from "@/components/AnimeImage";
+
+const FieldScene3D = dynamic(
+  () => import("./FieldScene3D").then((m) => m.FieldScene3D),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="archive-field-canvas-loading" role="status">
+        Staging field…
+      </div>
+    ),
+  },
+);
 
 const LAYOUT_KEY = "anime_nexus_archive_field_layout_v1";
 
@@ -41,10 +45,15 @@ function readLayout(): FieldLayoutMode {
   return "orbit";
 }
 
-function nodeSize(weight: number, zoom: number, total: number): number {
-  const density = total > 80 ? 0.72 : total > 40 ? 0.85 : 1;
-  const base = (36 + weight * 42) * density;
-  return Math.max(22, Math.min(96, base * Math.min(1.35, 0.85 + zoom * 0.15)));
+function reducedMotionNow(): boolean {
+  if (typeof document === "undefined") return true;
+  if (document.documentElement.getAttribute("data-reduce-motion") === "true")
+    return true;
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
 }
 
 export function ArchiveField({ entries }: { entries: WatchlistEntry[] }) {
@@ -54,12 +63,10 @@ export function ArchiveField({ entries }: { entries: WatchlistEntry[] }) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [compareId, setCompareId] = useState<number | null>(null);
   const [compareArmed, setCompareArmed] = useState(false);
-
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const dragging = useRef(false);
-  const lastPtr = useRef({ x: 0, y: 0 });
-  const stageRef = useRef<HTMLDivElement>(null);
+  const [focusId, setFocusId] = useState<number | null>(null);
+  const [listOpen, setListOpen] = useState(true);
+  const listRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setLayout(readLayout());
@@ -86,8 +93,6 @@ export function ArchiveField({ entries }: { entries: WatchlistEntry[] }) {
   }, [entries]);
 
   const selected = selectedId != null ? byId.get(selectedId) : null;
-  const selectedNode =
-    selectedId != null ? nodes.find((n) => n.id === selectedId) : null;
 
   const relationship = useMemo(() => {
     if (selectedId == null || compareId == null) return null;
@@ -108,8 +113,8 @@ export function ArchiveField({ entries }: { entries: WatchlistEntry[] }) {
     }
   }, []);
 
-  const onSelect = useCallback(
-    (id: number) => {
+  const selectTitle = useCallback(
+    (id: number, opts?: { focus?: boolean }) => {
       if (compareArmed && selectedId != null && id !== selectedId) {
         setCompareId(id);
         setCompareArmed(false);
@@ -118,59 +123,80 @@ export function ArchiveField({ entries }: { entries: WatchlistEntry[] }) {
       }
       setSelectedId(id);
       setCompareId(null);
+      if (opts?.focus !== false) setFocusId(id);
       playCue("shelf_settle");
+      requestAnimationFrame(() => {
+        const el = listRef.current?.querySelector(
+          `[data-list-id="${id}"]`,
+        ) as HTMLElement | null;
+        el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      });
     },
     [compareArmed, selectedId],
   );
 
-  const resetCamera = useCallback(() => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  }, []);
-
-  const onWheel = useCallback((e: ReactWheelEvent) => {
-    e.preventDefault();
-    setZoom((z) => Math.max(0.45, Math.min(2.4, z - e.deltaY * 0.0012)));
-  }, []);
-
-  const onPointerDown = useCallback((e: ReactPointerEvent) => {
-    if ((e.target as HTMLElement).closest("[data-field-node]")) return;
-    dragging.current = true;
-    lastPtr.current = { x: e.clientX, y: e.clientY };
-    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-  }, []);
-
-  const onPointerMove = useCallback((e: ReactPointerEvent) => {
-    if (!dragging.current) return;
-    const dx = e.clientX - lastPtr.current.x;
-    const dy = e.clientY - lastPtr.current.y;
-    lastPtr.current = { x: e.clientX, y: e.clientY };
-    setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
-  }, []);
-
-  const onPointerUp = useCallback(() => {
-    dragging.current = false;
-  }, []);
+  const moveListSelection = useCallback(
+    (delta: number) => {
+      if (!filtered.length) return;
+      const idx =
+        selectedId != null
+          ? filtered.findIndex((n) => n.id === selectedId)
+          : -1;
+      let next = idx + delta;
+      if (next < 0) next = filtered.length - 1;
+      if (next >= filtered.length) next = 0;
+      selectTitle(filtered[next].id);
+    },
+    [filtered, selectedId, selectTitle],
+  );
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const inSearch = (e.target as HTMLElement)?.classList?.contains(
+        "archive-field-search",
+      );
+      if (tag === "TEXTAREA" || tag === "SELECT") return;
+      if (tag === "INPUT" && !inSearch) return;
+
       if (e.key === "Escape") {
         setCompareArmed(false);
         setCompareId(null);
         setSelectedId(null);
+        setFocusId(null);
+        return;
       }
-      if ((e.key === "c" || e.key === "C") && selectedId != null) {
+      if ((e.key === "c" || e.key === "C") && selectedId != null && !inSearch) {
         setCompareArmed(true);
+        return;
       }
-      if (e.key === "Enter" && selectedId != null) {
+      if (e.key === "Enter" && selectedId != null && !inSearch) {
         window.location.href = `/anime/${selectedId}`;
+        return;
+      }
+      if (e.key === "ArrowDown" && !inSearch) {
+        e.preventDefault();
+        moveListSelection(1);
+        return;
+      }
+      if (e.key === "ArrowUp" && !inSearch) {
+        e.preventDefault();
+        moveListSelection(-1);
+        return;
+      }
+      if (
+        (e.key === "/" || e.key === "f") &&
+        !inSearch &&
+        !(e.metaKey || e.ctrlKey)
+      ) {
+        e.preventDefault();
+        setListOpen(true);
+        searchRef.current?.focus();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selectedId]);
+  }, [selectedId, moveListSelection]);
 
   if (!entries.length) {
     return (
@@ -185,9 +211,9 @@ export function ArchiveField({ entries }: { entries: WatchlistEntry[] }) {
   }
 
   return (
-    <div className="archive-field" data-layout={layout}>
+    <div className="archive-field archive-field--3d" data-layout={layout}>
       <header className="archive-field-toolbar">
-        <div className="archive-field-modes" role="group" aria-label="Field layout">
+        <div className="archive-field-modes" role="group" aria-label="3D layout">
           {(
             [
               ["orbit", "Orbit"],
@@ -209,41 +235,28 @@ export function ArchiveField({ entries }: { entries: WatchlistEntry[] }) {
           ))}
         </div>
 
-        <div className="archive-field-filters">
-          <input
-            className="filter-input archive-field-search"
-            placeholder="Find a title…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            aria-label="Filter titles in the field"
-          />
-          <select
-            className="filter-input"
-            value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(e.target.value as WatchStatus | "all")
-            }
-            aria-label="Filter by status"
-          >
-            <option value="all">All statuses ({entries.length})</option>
-            {(Object.keys(FIELD_STATUS_LABELS) as WatchStatus[]).map((s) => (
-              <option key={s} value={s}>
-                {FIELD_STATUS_LABELS[s]} ({counts[s]})
-              </option>
-            ))}
-          </select>
-        </div>
-
         <div className="archive-field-cam">
           <button
             type="button"
             className="btn btn-outline btn-sm"
-            onClick={resetCamera}
+            onClick={() => setListOpen((o) => !o)}
+            aria-pressed={listOpen}
           >
-            Reset view
+            {listOpen ? "Hide list" : "Show list"}
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={() => {
+              setFocusId(null);
+              setSelectedId(null);
+            }}
+          >
+            Clear selection
           </button>
           <span className="meta">
-            {filtered.length} of {entries.length} · drag to pan · scroll to zoom
+            {filtered.length} of {entries.length} · drag to orbit · scroll to
+            zoom · <kbd>/</kbd> search
           </span>
         </div>
       </header>
@@ -267,65 +280,119 @@ export function ArchiveField({ entries }: { entries: WatchlistEntry[] }) {
         ))}
       </div>
 
-      <div
-        ref={stageRef}
-        className="archive-field-stage"
-        onWheel={onWheel}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        role="application"
-        aria-label="Archive Field map of sealed titles"
-      >
-        {layout === "orbit" && (
-          <svg
-            className="archive-field-rings"
-            viewBox="0 0 1000 1000"
-            aria-hidden
-          >
-            {[0.22, 0.38, 0.52, 0.66, 0.82].map((r) => (
-              <ellipse
-                key={r}
-                cx="500"
-                cy="500"
-                rx={r * 420}
-                ry={r * 420 * 0.88}
-                fill="none"
-                stroke="rgba(240,160,144,0.12)"
-                strokeWidth="1.5"
+      <div className={"archive-field-body" + (listOpen ? " has-list" : "")}>
+        {listOpen ? (
+          <aside className="archive-field-list" aria-label="Pick a title">
+            <div className="archive-field-list-head">
+              <input
+                ref={searchRef}
+                className="filter-input archive-field-search"
+                placeholder="Search titles…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                aria-label="Search titles in the field"
               />
-            ))}
-            <circle cx="500" cy="500" r="8" fill="rgba(240,160,144,0.35)" />
-          </svg>
-        )}
-
-        <div
-          className="archive-field-world"
-          style={{
-            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-          }}
-        >
-          {filtered.map((n) => (
-            <FieldNodeView
-              key={n.id}
-              node={n}
-              size={nodeSize(n.weight, zoom, entries.length)}
-              selected={n.id === selectedId}
-              compare={n.id === compareId}
-              onSelect={onSelect}
-            />
-          ))}
-        </div>
-
-        {compareArmed ? (
-          <p className="archive-field-banner" role="status">
-            Compare armed — pick a second title (Esc cancels)
-          </p>
+              <select
+                className="filter-input"
+                value={statusFilter}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value as WatchStatus | "all")
+                }
+                aria-label="Filter by status"
+              >
+                <option value="all">All ({entries.length})</option>
+                {(Object.keys(FIELD_STATUS_LABELS) as WatchStatus[]).map(
+                  (s) => (
+                    <option key={s} value={s}>
+                      {FIELD_STATUS_LABELS[s]} ({counts[s]})
+                    </option>
+                  ),
+                )}
+              </select>
+            </div>
+            <div
+              className="archive-field-list-scroll"
+              ref={listRef}
+              role="listbox"
+            >
+              {filtered.length === 0 ? (
+                <p className="meta" style={{ padding: 12 }}>
+                  No titles match.
+                </p>
+              ) : (
+                filtered.map((n) => {
+                  const active = n.id === selectedId;
+                  const cmp = n.id === compareId;
+                  return (
+                    <button
+                      key={n.id}
+                      type="button"
+                      role="option"
+                      data-list-id={n.id}
+                      aria-selected={active}
+                      className={
+                        "archive-field-list-row" +
+                        (active ? " is-selected" : "") +
+                        (cmp ? " is-compare" : "")
+                      }
+                      onClick={() => selectTitle(n.id)}
+                      onDoubleClick={() => {
+                        window.location.href = `/anime/${n.id}`;
+                      }}
+                    >
+                      <span
+                        className="archive-field-list-dot"
+                        style={{ background: FIELD_STATUS_COLORS[n.status] }}
+                      />
+                      {n.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={n.image}
+                          alt=""
+                          className="archive-field-list-thumb"
+                        />
+                      ) : (
+                        <span className="archive-field-list-thumb is-empty" />
+                      )}
+                      <span className="archive-field-list-meta">
+                        <span className="archive-field-list-title">
+                          {n.title}
+                        </span>
+                        <span className="meta">
+                          {FIELD_STATUS_LABELS[n.status]}
+                          {n.progress > 0 ? ` · ep ${n.progress}` : ""}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+            <p className="archive-field-list-hint meta">
+              Click to select & fly camera · double-click to open · ↑↓ keys
+            </p>
+          </aside>
         ) : null}
+
+        <div className="archive-field-stage archive-field-stage--3d">
+          <FieldScene3D
+            nodes={filtered}
+            selectedId={selectedId}
+            compareId={compareId}
+            focusId={focusId}
+            onSelect={(id) => selectTitle(id)}
+            reducedMotion={reducedMotionNow()}
+          />
+          {compareArmed ? (
+            <p className="archive-field-banner" role="status">
+              Compare armed — pick a second title from the list or field (Esc
+              cancels)
+            </p>
+          ) : null}
+        </div>
       </div>
 
-      {selected && selectedNode ? (
+      {selected ? (
         <aside className="archive-field-inspect" aria-label="Selected title">
           <button
             type="button"
@@ -335,6 +402,7 @@ export function ArchiveField({ entries }: { entries: WatchlistEntry[] }) {
               setSelectedId(null);
               setCompareId(null);
               setCompareArmed(false);
+              setFocusId(null);
             }}
           >
             ×
@@ -375,6 +443,13 @@ export function ArchiveField({ entries }: { entries: WatchlistEntry[] }) {
               <button
                 type="button"
                 className="btn btn-outline btn-sm"
+                onClick={() => setFocusId(selected.id)}
+              >
+                Focus in 3D
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
                 onClick={() => setCompareArmed(true)}
               >
                 {compareArmed ? "Pick second…" : "Compare"}
@@ -393,70 +468,10 @@ export function ArchiveField({ entries }: { entries: WatchlistEntry[] }) {
         </aside>
       ) : (
         <p className="tools-hint archive-field-hint">
-          Every sealed title is on the field — {entries.length} nodes. Click a
-          cover to inspect. Layouts rearrange the same full set.
+          Use the list to pick any title — camera flies to it in the 3D{" "}
+          {layout} field. All {entries.length} sealed titles are placed.
         </p>
       )}
     </div>
-  );
-}
-
-function FieldNodeView({
-  node,
-  size,
-  selected,
-  compare,
-  onSelect,
-}: {
-  node: FieldNode;
-  size: number;
-  selected: boolean;
-  compare: boolean;
-  onSelect: (id: number) => void;
-}) {
-  const color = FIELD_STATUS_COLORS[node.status];
-  const left = `${(node.x / 1000) * 100}%`;
-  const top = `${(node.y / 1000) * 100}%`;
-
-  return (
-    <button
-      type="button"
-      data-field-node
-      className={
-        "archive-field-node" +
-        (selected ? " is-selected" : "") +
-        (compare ? " is-compare" : "")
-      }
-      style={{
-        left,
-        top,
-        width: size,
-        height: size * 1.45,
-        ["--node-glow" as string]: color,
-        zIndex: selected || compare ? 20 : Math.round(node.weight * 10),
-      }}
-      title={node.title}
-      aria-label={`${node.title}, ${FIELD_STATUS_LABELS[node.status]}`}
-      aria-pressed={selected}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect(node.id);
-      }}
-    >
-      {node.image ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={node.image} alt="" loading="lazy" draggable={false} />
-      ) : (
-        <span className="archive-field-node-fallback">
-          {node.title.slice(0, 2)}
-        </span>
-      )}
-      {node.progressRatio > 0.02 ? (
-        <span
-          className="archive-field-node-progress"
-          style={{ width: `${node.progressRatio * 100}%` }}
-        />
-      ) : null}
-    </button>
   );
 }
