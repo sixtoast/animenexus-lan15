@@ -2,7 +2,7 @@
 
 /**
  * Motion room — clip generator.
- * GIFs (Tenor/Giphy), AnimeThemes OP/ED, trailers, fanart/cover stills, samples, compose.
+ * GIFs (Gifukai/nekos.best), AnimeThemes OP/ED, trailers, fanart/cover stills, samples, compose.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -26,15 +26,6 @@ export type MotionAsset = {
 
 type Tab = "samples" | "anime" | "compose" | "url";
 type ComposeItem = MotionAsset & { dwellMs: number };
-
-const SAMPLE_ENDPOINTS = [
-  "https://api.waifu.pics/sfw/dance",
-  "https://api.waifu.pics/sfw/happy",
-  "https://api.waifu.pics/sfw/wave",
-  "https://api.waifu.pics/sfw/smile",
-  "https://api.waifu.pics/sfw/wink",
-  "https://api.waifu.pics/sfw/pat",
-];
 
 function assetThumb(a: MotionAsset): string {
   if (a.thumb) return a.thumb;
@@ -193,28 +184,22 @@ export function MotionClient() {
     setBusy(true);
     setErr(null);
     try {
-      const results: MotionAsset[] = [];
-      for (const ep of SAMPLE_ENDPOINTS) {
-        try {
-          const res = await fetch(ep);
-          if (!res.ok) continue;
-          const j = (await res.json()) as { url?: string };
-          if (j.url) {
-            results.push({
-              id: `sample-${results.length}`,
-              kind: /\.gif(\?|$)/i.test(j.url) ? "gif" : "still",
-              url: j.url,
-              thumb: j.url,
-              label: ep.split("/").pop() || "sample",
-              source: "waifu.pics",
-            });
-          }
-        } catch {
-          /* */
-        }
+      const res = await fetch("/api/motion-samples");
+      const json = (await res.json()) as {
+        assets?: MotionAsset[];
+        notes?: string[];
+      };
+      if (!res.ok || !(json.assets || []).length) {
+        throw new Error(
+          json.notes?.join(" · ") || "Sample APIs returned nothing",
+        );
       }
-      if (!results.length) throw new Error("Sample APIs returned nothing");
-      setSamples(results);
+      setSamples(
+        (json.assets || []).map((a) => ({
+          ...a,
+          kind: (a.kind || "gif") as MotionAsset["kind"],
+        })),
+      );
       setTab("samples");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Could not load samples");
@@ -240,11 +225,7 @@ export function MotionClient() {
       };
       if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
       setAnimeAssets(json.assets || []);
-      const n = [...(json.notes || [])];
-      if (json.gifSearchConfigured === false) {
-        n.push("Add TENOR_API_KEY (or GIPHY_API_KEY) for title GIFs");
-      }
-      setNotes(n);
+      setNotes([...(json.notes || [])]);
       if (!(json.assets || []).length) {
         setErr("No assets found — try samples or paste a URL.");
       }
@@ -373,9 +354,9 @@ export function MotionClient() {
       `}</style>
 
       <p className="tools-hint" style={{ marginBottom: 16 }}>
-        Title GIFs need <code>TENOR_API_KEY</code> or <code>GIPHY_API_KEY</code>.
-        Clips: AnimeThemes OP/ED + YouTube trailers. Stills: cover + fanart (
-        <code>FANART_API_KEY</code> + TVDB). Sample GIFs work without keys.
+        Title GIFs from <strong>Gifukai</strong> + <strong>nekos.best</strong> (no key).
+        Optional: <code>GIPHY_API_KEY</code> for extra search. Clips: AnimeThemes
+        OP/ED + trailers. Stills: cover + fanart (<code>FANART_API_KEY</code> + TVDB).
       </p>
 
       <Stage asset={stageAsset} playing={composePlaying || !!preview} />
@@ -462,7 +443,7 @@ export function MotionClient() {
             list={animeAssets}
             empty={
               selectedAnime
-                ? "No assets yet — add TENOR_API_KEY for GIFs, or try Sample GIFs."
+                ? "No assets yet — try another title or Sample GIFs."
                 : "Search a title or pick from your shelf."
             }
           />
@@ -480,7 +461,10 @@ export function MotionClient() {
           >
             {busy ? "Loading…" : "Load sample GIFs"}
           </button>
-          <AssetGrid list={samples} empty="Press Load sample GIFs (waifu.pics SFW)." />
+          <AssetGrid
+            list={samples}
+            empty="Press Load sample GIFs (Gifukai + nekos.best)."
+          />
         </div>
       ) : null}
 
@@ -567,7 +551,9 @@ export function MotionClient() {
               onClick={() => {
                 const u = url.trim();
                 if (!u) return;
-                const kind: MotionAsset["kind"] = /\.(mp4|webm|mov)(\?|$)/i.test(u)
+                const kind: MotionAsset["kind"] = /\.(mp4|webm|mov)(\?|$)/i.test(
+                  u,
+                )
                   ? "video"
                   : /\.gif(\?|$)/i.test(u)
                     ? "gif"
@@ -584,7 +570,7 @@ export function MotionClient() {
                 addToCompose(a);
               }}
             >
-              Preview & add
+              Preview &amp; add
             </button>
           </div>
           {recent.length ? (
@@ -623,6 +609,7 @@ export function MotionClient() {
       ) : null}
 
       <p className="meta" style={{ marginTop: 24 }}>
+        Rights: remote URLs only — no episode rips.{" "}
         <Link href="/tools">Back to tools</Link>
       </p>
     </div>
