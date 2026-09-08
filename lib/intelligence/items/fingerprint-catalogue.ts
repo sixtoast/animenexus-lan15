@@ -181,7 +181,11 @@ export function nearestFingerprints(
     if (exclude.has(entry.animeId)) continue;
     let sim: number;
     if (isFp(query)) {
-      sim = vectorSimilarity(query, entry.fingerprint, weights);
+      sim = vectorSimilarity(
+        fingerprintToVector(query),
+        entry.fingerprint,
+        weights,
+      );
     } else {
       sim =
         (cosineWeighted(
