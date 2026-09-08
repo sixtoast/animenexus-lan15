@@ -106,6 +106,7 @@ export function ArchiveField({ entries }: { entries: WatchlistEntry[] }) {
 
   const setLayoutPersist = useCallback((m: FieldLayoutMode) => {
     setLayout(m);
+    setFocusId(null);
     try {
       localStorage.setItem(LAYOUT_KEY, m);
     } catch {
@@ -376,6 +377,8 @@ export function ArchiveField({ entries }: { entries: WatchlistEntry[] }) {
 
         <div className="archive-field-stage archive-field-stage--3d">
           <FieldScene3D
+            key={layout}
+            layoutKey={layout}
             nodes={filtered}
             selectedId={selectedId}
             compareId={compareId}
