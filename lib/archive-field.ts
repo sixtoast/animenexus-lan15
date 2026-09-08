@@ -25,9 +25,11 @@ export type FieldNode = {
   userRating: number;
   genres: string[];
   addedAt: string;
-  /** SVG / CSS percent coords in a 1000×1000 field */
+  /** Normalized field coords (0–1000 plane + depth) */
   x: number;
   y: number;
+  /** Depth for 3D layouts */
+  z: number;
   seed: number;
 };
 
@@ -116,6 +118,14 @@ function layoutOrbit(entries: WatchlistEntry[]): FieldNode[] {
       const rJitter = radius * (0.92 + s * 0.16);
       const cx = 500 + Math.cos(angle) * rJitter;
       const cy = 500 + Math.sin(angle) * rJitter * 0.88;
+      const statusZ: Record<WatchStatus, number> = {
+        watching: 80,
+        planning: 20,
+        paused: -20,
+        completed: -60,
+        dropped: -120,
+      };
+      const z = (statusZ[status] ?? 0) + (s - 0.5) * 40;
       const cap = episodeCap(e);
       const sim = cosineSimilarity(user, resonanceFromGenres(e.genres));
       out.push({
@@ -131,6 +141,7 @@ function layoutOrbit(entries: WatchlistEntry[]): FieldNode[] {
         addedAt: e.addedAt,
         x: cx,
         y: cy,
+        z,
         seed: s,
       });
     });
@@ -173,6 +184,7 @@ function layoutConstellation(entries: WatchlistEntry[]): FieldNode[] {
         addedAt: e.addedAt,
         x: cx0 + Math.cos(a) * Math.min(clusterR, rr * 2.2),
         y: cy0 + Math.sin(a) * Math.min(clusterR, rr * 2),
+        z: (s - 0.5) * 160 + Math.sin(a) * 30,
         seed: s,
       });
     });
@@ -208,6 +220,7 @@ function layoutTimeline(entries: WatchlistEntry[]): FieldNode[] {
       addedAt: e.addedAt,
       x: 500 + Math.cos(angle) * radius,
       y: 500 + Math.sin(angle) * radius * 0.9,
+      z: (t - 0.5) * 280 + (s - 0.5) * 20,
       seed: s,
     });
   });
@@ -236,4 +249,13 @@ export function countByStatus(
   };
   for (const e of entries) c[e.watchStatus]++;
   return c;
+}
+
+/** Map field 0–1000 coords to Three.js world units. */
+export function fieldToWorld(n: {
+  x: number;
+  y: number;
+  z: number;
+}): [number, number, number] {
+  return [(n.x - 500) / 100, (500 - n.y) / 100, (n.z || 0) / 100];
 }
