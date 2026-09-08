@@ -51,12 +51,12 @@ export function WatchlistPresentationToggle({
         size="sm"
         variant={current === "shelf" ? "accent" : "outline"}
         aria-pressed={current === "shelf"}
-        aria-label="Shelf — spatial collection view"
+        aria-label="Archive Field — map of every sealed title"
         onClick={() => select("shelf")}
         silent
         riveKey="shelf_mode"
       >
-        Shelf
+        Field
       </Button>
     </div>
   );
