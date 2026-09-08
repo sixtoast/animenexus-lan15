@@ -34,7 +34,10 @@ import type { Anime, WatchlistEntry } from "@/lib/types";
 import { rankRecommendations } from "@/lib/recommend-rank";
 import {
   isRecV3Enabled,
-  setRecV3Enabled,
+  getRecV3Mode,
+  setRecV3Mode,
+  describeRecV3Mode,
+  type RecV3Mode,
 } from "@/lib/intelligence/recommendation/feature-flag";
 
 type Source = "current" | string;
@@ -42,11 +45,11 @@ type Source = "current" | string;
 export function RecommendationLab() {
   const { entries, ready } = useWatchlist();
   const [source, setSource] = useState<Source>("current");
-  const [v3On, setV3On] = useState(false);
+  const [v3Mode, setV3ModeState] = useState<RecV3Mode>("auto");
 
   useEffect(() => {
-    setV3On(isRecV3Enabled());
-    const on = () => setV3On(isRecV3Enabled());
+    setV3ModeState(getRecV3Mode());
+    const on = () => setV3ModeState(getRecV3Mode());
     window.addEventListener("animenexus:rec-v3", on);
     return () => window.removeEventListener("animenexus:rec-v3", on);
   }, []);
@@ -183,16 +186,25 @@ export function RecommendationLab() {
       </label>
 
       <label className="rec-lab-source">
-        <input
-          type="checkbox"
-          checked={v3On}
+        Rec engine mode{" "}
+        <select
+          value={v3Mode}
           onChange={(e) => {
-            setRecV3Enabled(e.target.checked);
-            setV3On(e.target.checked);
+            const m = e.target.value as RecV3Mode;
+            setRecV3Mode(m);
+            setV3ModeState(m);
           }}
-        />{" "}
-        Enable ranker/candidates V3 in this browser (localStorage{" "}
-        <code>an_rec_v3</code>)
+        >
+          <option value="auto">
+            Auto (V3 when shelf evidence ≥ 3 completed)
+          </option>
+          <option value="on">Force V3</option>
+          <option value="off">Force V2 (legacy)</option>
+        </select>
+        <span className="meta" style={{ marginLeft: "0.5rem" }}>
+          {describeRecV3Mode(activeEntries)} · effective{" "}
+          {isRecV3Enabled({ entries: activeEntries }) ? "V3" : "V2"}
+        </span>
       </label>
 
       {persona ? (
@@ -364,7 +376,7 @@ export function RecommendationLab() {
                   </ol>
                 </div>
                 <p className="meta" style={{ gridColumn: "1 / -1" }}>
-                  Pool size {rankCompare.poolSize}. Toggle an_rec_v3 for
+                  Pool size {rankCompare.poolSize}. Mode select above controls
                   production path.
                 </p>
               </div>
