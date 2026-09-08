@@ -37,40 +37,41 @@ export function siteBudgetFor(tier: SitePerfTier): SitePerfBudget {
   switch (tier) {
     case "mobile":
       return {
-        tier,
-        shelfMaxTextures: 12,
-        shelfDprMax: 1,
+        tier: "mobile",
+        shelfMaxTextures: 16,
+        shelfDprMax: 1.25,
         shelfAntialias: false,
-        shelfPreferFallback: true,
-        maxPriorityImages: 2,
+        // Still allow WebGL shelf — fallback only when R3F/WebGL blocked
+        shelfPreferFallback: false,
+        maxPriorityImages: 6,
       };
     case "low":
       return {
-        tier,
-        shelfMaxTextures: 18,
-        shelfDprMax: 1.15,
+        tier: "low",
+        shelfMaxTextures: 20,
+        shelfDprMax: 1.25,
         shelfAntialias: false,
         shelfPreferFallback: false,
-        maxPriorityImages: 3,
+        maxPriorityImages: 8,
       };
     case "balanced":
       return {
-        tier,
+        tier: "balanced",
         shelfMaxTextures: 28,
         shelfDprMax: 1.5,
         shelfAntialias: true,
         shelfPreferFallback: false,
-        maxPriorityImages: 4,
+        maxPriorityImages: 10,
       };
     case "full":
     default:
       return {
-        tier,
+        tier: "full",
         shelfMaxTextures: 40,
-        shelfDprMax: 1.75,
+        shelfDprMax: 2,
         shelfAntialias: true,
         shelfPreferFallback: false,
-        maxPriorityImages: 6,
+        maxPriorityImages: 14,
       };
   }
 }
