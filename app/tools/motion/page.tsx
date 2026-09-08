@@ -4,7 +4,8 @@ import "../tools.css";
 
 export const metadata = {
   title: "Motion · AnimeNexus",
-  description: "Clip room — samples and URL preview.",
+  description:
+    "Clip generator — AnimeThemes OP/ED, fanart Ken Burns, sample GIFs, and compose.",
 };
 
 export default function Page() {
@@ -14,7 +15,10 @@ export default function Page() {
         <div className="container">
           <div className="hero-badge">Night Desk · studio</div>
           <h1>Motion</h1>
-          <p>Clip room — samples and URL preview. No fake upscale.</p>
+          <p>
+            Clip generator from anime themes, fanart stills, sample GIFs, and
+            your own URLs — compose a short sequence and play it.
+          </p>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
