@@ -9,7 +9,7 @@ import {
   enrichDeepFromAniDb,
   isAniDbConfigured,
 } from "@/lib/providers/anidb";
-import type { AnimeIdentity } from "@/lib/anime-identity";
+import { identityFromAnime, type AnimeIdentity } from "@/lib/anime-identity";
 import {
   buildAnimePreferenceFingerprint,
   type BuildFingerprintOptions,
@@ -82,12 +82,7 @@ export async function buildEnrichedFingerprintAsync(
 
   if (isAniDbConfigured()) {
     try {
-      const identity =
-        opts?.identity ||
-        ({
-          anilistId: anime.anilist_id || anime.id,
-          title: anime.title,
-        } as AnimeIdentity);
+      const identity = opts?.identity || identityFromAnime(anime);
       const deep = await enrichDeepFromAniDb(identity);
       if (deep?.tags?.length) {
         deepTags = [...deepTags, ...deep.tags];
