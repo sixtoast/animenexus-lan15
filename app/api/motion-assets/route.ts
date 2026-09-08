@@ -1,5 +1,6 @@
 /**
- * Gather motion-room assets for a title: OP/ED videos + fanart/posters as stills.
+ * Gather motion-room assets for a title:
+ * cover, AnimeThemes OP/ED, Fanart stills, title GIFs (Tenor/Giphy), trailer.
  * Soft-fail individual sources.
  */
 
@@ -10,14 +11,22 @@ import {
   fetchAnimeThemesByTitle,
   type ThemeVideo,
 } from "@/lib/providers/animethemes";
-import { enrichArtworkFromFanart } from "@/lib/providers/fanart";
-import { identityFromAnime } from "@/lib/anime-identity";
+import {
+  enrichArtworkFromFanart,
+  fetchFanartByTvdb,
+} from "@/lib/providers/fanart";
+import { identityFromAnime, mapId } from "@/lib/anime-identity";
 import { searchAnime, fetchAnimeById } from "@/lib/anilist";
+import { fetchAnimeDetail } from "@/lib/anilist-detail";
+import {
+  searchAnimeGifs,
+  isGifSearchConfigured,
+} from "@/lib/providers/gif-search";
 import type { Anime } from "@/lib/types";
 
 export type MotionAssetDto = {
   id: string;
-  kind: "gif" | "video" | "still";
+  kind: "gif" | "video" | "still" | "youtube";
   url: string;
   thumb?: string;
   label: string;
@@ -43,6 +52,7 @@ function themeToAsset(
 export async function GET(req: NextRequest) {
   const idRaw = req.nextUrl.searchParams.get("id");
   const title = (req.nextUrl.searchParams.get("title") || "").trim();
+  const tvdbOverride = (req.nextUrl.searchParams.get("tvdb") || "").trim();
   const id = idRaw ? parseInt(idRaw, 10) : NaN;
 
   let anime: Anime | null = null;
@@ -72,6 +82,7 @@ export async function GET(req: NextRequest) {
 
   const assets: MotionAssetDto[] = [];
   const notes: string[] = [];
+  const displayTitle = anime.title;
 
   if (anime.image) {
     assets.push({
@@ -81,8 +92,27 @@ export async function GET(req: NextRequest) {
       thumb: anime.image,
       label: "Cover art",
       source: "anilist",
-      animeTitle: anime.title,
+      animeTitle: displayTitle,
     });
+  }
+
+  try {
+    const detail = await fetchAnimeDetail(anime.anilist_id || anime.id);
+    const tr = detail?.trailer;
+    if (tr?.site?.toLowerCase() === "youtube" && tr.id) {
+      assets.push({
+        id: `yt-${tr.id}`,
+        kind: "youtube",
+        url: `https://www.youtube.com/embed/${tr.id}`,
+        thumb: tr.thumbnail || `https://i.ytimg.com/vi/${tr.id}/hqdefault.jpg`,
+        label: "Official trailer",
+        source: "anilist-youtube",
+        animeTitle: displayTitle,
+      });
+      notes.push("trailer");
+    }
+  } catch {
+    notes.push("trailer: skip");
   }
 
   try {
@@ -102,7 +132,7 @@ export async function GET(req: NextRequest) {
         ...themes.endings,
         ...themes.inserts,
       ]) {
-        const a = themeToAsset(t, anime.title);
+        const a = themeToAsset(t, displayTitle);
         if (a) assets.push(a);
       }
     } else {
@@ -112,9 +142,46 @@ export async function GET(req: NextRequest) {
     notes.push("AnimeThemes: failed");
   }
 
+  if (isGifSearchConfigured()) {
+    try {
+      const { hits, notes: gifNotes } = await searchAnimeGifs(displayTitle, {
+        limit: 12,
+      });
+      notes.push(...gifNotes);
+      for (const h of hits) {
+        assets.push({
+          id: h.id,
+          kind: "gif",
+          url: h.url,
+          thumb: h.thumb,
+          label: h.label,
+          source: h.source,
+          animeTitle: displayTitle,
+        });
+      }
+    } catch {
+      notes.push("GIF search failed");
+    }
+  } else {
+    notes.push("GIF search: set TENOR_API_KEY or GIPHY_API_KEY");
+  }
+
   try {
-    const identity = identityFromAnime(anime);
-    const fanart = await enrichArtworkFromFanart(identity);
+    let identity = identityFromAnime(anime);
+    if (tvdbOverride) {
+      identity = mapId(identity, {
+        source: "anilist",
+        target: "tvdb",
+        targetId: tvdbOverride,
+        confidence: 0.95,
+        method: "manual",
+      });
+    }
+    const fanart = identity.tvdbId
+      ? await enrichArtworkFromFanart(identity)
+      : tvdbOverride
+        ? await fetchFanartByTvdb(tvdbOverride)
+        : null;
     if (fanart?.assets?.length) {
       notes.push("fanart.tv");
       for (const art of fanart.assets.slice(0, 10)) {
@@ -125,9 +192,13 @@ export async function GET(req: NextRequest) {
           thumb: art.url,
           label: `Fanart · ${art.type}`,
           source: "fanart",
-          animeTitle: anime.title,
+          animeTitle: displayTitle,
         });
       }
+    } else if (!identity.tvdbId && !tvdbOverride) {
+      notes.push("fanart: need TVDB id (?tvdb= on API or mapping)");
+    } else {
+      notes.push("fanart: no assets");
     }
   } catch {
     notes.push("fanart: skipped");
@@ -143,5 +214,6 @@ export async function GET(req: NextRequest) {
     },
     assets,
     notes,
+    gifSearchConfigured: isGifSearchConfigured(),
   });
 }
