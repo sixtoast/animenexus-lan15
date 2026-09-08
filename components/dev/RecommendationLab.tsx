@@ -30,7 +30,8 @@ import {
 import { CANDIDATE_GENERATOR_VERSION } from "@/lib/intelligence/recommendation/candidates-v3";
 import { FINGERPRINT_VERSION } from "@/lib/intelligence/items";
 import { PREFERENCE_MODEL_VERSION } from "@/lib/intelligence/preference/user-preference-vector";
-import type { WatchlistEntry } from "@/lib/types";
+import type { Anime, WatchlistEntry } from "@/lib/types";
+import { rankRecommendations } from "@/lib/recommend-rank";
 import {
   isRecV3Enabled,
   setRecV3Enabled,
@@ -89,6 +90,71 @@ export function RecommendationLab() {
     if (!persona) return null;
     return probePersona(persona);
   }, [persona]);
+
+  const rankCompare = useMemo(() => {
+    if (!activeEntries.length) return null;
+    try {
+      const candidates: Anime[] = [];
+      const seen = new Set<number>();
+      for (const e of activeEntries) {
+        if (seen.has(e.id)) continue;
+        seen.add(e.id);
+        candidates.push({
+          id: e.id,
+          title: e.title,
+          description: "",
+          genre: (e.genres || e.tags || [])[0] || "",
+          tags: [...(e.genres || []), ...(e.tags || [])],
+          status: "FINISHED",
+          format: (e.format as Anime["format"]) || "TV",
+          year: e.year || "",
+          score: e.score || 70,
+          popularity: 50,
+          image: e.image,
+          anilist_id: e.id,
+          episodes: e.episodes ?? 12,
+          duration: e.duration || 24,
+        });
+      }
+      for (const p of SYNTHETIC_PERSONAS) {
+        if (persona && p.id === persona.id) continue;
+        for (const e of p.entries.slice(0, 5)) {
+          if (seen.has(e.id)) continue;
+          seen.add(e.id);
+          candidates.push({
+            id: e.id,
+            title: e.title,
+            description: "",
+            genre: (e.genres || e.tags || [])[0] || "",
+            tags: [...(e.genres || []), ...(e.tags || [])],
+            status: "FINISHED",
+            format: (e.format as Anime["format"]) || "TV",
+            year: e.year || "",
+            score: e.score || 70,
+            popularity: 40,
+            image: e.image,
+            anilist_id: e.id,
+            episodes: e.episodes ?? 12,
+            duration: e.duration || 24,
+          });
+        }
+      }
+      const exclude = new Set(activeEntries.map((e) => e.id));
+      const open = candidates.filter((c) => !exclude.has(c.id));
+      const pool = open.length >= 4 ? open : candidates;
+      const v2 = rankRecommendations(pool, activeEntries, {
+        excludeIds: exclude,
+        forceVersion: "v2",
+      }).slice(0, 8);
+      const v3 = rankRecommendations(pool, activeEntries, {
+        excludeIds: exclude,
+        forceVersion: "v3",
+      }).slice(0, 8);
+      return { v2, v3, poolSize: pool.length };
+    } catch (e) {
+      return { error: String(e) };
+    }
+  }, [activeEntries, persona]);
 
   return (
     <div className="rec-lab">
@@ -250,6 +316,58 @@ export function RecommendationLab() {
                   </li>
                 ))}
               </ul>
+            )}
+          </section>
+
+          <section className="rec-lab-section">
+            <h2>V2 vs V3 ranking</h2>
+            {!rankCompare ? (
+              <p className="meta">Need shelf entries</p>
+            ) : "error" in rankCompare ? (
+              <p className="meta">Compare failed: {rankCompare.error}</p>
+            ) : (
+              <div
+                className="rec-lab-compare"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "1rem",
+                }}
+              >
+                <div>
+                  <h3>V2 (forced)</h3>
+                  <ol>
+                    {rankCompare.v2.map((r) => (
+                      <li key={`v2-${r.anime.id}`}>
+                        {r.anime.title}{" "}
+                        <span className="meta">
+                          {r.score.toFixed(3)} · {r.confidence}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+                <div>
+                  <h3>V3 (forced)</h3>
+                  <ol>
+                    {rankCompare.v3.map((r) => (
+                      <li key={`v3-${r.anime.id}`}>
+                        {r.anime.title}{" "}
+                        <span className="meta">
+                          {r.score.toFixed(3)} · {r.confidence}
+                        </span>
+                        {r.reasons?.[0] ? (
+                          <div className="meta">{r.reasons[0]}</div>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+                <p className="meta" style={{ gridColumn: "1 / -1" }}>
+                  Pool size {rankCompare.poolSize}. Toggle an_rec_v3 for
+                  production path.
+                </p>
+              </div>
             )}
           </section>
 
