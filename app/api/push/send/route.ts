@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * Broadcast a test/admin push to all stored subscriptions.
- * Auth: Authorization: Bearer $PUSH_SEND_SECRET (or query secret= for manual tests).
+ * Auth: Authorization: Bearer $PUSH_SEND_SECRET only
+ * (query-string secrets are avoided — they end up in logs/history).
  */
 export async function POST(req: NextRequest) {
   const expected = (process.env.PUSH_SEND_SECRET || "").trim();
@@ -19,8 +20,7 @@ export async function POST(req: NextRequest) {
 
   const auth = req.headers.get("authorization") || "";
   const bearer = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
-  const q = req.nextUrl.searchParams.get("secret") || "";
-  if (bearer !== expected && q !== expected) {
+  if (bearer !== expected) {
     return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
