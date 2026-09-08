@@ -34,6 +34,7 @@ import { CinematographyController } from "@/components/CinematographyController"
 import { NexusRouteBeacon } from "@/components/NexusRouteBeacon";
 import { MascotHost } from "@/components/mascot/MascotHost";
 import { MascotErrorBoundary } from "@/components/mascot/MascotErrorBoundary";
+import "./tokens.css";
 import "./globals.css";
 import "./button.css";
 import "./modal.css";
