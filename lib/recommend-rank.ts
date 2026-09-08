@@ -1,7 +1,6 @@
 /**
  * Recommendation ranking (V2).
- * Similarity is one signal among: clusters, session intent, drift, quality, fatigue, drops.
- * Soft path: ranker_v3 when isRecV3Enabled().
+ * Soft path: ranker_v3 when isRecV3Enabled({ entries }).
  */
 
 import type { Anime, WatchlistEntry } from "./types";
@@ -55,14 +54,12 @@ export function rankRecommendations(
     excludeIds?: Set<number> | number[];
     resonanceWeight?: number;
     experienceSlug?: string;
-    /** Lab only: force engine regardless of feature flag */
     forceVersion?: "v2" | "v3";
   },
 ): RankedRecommendation[] {
-  // Soft V3 path — lab / localStorage / NEXT_PUBLIC_REC_V3
   const useV3 =
     opts?.forceVersion === "v3" ||
-    (opts?.forceVersion !== "v2" && isRecV3Enabled());
+    (opts?.forceVersion !== "v2" && isRecV3Enabled({ entries }));
   if (useV3) {
     try {
       return rankRecommendationsV3AsLegacy(candidates, entries, {
