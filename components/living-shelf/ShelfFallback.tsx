@@ -37,7 +37,7 @@ export function ShelfFallback({
           return (
             <section
               key={cluster}
-              className="shelf-cluster-preview"
+              className="shelf-fallback-cluster"
               aria-labelledby={`shelf-cluster-${cluster}`}
             >
               <h3 className="nx-kicker" id={`shelf-cluster-${cluster}`}>
