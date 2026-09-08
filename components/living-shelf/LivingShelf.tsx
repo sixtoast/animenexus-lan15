@@ -69,19 +69,27 @@ function orderedIds(objects: ShelfObject[]): number[] {
 export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
   const allObjects = useMemo(() => projectShelfObjects(entries), [entries]);
   const [budget, setBudget] = useState(() => siteBudgetFor("balanced"));
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [compareId, setCompareId] = useState<number | null>(null);
+  const [compareArmed, setCompareArmed] = useState(false);
+  const [gl, setGl] = useState(true);
+  const [camKey, setCamKey] = useState(0);
+  const [announce, setAnnounce] = useState("");
+  const [sceneError, setSceneError] = useState(false);
 
   useEffect(() => {
     const b = siteBudgetFor(detectSitePerfTier());
     setBudget(b);
     const rm = reducedMotionNow();
-    setGl(
+    const allow =
       webglOk() &&
-        !b.shelfPreferFallback &&
-        !rm &&
-        creativeAllowsR3F(),
-    );
+      !rm &&
+      creativeAllowsR3F() &&
+      !b.shelfPreferFallback &&
+      !sceneError;
+    setGl(allow);
     getCinematography().setFocus("watchlist");
-  }, []);
+  }, [sceneError]);
 
   const objects = useMemo(() => {
     if (allObjects.length <= budget.shelfMaxTextures) return allObjects;
@@ -98,13 +106,6 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
     for (const e of entries) m.set(e.id, e);
     return m;
   }, [entries]);
-
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [compareId, setCompareId] = useState<number | null>(null);
-  const [compareArmed, setCompareArmed] = useState(false);
-  const [gl, setGl] = useState(true);
-  const [camKey, setCamKey] = useState(0);
-  const [announce, setAnnounce] = useState("");
 
   const selected: ShelfObject | null = useMemo(
     () => objects.find((o) => o.animeId === selectedId) ?? null,
@@ -244,9 +245,12 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
 
   if (!allObjects.length) {
     return (
-      <div className="state-box lantern-empty">
-        <h3>Empty archive</h3>
-        <p>Seal titles in Manage mode — the spatial shelf projects from your list.</p>
+      <div className="state-box lantern-empty living-shelf-empty">
+        <h3>The archive is dark</h3>
+        <p>
+          Seal titles in <strong>Manage</strong> mode — the living shelf
+          projects a spatial gallery from your list.
+        </p>
       </div>
     );
   }
@@ -257,9 +261,29 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
 
   if (!gl) {
     return (
-      <div>
+      <div className="living-shelf living-shelf-fallback-mode">
         <p className="sr-only" role="status">
           {a11yHelp}
+        </p>
+        <p className="tools-hint shelf-fallback-note">
+          {sceneError
+            ? "3D shelf hit a snag — showing the gallery grid instead."
+            : "Spatial shelf is resting (reduced motion, low power, or no WebGL). Gallery view below."}
+          {sceneError ? (
+            <>
+              {" "}
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => {
+                  setSceneError(false);
+                  setGl(true);
+                }}
+              >
+                Retry 3D
+              </button>
+            </>
+          ) : null}
         </p>
         <ShelfFallback objects={allObjects} onSelect={onSelect} />
         {relationship ? (
@@ -286,7 +310,10 @@ export function LivingShelf({ entries }: { entries: WatchlistEntry[] }) {
           ? ` Showing ${objects.length} of ${allObjects.length} in 3D (perf budget).`
           : ""}
       </p>
-      <div className="living-shelf-stage" aria-describedby="shelf-kbd-help">
+      <div
+        className="living-shelf-stage living-shelf-stage-immersive"
+        aria-describedby="shelf-kbd-help"
+      >
         <ShelfScene
           key={camKey}
           objects={objects}
