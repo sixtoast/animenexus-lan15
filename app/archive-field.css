@@ -1,0 +1,277 @@
+/* Archive Field — full-collection living map */
+
+.archive-field {
+  position: relative;
+  margin-top: 8px;
+}
+
+.archive-field-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.archive-field-modes,
+.archive-field-filters,
+.archive-field-cam {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.archive-field-search {
+  min-width: 160px;
+  max-width: 220px;
+}
+
+.archive-field-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.archive-field-legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--chip) 45%, transparent);
+  background: rgba(12, 10, 14, 0.55);
+  color: #f5ebe0;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.archive-field-legend-chip i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--chip);
+  box-shadow: 0 0 8px var(--chip);
+}
+
+.archive-field-legend-chip b {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+  font-weight: 600;
+}
+
+.archive-field-legend-chip.is-active {
+  background: color-mix(in srgb, var(--chip) 18%, rgba(12, 10, 14, 0.7));
+  box-shadow: 0 0 20px color-mix(in srgb, var(--chip) 25%, transparent);
+}
+
+.archive-field-stage {
+  position: relative;
+  width: 100%;
+  height: min(72vh, 720px);
+  min-height: 380px;
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  border: 1px solid rgba(240, 160, 144, 0.2);
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 45%, rgba(240, 160, 144, 0.07), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 80% 20%, rgba(126, 184, 255, 0.06), transparent 50%),
+    radial-gradient(ellipse 40% 35% at 15% 80%, rgba(239, 192, 122, 0.05), transparent 45%),
+    linear-gradient(165deg, #0a080e 0%, #050408 55%, #0c0a12 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 28px 80px rgba(0, 0, 0, 0.5);
+}
+
+.archive-field-stage:active {
+  cursor: grabbing;
+}
+
+.archive-field-rings {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.archive-field-world {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(92vmin, 900px);
+  height: min(92vmin, 900px);
+  margin-left: calc(min(92vmin, 900px) / -2);
+  margin-top: calc(min(92vmin, 900px) / -2);
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.archive-field-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 0;
+  border: 2px solid color-mix(in srgb, var(--node-glow) 35%, transparent);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #141018;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 0 20px color-mix(in srgb, var(--node-glow) 18%, transparent);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.archive-field-node img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+.archive-field-node-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 0.75rem;
+  color: #9a8b82;
+  text-transform: uppercase;
+}
+
+.archive-field-node-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--node-glow);
+  box-shadow: 0 0 8px var(--node-glow);
+}
+
+.archive-field-node:hover {
+  transform: translate(-50%, -50%) scale(1.08);
+  z-index: 30 !important;
+  border-color: var(--node-glow);
+  box-shadow:
+    0 12px 36px rgba(0, 0, 0, 0.5),
+    0 0 28px color-mix(in srgb, var(--node-glow) 35%, transparent);
+}
+
+.archive-field-node.is-selected,
+.archive-field-node.is-compare {
+  transform: translate(-50%, -50%) scale(1.14);
+  z-index: 40 !important;
+  border-color: var(--node-glow);
+  box-shadow:
+    0 0 0 2px var(--node-glow),
+    0 16px 48px rgba(0, 0, 0, 0.55),
+    0 0 40px color-mix(in srgb, var(--node-glow) 45%, transparent);
+}
+
+.archive-field-node.is-compare:not(.is-selected) {
+  border-color: #7eb8ff;
+  box-shadow:
+    0 0 0 2px #7eb8ff,
+    0 12px 36px rgba(0, 0, 0, 0.5);
+}
+
+.archive-field-banner {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(12, 10, 14, 0.85);
+  border: 1px solid rgba(240, 160, 144, 0.35);
+  font-size: 0.85rem;
+  backdrop-filter: blur(10px);
+  z-index: 50;
+}
+
+.archive-field-inspect {
+  position: relative;
+  margin-top: 16px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(240, 160, 144, 0.3);
+  background:
+    linear-gradient(145deg, rgba(34, 26, 28, 0.94), rgba(12, 10, 14, 0.96)),
+    radial-gradient(ellipse at top right, rgba(240, 160, 144, 0.1), transparent 55%);
+  backdrop-filter: blur(14px);
+}
+
+.archive-field-inspect-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted, #9a8b82);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.archive-field-inspect-art {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.archive-field-inspect-body h3 {
+  font-family: var(--font-display, serif);
+  font-size: 1.25rem;
+  margin: 4px 0 8px;
+  background: linear-gradient(90deg, #f5ebe0, #f0a090);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.archive-field-inspect-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.archive-field-hint {
+  margin-top: 12px;
+}
+
+.archive-field-empty {
+  text-align: center;
+  padding: 48px 24px;
+  border-radius: 20px;
+  border: 1px dashed rgba(240, 160, 144, 0.25);
+}
+
+@media (max-width: 640px) {
+  .archive-field-stage {
+    height: min(62vh, 480px);
+    min-height: 320px;
+    border-radius: 14px;
+  }
+  .archive-field-search {
+    min-width: 120px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .archive-field-node {
+    transition: none;
+  }
+}
