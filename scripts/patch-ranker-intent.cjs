@@ -1,5 +1,5 @@
 /**
- * If ranker still uses the fake-anime intent path, rewrite the intent block.
+ * Ensure ranker uses V3 fingerprintIntentFit + explicit intent weights.
  */
 const fs = require("fs");
 const path = require("path");
@@ -12,10 +12,7 @@ const file = path.join(
 function main() {
   if (!fs.existsSync(file)) return;
   let t = fs.readFileSync(file, "utf8");
-  if (t.includes("fingerprintIntentFit(fp, exp") && !t.includes("id: -10")) {
-    console.log("[patch-ranker] already fixed");
-    return;
-  }
+  let changed = false;
 
   if (!t.includes("fingerprintIntentFit")) {
     t = t.replace(
@@ -25,6 +22,7 @@ function main() {
   fingerprintIntentFit,
 } from "@/lib/viewing-intent";`,
     );
+    changed = true;
   }
 
   if (!t.includes("RANKER_V3_EXPLICIT_INTENT_WEIGHTS")) {
@@ -48,14 +46,16 @@ export const RANKER_V3_EXPLICIT_INTENT_WEIGHTS = {
 
 export type MatchSignal`,
     );
+    changed = true;
   }
 
-  const start = t.indexOf("let intentSim = stableSim * 0.85;");
-  const end = t.indexOf("const fpSim", start);
-  if (start >= 0 && end > start) {
-    t =
-      t.slice(0, start) +
-      `let intentSim = stableSim * 0.85;
+  if (t.includes("id: -10") || !t.includes("fingerprintIntentFit(fp, exp")) {
+    const start = t.indexOf("let intentSim = stableSim * 0.85;");
+    const end = t.indexOf("const fpSim", start);
+    if (start >= 0 && end > start) {
+      t =
+        t.slice(0, start) +
+        `let intentSim = stableSim * 0.85;
     if (exp) {
       intentSim =
         exp.slug === "surprise"
@@ -64,25 +64,36 @@ export type MatchSignal`,
     }
 
     ` +
-      t.slice(end);
+        t.slice(end);
+      changed = true;
+    }
   }
 
-  if (!t.includes("const W =")) {
-    t = t.replace(
-      "  const exp = slug ? getExperienceIntent(slug) : undefined;",
-      `  const exp = slug ? getExperienceIntent(slug) : undefined;
+  if (!t.includes("const session =") || !t.includes("const W =")) {
+    const marker = "  const exp = slug ? getExperienceIntent(slug) : undefined;";
+    if (t.includes(marker) && !t.includes("const session =")) {
+      t = t.replace(
+        marker,
+        `  const exp = slug ? getExperienceIntent(slug) : undefined;
   const session =
     typeof window !== "undefined" ? readIntentSession() : null;
   const W =
     exp && exp.slug !== "surprise"
       ? RANKER_V3_EXPLICIT_INTENT_WEIGHTS
       : RANKER_V3_WEIGHTS;`,
-    );
+      );
+      changed = true;
+    }
   }
-  t = t.replace(/  const W = RANKER_V3_WEIGHTS;\n/, "");
 
-  fs.writeFileSync(file, t);
-  console.log("[patch-ranker] patched", file);
+  t = t.replace(/\n  const W = RANKER_V3_WEIGHTS;\n/, "\n");
+
+  if (changed) {
+    fs.writeFileSync(file, t);
+    console.log("[patch-ranker] patched", file);
+  } else {
+    console.log("[patch-ranker] already fixed");
+  }
 }
 
 try {
