@@ -89,6 +89,17 @@ export type SemanticJudgeResult = {
   overallConfidence: "low" | "medium" | "high";
 };
 
+function cleanNumRecord(
+  obj: Record<string, number | undefined> | undefined | null,
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (!obj) return out;
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === "number" && Number.isFinite(v)) out[k] = v;
+  }
+  return out;
+}
+
 function listDigest(entries: WatchlistEntry[]): string {
   return entries
     .slice(0, 28)
@@ -191,14 +202,14 @@ export function buildSemanticJudgePacket(opts: {
       preferredTraits,
     },
     intentTarget: {
-      fingerprintTarget: {
+      fingerprintTarget: cleanNumRecord({
         ...(exp?.fingerprintTarget || {}),
         ...(built?.target || {}),
-      },
-      fingerprintWeights: {
+      }),
+      fingerprintWeights: cleanNumRecord({
         ...(exp?.fingerprintWeights || {}),
         ...(built?.weights || {}),
-      },
+      }),
     },
     candidates,
   };
