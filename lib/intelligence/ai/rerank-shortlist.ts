@@ -80,7 +80,7 @@ export async function rerankShortlist(opts: {
       episodes: c.anime.episodes,
       tags: (c.anime.tags || []).slice(0, 8),
       detScore: Number(c.detScore.toFixed(3)),
-      synopsis: (c.anime.synopsis || "").slice(0, 220),
+      synopsis: (c.anime.description || "").slice(0, 220),
     })),
     tasteDigest: (opts.tasteDigest || "").slice(0, 600),
   };
