@@ -64,9 +64,18 @@ export function emitMascotAppEvent(name: string | AppUiEvent) {
 export function runMascotAction(action: MascotAction) {
   if (typeof window === "undefined") return;
 
-  const animReq = ACTION_ANIM[action];
-  if (animReq) {
-    useMascotStore.getState().requestAnim(animReq);
+  const anim = ACTION_ANIM[action];
+  if (anim) {
+    useMascotStore.getState().requestAnim({
+      anim,
+      force: action === "jump" || action === "celebrate",
+      holdMs:
+        action === "jump" || action === "celebrate"
+          ? 500
+          : action === "think"
+            ? 2500
+            : 900,
+    });
     if (action === "jump" || action === "celebrate") {
       useMascotStore.setState({ jumpQueued: true });
     }
@@ -76,7 +85,7 @@ export function runMascotAction(action: MascotAction) {
   }
 
   if (action === "wake") {
-    useMascotStore.getState().requestAnim("idle");
+    useMascotStore.getState().requestAnim({ anim: "idle", force: true });
     return;
   }
 
