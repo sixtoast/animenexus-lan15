@@ -101,3 +101,6 @@ export function installBuiltinMascotListeners(): () => void {
     window.removeEventListener("animenexus:mascot-action", onAction);
   };
 }
+
+/** @deprecated use installBuiltinMascotListeners */
+export const installBuiltinMascotEvents = installBuiltinMascotListeners;
