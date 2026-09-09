@@ -1,5 +1,5 @@
 /**
- * Ensure ranker uses V3 fingerprintIntentFit + explicit intent weights.
+ * Ensure ranker uses V3 fingerprintIntentFit + explicit intent weights + AI overlay.
  */
 const fs = require("fs");
 const path = require("path");
@@ -22,6 +22,33 @@ function main() {
   fingerprintIntentFit,
 } from "@/lib/viewing-intent";`,
     );
+    changed = true;
+  }
+
+  if (!t.includes("readAiIntentOverlay")) {
+    if (t.includes('from "@/lib/intent-session"')) {
+      t = t.replace(
+        /import \{([^}]+)\} from "@\/lib\/intent-session";/,
+        (m, inner) => {
+          if (inner.includes("readAiIntentOverlay")) return m;
+          return `import { ${inner.trim().replace(/,$/, "")}, readAiIntentOverlay } from "@/lib/intent-session";`;
+        },
+      );
+    } else {
+      t = t.replace(
+        "import { getExperienceIntent",
+        `import { readIntentSession, readAiIntentOverlay } from "@/lib/intent-session";
+import { structuredToExperienceIntent } from "@/lib/intelligence/ai/interpret-intent";
+import { getExperienceIntent`,
+      );
+    }
+    if (!t.includes("structuredToExperienceIntent")) {
+      t = t.replace(
+        'from "@/lib/intent-session";',
+        `from "@/lib/intent-session";
+import { structuredToExperienceIntent } from "@/lib/intelligence/ai/interpret-intent";`,
+      );
+    }
     changed = true;
   }
 
@@ -69,12 +96,53 @@ export type MatchSignal`,
     }
   }
 
-  if (!t.includes("const session =") || !t.includes("const W =")) {
-    const marker = "  const exp = slug ? getExperienceIntent(slug) : undefined;";
+  if (!t.includes("structuredToExperienceIntent(aiOverlay")) {
+    const emerging = t.indexOf("  const emergingVec = { ...userVec };");
+    const slugIdx = t.search(/\n  (let|const) slug = opts\?\.experienceSlug/);
+    if (emerging > 0) {
+      const clean = `  let slug = opts?.experienceSlug ?? null;
+  if (slug == null && typeof window !== "undefined") {
+    try {
+      slug = readIntentSession()?.slug ?? null;
+    } catch {
+      slug = null;
+    }
+  }
+  let exp = slug ? getExperienceIntent(slug) : undefined;
+  if (typeof window !== "undefined") {
+    try {
+      const aiOverlay = readAiIntentOverlay();
+      if (
+        aiOverlay?.structured &&
+        Date.now() - (aiOverlay.at || 0) < 1000 * 60 * 60 * 6
+      ) {
+        exp = structuredToExperienceIntent(aiOverlay.structured);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  const session =
+    typeof window !== "undefined" ? readIntentSession() : null;
+  const W =
+    exp && exp.slug !== "surprise"
+      ? RANKER_V3_EXPLICIT_INTENT_WEIGHTS
+      : RANKER_V3_WEIGHTS;
+
+`;
+      if (slugIdx >= 0 && slugIdx < emerging) {
+        t = t.slice(0, slugIdx + 1) + clean + t.slice(emerging);
+      } else {
+        t = t.slice(0, emerging) + clean + t.slice(emerging);
+      }
+      changed = true;
+    }
+  } else if (!t.includes("const session =") || !t.includes("const W =")) {
+    const marker = "  let exp = slug ? getExperienceIntent(slug) : undefined;";
     if (t.includes(marker) && !t.includes("const session =")) {
       t = t.replace(
         marker,
-        `  const exp = slug ? getExperienceIntent(slug) : undefined;
+        `  let exp = slug ? getExperienceIntent(slug) : undefined;
   const session =
     typeof window !== "undefined" ? readIntentSession() : null;
   const W =
@@ -86,7 +154,7 @@ export type MatchSignal`,
     }
   }
 
-  t = t.replace(/\n  const W = RANKER_V3_WEIGHTS;\n/, "\n");
+  t = t.replace(/\n  const W = RANKER_V3_WEIGHTS;\n/g, "\n");
 
   if (changed) {
     fs.writeFileSync(file, t);
