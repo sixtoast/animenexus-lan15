@@ -51,7 +51,6 @@ const ACTION_ANIM: Partial<Record<MascotAction, MascotAnim>> = {
 const ACTION_TO_EVENT: Partial<Record<MascotAction, MascotEvent>> = {
   pet: { type: "pet" },
   home: { type: "go-to", x: 0.32, y: 0.08 },
-  wake: { type: "wake" },
 };
 
 export function emitMascotAppEvent(name: string | AppUiEvent) {
@@ -73,6 +72,11 @@ export function runMascotAction(action: MascotAction) {
     }
     if (action === "pet") mascotNotify({ type: "pet" });
     if (action === "home") mascotNotify({ type: "go-to", x: 0.32, y: 0.08 });
+    return;
+  }
+
+  if (action === "wake") {
+    useMascotStore.getState().requestAnim("idle");
     return;
   }
 
