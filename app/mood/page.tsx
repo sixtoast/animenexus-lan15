@@ -2,12 +2,13 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { MOODS } from "@/lib/moods";
 import { MoodChips } from "@/components/MoodChips";
+import { MoodFreeText } from "@/components/MoodFreeText";
 import "./mood.css";
 
 export const metadata: Metadata = {
-  title: "Tonight · moods · AnimeNexus",
+  title: "Tonight \u00b7 moods \u00b7 AnimeNexus",
   description:
-    "Pick a viewing intent for tonight — Lantern steers ranking from how you want to feel.",
+    "Pick a viewing intent for tonight \u2014 Lantern steers ranking from how you want to feel.",
 };
 
 export default function MoodIndexPage() {
@@ -17,15 +18,16 @@ export default function MoodIndexPage() {
         <div className="container">
           <div className="hero-badge">Viewing intent</div>
           <h1>
-            What kind of night · <span>pick a mood</span>
+            What kind of night \u00b7 <span>pick a mood</span>
           </h1>
           <p>
-            Tell Lantern how you want to feel. Intent steers ranking — it is not
+            Tell Lantern how you want to feel. Intent steers ranking \u2014 it is not
             a genre filter alone.
           </p>
           <div style={{ marginTop: 20 }}>
             <MoodChips />
           </div>
+          <MoodFreeText />
         </div>
       </section>
 
