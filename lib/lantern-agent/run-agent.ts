@@ -17,6 +17,11 @@ import {
   type ToolName,
   type ToolResult,
 } from "./tools";
+import {
+  readIntentSession,
+  readAiIntentOverlay,
+} from "@/lib/intent-session";
+import { getExperienceIntent } from "@/lib/viewing-intent";
 
 export type AgentPendingAction = {
   tool: ToolName;
@@ -35,6 +40,49 @@ type ToolCallPlan = {
   answerDirectly?: boolean;
 };
 
+function viewingIntentDigest(): string {
+  try {
+    const session = readIntentSession();
+    const overlay = readAiIntentOverlay();
+    const slug = session.slug || overlay?.structured?.intent || null;
+    const exp = slug ? getExperienceIntent(slug) : undefined;
+    const lines: string[] = [];
+    if (exp) {
+      lines.push(
+        `Active experience: ${exp.emoji} ${exp.label} (${exp.slug}) \u2014 ${exp.blurb}`,
+      );
+    } else if (slug) {
+      lines.push(`Intent slug: ${slug}`);
+    } else {
+      lines.push(
+        "No named mood selected yet (user may still describe one in chat).",
+      );
+    }
+    lines.push(
+      `Session dials: intensity=${session.intensity}, energy=${session.energy}, attention=${session.attention}` +
+        (session.minutesAvailable != null
+          ? `, minutes=${session.minutesAvailable}`
+          : ""),
+    );
+    if (overlay?.freeText) {
+      lines.push(`Free-text night request: "${overlay.freeText.slice(0, 280)}"`);
+    }
+    if (overlay?.structured?.paraphrase) {
+      lines.push(`Interpreted as: ${overlay.structured.paraphrase}`);
+    }
+    const hard = overlay?.structured?.hardAvoid || [];
+    const soft = overlay?.structured?.avoid || [];
+    if (hard.length) lines.push(`Hard avoids: ${hard.join(", ")}`);
+    if (soft.length) lines.push(`Soft avoids: ${soft.join(", ")}`);
+    lines.push(
+      "Viewing intent for tonight outranks broad lifetime genre taste when recommending.",
+    );
+    return lines.join("\n");
+  } catch {
+    return "Viewing intent unavailable.";
+  }
+}
+
 function plannerSystem(): string {
   return [
     "You are Lantern's planner for AnimeNexus.",
@@ -42,25 +90,32 @@ function plannerSystem(): string {
     "Respond with ONLY valid JSON, no markdown:",
     '{"tools":[{"name":"toolName","args":{...}}],"answerDirectly":false}',
     'or {"tools":[],"answerDirectly":true} for pure chat.',
+    "CURRENT VIEWING INTENT (authoritative for tonight):",
+    viewingIntentDigest(),
     "Available tools:",
     toolsCatalogForPrompt(),
     "Rules:",
+    "- MUST call getViewingIntent when the user talks about mood, tonight, how they want to feel, energy, or 'something depressing/chill/intense'.",
     "- MUST call getWatchlist for questions about their list, watching, planning, or 'what should I watch from my list'.",
     "- MUST call getCompletionQueue for 'what should I finish', 'what to complete next', backlog / queue prioritization.",
     "- MUST call getTasteProfile or getStats for taste/stats questions.",
     "- MUST call searchAnime when the user names a title to look up.",
-    "- MUST call getRecommendations for 'recommend something' when not pure chat.",
+    "- MUST call getRecommendations for 'recommend something' / 'what should I watch' when not pure chat. Prefer pairing with getViewingIntent.",
+    "- When recommending, respect hard avoids from viewing intent; current intent outranks long-term genre habits.",
     "- Use getRecentActivity for 'what was I looking at'.",
     "- answerDirectly:true only for greetings, meta questions about Lantern, or when no data is needed.",
     "- Never invent anime titles or watchlist contents.",
-    "- Max 3 tools; prefer 1–2 precise tools over many.",
+    "- Max 3 tools; prefer 1\u20132 precise tools over many.",
   ].join("\n");
 }
 
 function answerSystem(toolBlock: string): string {
   return [
-    "You are Lantern — host of AnimeNexus, not a generic chatbot.",
+    "You are Lantern \u2014 host of AnimeNexus, not a generic chatbot.",
     "Speak warm, concise, anime-literate.",
+    "CURRENT VIEWING INTENT:",
+    viewingIntentDigest(),
+    "Steer picks toward the requested experience; do not default to their usual action/fantasy diet if tonight asks for something else.",
     "You MUST treat TOOL_RESULTS as ground truth.",
     "If a tool failed or returned empty, say so honestly. Never invent titles or claim you modified the list unless a tool confirmed it.",
     "If a tool needs confirmation, tell the user what would happen and that they must confirm in the UI.",
@@ -95,6 +150,7 @@ const ALLOWED = new Set<string>([
   "getStats",
   "getRecentActivity",
   "getRecommendations",
+  "getViewingIntent",
   "getCompletionQueue",
   "addToWatchlist",
   "removeFromWatchlist",
@@ -160,8 +216,8 @@ export async function runLanternAgent(
         if (title) {
           message =
             name === "addToWatchlist"
-              ? `Add “${title}” to your watchlist?`
-              : `Remove “${title}” from your watchlist?`;
+              ? `Add \u201c${title}\u201d to your watchlist?`
+              : `Remove \u201c${title}\u201d from your watchlist?`;
         }
       }
       pendingActions.push({
