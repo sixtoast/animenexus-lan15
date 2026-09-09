@@ -12,22 +12,77 @@ export type ChatMessage = {
 
 type Cfg = { baseUrl: string; model: string; apiKey: string };
 
+/**
+ * Ensure we always hit an absolute provider API, never a relative path on
+ * the AnimeNexus origin (that yields Next.js HTML 404s like dpl- / _next_error_).
+ */
+export function normalizeAIBaseUrl(raw: string, provider?: AIProviderId): string {
+  let u = (raw || "").trim().replace(/\/+$/, "");
+  if (!u) {
+    const preset =
+      provider && provider !== "custom" ? AI_PRESETS[provider] : AI_PRESETS.openrouter;
+    return preset.baseUrl.replace(/\/+$/, "");
+  }
+  if (u.startsWith("/") || !/^https?:\/\//i.test(u)) {
+    if (/^[a-z0-9.-]+\.[a-z]{2,}/i.test(u) && !u.includes(" ")) {
+      u = `https://${u}`.replace(/\/+$/, "");
+    } else {
+      return AI_PRESETS.openrouter.baseUrl.replace(/\/+$/, "");
+    }
+  }
+  if (/^https:\/\/openrouter\.ai$/i.test(u)) {
+    u = "https://openrouter.ai/api/v1";
+  }
+  if (/^https:\/\/api\.openai\.com$/i.test(u)) {
+    u = "https://api.openai.com/v1";
+  }
+  if (/^https:\/\/api\.groq\.com$/i.test(u)) {
+    u = "https://api.groq.com/openai/v1";
+  }
+  u = u.replace(/\/chat\/completions$/i, "");
+  return u.replace(/\/+$/, "");
+}
+
+function assertSafeProviderUrl(url: string) {
+  if (typeof window !== "undefined") {
+    try {
+      const target = new URL(url);
+      if (target.origin === window.location.origin) {
+        throw new Error(
+          "AI base URL points at this site, not a model provider. Open AI settings and set Base URL to e.g. https://openrouter.ai/api/v1 (or pick a provider preset).",
+        );
+      }
+    } catch (e) {
+      if (e instanceof Error && e.message.includes("AI base URL")) throw e;
+    }
+  }
+  if (!/^https:\/\//i.test(url)) {
+    throw new Error(
+      `AI base URL must be https://\u2026 (got \u201c${url.slice(0, 60)}\u201d). Pick a provider preset in AI settings.`,
+    );
+  }
+}
+
 async function callOnce(
   cfg: Cfg,
   messages: ChatMessage[],
   opts: { temperature?: number } = {},
 ): Promise<string> {
   if (!cfg.apiKey) throw new Error("Missing API key");
-  if (!cfg.baseUrl) throw new Error("Missing API base URL");
-  const base = cfg.baseUrl.replace(/\/$/, "");
+  const base = normalizeAIBaseUrl(cfg.baseUrl);
+  if (!base) throw new Error("Missing API base URL");
   const url = `${base}/chat/completions`;
+  assertSafeProviderUrl(url);
+
   const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${cfg.apiKey}`,
       "HTTP-Referer":
-        typeof window !== "undefined" ? window.location.origin : "",
+        typeof window !== "undefined"
+          ? window.location.origin
+          : "https://animenexus.app",
       "X-Title": "AnimeNexus Lantern",
     },
     body: JSON.stringify({
@@ -38,6 +93,17 @@ async function callOnce(
   });
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
+    const looksLikeNext =
+      errText.includes("_next_error_") ||
+      errText.includes("dpl_") ||
+      errText.includes("<!DOCTYPE html>");
+    if (looksLikeNext || res.status === 404) {
+      throw new Error(
+        `AI HTTP ${res.status}: request hit the wrong host (got app HTML, not the model API). ` +
+          `Check Base URL in AI settings \u2014 use https://openrouter.ai/api/v1 or another provider preset. ` +
+          `Attempted: ${url}`,
+      );
+    }
     throw new Error(
       `AI HTTP ${res.status}${errText ? `: ${errText.slice(0, 180)}` : ""}`,
     );
@@ -50,7 +116,6 @@ async function callOnce(
   return content.trim();
 }
 
-/** Stream tokens when the provider supports SSE; falls back to full response. */
 export async function streamChatCompletions(
   messages: ChatMessage[],
   opts: {
@@ -62,15 +127,18 @@ export async function streamChatCompletions(
   const settings = opts.settings || readAISettings();
   const tryStream = async (cfg: Cfg) => {
     if (!cfg.apiKey) throw new Error("Missing API key");
-    const base = cfg.baseUrl.replace(/\/$/, "");
+    const base = normalizeAIBaseUrl(cfg.baseUrl, settings.provider);
     const url = `${base}/chat/completions`;
+    assertSafeProviderUrl(url);
     const res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${cfg.apiKey}`,
         "HTTP-Referer":
-          typeof window !== "undefined" ? window.location.origin : "",
+          typeof window !== "undefined"
+            ? window.location.origin
+            : "https://animenexus.app",
         "X-Title": "AnimeNexus Lantern",
       },
       body: JSON.stringify({
@@ -82,20 +150,19 @@ export async function streamChatCompletions(
     });
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
+      const looksLikeNext =
+        errText.includes("_next_error_") ||
+        errText.includes("<!DOCTYPE html>");
+      if (looksLikeNext || res.status === 404) {
+        throw new Error(
+          `AI HTTP ${res.status}: wrong host (app HTML). Fix Base URL in AI settings. Attempted: ${url}`,
+        );
+      }
       throw new Error(
         `AI HTTP ${res.status}${errText ? `: ${errText.slice(0, 180)}` : ""}`,
       );
     }
-    const ctype = res.headers.get("content-type") || "";
-    if (!res.body || !ctype.includes("text/event-stream")) {
-      // Provider ignored stream — parse as JSON
-      const json = (await res.json()) as {
-        choices?: { message?: { content?: string } }[];
-      };
-      const content = json.choices?.[0]?.message?.content || "";
-      if (content) opts.onToken?.(content);
-      return content.trim();
-    }
+    if (!res.body) throw new Error("No stream body");
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let full = "";
@@ -121,7 +188,7 @@ export async function streamChatCompletions(
             opts.onToken?.(piece);
           }
         } catch {
-          /* skip malformed chunk */
+          /* skip */
         }
       }
     }
@@ -137,10 +204,9 @@ export async function streamChatCompletions(
       try {
         return await tryStream(fb);
       } catch {
-        /* fall through to non-stream */
+        /* fall through */
       }
     }
-    // Final fallback: non-streaming full response
     try {
       return await callChatCompletions(messages, opts);
     } catch (err) {
@@ -149,15 +215,15 @@ export async function streamChatCompletions(
   }
 }
 
-function resolveCfg(settings: AISettings) {
+function resolveCfg(settings: AISettings): Cfg {
   return {
-    baseUrl: settings.baseUrl,
-    model: settings.model,
+    baseUrl: normalizeAIBaseUrl(settings.baseUrl, settings.provider),
+    model: settings.model || AI_PRESETS.openrouter.model,
     apiKey: settings.apiKey,
   };
 }
 
-function resolveFallback(settings: AISettings) {
+function resolveFallback(settings: AISettings): Cfg | null {
   if (!settings.fallbackKey) return null;
   const pid = (settings.fallbackProvider || "openrouter") as AIProviderId;
   const preset =
@@ -165,7 +231,7 @@ function resolveFallback(settings: AISettings) {
       ? AI_PRESETS[pid as Exclude<AIProviderId, "custom">]
       : null;
   return {
-    baseUrl: preset?.baseUrl || settings.baseUrl,
+    baseUrl: normalizeAIBaseUrl(preset?.baseUrl || settings.baseUrl, pid),
     model: preset?.model || settings.model,
     apiKey: settings.fallbackKey,
   };
