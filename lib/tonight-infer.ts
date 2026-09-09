@@ -1,5 +1,6 @@
 /**
  * Passive default for Tonight UI — Lantern guesses; user overrides.
+ * Explicit mood selection always wins over this inference.
  */
 
 import type { WatchlistEntry } from "./types";
@@ -17,7 +18,7 @@ export type TonightGuess = {
   attention: IntentSession["attention"];
 };
 
-/** Map recent shelf texture → a soft experience guess. */
+/** Map recent shelf texture → a soft experience guess. Never invents "Destroy me" from weak evidence. */
 export function inferTonightGuess(entries: WatchlistEntry[]): TonightGuess {
   const trends = detectTasteTrends(entries, 2);
   const clusters = buildTasteClusters(entries, 3);
@@ -26,8 +27,10 @@ export function inferTonightGuess(entries: WatchlistEntry[]): TonightGuess {
   let slug = "comfort";
   if (up.some((d) => ["horror", "thriller", "psychological"].includes(d))) {
     slug = "tense";
-  } else if (up.some((d) => ["drama", "romance"].includes(d))) {
-    slug = "destroy";
+  } else if (up.some((d) => d === "romance")) {
+    slug = "romance";
+  } else if (up.some((d) => d === "drama")) {
+    slug = "gentle";
   } else if (up.some((d) => ["comedy", "parody"].includes(d))) {
     slug = "laugh";
   } else if (up.some((d) => ["fantasy", "adventure"].includes(d))) {
@@ -45,7 +48,7 @@ export function inferTonightGuess(entries: WatchlistEntry[]): TonightGuess {
   const energy: IntentSession["energy"] =
     hour >= 22 || hour < 6 ? "low" : "medium";
   const intensity: IntentSession["intensity"] =
-    slug === "destroy" || slug === "tense" ? "maximum" : "moderate";
+    slug === "tense" ? "maximum" : "moderate";
   const attention: IntentSession["attention"] =
     slug === "think"
       ? "demanding"
