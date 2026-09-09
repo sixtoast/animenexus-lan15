@@ -127,7 +127,7 @@ export async function enrichFingerprintWithAI(
     episodes: anime.episodes,
     score: anime.score,
     genres: labels.anilistLabels.slice(0, 16),
-    synopsis: (anime.synopsis || "").slice(0, 900),
+    synopsis: (anime.description || "").slice(0, 900),
   };
 
   const raw = await callChatCompletions(
