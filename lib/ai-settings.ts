@@ -62,7 +62,18 @@ export function readAISettings(): AISettings {
     const raw = localStorage.getItem(AI_SETTINGS_KEY);
     if (!raw) return defaultSettings();
     const parsed = JSON.parse(raw) as Partial<AISettings>;
-    return { ...defaultSettings(), ...parsed };
+    const merged = { ...defaultSettings(), ...parsed };
+    const base = (merged.baseUrl || "").trim();
+    // Repair broken relative / empty base URLs from older saves
+    if (!base || base.startsWith("/") || !/^https?:\/\//i.test(base)) {
+      const preset =
+        merged.provider !== "custom" && merged.provider in AI_PRESETS
+          ? AI_PRESETS[merged.provider as Exclude<AIProviderId, "custom">]
+          : AI_PRESETS.openrouter;
+      merged.baseUrl = preset.baseUrl;
+      if (!merged.model) merged.model = preset.model;
+    }
+    return merged;
   } catch {
     return defaultSettings();
   }
@@ -70,10 +81,26 @@ export function readAISettings(): AISettings {
 
 export function writeAISettings(s: AISettings) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(s));
+  const next = { ...s };
+  let base = (next.baseUrl || "").trim().replace(/\/+$/, "");
+  if (!base || base.startsWith("/")) {
+    const preset =
+      next.provider !== "custom" && next.provider in AI_PRESETS
+        ? AI_PRESETS[next.provider as Exclude<AIProviderId, "custom">]
+        : AI_PRESETS.openrouter;
+    base = preset.baseUrl;
+    next.baseUrl = base;
+    if (!next.model) next.model = preset.model;
+  }
+  next.baseUrl = base.replace(/\/chat\/completions$/i, "").replace(/\/+$/, "");
+  localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(next));
 }
 
 export function isAIConfigured(s?: AISettings): boolean {
   const cfg = s || (typeof window !== "undefined" ? readAISettings() : null);
-  return !!(cfg && cfg.apiKey && cfg.baseUrl);
+  if (!cfg?.apiKey) return false;
+  const base = (cfg.baseUrl || "").trim();
+  if (!base) return false;
+  if (base.startsWith("/")) return false;
+  return true;
 }
