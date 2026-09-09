@@ -19,7 +19,7 @@ type Props = {
 };
 
 /**
- * Catalog from the server, re-ordered by Preference Engine V2 when shelf is warm.
+ * Catalog from the server; explicit Viewing Intent uses Ranker V3 fingerprint fit.
  * Re-ranks when session dials change (intensity / energy / time).
  */
 export function MoodFeedClient({ items, moodLabel, experienceSlug }: Props) {
@@ -35,6 +35,7 @@ export function MoodFeedClient({ items, moodLabel, experienceSlug }: Props) {
     const ranked = rankRecommendations(items, entries, {
       excludeIds: exclude,
       experienceSlug,
+      forceVersion: experienceSlug ? "v3" : undefined,
     });
     if (!ranked.length) return items;
     const rankedIds = new Set(ranked.map((r) => r.anime.id));
