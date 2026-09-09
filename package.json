@@ -2,7 +2,7 @@
   "name": "animenexus-lantern",
   "version": "1.0.0",
   "private": true,
-  "description": "AnimeNexus — Lantern: mood-based anime recommendations, taste profile, and AI tools",
+  "description": "AnimeNexus \u2014 Lantern: mood-based anime recommendations, taste profile, and AI tools",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "generate:sfx": "node scripts/generate-ui-sfx.mjs",
-    "postinstall": "node scripts/restore-emptied.cjs && node scripts/patch-ranker-intent.cjs && node scripts/generate-ui-sfx.mjs",
+    "postinstall": "node scripts/restore-ai-hybrid.cjs && node scripts/restore-emptied.cjs && node scripts/patch-ranker-intent.cjs && node scripts/generate-ui-sfx.mjs",
     "restore:emptied": "node scripts/restore-emptied.cjs",
     "visual:routes": "node scripts/visual-routes.mjs",
     "typecheck": "tsc --noEmit",

@@ -79,3 +79,36 @@ export function intentControlOverlay(session: IntentSession): {
     session.energy === "low" ? -0.15 : session.energy === "high" ? 0.12 : 0;
   return { intensityScale, cognitiveScale, pacingBias };
 }
+
+/** Free-text AI structured intent overlay (session-scoped). */
+const AI_INTENT_KEY = "anime_nexus_ai_intent_v1";
+
+export type StoredAiIntent = {
+  freeText: string;
+  structured: import("@/lib/intelligence/ai/interpret-intent").StructuredViewingIntent;
+  at: number;
+};
+
+export function readAiIntentOverlay(): StoredAiIntent | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(AI_INTENT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as StoredAiIntent;
+  } catch {
+    return null;
+  }
+}
+
+export function writeAiIntentOverlay(data: StoredAiIntent | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (!data) localStorage.removeItem(AI_INTENT_KEY);
+    else localStorage.setItem(AI_INTENT_KEY, JSON.stringify(data));
+    window.dispatchEvent(
+      new CustomEvent("animenexus:ai-intent", { detail: data }),
+    );
+  } catch {
+    /* */
+  }
+}
