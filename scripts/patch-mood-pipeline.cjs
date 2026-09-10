@@ -113,10 +113,10 @@ function patchIdentity() {
   let changed = false;
   if (!t.includes("nexusId") && t.includes("export type AnimeIdentity")) {
     t = t.replace(
-      "export type AnimeIdentity = {\n  /** Primary catalog key \u2014 AniList when known */\n  anilistId: number | null;",
+      "export type AnimeIdentity = {\n  /** Primary catalog key — AniList when known */\n  anilistId: number | null;",
       `export type AnimeIdentity = {
   nexusId?: string;
-  /** Primary catalog key \u2014 AniList when known */
+  /** Primary catalog key — AniList when known */
   anilistId: number | null;`,
     );
     changed = true;
@@ -195,11 +195,109 @@ function patchTypes() {
   }
 }
 
+function patchCandidatesV3() {
+  const file = path.join(
+    process.cwd(),
+    "lib/intelligence/recommendation/candidates-v3.ts",
+  );
+  if (!fs.existsSync(file)) return;
+  let t = fs.readFileSync(file, "utf8");
+  if (!t.includes("title: exp.label")) {
+    console.log("[patch-mood] candidates-v3 no fake mood anime");
+    return;
+  }
+  const start = t.indexOf("function intentPullVector");
+  const end = t.indexOf("\nfunction shelfAnime", start);
+  if (start < 0 || end < 0) {
+    console.log("[patch-mood] candidates-v3 intentPullVector block not found");
+    return;
+  }
+  const replacement = `function intentPullVector(
+  base: FingerprintVector,
+  exp: ExperienceIntent,
+): FingerprintVector {
+  const out: FingerprintVector = { ...base };
+  const target = exp.fingerprintTarget || {};
+  for (const [k, v] of Object.entries(target)) {
+    if (typeof v === "number") {
+      out[k] = (out[k] ?? 0.5) * 0.25 + v * 0.75;
+    }
+  }
+  return out;
+}
+
+`;
+  t = t.slice(0, start) + replacement + t.slice(end);
+  fs.writeFileSync(file, t);
+  console.log("[patch-mood] candidates-v3 fake mood anime removed");
+}
+
+function patchRankerFingerprint() {
+  const file = path.join(
+    process.cwd(),
+    "lib/intelligence/recommendation/ranker-v3.ts",
+  );
+  if (!fs.existsSync(file)) return;
+  let t = fs.readFileSync(file, "utf8");
+  let changed = false;
+  if (
+    !t.includes("fingerprint?:") &&
+    t.includes("fingerprintConfidence?: number;")
+  ) {
+    t = t.replace(
+      "  fingerprintConfidence?: number;\n};",
+      '  fingerprint?: import("@/lib/intelligence/items/anime-preference-fingerprint").AnimePreferenceFingerprint;\n  fingerprintConfidence?: number;\n};',
+    );
+    changed = true;
+  }
+  if (
+    t.includes("fingerprintConfidence: fp.confidence.overall,") &&
+    !t.includes("fingerprint: fp,\n      fingerprintConfidence")
+  ) {
+    t = t.replace(
+      "fingerprintConfidence: fp.confidence.overall,",
+      "fingerprint: fp,\n      fingerprintConfidence: fp.confidence.overall,",
+    );
+    changed = true;
+  }
+  if (changed) {
+    fs.writeFileSync(file, t);
+    console.log("[patch-mood] ranker attaches real fingerprint");
+  } else {
+    console.log("[patch-mood] ranker fingerprint field ok");
+  }
+}
+
+function patchViewingIntentFit() {
+  const file = path.join(process.cwd(), "lib/viewing-intent.ts");
+  if (!fs.existsSync(file)) return;
+  let t = fs.readFileSync(file, "utf8");
+  if (t.includes("rawFit")) {
+    console.log("[patch-mood] fingerprintIntentFit already uses rawFit");
+    return;
+  }
+  if (t.includes("const fit = 1 - Math.abs(actual - desired)")) {
+    t = t.replace(
+      "const fit = 1 - Math.abs(actual - desired);",
+      "const rawFit = 1 - Math.abs(actual - desired);\n    const effectiveFit = 0.5 + (rawFit - 0.5) * confidence;",
+    );
+    t = t.replace(
+      "score += clamp01(0.5 + (fit - 0.5) * (0.45 + confidence * 0.55)) * importance;",
+      "score += clamp01(effectiveFit) * importance;",
+    );
+    fs.writeFileSync(file, t);
+    console.log("[patch-mood] fingerprintIntentFit formula fixed");
+  }
+}
+
 try {
   if (!restoreAnilistFromB64()) patchAnilist();
   patchDetail();
   patchIdentity();
   patchTypes();
+  patchCandidatesV3();
+  patchRankerFingerprint();
+  patchViewingIntentFit();
 } catch (e) {
   console.error("[patch-mood]", e.message);
 }
