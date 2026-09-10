@@ -199,10 +199,11 @@ export function rankRecommendationsV3(
     const agreement = opts?.sourceAgreement?.get(anime.id) ?? 1;
     const agreementScore = clamp01((agreement - 1) / 3);
 
-    const completion = estimateCompletionLikelihood(anime, entries, {
+    const completionEst = estimateCompletionLikelihood(anime, entries, {
       userVector: userVec,
       fingerprint: fp,
     });
+    const completion = completionEst.probability;
 
     const community =
       typeof anime.score === "number" && anime.score > 0
