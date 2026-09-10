@@ -213,7 +213,12 @@ export function rankRecommendationsV3(
     const fatFactor = fatigueScoreFactor(fat);
     const fatiguePenalty = 1 - fatFactor;
 
-    const { penalty: dropPen } = dropPenalty(anime, dropSigs);
+    const { penalty: dropPen } = dropPenalty(
+      dropSigs,
+      [...(anime.tags || []), anime.genre].filter(Boolean) as string[],
+      anime.format,
+      anime.episodes,
+    );
 
     const availability = 0.55;
 
@@ -252,8 +257,6 @@ export function rankRecommendationsV3(
     const friction = detectFriction(anime, entries, {
       fingerprint: fp,
       userVector: userVec,
-      fatiguePenalty,
-      dropPenalty: dropPen,
     });
 
     const explorationSlot =
