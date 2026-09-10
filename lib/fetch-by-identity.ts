@@ -58,7 +58,8 @@ export async function fetchAnimeByIdentity(
     }
   }
 
-  const parsed = parseNexusId(id.nexusId);
+  const nexus = id.nexusId ?? "";
+  const parsed = nexus ? parseNexusId(nexus) : null;
   if (parsed?.provider === "anilist") {
     const n = Number(parsed.id);
     if (Number.isFinite(n) && n > 0) {
@@ -68,7 +69,7 @@ export async function fetchAnimeByIdentity(
   }
 
   throw new IdentityResolutionError(
-    `Cannot resolve identity ${id.nexusId} — no usable provider id`,
+    `Cannot resolve identity ${nexus || "(unknown)"} — no usable provider id`,
     id,
   );
 }
