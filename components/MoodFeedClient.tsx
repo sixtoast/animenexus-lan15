@@ -25,8 +25,8 @@ type Props = {
 };
 
 /**
- * Catalog from the server; explicit Viewing Intent uses Ranker V3 fingerprint fit.
- * When AI is configured, semantic judge may modestly reorder the V3 shortlist.
+ * Mood pages: server already ranks by moodMatchScore. Client only filters shelf/rejects.
+ * Non-mood feeds may still personalise with the ranker + optional AI judge.
  */
 export function MoodFeedClient({
   items,
@@ -40,19 +40,29 @@ export function MoodFeedClient({
   const [aiBusy, setAiBusy] = useState(false);
 
   const ordered = useMemo(() => {
-    // Explicit mood must rank by intent even with an empty shelf.
-    // Taste personalisation is secondary; fingerprintIntentFit is primary.
     if (items.length < 2) return items;
-    if (!experienceSlug && (!ready || entries.length < 2)) return items;
+
+    // Explicit mood pages are already ranked on the server by moodMatchScore.
+    // Do NOT re-sort by community score / neutral fingerprints — that made
+    // every mood look identical (FMA, Steins;Gate, etc.).
+    if (experienceSlug) {
+      const exclude = new Set<number>([
+        ...(ready ? entries.map((e) => e.id) : []),
+        ...rejectedAnimeIds(),
+      ]);
+      if (!exclude.size) return items;
+      return items.filter((a) => !exclude.has(a.id));
+    }
+
+    if (!ready || entries.length < 2) return items;
 
     const exclude = new Set<number>([
-      ...(ready ? entries.map((e) => e.id) : []),
+      ...entries.map((e) => e.id),
       ...rejectedAnimeIds(),
     ]);
     const ranked = rankRecommendations(items, entries, {
       excludeIds: exclude,
       experienceSlug,
-      forceVersion: experienceSlug ? "v3" : undefined,
     });
     if (!ranked.length) return items;
     const rankedIds = new Set(ranked.map((r) => r.anime.id));
@@ -64,7 +74,9 @@ export function MoodFeedClient({
     setAiOrdered(null);
     setJudge(null);
     if (items.length < 4) return;
-    if (!experienceSlug && (!ready || entries.length < 2)) return;
+    // Mood pages: server order is authoritative; AI judge was scrambling moods.
+    if (experienceSlug) return;
+    if (!ready || entries.length < 2) return;
     if (typeof window === "undefined" || !isAIConfigured()) return;
 
     let cancelled = false;
