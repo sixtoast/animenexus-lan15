@@ -117,8 +117,20 @@ function flatFingerprint(
 ): Record<string, number> {
   if (!fp) return {};
   const out: Record<string, number> = {};
-  for (const [k, v] of Object.entries(fp)) {
-    if (typeof v === "number" && Number.isFinite(v)) out[k] = Number(v.toFixed(3));
+  const buckets = [
+    fp.emotional,
+    fp.narrative,
+    fp.experience,
+    fp.structure,
+    fp.style,
+  ];
+  for (const bucket of buckets) {
+    if (!bucket || typeof bucket !== "object") continue;
+    for (const [k, v] of Object.entries(bucket)) {
+      if (typeof v === "number" && Number.isFinite(v)) {
+        out[k] = Number(v.toFixed(3));
+      }
+    }
   }
   return out;
 }
@@ -173,15 +185,18 @@ export function buildSemanticJudgePacket(opts: {
       ].filter(Boolean),
       tags: (r.anime.tags || []).slice(0, 10),
       systemScore: Number(r.score.toFixed(3)),
-      intentFit: r.featureBreakdown?.viewingIntent,
-      tasteFit: r.featureBreakdown?.stableTaste,
-      completionLikelihood: r.featureBreakdown?.completionLikelihood,
-      sourceAgreement: r.sourceAgreement,
-      explorationLevel: r.explorationLevel,
-      fatiguePenalty: r.featureBreakdown?.fatigue,
-      dropRisk: r.featureBreakdown?.dropRisk,
-      strongSignals: r.strongSignals.map((s) => s.label),
-      frictionSignals: r.frictionSignals.map((f) => f.message || f.messageKey),
+      intentFit: undefined,
+      tasteFit: r.score,
+      completionLikelihood: r.completionLikelihood,
+      sourceAgreement: undefined,
+      noveltyLevel: r.explorationSlot ? "high" : "low",
+      explorationLevel: r.explorationSlot ? "high" : "low",
+      fatiguePenalty: undefined,
+      dropRisk: undefined,
+      strongSignals: (r.signals || []).map((s) => s.label),
+      frictionSignals: (r.friction || []).map(
+        (f) => f.message || f.messageKey,
+      ),
       fingerprint: flatFingerprint(r.featureBreakdown),
     }));
 
