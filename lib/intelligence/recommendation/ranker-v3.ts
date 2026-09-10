@@ -104,6 +104,21 @@ function confidenceLabel(score: number): RankedRecommendationV3["confidence"] {
   return "exploratory";
 }
 
+export function confidenceLabelV3(
+  c: RankedRecommendationV3["confidence"],
+): string {
+  switch (c) {
+    case "strong":
+      return "Very strong match";
+    case "good":
+      return "Solid match";
+    case "soft":
+      return "Soft match";
+    default:
+      return "Exploratory pick";
+  }
+}
+
 export function rankRecommendationsV3(
   candidates: Anime[],
   entries: WatchlistEntry[],
