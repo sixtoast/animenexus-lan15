@@ -4,7 +4,7 @@
  */
 
 import type { Anime } from "./types";
-import { fetchDiscover, fetchFiltered, searchAnime } from "./anilist";
+import { fetchDiscover, fetchFiltered } from "./anilist";
 import {
   getExperienceIntent,
   type ExperienceIntent,
@@ -75,15 +75,11 @@ async function poolTag(
     );
     return { data: page.data };
   } catch (e) {
-    try {
-      const page = await searchAnime(tag, 1, perPage);
-      return { data: page.data };
-    } catch (e2) {
-      return {
-        data: [],
-        error: e2 instanceof Error ? e2.message : "tag pool failed",
-      };
-    }
+    // Do NOT fall back to title search — that is not semantic tag retrieval.
+    return {
+      data: [],
+      error: e instanceof Error ? e.message : "tag pool failed",
+    };
   }
 }
 
@@ -129,7 +125,7 @@ export async function getMoodCandidates(
   _session?: IntentSession | null,
   opts?: { perPool?: number },
 ): Promise<MoodCandidatesResult> {
-  const perPool = opts?.perPool ?? 36;
+  const perPool = opts?.perPool ?? 40;
   const retrieval: MoodRetrievalSource[] = [];
   const pools: Anime[][] = [];
 
@@ -159,14 +155,14 @@ export async function getMoodCandidates(
 
   const tagHints = MOOD_TAG_HINTS[intent.slug] || [];
   const tagResults = await Promise.allSettled(
-    tagHints.slice(0, 3).map((tg) => poolTag(tg, Math.min(24, perPool))),
+    tagHints.slice(0, 3).map((tg) => poolTag(tg, Math.min(32, perPool))),
   );
   tagResults.forEach((r, i) => {
     const tg = tagHints[i];
     if (r.status === "fulfilled") {
       retrieval.push({
         source: `tag:${tg}`,
-        requested: Math.min(24, perPool),
+        requested: Math.min(32, perPool),
         returned: r.value.data.length,
         error: r.value.error,
       });
@@ -174,17 +170,18 @@ export async function getMoodCandidates(
     } else {
       retrieval.push({
         source: `tag:${tg}`,
-        requested: Math.min(24, perPool),
+        requested: Math.min(32, perPool),
         returned: 0,
         error: String(r.reason),
       });
     }
   });
 
-  const quality = await poolQuality(40);
+  // Quality pool is a safety net — keep small so it cannot dominate mood pools
+  const quality = await poolQuality(18);
   retrieval.push({
     source: "quality:top+trending",
-    requested: 40,
+    requested: 18,
     returned: quality.data.length,
     error: quality.error,
   });
@@ -194,10 +191,10 @@ export async function getMoodCandidates(
   let { unique, dropped } = dedupe(merged);
 
   if (unique.length < 50) {
-    const more = await poolQuality(48);
+    const more = await poolQuality(24);
     retrieval.push({
       source: "quality:broaden",
-      requested: 48,
+      requested: 24,
       returned: more.data.length,
       error: more.error,
     });
