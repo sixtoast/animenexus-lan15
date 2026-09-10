@@ -136,7 +136,8 @@ export function Navbar() {
           <Link
             href="/"
             className={
-              "logo nav-brand" + (logoPulse ? " logo--pulse nav-brand--pulse" : "")
+              "logo nav-brand" +
+              (logoPulse ? " logo--pulse nav-brand--pulse" : "")
             }
             onClick={() => playCue("filter_select")}
           >
@@ -174,7 +175,8 @@ export function Navbar() {
               })}
               <span
                 className={
-                  "nav-indicator" + (indicator.ready ? " nav-indicator--on" : "")
+                  "nav-indicator" +
+                  (indicator.ready ? " nav-indicator--on" : "")
                 }
                 style={{
                   transform: `translateX(${indicator.left}px)`,
@@ -192,10 +194,10 @@ export function Navbar() {
               size="sm"
               className="nav-search-btn"
               aria-label="Search"
-              title="Search ( / or ⌘K )"
+              title="Search ( / or \u2318K )"
               onClick={onSearch}
             >
-              <span aria-hidden>⌕</span>
+              <span aria-hidden>\u2315</span>
               <span className="nav-search-label">Search</span>
             </Button>
             <MotionToggle />
@@ -237,7 +239,9 @@ export function Navbar() {
               aria-controls="mobile-nav"
               onClick={toggleMenu}
             >
-              <NexusIcon name={open ? "close" : "menu"} size="sm" />
+              <span aria-hidden className="nav-toggle-glyph">
+                {open ? "\u2715" : "\u2630"}
+              </span>
             </Button>
           </div>
         </div>
@@ -263,7 +267,7 @@ export function Navbar() {
               <div className="nav-mobile-head">
                 <p className="nav-mobile-kicker">More</p>
                 <p className="nav-mobile-sub">
-                  Catalog, moods, account — primary tabs stay on the dock
+                  Catalog, moods, account \u2014 primary tabs stay on the dock
                 </p>
               </div>
               <ul>
@@ -314,7 +318,7 @@ export function Navbar() {
                       closeMenu();
                     }}
                   >
-                    Log out · {session.username}
+                    Log out \u00b7 {session.username}
                   </Button>
                 ) : null}
                 <NavSoundToggle />
