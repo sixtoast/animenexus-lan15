@@ -11,6 +11,17 @@ const map = [
   ["app__ai-panel.css.b64", "app/ai-panel.css"],
 ];
 function main() {
+  // Join split CommandPalette blob if present
+  const cpParts = [0, 1, 2].map((i) =>
+    path.join(blobs, `components__CommandPalette.tsx.b64.${i}`),
+  );
+  if (cpParts.every(fs.existsSync)) {
+    const joined = cpParts.map((p) => fs.readFileSync(p, "utf8")).join("");
+    fs.writeFileSync(
+      path.join(blobs, "components__CommandPalette.tsx.b64"),
+      joined,
+    );
+  }
   if (!fs.existsSync(blobs)) {
     console.log("[restore-ui] no blobs");
     return;
