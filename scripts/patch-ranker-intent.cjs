@@ -1,26 +1,8 @@
 /**
- * Ensure ranker uses V3 fingerprintIntentFit + explicit intent weights + AI overlay.
+ * Ensure ranker uses V3 fingerprintIntentFit + explicit intent weights.
  */
 const fs = require("fs");
 const path = require("path");
-
-function restoreRankerFromB64() {
-  const b64 = path.join(process.cwd(), "scripts/lib__ranker-v3.ts.b64");
-  const dest = path.join(
-    process.cwd(),
-    "lib/intelligence/recommendation/ranker-v3.ts",
-  );
-  if (!fs.existsSync(b64)) return false;
-  const text = Buffer.from(fs.readFileSync(b64, "utf8"), "base64").toString(
-    "utf8",
-  );
-  if (text.includes("fingerprintIntentFit") && !text.includes("id: -10")) {
-    fs.writeFileSync(dest, text);
-    console.log("[patch-ranker] restored ranker-v3 from b64 snapshot");
-    return true;
-  }
-  return false;
-}
 
 const file = path.join(
   process.cwd(),
@@ -28,7 +10,6 @@ const file = path.join(
 );
 
 function main() {
-  if (restoreRankerFromB64()) return;
   if (!fs.existsSync(file)) return;
   let t = fs.readFileSync(file, "utf8");
   let changed = false;
@@ -40,6 +21,14 @@ function main() {
   getExperienceIntent,
   fingerprintIntentFit,
 } from "@/lib/viewing-intent";`,
+    );
+    changed = true;
+  }
+
+  if (t.includes("fingerprintIntentFit") && !t.includes('from "@/lib/intent-session"')) {
+    t = t.replace(
+      'from "@/lib/viewing-intent";',
+      'from "@/lib/viewing-intent";\nimport { readIntentSession } from "@/lib/intent-session";',
     );
     changed = true;
   }
@@ -88,7 +77,26 @@ export type MatchSignal`,
     }
   }
 
-  if (t.includes("const W = RANKER_V3_WEIGHTS;") && t.includes("EXPLICIT")) {
+  if (
+    t.includes("fingerprintIntentFit(fp, exp, session)") &&
+    !t.includes("const session =")
+  ) {
+    const expLine =
+      "  const exp = slug ? getExperienceIntent(slug) : undefined;\n";
+    if (t.includes(expLine)) {
+      t = t.replace(
+        expLine,
+        expLine +
+          "  const session =\n    typeof window !== \"undefined\" ? readIntentSession() : null;\n",
+      );
+      changed = true;
+    }
+  }
+
+  if (
+    t.includes("const W = RANKER_V3_WEIGHTS;") &&
+    t.includes("RANKER_V3_EXPLICIT_INTENT_WEIGHTS")
+  ) {
     t = t.replace(
       "const W = RANKER_V3_WEIGHTS;",
       `const W =
