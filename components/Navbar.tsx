@@ -194,10 +194,10 @@ export function Navbar() {
               size="sm"
               className="nav-search-btn"
               aria-label="Search"
-              title="Search ( / or \u2318K )"
+              title="Search ( / or ⌘K )"
               onClick={onSearch}
             >
-              <span aria-hidden>\u2315</span>
+              <span aria-hidden>⌕</span>
               <span className="nav-search-label">Search</span>
             </Button>
             <MotionToggle />
@@ -267,7 +267,7 @@ export function Navbar() {
               <div className="nav-mobile-head">
                 <p className="nav-mobile-kicker">More</p>
                 <p className="nav-mobile-sub">
-                  Catalog, moods, account \u2014 primary tabs stay on the dock
+                  Catalog, moods, account — primary tabs stay on the dock
                 </p>
               </div>
               <ul>
@@ -318,7 +318,7 @@ export function Navbar() {
                       closeMenu();
                     }}
                   >
-                    Log out \u00b7 {session.username}
+                    Log out · {session.username}
                   </Button>
                 ) : null}
                 <NavSoundToggle />
