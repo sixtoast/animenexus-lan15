@@ -1,12 +1,32 @@
-/** Apply critical Mood pipeline fixes if not already present. */
+/** Surgical Mood pipeline AniList + identity fixes for Vercel postinstall. */
 const fs = require("fs");
 const path = require("path");
+
+function restoreAnilistFromB64() {
+  const b64 = path.join(process.cwd(), "scripts/lib__anilist.ts.b64");
+  const dest = path.join(process.cwd(), "lib/anilist.ts");
+  if (!fs.existsSync(b64)) return false;
+  const text = Buffer.from(fs.readFileSync(b64, "utf8"), "base64").toString(
+    "utf8",
+  );
+  if (
+    text.includes("tag: $tag") &&
+    text.includes("filters.tag") &&
+    !text.includes("tags: genres,")
+  ) {
+    fs.writeFileSync(dest, text);
+    console.log("[patch-mood] restored lib/anilist.ts from b64 snapshot");
+    return true;
+  }
+  return false;
+}
 
 function patchAnilist() {
   const file = path.join(process.cwd(), "lib/anilist.ts");
   if (!fs.existsSync(file)) return;
   let t = fs.readFileSync(file, "utf8");
   let changed = false;
+
   if (!t.includes("tags {") && t.includes("genres\n  status")) {
     t = t.replace(
       "genres\n  status",
@@ -14,6 +34,7 @@ function patchAnilist() {
     );
     changed = true;
   }
+
   if (t.includes("tags: genres,")) {
     t = t.replace(
       "tags: genres,",
@@ -28,18 +49,36 @@ function patchAnilist() {
     );
     changed = true;
   }
-  if (!t.includes("$tag: String") && t.includes("$genre: String")) {
-    t = t.replace("$genre: String", "$genre: String, $tag: String");
-    t = t.replace("genre: $genre", "genre: $genre, tag: $tag");
+
+  if (!t.includes("$tag") && t.includes("$genre: String")) {
+    t = t.replace("$genre: String", "$genre: String\n      $tag: String");
     t = t.replace(
-      "if (filters.genre) variables.genre = filters.genre;",
-      "if (filters.genre) variables.genre = filters.genre;\n  if (filters.tag) variables.tag = filters.tag;",
+      "genre: $genre\n          status:",
+      "genre: $genre\n          tag: $tag\n          status:",
+    );
+    if (!t.includes("if (filters.tag)")) {
+      t = t.replace(
+        "if (filters.genre) variables.genre = filters.genre;",
+        "if (filters.genre) variables.genre = filters.genre;\n  if (filters.tag) variables.tag = filters.tag;",
+      );
+    }
+    changed = true;
+  }
+
+  if (
+    t.includes('"filtered"') &&
+    t.includes("filters.genre,\n    filters.status")
+  ) {
+    t = t.replace(
+      "filters.genre,\n    filters.status",
+      "filters.genre,\n    filters.tag,\n    filters.status",
     );
     changed = true;
   }
+
   if (changed) {
     fs.writeFileSync(file, t);
-    console.log("[patch-mood] anilist tags fixed");
+    console.log("[patch-mood] anilist tags + filter + cache fixed");
   } else {
     console.log("[patch-mood] anilist already patched");
   }
@@ -76,10 +115,6 @@ function patchIdentity() {
     t = t.replace(
       "export type AnimeIdentity = {\n  /** Primary catalog key \u2014 AniList when known */\n  anilistId: number | null;",
       `export type AnimeIdentity = {
-  /**
-   * Canonical cross-provider key. MUST encode provider.
-   * Examples: anilist:9253 | mal:7785 | kitsu:12 | shikimori:9253
-   */
   nexusId?: string;
   /** Primary catalog key \u2014 AniList when known */
   anilistId: number | null;`,
@@ -91,7 +126,6 @@ function patchIdentity() {
       t.trimEnd() +
       `
 
-/** Build a provider-safe nexus id. Never use a bare number as canonical identity. */
 export function makeNexusId(
   provider: "anilist" | "mal" | "kitsu" | "shikimori" | "tmdb" | "anidb",
   id: number | string,
@@ -108,7 +142,6 @@ export function parseNexusId(nexusId: string): {
   return { provider: nexusId.slice(0, i), id: nexusId.slice(i + 1) };
 }
 
-/** Prefer AniList, then MAL, then Kitsu, then Shikimori for nexusId. */
 export function ensureNexusId(identity: AnimeIdentity): AnimeIdentity {
   if (identity.nexusId && identity.nexusId.includes(":")) return identity;
   if (identity.anilistId != null && identity.anilistId > 0) {
@@ -150,27 +183,20 @@ function patchTypes() {
   if (t.includes("export type AnimeFilters") && !t.includes("tag?: string")) {
     t = t.replace(
       "export type AnimeFilters = {\n  genre?: string;",
-      "export type AnimeFilters = {\n  genre?: string;\n  /** Real AniList tag name \u2014 never a product semantic dim */\n  tag?: string;",
-    );
-    changed = true;
-  }
-  if (!t.includes("idMal?:") && t.includes("anilist_id: number;")) {
-    t = t.replace(
-      "  anilist_id: number;",
-      "  anilist_id: number;\n  idMal?: number | null;",
+      "export type AnimeFilters = {\n  genre?: string;\n  tag?: string;",
     );
     changed = true;
   }
   if (changed) {
     fs.writeFileSync(file, t);
-    console.log("[patch-mood] types AnimeFilters.tag + idMal");
+    console.log("[patch-mood] types AnimeFilters.tag");
   } else {
     console.log("[patch-mood] types already patched");
   }
 }
 
 try {
-  patchAnilist();
+  if (!restoreAnilistFromB64()) patchAnilist();
   patchDetail();
   patchIdentity();
   patchTypes();
