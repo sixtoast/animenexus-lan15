@@ -1,0 +1,136 @@
+/**
+ * AnimeNexus — foundation tokens (load FIRST, before globals).
+ * Lantern broadcast: deep ink night + warm flame gold + soft coral.
+ */
+
+:root {
+  --color-primary: #0c0a0f;
+  --color-secondary: #16121a;
+  --color-tertiary: #1f1a24;
+
+  --color-accent: #ffb087;
+  --color-accent-rgb: 255, 176, 135;
+  --color-accent-hover: #ffd0b0;
+  --color-accent-muted: #e8a078;
+  --color-accent-glow: rgba(var(--color-accent-rgb), 0.42);
+  --color-accent-soft: rgba(var(--color-accent-rgb), 0.12);
+  --color-accent-border: rgba(var(--color-accent-rgb), 0.16);
+  --color-accent-border-strong: rgba(var(--color-accent-rgb), 0.32);
+
+  --color-amber: #f0c56e;
+  --color-amber-rgb: 240, 197, 110;
+  --color-amber-glow: rgba(var(--color-amber-rgb), 0.36);
+  --color-amber-soft: rgba(var(--color-amber-rgb), 0.12);
+
+  --color-ink-cool: #7a6b9a;
+  --color-ink-cool-rgb: 122, 107, 154;
+
+  --color-text: #faf6f1;
+  --color-text-muted: #a8988c;
+  --color-border: var(--color-accent-border);
+  --color-danger: #e87870;
+  --color-success: #7dcea0;
+  --color-warning: #e0b84a;
+
+  --surface-0: var(--color-primary);
+  --surface-1: var(--color-secondary);
+  --surface-2: var(--color-tertiary);
+  --surface-glass: rgba(14, 11, 18, 0.78);
+  --surface-elevated: linear-gradient(
+    165deg,
+    rgba(36, 28, 34, 0.96),
+    rgba(10, 8, 12, 0.98)
+  );
+  --hairline: rgba(255, 236, 220, 0.08);
+  --border-soft: var(--color-accent-border);
+  --border-strong: var(--color-accent-border-strong);
+
+  --z-base: 1;
+  --z-raised: 5;
+  --z-dropdown: 50;
+  --z-sticky: 80;
+  --z-nav: 100;
+  --z-drawer: 200;
+  --z-dock: 2500;
+  --z-modal: 3000;
+  --z-toast: 3100;
+  --z-mascot: 600;
+  --z-cmdk: 3200;
+  --z-overlay-top: 3300;
+  --z-ai-fab: 2400;
+
+  --bp-xs: 480px;
+  --bp-sm: 640px;
+  --bp-md: 900px;
+  --bp-lg: 1100px;
+  --bp-xl: 1400px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --radius: 20px;
+  --radius-sm: 12px;
+  --radius-pill: 999px;
+  --shadow: 0 36px 72px rgba(0, 0, 0, 0.58);
+  --shadow-soft: 0 14px 40px rgba(0, 0, 0, 0.38);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 180ms;
+  --dur: 400ms;
+  --dur-slow: 700ms;
+  --duration-fast: var(--dur-fast);
+  --duration-med: var(--dur);
+  --duration-slow: var(--dur-slow);
+  --transition: var(--dur) var(--ease-out);
+  --font: "Outfit", "Noto Sans JP", system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", "Noto Sans JP", Georgia, serif;
+  --text-xs: 0.72rem;
+  --text-sm: 0.85rem;
+  --text-md: 0.95rem;
+  --focus-ring: 0 0 0 2px var(--color-primary), 0 0 0 4px var(--color-accent);
+
+  --body-wash-1: rgba(var(--color-accent-rgb), 0.11);
+  --body-wash-2: rgba(var(--color-amber-rgb), 0.09);
+  --body-wash-3: rgba(var(--color-ink-cool-rgb), 0.08);
+
+  --dock-h: 64px;
+}
+
+html[data-theme="light"] {
+  --color-primary: #f8f3ed;
+  --color-secondary: #efe7dc;
+  --color-tertiary: #e4d9cb;
+  --color-accent: #c45a3a;
+  --color-accent-rgb: 196, 90, 58;
+  --color-accent-hover: #a84830;
+  --color-accent-muted: #d4846a;
+  --color-accent-glow: rgba(var(--color-accent-rgb), 0.26);
+  --color-accent-soft: rgba(var(--color-accent-rgb), 0.1);
+  --color-accent-border: rgba(var(--color-accent-rgb), 0.18);
+  --color-accent-border-strong: rgba(var(--color-accent-rgb), 0.34);
+  --color-amber: #b8892e;
+  --color-amber-rgb: 184, 137, 46;
+  --color-text: #1a1410;
+  --color-text-muted: #6b5c52;
+  --color-border: var(--color-accent-border);
+  --surface-0: var(--color-primary);
+  --surface-1: var(--color-secondary);
+  --surface-2: var(--color-tertiary);
+  --surface-glass: rgba(248, 243, 237, 0.86);
+  --surface-elevated: linear-gradient(
+    165deg,
+    rgba(255, 252, 248, 0.98),
+    rgba(236, 226, 214, 0.96)
+  );
+  --hairline: rgba(40, 24, 16, 0.08);
+  --border-soft: var(--color-accent-border);
+  --border-strong: var(--color-accent-border-strong);
+  --body-wash-1: rgba(var(--color-accent-rgb), 0.07);
+  --body-wash-2: rgba(var(--color-amber-rgb), 0.06);
+  --body-wash-3: rgba(100, 80, 140, 0.05);
+  --focus-ring: 0 0 0 2px var(--color-primary), 0 0 0 4px var(--color-accent);
+}
