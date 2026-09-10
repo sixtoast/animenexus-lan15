@@ -7,8 +7,10 @@ import type { Anime } from "./types";
 import { fetchDiscover, fetchFiltered } from "./anilist";
 import {
   getExperienceIntent,
+  fingerprintIntentFit,
   type ExperienceIntent,
 } from "./viewing-intent";
+import { buildEnrichedFingerprint } from "./intelligence/items";
 import type { IntentSession } from "./intent-session";
 import { identityFromAnime, ensureNexusId } from "./anime-identity";
 
@@ -205,7 +207,19 @@ export async function getMoodCandidates(
     ({ unique, dropped } = dedupe([...unique, ...more.data]));
   }
 
-  const candidates: MoodCandidate[] = unique.map((anime) => ({
+  // Rank by real fingerprintIntentFit on the server so mood pages diverge
+  // even with an empty shelf and before client JS runs.
+  // Tag-pool hits get a small provenance boost (not a genre rewrite).
+  const tagIds = new Set(tagAnimes.map((a) => a.id));
+  const scored = unique.map((anime) => {
+    const fp = buildEnrichedFingerprint(anime);
+    let fit = fingerprintIntentFit(fp, intent, null);
+    if (tagIds.has(anime.id)) fit = Math.min(1, fit + 0.08);
+    return { anime, fit };
+  });
+  scored.sort((a, b) => b.fit - a.fit);
+
+  const candidates: MoodCandidate[] = scored.map(({ anime }) => ({
     identity: ensureNexusId(identityFromAnime(anime)),
     anime,
   }));
