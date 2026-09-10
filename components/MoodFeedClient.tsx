@@ -123,7 +123,11 @@ export function MoodFeedClient({
           {entries.length < 2
             ? " by viewing intent (add shelf titles for taste personalisation)"
             : " by viewing intent + your shelf"}
-          {aiBusy ? " · refining…" : judge?.ok ? " · AI refined" : ""}
+          {aiBusy
+            ? " \u00b7 refining\u2026"
+            : judge?.recommendations?.length
+              ? " \u00b7 AI refined"
+              : ""}
         </p>
       ) : null}
       <AnimeGrid items={display} trackBehaviour />
