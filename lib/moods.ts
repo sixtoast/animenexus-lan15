@@ -50,13 +50,5 @@ export function getMood(slug: string): MoodDef | undefined {
   return MOODS.find((m) => m.slug === slug);
 }
 
-export function moodToFilters(mood: MoodDef): AnimeFilters {
-  return {
-    genre: mood.genres[0],
-    sort: mood.sort,
-    adultFilter: "exclude",
-  };
-}
-
 /** @deprecated use getExperienceIntent — kept for imports */
 export { EXPERIENCE_INTENTS, getExperienceIntent, resolveIntentSlug };
