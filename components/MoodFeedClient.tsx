@@ -28,7 +28,11 @@ type Props = {
  * Catalog from the server; explicit Viewing Intent uses Ranker V3 fingerprint fit.
  * When AI is configured, semantic judge may modestly reorder the V3 shortlist.
  */
-export function MoodFeedClient({ items, moodLabel, experienceSlug }: Props) {
+export function MoodFeedClient({
+  items,
+  moodLabel,
+  experienceSlug,
+}: Props) {
   const { entries, ready } = useWatchlist();
   const sessionKey = useSessionRevision();
   const [aiOrdered, setAiOrdered] = useState<Anime[] | null>(null);
@@ -36,9 +40,13 @@ export function MoodFeedClient({ items, moodLabel, experienceSlug }: Props) {
   const [aiBusy, setAiBusy] = useState(false);
 
   const ordered = useMemo(() => {
-    if (!ready || entries.length < 2 || items.length < 2) return items;
+    // Explicit mood must rank by intent even with an empty shelf.
+    // Taste personalisation is secondary; fingerprintIntentFit is primary.
+    if (items.length < 2) return items;
+    if (!experienceSlug && (!ready || entries.length < 2)) return items;
+
     const exclude = new Set<number>([
-      ...entries.map((e) => e.id),
+      ...(ready ? entries.map((e) => e.id) : []),
       ...rejectedAnimeIds(),
     ]);
     const ranked = rankRecommendations(items, entries, {
@@ -55,7 +63,8 @@ export function MoodFeedClient({ items, moodLabel, experienceSlug }: Props) {
   useEffect(() => {
     setAiOrdered(null);
     setJudge(null);
-    if (!ready || entries.length < 2 || items.length < 4) return;
+    if (items.length < 4) return;
+    if (!experienceSlug && (!ready || entries.length < 2)) return;
     if (typeof window === "undefined" || !isAIConfigured()) return;
 
     let cancelled = false;
@@ -64,29 +73,28 @@ export function MoodFeedClient({ items, moodLabel, experienceSlug }: Props) {
     (async () => {
       try {
         const exclude = new Set<number>([
-          ...entries.map((e) => e.id),
+          ...(ready ? entries.map((e) => e.id) : []),
           ...rejectedAnimeIds(),
         ]);
         const v3 = rankRecommendationsV3(items, entries, {
           excludeIds: exclude,
           experienceSlug,
         });
-        if (!v3.length) return;
         const { ranked, judge: j } = await rankWithSemanticJudge(v3, entries, {
           experienceSlug,
           limit: 24,
         });
         if (cancelled) return;
         setJudge(j);
-        if (j?.recommendations?.length) {
+        if (ranked.length) {
           const ids = new Set(ranked.map((r) => r.anime.id));
           const tail = items.filter((a) => !ids.has(a.id));
           setAiOrdered([...ranked.map((r) => r.anime), ...tail]);
         }
       } catch {
         if (!cancelled) {
-          setAiOrdered(null);
           setJudge(null);
+          setAiOrdered(null);
         }
       } finally {
         if (!cancelled) setAiBusy(false);
@@ -98,51 +106,24 @@ export function MoodFeedClient({ items, moodLabel, experienceSlug }: Props) {
     };
   }, [ready, entries, items, experienceSlug, sessionKey]);
 
-  const display = aiOrdered || ordered;
-
-  const personalized = ready && entries.length >= 2;
+  const display = aiOrdered ?? ordered;
   const trend =
-    personalized && typeof window !== "undefined"
-      ? preferenceTrendLine(entries)
-      : null;
-
-  const sess = typeof window !== "undefined" ? readIntentSession() : null;
-  const dialNote =
-    sess &&
-    (sess.intensity !== "moderate" ||
-      sess.energy !== "medium" ||
-      sess.minutesAvailable != null)
-      ? ` \u00b7 ${sess.intensity}/${sess.energy}${
-          sess.minutesAvailable ? `/${sess.minutesAvailable}m` : ""
-        }`
-      : "";
-
-  const topWhy =
-    judge?.recommendations?.[0]?.why?.filter(Boolean).slice(0, 2) || [];
+    ready && entries.length >= 2 ? preferenceTrendLine(entries) : null;
 
   return (
-    <div>
-      {personalized ? (
-        <p
-          className="meta"
-          style={{ marginBottom: 12 }}
-          role="status"
-          aria-live="polite"
-        >
-          Ranked for your interest modes within {moodLabel}
-          {trend ? ` \u00b7 ${trend}` : ""}
-          {dialNote}
-          {aiBusy
-            ? " \u00b7 Lantern is reading the room\u2026"
-            : judge
-              ? " \u00b7 semantic layer on"
-              : " \u2014 preference prediction, not pure similarity."}
+    <div className="mood-feed">
+      {trend ? (
+        <p className="mood-feed-trend muted" style={{ marginBottom: 12 }}>
+          {trend}
         </p>
       ) : null}
-      {judge?.interpretation?.whatTheUserWants ? (
-        <p className="meta" style={{ marginBottom: 10 }}>
-          <strong>Tonight:</strong> {judge.interpretation.whatTheUserWants}
-          {topWhy.length ? ` \u2014 ${topWhy.join(" \u00b7 ")}` : ""}
+      {experienceSlug ? (
+        <p className="mood-feed-rank-note muted" style={{ marginBottom: 8 }}>
+          Ranked for <strong>{moodLabel}</strong>
+          {entries.length < 2
+            ? " by viewing intent (add shelf titles for taste personalisation)"
+            : " by viewing intent + your shelf"}
+          {aiBusy ? " · refining…" : judge?.ok ? " · AI refined" : ""}
         </p>
       ) : null}
       <AnimeGrid items={display} trackBehaviour />
