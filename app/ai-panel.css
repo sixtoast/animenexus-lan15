@@ -1,16 +1,17 @@
 .ai-fab {
   position: fixed;
-  bottom: 96px;
-  right: 28px;
-  z-index: 85;
-  width: 48px;
-  height: 48px;
+  bottom: max(96px, calc(var(--dock-h, 64px) + 28px + env(safe-area-inset-bottom)));
+  right: 20px;
+  z-index: var(--z-ai-fab, 160);
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  border: 1px solid var(--color-border);
-  background: var(--color-secondary);
-  font-size: 1.25rem;
+  border: 1px solid var(--color-accent-border-strong);
+  background: linear-gradient(145deg, var(--color-secondary), var(--color-tertiary));
+  color: var(--color-accent);
+  font-size: 1.3rem;
   cursor: pointer;
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 8px 28px var(--color-accent-glow), var(--shadow-soft);
   transition: var(--transition);
 }
 
@@ -49,7 +50,6 @@
   font-weight: 600;
 }
 
-/* Inner stack when hosted in Modal drawer */
 .ai-panel-inner {
   display: flex;
   flex-direction: column;
@@ -98,7 +98,7 @@
 }
 
 .ai-msg.assistant {
-  background: rgba(240, 160, 144, 0.12);
+  background: rgba(var(--color-accent-rgb), 0.12);
   border: 1px solid var(--color-border);
   align-self: flex-start;
   max-width: 95%;
