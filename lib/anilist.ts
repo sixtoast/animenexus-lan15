@@ -538,13 +538,26 @@ export async function fetchFiltered(
     page,
     perPage,
   ]);
+  // Tag filters are AniList-specific. Kitsu/Shikimori ignore `tag` and would
+  // poison mood pools with identical untagged catalogues if used as fallbacks.
+  const fallbacks =
+    filters.tag
+      ? []
+      : [
+          { name: "Kitsu", run: () => kitsuFiltered(filters, page, perPage) },
+          {
+            name: "Shikimori",
+            run: () => shikiFiltered(filters, page, perPage),
+          },
+        ];
   return dedupedFetch(
     key,
     () =>
-      withFallbacks("filtered", () => anilistFiltered(filters, page, perPage), [
-        { name: "Kitsu", run: () => kitsuFiltered(filters, page, perPage) },
-        { name: "Shikimori", run: () => shikiFiltered(filters, page, perPage) },
-      ]),
+      withFallbacks(
+        "filtered",
+        () => anilistFiltered(filters, page, perPage),
+        fallbacks,
+      ),
     CACHE_TTL.catalog,
   );
 }
