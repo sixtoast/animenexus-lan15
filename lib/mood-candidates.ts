@@ -1,8 +1,6 @@
 /**
- * Multi-source Mood candidate retrieval.
- * Genres are retrieval hints ONLY — never semantic truth.
+ * Mood candidate retrieval + hard mood ranking.
  */
-
 import type { Anime } from "./types";
 import { fetchDiscover, fetchFiltered } from "./anilist";
 import {
@@ -13,6 +11,12 @@ import {
 import { buildEnrichedFingerprint } from "./intelligence/items";
 import type { IntentSession } from "./intent-session";
 import { identityFromAnime, ensureNexusId } from "./anime-identity";
+import { JIKAN_BASE } from "./api";
+import {
+  MOOD_TAG_HINTS,
+  MOOD_JIKAN_GENRES,
+  moodMatchScore,
+} from "./mood-match";
 
 export type MoodRetrievalSource = {
   source: string;
@@ -32,77 +36,103 @@ export type MoodCandidatesResult = {
   dedupeCount: number;
 };
 
-/** Valid AniList-ish tag names only — never product semantic dims as API tags. */
-const MOOD_TAG_HINTS: Record<string, string[]> = {
-  destroy: ["Tragedy", "Coming of Age", "Drama"],
-  comfort: ["Iyashikei", "Slice of Life", "CGDCT"],
-  think: ["Psychological", "Philosophy", "Detective"],
-  laugh: ["Comedy", "Parody", "Gag Humor"],
-  tense: ["Suspense", "Thriller", "Psychological"],
-  wonder: ["Fantasy", "Adventure", "Space"],
-  gentle: ["Iyashikei", "Slice of Life", "School"],
-  chaotic: ["Comedy", "Action", "Parody"],
-  romance: ["Romance", "School"],
-  surprise: [],
-};
+export { moodMatchScore, MOOD_TAG_HINTS };
 
-async function poolGenre(
-  genre: string,
-  perPage: number,
-): Promise<{ data: Anime[]; error?: string }> {
+async function poolGenre(genre: string, perPage: number) {
   try {
     const page = await fetchFiltered(
       { genre, sort: "score", adultFilter: "exclude" },
       1,
       perPage,
     );
-    return { data: page.data };
+    return { data: page.data as Anime[] };
   } catch (e) {
     return {
-      data: [],
-      error: e instanceof Error ? e.message : "genre pool failed",
+      data: [] as Anime[],
+      error: e instanceof Error ? e.message : "genre failed",
     };
   }
 }
 
-async function poolTag(
-  tag: string,
-  perPage: number,
-): Promise<{ data: Anime[]; error?: string }> {
+async function poolTag(tag: string, perPage: number) {
   try {
     const page = await fetchFiltered(
       { tag, sort: "score", adultFilter: "exclude" },
       1,
       perPage,
     );
-    return { data: page.data };
+    return { data: page.data as Anime[] };
   } catch (e) {
-    // Do NOT fall back to title search — that is not semantic tag retrieval.
     return {
-      data: [],
-      error: e instanceof Error ? e.message : "tag pool failed",
+      data: [] as Anime[],
+      error: e instanceof Error ? e.message : "tag failed",
     };
   }
 }
 
-async function poolQuality(
-  perPage: number,
-): Promise<{ data: Anime[]; error?: string }> {
+async function poolJikanGenres(genreIds: number[], perPage: number) {
+  if (!genreIds.length) return { data: [] as Anime[] };
   try {
-    const [top, trending] = await Promise.all([
-      fetchDiscover("top", 1, Math.ceil(perPage / 2), "exclude"),
-      fetchDiscover("trending", 1, Math.ceil(perPage / 2), "exclude"),
-    ]);
-    return { data: [...top.data, ...trending.data] };
+    const ids = genreIds.slice(0, 2).join(",");
+    const url = `${JIKAN_BASE}/anime?genres=${ids}&order_by=score&sort=desc&limit=${Math.min(perPage, 25)}&sfw=true`;
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      next: { revalidate: 3600 },
+    } as RequestInit);
+    if (!res.ok) {
+      return { data: [] as Anime[], error: `Jikan HTTP ${res.status}` };
+    }
+    const json = (await res.json()) as {
+      data?: Array<{
+        mal_id: number;
+        title?: string;
+        title_english?: string | null;
+        images?: { jpg?: { large_image_url?: string; image_url?: string } };
+        score?: number | null;
+        episodes?: number | null;
+        type?: string | null;
+        genres?: { name: string }[];
+        themes?: { name: string }[];
+        synopsis?: string | null;
+        year?: number | null;
+        status?: string | null;
+      }>;
+    };
+    const data: Anime[] = (json.data || []).map((a) => {
+      const genres = [
+        ...(a.genres || []).map((g) => g.name),
+        ...(a.themes || []).map((g) => g.name),
+      ];
+      return {
+        id: a.mal_id + 20_000_000,
+        idMal: a.mal_id,
+        anilist_id: 0,
+        title: a.title || a.title_english || "Unknown",
+        image:
+          a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || "",
+        description: a.synopsis || "",
+        episodes: a.episodes ?? 0,
+        duration: 0,
+        popularity: 0,
+        score: a.score != null ? a.score * 10 : 0,
+        format: (a.type || "TV") as Anime["format"],
+        status: (a.status || "FINISHED") as Anime["status"],
+        year: a.year ?? "",
+        genre: genres[0] || "N/A",
+        tags: genres,
+        source: "jikan",
+      } as Anime;
+    });
+    return { data };
   } catch (e) {
     return {
-      data: [],
-      error: e instanceof Error ? e.message : "quality pool failed",
+      data: [] as Anime[],
+      error: e instanceof Error ? e.message : "jikan failed",
     };
   }
 }
 
-function dedupe(animes: Anime[]): { unique: Anime[]; dropped: number } {
+function dedupe(animes: Anime[]) {
   const byNexus = new Map<string, Anime>();
   let dropped = 0;
   for (const a of animes) {
@@ -131,8 +161,8 @@ export async function getMoodCandidates(
   const retrieval: MoodRetrievalSource[] = [];
   const tagAnimes: Anime[] = [];
   const genreAnimes: Anime[] = [];
+  const jikanAnimes: Anime[] = [];
 
-  // 1) Real AniList tag pools first (mood-specific)
   const tagHints = MOOD_TAG_HINTS[intent.slug] || [];
   const tagResults = await Promise.allSettled(
     tagHints.slice(0, 3).map((tg) => poolTag(tg, Math.max(perPool, 40))),
@@ -157,7 +187,6 @@ export async function getMoodCandidates(
     }
   });
 
-  // 2) Genre hint pools (retrieval only, not semantic truth)
   const genres = (intent.genreHints || []).slice(0, 3);
   const genreResults = await Promise.allSettled(
     genres.map((g) => poolGenre(g, perPool)),
@@ -182,49 +211,84 @@ export async function getMoodCandidates(
     }
   });
 
-  // 3) Tiny quality safety net — only if tag+genre are thin
-  let { unique, dropped } = dedupe([...tagAnimes, ...genreAnimes]);
-
-  if (unique.length < 48) {
-    const quality = await poolQuality(12);
+  const jikanIds = MOOD_JIKAN_GENRES[intent.slug] || [];
+  if (jikanIds.length) {
+    const jk = await poolJikanGenres(jikanIds, 25);
     retrieval.push({
-      source: "quality:top+trending",
-      requested: 12,
-      returned: quality.data.length,
-      error: quality.error,
+      source: `jikan:genres:${jikanIds.slice(0, 2).join(",")}`,
+      requested: 25,
+      returned: jk.data.length,
+      error: (jk as { error?: string }).error,
     });
-    ({ unique, dropped } = dedupe([...unique, ...quality.data]));
+    jikanAnimes.push(...jk.data);
   }
 
-  if (unique.length < 36) {
-    const more = await poolQuality(16);
-    retrieval.push({
-      source: "quality:broaden",
-      requested: 16,
-      returned: more.data.length,
-      error: more.error,
-    });
-    ({ unique, dropped } = dedupe([...unique, ...more.data]));
+  let { unique, dropped } = dedupe([
+    ...tagAnimes,
+    ...genreAnimes,
+    ...jikanAnimes,
+  ]);
+
+  if (unique.length < 12) {
+    try {
+      const quality = await fetchDiscover("top", 1, 12, "exclude");
+      retrieval.push({
+        source: "quality:top-emergency",
+        requested: 12,
+        returned: quality.data.length,
+      });
+      ({ unique, dropped } = dedupe([...unique, ...quality.data]));
+    } catch (e) {
+      retrieval.push({
+        source: "quality:top-emergency",
+        requested: 12,
+        returned: 0,
+        error: e instanceof Error ? e.message : "quality failed",
+      });
+    }
   }
 
-  // Rank by real fingerprintIntentFit on the server so mood pages diverge
-  // even with an empty shelf and before client JS runs.
-  // Tag-pool hits get a small provenance boost (not a genre rewrite).
   const tagIds = new Set(tagAnimes.map((a) => a.id));
+  const jikanIdSet = new Set(jikanAnimes.map((a) => a.id));
+
   const scored = unique.map((anime) => {
-    const fp = buildEnrichedFingerprint(anime);
-    let fit = fingerprintIntentFit(fp, intent, null);
-    if (tagIds.has(anime.id)) fit = Math.min(1, fit + 0.08);
-    return { anime, fit };
+    const hard = moodMatchScore(anime, intent);
+    let fpFit = 0.5;
+    try {
+      fpFit = fingerprintIntentFit(
+        buildEnrichedFingerprint(anime),
+        intent,
+        null,
+      );
+    } catch {
+      /* soft */
+    }
+    let fit = hard * 0.7 + fpFit * 0.3;
+    if (tagIds.has(anime.id)) fit = Math.min(1, fit + 0.1);
+    if (jikanIdSet.has(anime.id)) fit = Math.min(1, fit + 0.06);
+    return { anime, fit, hard };
   });
-  scored.sort((a, b) => b.fit - a.fit);
 
-  const candidates: MoodCandidate[] = scored.map(({ anime }) => ({
-    identity: ensureNexusId(identityFromAnime(anime)),
-    anime,
-  }));
+  scored.sort((a, b) => {
+    if (Math.abs(b.hard - a.hard) > 0.05) return b.hard - a.hard;
+    return b.fit - a.fit;
+  });
 
-  return { candidates, retrieval, dedupeCount: dropped };
+  let final = scored;
+  const strong = scored.filter((s) => s.hard >= 0.25);
+  if (strong.length >= 16) final = strong;
+  else if (scored.filter((s) => s.hard >= 0.15).length >= 12) {
+    final = scored.filter((s) => s.hard >= 0.15);
+  }
+
+  return {
+    candidates: final.map(({ anime }) => ({
+      identity: ensureNexusId(identityFromAnime(anime)),
+      anime,
+    })),
+    retrieval,
+    dedupeCount: dropped,
+  };
 }
 
 export async function getMoodCandidatesBySlug(
@@ -232,8 +296,6 @@ export async function getMoodCandidatesBySlug(
   session?: IntentSession | null,
 ): Promise<MoodCandidatesResult> {
   const intent = getExperienceIntent(slug);
-  if (!intent) {
-    return { candidates: [], retrieval: [], dedupeCount: 0 };
-  }
+  if (!intent) return { candidates: [], retrieval: [], dedupeCount: 0 };
   return getMoodCandidates(intent, session);
 }
