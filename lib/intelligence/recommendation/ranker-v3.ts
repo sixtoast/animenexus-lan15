@@ -38,7 +38,10 @@ import {
   fatigueScoreFactor,
 } from "@/lib/taste-fatigue";
 import { buildDropSignatures, dropPenalty } from "@/lib/drop-signatures";
-import { getExperienceIntent } from "@/lib/viewing-intent";
+import {
+  getExperienceIntent,
+  fingerprintIntentFit,
+} from "@/lib/viewing-intent";
 import { readIntentSession } from "@/lib/intent-session";
 
 export const RANKER_VERSION = "ranker_v3";
@@ -57,6 +60,20 @@ export const RANKER_V3_WEIGHTS = {
   dropRisk: 0.08,
 } as const;
 
+export const RANKER_V3_EXPLICIT_INTENT_WEIGHTS = {
+  stableTaste: 0.13,
+  activeCluster: 0.08,
+  emergingTaste: 0.06,
+  viewingIntent: 0.36,
+  fingerprint: 0.09,
+  sourceAgreement: 0.06,
+  completionLikelihood: 0.1,
+  communityQuality: 0.05,
+  availability: 0.03,
+  fatigue: 0.08,
+  dropRisk: 0.08,
+} as const;
+
 export type MatchSignal = {
   key: string;
   label: string;
@@ -66,69 +83,48 @@ export type MatchSignal = {
 export type RankedRecommendationV3 = {
   anime: Anime;
   score: number;
-  confidence: "soft" | "good" | "strong" | "very_strong";
-  explorationLevel: "safe" | "adjacent" | "exploratory";
-  strongSignals: MatchSignal[];
-  frictionSignals: FrictionSignal[];
+  confidence: "strong" | "good" | "soft" | "exploratory";
   reasons: string[];
-  featureBreakdown: Record<string, number>;
-  sourceAgreement?: number;
-  fingerprintConfidence?: number;
+  signals: MatchSignal[];
+  friction: FrictionSignal[];
+  completionLikelihood: number;
+  noveltyFit: number;
+  explorationSlot: boolean;
+  featureBreakdown: AnimePreferenceFingerprint;
 };
 
-function clamp01(n: number): number {
+function clamp01(n: number) {
   return Math.max(0, Math.min(1, n));
 }
 
-function confidenceFrom(
-  score: number,
-  fpConf: number,
-  userConf: number,
-): RankedRecommendationV3["confidence"] {
-  const evidence = Math.min(fpConf, Math.max(0.35, userConf));
-  const adjusted = score * (0.55 + evidence * 0.45);
-  if (adjusted >= 0.78 && evidence >= 0.55) return "very_strong";
-  if (adjusted >= 0.65) return "strong";
-  if (adjusted >= 0.48) return "good";
-  return "soft";
-}
-
-function explorationLevel(
-  score: number,
-  novelty: number,
-): RankedRecommendationV3["explorationLevel"] {
-  if (score >= 0.62) return "safe";
-  if (score >= 0.42 || novelty >= 0.55) return "adjacent";
+function confidenceLabel(score: number): RankedRecommendationV3["confidence"] {
+  if (score >= 0.72) return "strong";
+  if (score >= 0.55) return "good";
+  if (score >= 0.35) return "soft";
   return "exploratory";
 }
-
-export type RankV3Options = {
-  excludeIds?: Set<number> | number[];
-  experienceSlug?: string | null;
-  sourceAgreement?: Map<number, number>;
-  fingerprints?: Map<number, AnimePreferenceFingerprint>;
-};
 
 export function rankRecommendationsV3(
   candidates: Anime[],
   entries: WatchlistEntry[],
-  opts?: RankV3Options,
+  opts?: {
+    excludeIds?: Set<number> | number[];
+    experienceSlug?: string | null;
+    fingerprints?: Map<number, AnimePreferenceFingerprint>;
+    sourceAgreement?: Map<number, number>;
+  },
 ): RankedRecommendationV3[] {
   const exclude = new Set(
     opts?.excludeIds
       ? Array.isArray(opts.excludeIds)
         ? opts.excludeIds
         : [...opts.excludeIds]
-      : entries.map((e) => e.id),
+      : [],
   );
 
-  const user = buildUserPreferenceVector(entries, {
-    fingerprints: opts?.fingerprints,
-  });
+  const user = buildUserPreferenceVector(entries);
   const userVec = blendUserVector(user);
-  const clusters = buildTasteClustersV3(entries, {
-    fingerprints: opts?.fingerprints,
-  });
+  const clusters = buildTasteClustersV3(entries);
   const trends = detectTasteDriftV3(entries, {
     fingerprints: opts?.fingerprints,
   });
@@ -146,6 +142,8 @@ export function rankRecommendationsV3(
     }
   }
   const exp = slug ? getExperienceIntent(slug) : undefined;
+  const session =
+    typeof window !== "undefined" ? readIntentSession() : null;
 
   const emergingVec = { ...userVec };
   for (const t of trends.filter((x) => x.direction === "up").slice(0, 4)) {
@@ -156,7 +154,10 @@ export function rankRecommendationsV3(
   }
 
   const active = clusters.find((c) => c.state === "stable") || clusters[0];
-  const W = RANKER_V3_WEIGHTS;
+  const W =
+    exp && exp.slug !== "surprise"
+      ? RANKER_V3_EXPLICIT_INTENT_WEIGHTS
+      : RANKER_V3_WEIGHTS;
   const ranked: RankedRecommendationV3[] = [];
 
   for (const anime of candidates) {
@@ -173,28 +174,10 @@ export function rankRecommendationsV3(
 
     let intentSim = stableSim * 0.85;
     if (exp) {
-      const tip = buildAnimePreferenceFingerprint({
-        id: -10,
-        title: exp.label,
-        description: exp.blurb || "",
-        genre: exp.genreHints?.[0] || "",
-        tags: exp.genreHints || [],
-        status: "FINISHED",
-        format: "TV",
-        year: "",
-        score: 0,
-        popularity: 0,
-        image: "",
-        anilist_id: -10,
-        episodes: 12,
-        duration: 24,
-      });
-      const tv = fingerprintToVector(tip);
-      const intentUser = { ...userVec };
-      for (const [k, v] of Object.entries(tv)) {
-        intentUser[k] = (intentUser[k] ?? 0.5) * 0.4 + v * 0.6;
-      }
-      intentSim = vectorSimilarity(intentUser, fp, WEIGHTS_TONIGHT);
+      intentSim =
+        exp.slug === "surprise"
+          ? 0.5
+          : fingerprintIntentFit(fp, exp, session);
     }
 
     const fpSim = vectorSimilarity(userVec, fp, WEIGHTS_LONG_TERM);
@@ -215,158 +198,87 @@ export function rankRecommendationsV3(
     const fatFactor = fatigueScoreFactor(fat);
     const fatiguePenalty = 1 - fatFactor;
 
-    const { penalty: dropPen } = dropPenalty(
-      dropSigs,
-      anime.tags,
-      String(anime.format || ""),
-      anime.episodes,
-    );
+    const { penalty: dropPen } = dropPenalty(anime, dropSigs);
 
-    const features: Record<string, number> = {
-      stableTaste: stableSim,
-      activeCluster: clusterSim,
-      emergingTaste: emergingSim,
-      viewingIntent: intentSim,
-      fingerprint: fpSim,
-      sourceAgreement: agreementScore,
-      completionLikelihood: completion.probability,
-      communityQuality: community,
-      availability: 0.5,
-      fatigue: fatiguePenalty,
-      dropRisk: clamp01(dropPen),
-    };
+    const availability = 0.55;
 
     let score =
-      features.stableTaste * W.stableTaste +
-      features.activeCluster * W.activeCluster +
-      features.emergingTaste * W.emergingTaste +
-      features.viewingIntent * W.viewingIntent +
-      features.fingerprint * W.fingerprint +
-      features.sourceAgreement * W.sourceAgreement +
-      features.completionLikelihood * W.completionLikelihood +
-      features.communityQuality * W.communityQuality +
-      features.availability * W.availability -
-      features.fatigue * W.fatigue -
-      features.dropRisk * W.dropRisk;
+      W.stableTaste * stableSim +
+      W.activeCluster * clusterSim +
+      W.emergingTaste * emergingSim +
+      W.viewingIntent * intentSim +
+      W.fingerprint * fpSim +
+      W.sourceAgreement * agreementScore +
+      W.completionLikelihood * completion +
+      W.communityQuality * community +
+      W.availability * availability -
+      W.fatigue * fatiguePenalty -
+      W.dropRisk * dropPen;
 
     score = clamp01(score);
 
-    const aligned = topAlignedDimensions(userVec, fp, 6);
-    const strongSignals: MatchSignal[] = aligned
-      .filter((a) => a.align >= 0.72 && Math.abs(a.item - 0.5) >= 0.12)
-      .slice(0, 4)
-      .map((a) => ({
-        key: a.key,
-        label: humanizeDimKey(a.key),
-        strength: a.align,
-      }));
-
-    if (active && clusterSim >= 0.6) {
-      strongSignals.unshift({
-        key: "cluster",
-        label: active.label,
-        strength: clusterSim,
-      });
+    const reasons: string[] = [];
+    if (exp && intentSim >= 0.55) {
+      reasons.push(`Fits tonight \u00b7 ${exp.label}`);
     }
+    if (stableSim >= 0.6) reasons.push("Aligned with long-term taste");
+    if (clusterSim >= 0.62) reasons.push("Matches an active taste cluster");
+    if (completion >= 0.65) reasons.push("Likely to finish");
+    if (fatFactor < 0.85) reasons.push("Some fatigue risk on familiar beats");
+    if (dropPen > 0.15) reasons.push("Shares traits with past drops");
 
-    const frictionSignals = detectFriction(anime, entries, {
-      userVector: userVec,
+    const aligned = topAlignedDimensions(userVec, fp, 3);
+    const signals: MatchSignal[] = aligned.map((d) => ({
+      key: d.key,
+      label: humanizeDimKey(d.key),
+      strength: d.score,
+    }));
+
+    const friction = detectFriction(anime, entries, {
       fingerprint: fp,
+      userVector: userVec,
+      fatiguePenalty,
+      dropPenalty: dropPen,
     });
 
-    const reasons: string[] = [];
-    if (strongSignals[0]) {
-      reasons.push(`Aligns on ${strongSignals[0].label.toLowerCase()}`);
-    }
-    if (trends[0]?.direction === "up" && emergingSim >= 0.55) {
-      reasons.push(`Matches rising ${trends[0].label.toLowerCase()}`);
-    }
-    if (exp && intentSim >= 0.55) {
-      reasons.push(`Fits tonight · ${exp.label}`);
-    }
-    if (completion.probability >= 0.65 && completion.confidence >= 0.45) {
-      reasons.push(completion.reasons[0] || "Good completion outlook");
-    }
-    if (frictionSignals[0] && frictionSignals[0].severity >= 0.45) {
-      reasons.push(frictionSignals[0].message);
-    }
+    const explorationSlot =
+      novelty.level === "high" &&
+      budget.explorationShare > 0.2 &&
+      (fpSim < 0.45 || intentSim < 0.5);
 
     ranked.push({
       anime,
       score,
-      confidence: confidenceFrom(score, fp.confidence.overall, user.confidence),
-      explorationLevel: explorationLevel(score, novelty.value),
-      strongSignals: strongSignals.slice(0, 4),
-      frictionSignals: frictionSignals.slice(0, 3),
+      confidence: confidenceLabel(score),
       reasons: reasons.slice(0, 5),
-      featureBreakdown: features,
-      sourceAgreement: agreement,
-      fingerprintConfidence: fp.confidence.overall,
+      signals,
+      friction,
+      completionLikelihood: completion,
+      noveltyFit: clamp01(1 - Math.abs(novelty.score - 0.5) * 0.5),
+      explorationSlot,
+      featureBreakdown: fp,
     });
   }
 
   ranked.sort((a, b) => b.score - a.score);
-  return applyExplorationBudget(ranked, budget);
-}
 
-function applyExplorationBudget(
-  ranked: RankedRecommendationV3[],
-  budget: { safe: number; adjacent: number; exploratory: number },
-): RankedRecommendationV3[] {
-  if (ranked.length <= 8) return ranked;
-  const limit = Math.min(40, ranked.length);
-  const nSafe = Math.round(limit * budget.safe);
-  const nAdj = Math.round(limit * budget.adjacent);
-  const nExp = Math.max(1, limit - nSafe - nAdj);
+  // Soft exploration interleave for high novelty tolerance
+  if (budget.explorationShare >= 0.25 && ranked.length > 8) {
+    const explorers = ranked.filter((r) => r.explorationSlot).slice(0, 3);
+    if (explorers.length) {
+      const core = ranked.filter((r) => !r.explorationSlot);
+      const out: RankedRecommendationV3[] = [];
+      let ei = 0;
+      for (let i = 0; i < core.length; i++) {
+        out.push(core[i]);
+        if ((i + 1) % 5 === 0 && ei < explorers.length) {
+          out.push(explorers[ei++]);
+        }
+      }
+      while (ei < explorers.length) out.push(explorers[ei++]);
+      return out;
+    }
+  }
 
-  const safe = ranked.filter((r) => r.explorationLevel === "safe");
-  const adj = ranked.filter((r) => r.explorationLevel === "adjacent");
-  const exp = ranked.filter((r) => r.explorationLevel === "exploratory");
-
-  const out: RankedRecommendationV3[] = [];
-  const used = new Set<number>();
-
-  for (const r of safe) {
-    if (out.filter((x) => x.explorationLevel === "safe").length >= nSafe) break;
-    out.push(r);
-    used.add(r.anime.id);
-  }
-  for (const r of adj) {
-    if (used.has(r.anime.id)) continue;
-    if (out.filter((x) => x.explorationLevel === "adjacent").length >= nAdj)
-      break;
-    out.push(r);
-    used.add(r.anime.id);
-  }
-  for (const r of exp) {
-    if (used.has(r.anime.id)) continue;
-    if (
-      out.filter((x) => x.explorationLevel === "exploratory").length >= nExp
-    )
-      break;
-    out.push(r);
-    used.add(r.anime.id);
-  }
-  for (const r of ranked) {
-    if (out.length >= limit) break;
-    if (used.has(r.anime.id)) continue;
-    out.push(r);
-    used.add(r.anime.id);
-  }
-  return out;
-}
-
-export function confidenceLabelV3(
-  c: RankedRecommendationV3["confidence"],
-): string {
-  switch (c) {
-    case "very_strong":
-      return "Very strong";
-    case "strong":
-      return "Strong";
-    case "good":
-      return "Good";
-    default:
-      return "Soft";
-  }
+  return ranked;
 }
