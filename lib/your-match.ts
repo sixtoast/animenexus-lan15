@@ -33,7 +33,7 @@ export type YourMatch = {
   shelfStatus?: string;
   strongSignals?: MatchSignal[];
   frictionSignals?: FrictionSignal[];
-  explorationLevel?: RankedRecommendationV3["explorationLevel"];
+  explorationLevel?: "high" | "low";
 };
 
 function confidenceFromScore(
@@ -66,7 +66,7 @@ export function computeYourMatch(
             ? "Already on your completed shelf"
             : onShelf.watchStatus === "watching"
               ? "You're watching this now"
-              : `On your list · ${onShelf.watchStatus}`,
+              : `On your list \u00b7 ${onShelf.watchStatus}`,
         );
       }
       return {
@@ -75,12 +75,12 @@ export function computeYourMatch(
         confidenceLabel: confidenceLabelV3(hit.confidence),
         reasons: reasons.slice(0, 5),
         activeCluster:
-          hit.strongSignals.find((s) => s.key === "cluster")?.label ?? null,
+          hit.signals.find((s) => s.key === "cluster")?.label ?? null,
         onShelf: !!onShelf,
         shelfStatus: onShelf?.watchStatus,
-        strongSignals: hit.strongSignals,
-        frictionSignals: hit.frictionSignals,
-        explorationLevel: hit.explorationLevel,
+        strongSignals: hit.signals,
+        frictionSignals: hit.friction,
+        explorationLevel: hit.explorationSlot ? "high" : "low",
       };
     }
   } catch {
@@ -105,7 +105,7 @@ export function computeYourMatch(
         ? "Already on your completed shelf"
         : onShelf.watchStatus === "watching"
           ? "You're watching this now"
-          : `On your list · ${onShelf.watchStatus}`,
+          : `On your list \u00b7 ${onShelf.watchStatus}`,
     );
   }
 

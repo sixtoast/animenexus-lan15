@@ -27,7 +27,7 @@ export function YourMatchPanel({ anime }: Props) {
   if (!ready || !match) return null;
 
   const meter =
-    match.confidence === "very_strong" || match.confidence === "strong"
+    match.confidence === "strong"
       ? 88
       : match.confidence === "good"
         ? 68
@@ -50,11 +50,11 @@ export function YourMatchPanel({ anime }: Props) {
         />
       </div>
       <p className="your-match-score meta" aria-live="polite">
-        Lantern confidence · {match.confidenceLabel}
+        Lantern confidence \u00b7 {match.confidenceLabel}
         {match.explorationLevel
-          ? ` · ${match.explorationLevel}`
+          ? ` \u00b7 ${match.explorationLevel}`
           : match.activeCluster
-            ? ` · "${match.activeCluster}"`
+            ? ` \u00b7 "${match.activeCluster}"`
             : ""}
       </p>
 
