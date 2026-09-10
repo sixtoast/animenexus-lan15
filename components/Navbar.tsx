@@ -131,11 +131,13 @@ export function Navbar() {
 
   return (
     <>
-      <header className="site-header">
-        <div className="container nav-bar">
+      <header className="navbar site-header">
+        <div className="container navbar-inner nav-bar">
           <Link
             href="/"
-            className={"nav-brand" + (logoPulse ? " nav-brand--pulse" : "")}
+            className={
+              "logo nav-brand" + (logoPulse ? " logo--pulse nav-brand--pulse" : "")
+            }
             onClick={() => playCue("filter_select")}
           >
             <span className="nav-brand-mark" aria-hidden />
@@ -170,30 +172,30 @@ export function Navbar() {
                   </li>
                 );
               })}
-              {indicator.ready ? (
-                <li
-                  className="nav-indicator"
-                  aria-hidden
-                  style={{
-                    transform: `translateX(${indicator.left}px)`,
-                    width: indicator.width,
-                  }}
-                />
-              ) : null}
+              <span
+                className={
+                  "nav-indicator" + (indicator.ready ? " nav-indicator--on" : "")
+                }
+                style={{
+                  transform: `translateX(${indicator.left}px)`,
+                  width: indicator.width,
+                }}
+                aria-hidden
+              />
             </ul>
           </nav>
 
-          <div className="nav-actions">
+          <div className="nav-right nav-actions">
             <OnAir />
             <Button
               variant="outline"
               size="sm"
               className="nav-search-btn"
               aria-label="Search"
-              title="Search ( / or \u2318K )"
+              title="Search ( / or ⌘K )"
               onClick={onSearch}
             >
-              <span aria-hidden>\u2315</span>
+              <span aria-hidden>⌕</span>
               <span className="nav-search-label">Search</span>
             </Button>
             <MotionToggle />
@@ -223,19 +225,19 @@ export function Navbar() {
                   playCue("filter_select");
                 }}
               >
-                Log out
+                Out
               </Button>
             ) : null}
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               className="nav-toggle"
+              aria-label={open ? "Close menu" : "Open menu"}
               aria-expanded={open}
               aria-controls="mobile-nav"
               onClick={toggleMenu}
-              silent
             >
-              {open ? "Close" : "More"}
+              <NexusIcon name={open ? "close" : "menu"} size="sm" />
             </Button>
           </div>
         </div>
@@ -261,7 +263,7 @@ export function Navbar() {
               <div className="nav-mobile-head">
                 <p className="nav-mobile-kicker">More</p>
                 <p className="nav-mobile-sub">
-                  Catalog, moods, account \u2014 primary tabs stay on the dock
+                  Catalog, moods, account — primary tabs stay on the dock
                 </p>
               </div>
               <ul>
@@ -280,9 +282,7 @@ export function Navbar() {
                         <span className="nav-mobile-main">
                           <span className="nav-mobile-label">{l.label}</span>
                           {l.poetic ? (
-                            <span className="nav-mobile-poetic">
-                              {l.poetic}
-                            </span>
+                            <span className="nav-mobile-poetic">{l.poetic}</span>
                           ) : null}
                         </span>
                         {active ? (
@@ -314,24 +314,10 @@ export function Navbar() {
                       closeMenu();
                     }}
                   >
-                    Log out \u00b7 {session.username}
+                    Log out · {session.username}
                   </Button>
                 ) : null}
                 <NavSoundToggle />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  silent
-                  onClick={() => toggleTheme()}
-                >
-                  <>
-                    <NexusIcon
-                      name={theme === "dark" ? "theme-light" : "theme-dark"}
-                      size="sm"
-                    />
-                    {theme === "dark" ? " Light" : " Dark"}
-                  </>
-                </Button>
               </div>
             </nav>
           </>
@@ -343,7 +329,7 @@ export function Navbar() {
           if (item.href === "__search__") {
             return (
               <button
-                key="search"
+                key={item.href}
                 type="button"
                 className="nav-dock-item nav-dock-item--search"
                 onClick={onSearch}
@@ -358,7 +344,7 @@ export function Navbar() {
           if (item.href === "__more__") {
             return (
               <button
-                key="more"
+                key={item.href}
                 type="button"
                 className={
                   "nav-dock-item" + (open ? " nav-dock-item--active" : "")
