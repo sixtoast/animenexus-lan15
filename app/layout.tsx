@@ -45,6 +45,7 @@ import "./seal-env.css";
 import "./signal-motion.css";
 import "./card-polish.css";
 import "./nav-polish.css";
+import "./nav-dock.css";
 import "./layout-shell.css";
 import "./mascot.css";
 import "./sprint-a.css";
@@ -135,7 +136,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#120e0c",
+  themeColor: "#0c0a0f",
 };
 
 export default function RootLayout({
