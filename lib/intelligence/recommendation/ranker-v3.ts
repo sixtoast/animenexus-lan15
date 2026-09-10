@@ -74,6 +74,21 @@ export const RANKER_V3_EXPLICIT_INTENT_WEIGHTS = {
   dropRisk: 0.08,
 } as const;
 
+/** When the shelf is empty, ranking must be almost pure viewing-intent fit. */
+export const RANKER_V3_EMPTY_SHELF_INTENT_WEIGHTS = {
+  stableTaste: 0.02,
+  activeCluster: 0.02,
+  emergingTaste: 0.02,
+  viewingIntent: 0.72,
+  fingerprint: 0.04,
+  sourceAgreement: 0.02,
+  completionLikelihood: 0.06,
+  communityQuality: 0.04,
+  availability: 0.02,
+  fatigue: 0.02,
+  dropRisk: 0.02,
+} as const;
+
 export type MatchSignal = {
   key: string;
   label: string;
@@ -169,9 +184,12 @@ export function rankRecommendationsV3(
   }
 
   const active = clusters.find((c) => c.state === "stable") || clusters[0];
+  const thinShelf = entries.length < 2;
   const W =
     exp && exp.slug !== "surprise"
-      ? RANKER_V3_EXPLICIT_INTENT_WEIGHTS
+      ? thinShelf
+        ? RANKER_V3_EMPTY_SHELF_INTENT_WEIGHTS
+        : RANKER_V3_EXPLICIT_INTENT_WEIGHTS
       : RANKER_V3_WEIGHTS;
   const ranked: RankedRecommendationV3[] = [];
 
