@@ -252,7 +252,7 @@ export function rankRecommendationsV3(
     const signals: MatchSignal[] = aligned.map((d) => ({
       key: d.key,
       label: humanizeDimKey(d.key),
-      strength: d.score,
+      strength: d.align,
     }));
 
     const friction = detectFriction(anime, entries, {
@@ -261,8 +261,8 @@ export function rankRecommendationsV3(
     });
 
     const explorationSlot =
-      novelty.level === "high" &&
-      budget.explorationShare > 0.2 &&
+      novelty.value >= 0.65 &&
+      budget.exploratory > 0.15 &&
       (fpSim < 0.45 || intentSim < 0.5);
 
     ranked.push({
@@ -273,7 +273,7 @@ export function rankRecommendationsV3(
       signals,
       friction,
       completionLikelihood: completion,
-      noveltyFit: clamp01(1 - Math.abs(novelty.score - 0.5) * 0.5),
+      noveltyFit: clamp01(1 - Math.abs(novelty.value - 0.5) * 0.5),
       explorationSlot,
       featureBreakdown: fp,
     });
@@ -282,7 +282,7 @@ export function rankRecommendationsV3(
   ranked.sort((a, b) => b.score - a.score);
 
   // Soft exploration interleave for high novelty tolerance
-  if (budget.explorationShare >= 0.25 && ranked.length > 8) {
+  if (budget.exploratory >= 0.2 && ranked.length > 8) {
     const explorers = ranked.filter((r) => r.explorationSlot).slice(0, 3);
     if (explorers.length) {
       const core = ranked.filter((r) => !r.explorationSlot);
