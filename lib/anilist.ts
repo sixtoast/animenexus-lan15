@@ -63,7 +63,14 @@ export function mapAniListMedia(item: Record<string, unknown>): Anime {
     titleNative: titleObj.native || undefined,
     description: stripHtml(item.description as string) || "No description available.",
     genre: genres[0] || "N/A",
-    tags: genres,
+    tags: Array.isArray(item.tags)
+      ? (item.tags as { name?: string; rank?: number }[])
+          .slice()
+          .sort((a, b) => (b.rank ?? 0) - (a.rank ?? 0))
+          .map((tg) => tg.name)
+          .filter((n): n is string => Boolean(n))
+      : [],
+    idMal: (item.idMal as number) || null,
     status: (item.status as string) || "Unknown",
     format: (item.format as string) || "TV",
     year: start.year ?? "?",
@@ -180,6 +187,16 @@ const MEDIA_FIELDS = `
   title { romaji english native }
   description
   genres
+  tags {
+    id
+    name
+    description
+    category
+    rank
+    isGeneralSpoiler
+    isMediaSpoiler
+  }
+  idMal
   status
   format
   startDate { year }
@@ -431,6 +448,7 @@ async function anilistFiltered(
       $perPage: Int
       $sort: [MediaSort]
       $genre: String
+      $tag: String
       $status: MediaStatus
       $format: MediaFormat
       $seasonYear: Int
@@ -442,6 +460,7 @@ async function anilistFiltered(
           type: ANIME
           sort: $sort
           genre: $genre
+          tag: $tag
           status: $status
           format: $format
           seasonYear: $seasonYear
@@ -459,6 +478,7 @@ async function anilistFiltered(
     sort: [sort],
   };
   if (filters.genre) variables.genre = filters.genre;
+  if (filters.tag) variables.tag = filters.tag;
   if (filters.status) {
     const statusMap: Record<string, string> = {
       finished: "FINISHED",
@@ -508,6 +528,7 @@ export async function fetchFiltered(
   const key = cacheKey([
     "filtered",
     filters.genre,
+    filters.tag,
     filters.status,
     filters.format,
     filters.year,
