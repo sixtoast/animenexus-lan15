@@ -1,5 +1,21 @@
 /** Shared domain types for AnimeNexus Lantern */
 
+export type AnimeTag = {
+  id: number | string;
+  name: string;
+  description?: string | null;
+  category?: string | null;
+  rank?: number | null;
+  isGeneralSpoiler?: boolean;
+  isMediaSpoiler?: boolean;
+  source:
+    | "anilist"
+    | "anidb"
+    | "mal"
+    | "tmdb"
+    | "legacy";
+};
+
 export type MediaFormat =
   | "TV"
   | "TV_SHORT"
@@ -105,6 +121,8 @@ export type AnimePage = {
 
 export type AnimeFilters = {
   genre?: string;
+  /** Real AniList tag name — never a product semantic dim */
+  tag?: string;
   status?: string;
   format?: string;
   year?: string;
