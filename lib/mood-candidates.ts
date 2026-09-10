@@ -110,11 +110,11 @@ function dedupe(animes: Anime[]): { unique: Anime[]; dropped: number } {
   for (const a of animes) {
     const id = ensureNexusId(identityFromAnime(a));
     const key =
-      id.anilistId != null
+      id.anilistId != null && id.anilistId > 0
         ? `anilist:${id.anilistId}`
-        : id.malId != null
+        : id.malId != null && id.malId > 0
           ? `mal:${id.malId}`
-          : id.nexusId;
+          : id.nexusId || `raw:${a.id}`;
     if (byNexus.has(key)) {
       dropped++;
       continue;
