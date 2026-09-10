@@ -45,6 +45,7 @@ import "./seal-env.css";
 import "./signal-motion.css";
 import "./card-polish.css";
 import "./nav-polish.css";
+import "./nav-brand-fix.css";
 import "./nav-dock.css";
 import "./layout-shell.css";
 import "./mascot.css";
