@@ -127,8 +127,35 @@ export async function getMoodCandidates(
 ): Promise<MoodCandidatesResult> {
   const perPool = opts?.perPool ?? 40;
   const retrieval: MoodRetrievalSource[] = [];
-  const pools: Anime[][] = [];
+  const tagAnimes: Anime[] = [];
+  const genreAnimes: Anime[] = [];
 
+  // 1) Real AniList tag pools first (mood-specific)
+  const tagHints = MOOD_TAG_HINTS[intent.slug] || [];
+  const tagResults = await Promise.allSettled(
+    tagHints.slice(0, 3).map((tg) => poolTag(tg, Math.max(perPool, 40))),
+  );
+  tagResults.forEach((r, i) => {
+    const tg = tagHints[i];
+    if (r.status === "fulfilled") {
+      retrieval.push({
+        source: `tag:${tg}`,
+        requested: Math.max(perPool, 40),
+        returned: r.value.data.length,
+        error: r.value.error,
+      });
+      tagAnimes.push(...r.value.data);
+    } else {
+      retrieval.push({
+        source: `tag:${tg}`,
+        requested: Math.max(perPool, 40),
+        returned: 0,
+        error: String(r.reason),
+      });
+    }
+  });
+
+  // 2) Genre hint pools (retrieval only, not semantic truth)
   const genres = (intent.genreHints || []).slice(0, 3);
   const genreResults = await Promise.allSettled(
     genres.map((g) => poolGenre(g, perPool)),
@@ -142,7 +169,7 @@ export async function getMoodCandidates(
         returned: r.value.data.length,
         error: r.value.error,
       });
-      pools.push(r.value.data);
+      genreAnimes.push(...r.value.data);
     } else {
       retrieval.push({
         source: `genre:${g}`,
@@ -153,48 +180,25 @@ export async function getMoodCandidates(
     }
   });
 
-  const tagHints = MOOD_TAG_HINTS[intent.slug] || [];
-  const tagResults = await Promise.allSettled(
-    tagHints.slice(0, 3).map((tg) => poolTag(tg, Math.min(32, perPool))),
-  );
-  tagResults.forEach((r, i) => {
-    const tg = tagHints[i];
-    if (r.status === "fulfilled") {
-      retrieval.push({
-        source: `tag:${tg}`,
-        requested: Math.min(32, perPool),
-        returned: r.value.data.length,
-        error: r.value.error,
-      });
-      pools.push(r.value.data);
-    } else {
-      retrieval.push({
-        source: `tag:${tg}`,
-        requested: Math.min(32, perPool),
-        returned: 0,
-        error: String(r.reason),
-      });
-    }
-  });
+  // 3) Tiny quality safety net — only if tag+genre are thin
+  let { unique, dropped } = dedupe([...tagAnimes, ...genreAnimes]);
 
-  // Quality pool is a safety net — keep small so it cannot dominate mood pools
-  const quality = await poolQuality(18);
-  retrieval.push({
-    source: "quality:top+trending",
-    requested: 18,
-    returned: quality.data.length,
-    error: quality.error,
-  });
-  pools.push(quality.data);
+  if (unique.length < 48) {
+    const quality = await poolQuality(12);
+    retrieval.push({
+      source: "quality:top+trending",
+      requested: 12,
+      returned: quality.data.length,
+      error: quality.error,
+    });
+    ({ unique, dropped } = dedupe([...unique, ...quality.data]));
+  }
 
-  let merged = pools.flat();
-  let { unique, dropped } = dedupe(merged);
-
-  if (unique.length < 50) {
-    const more = await poolQuality(24);
+  if (unique.length < 36) {
+    const more = await poolQuality(16);
     retrieval.push({
       source: "quality:broaden",
-      requested: 24,
+      requested: 16,
       returned: more.data.length,
       error: more.error,
     });
