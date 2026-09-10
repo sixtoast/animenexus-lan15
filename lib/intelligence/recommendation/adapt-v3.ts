@@ -13,7 +13,6 @@ function mapConfidence(
   c: RankedRecommendationV3["confidence"],
 ): RankedRecommendation["confidence"] {
   switch (c) {
-    case "very_strong":
     case "strong":
       return "strong";
     case "good":
@@ -32,9 +31,9 @@ export function rankedV3ToLegacy(
     anime: r.anime,
     score: r.score,
     confidence: mapConfidence(r.confidence),
-    resonanceSim: r.featureBreakdown.fingerprint ?? r.score,
+    resonanceSim: r.score,
     reasons: [
-      ...r.strongSignals.slice(0, 2).map((s) => s.label),
+      ...(r.signals || []).slice(0, 2).map((s) => s.label),
       ...r.reasons,
     ].slice(0, 5),
   }));
