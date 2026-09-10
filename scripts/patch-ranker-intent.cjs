@@ -4,12 +4,31 @@
 const fs = require("fs");
 const path = require("path");
 
+function restoreRankerFromB64() {
+  const b64 = path.join(process.cwd(), "scripts/lib__ranker-v3.ts.b64");
+  const dest = path.join(
+    process.cwd(),
+    "lib/intelligence/recommendation/ranker-v3.ts",
+  );
+  if (!fs.existsSync(b64)) return false;
+  const text = Buffer.from(fs.readFileSync(b64, "utf8"), "base64").toString(
+    "utf8",
+  );
+  if (text.includes("fingerprintIntentFit") && !text.includes("id: -10")) {
+    fs.writeFileSync(dest, text);
+    console.log("[patch-ranker] restored ranker-v3 from b64 snapshot");
+    return true;
+  }
+  return false;
+}
+
 const file = path.join(
   process.cwd(),
   "lib/intelligence/recommendation/ranker-v3.ts",
 );
 
 function main() {
+  if (restoreRankerFromB64()) return;
   if (!fs.existsSync(file)) return;
   let t = fs.readFileSync(file, "utf8");
   let changed = false;
@@ -22,33 +41,6 @@ function main() {
   fingerprintIntentFit,
 } from "@/lib/viewing-intent";`,
     );
-    changed = true;
-  }
-
-  if (!t.includes("readAiIntentOverlay")) {
-    if (t.includes('from "@/lib/intent-session"')) {
-      t = t.replace(
-        /import \{([^}]+)\} from "@\/lib\/intent-session";/,
-        (m, inner) => {
-          if (inner.includes("readAiIntentOverlay")) return m;
-          return `import { ${inner.trim().replace(/,$/, "")}, readAiIntentOverlay } from "@/lib/intent-session";`;
-        },
-      );
-    } else {
-      t = t.replace(
-        "import { getExperienceIntent",
-        `import { readIntentSession, readAiIntentOverlay } from "@/lib/intent-session";
-import { structuredToExperienceIntent } from "@/lib/intelligence/ai/interpret-intent";
-import { getExperienceIntent`,
-      );
-    }
-    if (!t.includes("structuredToExperienceIntent")) {
-      t = t.replace(
-        'from "@/lib/intent-session";',
-        `from "@/lib/intent-session";
-import { structuredToExperienceIntent } from "@/lib/intelligence/ai/interpret-intent";`,
-      );
-    }
     changed = true;
   }
 
@@ -78,11 +70,10 @@ export type MatchSignal`,
 
   if (t.includes("id: -10") || !t.includes("fingerprintIntentFit(fp, exp")) {
     const start = t.indexOf("let intentSim = stableSim * 0.85;");
-    const end = t.indexOf("const fpSim", start);
-    if (start >= 0 && end > start) {
-      t =
-        t.slice(0, start) +
-        `let intentSim = stableSim * 0.85;
+    if (start >= 0) {
+      const end = t.indexOf("const fpSim = vectorSimilarity", start);
+      if (end > start) {
+        const replacement = `let intentSim = stableSim * 0.85;
     if (exp) {
       intentSim =
         exp.slug === "surprise"
@@ -90,82 +81,30 @@ export type MatchSignal`,
           : fingerprintIntentFit(fp, exp, session);
     }
 
-    ` +
-        t.slice(end);
-      changed = true;
+    `;
+        t = t.slice(0, start) + replacement + t.slice(end);
+        changed = true;
+      }
     }
   }
 
-  if (!t.includes("structuredToExperienceIntent(aiOverlay")) {
-    const emerging = t.indexOf("  const emergingVec = { ...userVec };");
-    const slugIdx = t.search(/\n  (let|const) slug = opts\?\.experienceSlug/);
-    if (emerging > 0) {
-      const clean = `  let slug = opts?.experienceSlug ?? null;
-  if (slug == null && typeof window !== "undefined") {
-    try {
-      slug = readIntentSession()?.slug ?? null;
-    } catch {
-      slug = null;
-    }
-  }
-  let exp = slug ? getExperienceIntent(slug) : undefined;
-  if (typeof window !== "undefined") {
-    try {
-      const aiOverlay = readAiIntentOverlay();
-      if (
-        aiOverlay?.structured &&
-        Date.now() - (aiOverlay.at || 0) < 1000 * 60 * 60 * 6
-      ) {
-        exp = structuredToExperienceIntent(aiOverlay.structured);
-      }
-    } catch {
-      /* ignore */
-    }
-  }
-  const session =
-    typeof window !== "undefined" ? readIntentSession() : null;
-  const W =
-    exp && exp.slug !== "surprise"
-      ? RANKER_V3_EXPLICIT_INTENT_WEIGHTS
-      : RANKER_V3_WEIGHTS;
-
-`;
-      if (slugIdx >= 0 && slugIdx < emerging) {
-        t = t.slice(0, slugIdx + 1) + clean + t.slice(emerging);
-      } else {
-        t = t.slice(0, emerging) + clean + t.slice(emerging);
-      }
-      changed = true;
-    }
-  } else if (!t.includes("const session =") || !t.includes("const W =")) {
-    const marker = "  let exp = slug ? getExperienceIntent(slug) : undefined;";
-    if (t.includes(marker) && !t.includes("const session =")) {
-      t = t.replace(
-        marker,
-        `  let exp = slug ? getExperienceIntent(slug) : undefined;
-  const session =
-    typeof window !== "undefined" ? readIntentSession() : null;
-  const W =
+  if (t.includes("const W = RANKER_V3_WEIGHTS;") && t.includes("EXPLICIT")) {
+    t = t.replace(
+      "const W = RANKER_V3_WEIGHTS;",
+      `const W =
     exp && exp.slug !== "surprise"
       ? RANKER_V3_EXPLICIT_INTENT_WEIGHTS
       : RANKER_V3_WEIGHTS;`,
-      );
-      changed = true;
-    }
+    );
+    changed = true;
   }
-
-  t = t.replace(/\n  const W = RANKER_V3_WEIGHTS;\n/g, "\n");
 
   if (changed) {
     fs.writeFileSync(file, t);
     console.log("[patch-ranker] patched", file);
   } else {
-    console.log("[patch-ranker] already fixed");
+    console.log("[patch-ranker] already up to date");
   }
 }
 
-try {
-  main();
-} catch (e) {
-  console.error("[patch-ranker]", e.message);
-}
+main();
