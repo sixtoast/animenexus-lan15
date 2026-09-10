@@ -61,6 +61,11 @@ export type IdentityMapping = {
 };
 
 export type AnimeIdentity = {
+  /**
+   * Canonical cross-provider key. MUST encode provider.
+   * Examples: anilist:9253 | mal:7785 | kitsu:12 | shikimori:9253
+   */
+  nexusId?: string;
   /** Primary catalog key — AniList when known */
   anilistId: number | null;
 
@@ -268,7 +273,6 @@ export function getMapping(
 ): IdentityMapping | undefined {
   const candidates = identity.mappings.filter((m) => m.target === target);
   if (!candidates.length) return undefined;
-  // Prefer higher confidence; break ties by resolution order
   return candidates.sort((a, b) => {
     if (b.confidence !== a.confidence) return b.confidence - a.confidence;
     return (
@@ -282,7 +286,6 @@ export function withMapping(
   identity: AnimeIdentity,
   map: IdentityMapping,
 ): AnimeIdentity {
-  // Never promote title_match over an existing authoritative mapping for same target
   if (map.method === "title_match") {
     const existing = getMapping(identity, map.target);
     if (existing && isAuthoritativeMapping(existing)) {
@@ -317,7 +320,6 @@ export function withMapping(
     },
   };
 
-  // Only write canonical id fields for non-provisional or high-confidence maps
   const writeField =
     map.method !== "title_match" || map.confidence >= 0.95;
 
@@ -385,4 +387,45 @@ export function mapId(
     identity,
     mapping(opts.source, opts.target, opts.targetId, opts.confidence, opts.method),
   );
+}
+
+/** Build a provider-safe nexus id. Never use a bare number as canonical identity. */
+export function makeNexusId(
+  provider: "anilist" | "mal" | "kitsu" | "shikimori" | "tmdb" | "anidb",
+  id: number | string,
+): string {
+  return `${provider}:${id}`;
+}
+
+export function parseNexusId(nexusId: string): {
+  provider: string;
+  id: string;
+} | null {
+  const i = nexusId.indexOf(":");
+  if (i <= 0) return null;
+  return { provider: nexusId.slice(0, i), id: nexusId.slice(i + 1) };
+}
+
+/** Prefer AniList, then MAL, then Kitsu, then Shikimori for nexusId. */
+export function ensureNexusId(identity: AnimeIdentity): AnimeIdentity {
+  if (identity.nexusId && identity.nexusId.includes(":")) return identity;
+  if (identity.anilistId != null && identity.anilistId > 0) {
+    return { ...identity, nexusId: makeNexusId("anilist", identity.anilistId) };
+  }
+  if (identity.malId != null && identity.malId > 0) {
+    return { ...identity, nexusId: makeNexusId("mal", identity.malId) };
+  }
+  if (identity.kitsuId) {
+    return { ...identity, nexusId: makeNexusId("kitsu", identity.kitsuId) };
+  }
+  if (identity.shikimoriId) {
+    return {
+      ...identity,
+      nexusId: makeNexusId("shikimori", identity.shikimoriId),
+    };
+  }
+  return {
+    ...identity,
+    nexusId: makeNexusId("anilist", identity.anilistId ?? 0),
+  };
 }
