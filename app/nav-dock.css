@@ -1,0 +1,173 @@
+/* Search trigger in header */
+.nav-search-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-pill, 999px);
+  border-color: var(--color-accent-border-strong, rgba(240, 160, 144, 0.35)) !important;
+  background: var(--color-accent-soft, rgba(240, 160, 144, 0.12)) !important;
+  color: var(--color-text, #fff) !important;
+}
+.nav-search-btn:hover {
+  border-color: var(--color-accent, #e8a598) !important;
+  box-shadow: 0 0 20px var(--color-accent-glow, rgba(240, 160, 144, 0.35));
+}
+.nav-search-label {
+  font-size: var(--text-sm, 0.85rem);
+  font-weight: 500;
+}
+@media (max-width: 720px) {
+  .nav-search-label {
+    display: none;
+  }
+}
+
+/*
+ * Bottom control panel — always on.
+ * Home · Shelf · Search · Taste · More
+ */
+.nav-dock {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  position: fixed !important;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 2500 !important;
+  width: min(520px, calc(100vw - 24px));
+  height: var(--dock-h, 64px);
+  padding: 6px 8px;
+  gap: 4px;
+  background: rgba(12, 10, 14, 0.95);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid rgba(240, 160, 144, 0.28);
+  border-radius: 18px;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 0 28px rgba(240, 160, 144, 0.12);
+}
+
+.nav-dock-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 236, 220, 0.55);
+  text-decoration: none;
+  font: inherit;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    color 120ms ease,
+    background 120ms ease,
+    transform 120ms ease;
+  min-height: 48px;
+  min-width: 0;
+}
+
+.nav-dock-item:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nav-dock-item--active,
+.nav-dock-item[aria-current="page"] {
+  color: var(--color-accent, #e8a598);
+  background: rgba(240, 160, 144, 0.14);
+}
+
+.nav-dock-item--search {
+  color: var(--color-amber, #f0c27a);
+}
+
+.nav-dock-item--search .nav-dock-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(145deg, #e8a598, #f0c27a);
+  color: #1a1008;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 16px rgba(240, 160, 144, 0.4);
+}
+
+.nav-dock-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.nav-dock-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.app-shell {
+  padding-bottom: calc(var(--dock-h, 64px) + 36px + env(safe-area-inset-bottom));
+}
+.site-footer {
+  padding-bottom: calc(var(--dock-h, 64px) + 24px + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 899px) {
+  .nav-dock {
+    left: 0;
+    right: 0;
+    transform: none;
+    width: 100%;
+    bottom: 0;
+    z-index: 2500 !important;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    height: calc(var(--dock-h, 64px) + env(safe-area-inset-bottom));
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+  .nav-desktop {
+    display: none;
+  }
+  .nav-toggle {
+    display: none !important;
+  }
+}
+
+@media (min-width: 900px) {
+  .nav-toggle {
+    display: none !important;
+  }
+}
+
+html[data-theme="light"] .nav-dock {
+  background: rgba(255, 250, 246, 0.94);
+  border-color: rgba(120, 70, 55, 0.18);
+  box-shadow: 0 12px 36px rgba(40, 20, 12, 0.12);
+}
+html[data-theme="light"] .nav-dock-item {
+  color: rgba(40, 24, 16, 0.55);
+}
+html[data-theme="light"] .nav-dock-item:hover {
+  color: #2a1810;
+  background: rgba(40, 24, 16, 0.05);
+}
+html[data-theme="light"] .nav-dock-item--active,
+html[data-theme="light"] .nav-dock-item[aria-current="page"] {
+  color: #b45c4e;
+  background: rgba(240, 160, 144, 0.18);
+}
