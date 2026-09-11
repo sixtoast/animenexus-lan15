@@ -252,12 +252,26 @@ html[data-tod="late-night"] body {
     var(--color-primary);
 }
 
-html[data-nx-intensity="low"] body {
+/*
+ * NEVER put filter/transform on body or html — it makes position:fixed
+ * children (nav-dock, modals, FABs) stick to the document bottom instead
+ * of the viewport. Apply saturation on content shells only.
+ */
+html[data-nx-intensity="low"] .app-shell,
+html[data-nx-intensity="low"] .site-footer,
+html[data-nx-intensity="low"] .navbar {
   filter: saturate(0.92);
 }
 
-html[data-nx-intensity="high"] body {
+html[data-nx-intensity="high"] .app-shell,
+html[data-nx-intensity="high"] .site-footer,
+html[data-nx-intensity="high"] .navbar {
   filter: saturate(1.06);
+}
+
+/* Guard: body must stay unfiltered so fixed UI works on mobile */
+body {
+  filter: none;
 }
 
 html[data-nx-accent="warm"] {
