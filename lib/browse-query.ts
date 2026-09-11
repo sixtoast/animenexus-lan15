@@ -8,11 +8,13 @@ export function parseBrowseParams(sp: URLSearchParams): {
 } {
   const q = (sp.get("q") || "").trim();
   const feed = (sp.get("feed") as DiscoverFeed) || "trending";
+  const yearRaw = sp.get("year");
+  const yearNum = yearRaw ? parseInt(yearRaw, 10) : NaN;
   const filters: AnimeFilters = {
     genre: sp.get("genre") || undefined,
     status: sp.get("status") || undefined,
     format: sp.get("format") || undefined,
-    year: sp.get("year") || undefined,
+    year: Number.isFinite(yearNum) ? yearNum : undefined,
     sort: (sp.get("sort") as AnimeFilters["sort"]) || "score",
     adultFilter: "exclude",
     search: q || undefined,
