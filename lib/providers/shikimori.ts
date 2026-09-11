@@ -131,7 +131,6 @@ async function shikiGet(
   }
   const init: RequestInit & { next?: { revalidate: number } } = {
     headers: {
-      // Shikimori requires a descriptive UA for public API access
       "User-Agent": "AnimeNexusLantern/1.0 (github.com/sixtoast/animenexus-lan15)",
       Accept: "application/json",
     },
@@ -213,7 +212,7 @@ export async function shikiFiltered(
     order,
   };
   if (filters.year) {
-    params.season = filters.year; // e.g. "2024" accepted as year filter loosely
+    params.season = filters.year;
   }
   if (filters.status) {
     const statusMap: Record<string, string> = {
@@ -226,7 +225,12 @@ export async function shikiFiltered(
     };
     params.status = statusMap[filters.status] || filters.status;
   }
-  if (filters.genre) params.genre = filters.genre;
+  if (filters.genre) {
+    // Shikimori expects a numeric genre id (e.g. 4=Comedy). Names are ignored.
+    const asNum = Number(filters.genre);
+    if (Number.isFinite(asNum) && asNum > 0) params.genre = asNum;
+    else params.genre = filters.genre;
+  }
   if (filters.format) {
     params.kind = filters.format.toLowerCase().replace("_", "");
   }
