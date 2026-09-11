@@ -1,6 +1,7 @@
 /**
  * Mood candidate retrieval.
  * When AniList / Jikan / Kitsu are down: Shikimori → MAL → Simkl → TMDB → curated.
+ * Offline curated/static can be disabled via resolveMoodOfflineSeed.
  */
 import type { Anime } from "./types";
 import { fetchDiscover, fetchFiltered } from "./anilist";
@@ -27,6 +28,10 @@ import {
   poolStaticGenre,
   type PoolResult,
 } from "./mood-fallback-pools";
+import {
+  resolveMoodOfflineSeed,
+  offlineSeedDisabledReason,
+} from "./mood-offline-seed";
 
 export type MoodRetrievalSource = {
   source: string;
@@ -44,6 +49,7 @@ export type MoodCandidatesResult = {
   candidates: MoodCandidate[];
   retrieval: MoodRetrievalSource[];
   dedupeCount: number;
+  offlineSeedEnabled: boolean;
 };
 
 export { moodMatchScore, MOOD_TAG_HINTS };
@@ -91,67 +97,66 @@ async function poolJikanGenreId(
   limit = 25,
 ): Promise<{ data: Anime[]; error?: string }> {
   try {
-    const url = `${JIKAN_BASE}/anime?genres=${genreId}&order_by=score&sort=desc&limit=${Math.min(limit, 25)}&sfw=true`;
+    const url = `${JIKAN_BASE}/anime?genres=${genreId}&order_by=score&sort=desc&limit=${Math.min(limit, 25)}`;
     const res = await fetch(url, {
       headers: { Accept: "application/json" },
-      next: { revalidate: 1800 },
+      next: { revalidate: 600 },
     } as RequestInit);
     if (!res.ok) return { data: [], error: `Jikan HTTP ${res.status}` };
-    const json = (await res.json()) as {
-      data?: Parameters<typeof mapJikanRow>[0][];
-    };
+    const json = (await res.json()) as { data?: Parameters<typeof mapJikanRow>[0][] };
     return { data: (json.data || []).map(mapJikanRow) };
   } catch (e) {
     return {
       data: [],
-      error: e instanceof Error ? e.message : "jikan failed",
+      error: e instanceof Error ? e.message : "jikan genre failed",
     };
   }
 }
 
-async function poolGenre(genre: string, perPage: number) {
-  try {
-    const page = await fetchFiltered(
-      { genre, sort: "score", adultFilter: "exclude" },
-      1,
-      perPage,
-    );
-    return { data: page.data as Anime[] };
-  } catch (e) {
-    return {
-      data: [] as Anime[],
-      error: e instanceof Error ? e.message : "genre failed",
-    };
-  }
-}
-
-async function poolTag(tag: string, perPage: number) {
+async function poolTag(
+  tag: string,
+  limit = 30,
+): Promise<{ data: Anime[]; error?: string }> {
   try {
     const page = await fetchFiltered(
       { tag, sort: "score", adultFilter: "exclude" },
       1,
-      perPage,
+      limit,
     );
-    return { data: page.data as Anime[] };
+    return { data: page.data };
   } catch (e) {
     return {
-      data: [] as Anime[],
-      error: e instanceof Error ? e.message : "tag failed",
+      data: [],
+      error: e instanceof Error ? e.message : "anilist tag failed",
     };
   }
 }
 
-function dedupe(animes: Anime[]) {
+async function poolGenre(
+  genre: string,
+  limit = 30,
+): Promise<{ data: Anime[]; error?: string }> {
+  try {
+    const page = await fetchFiltered(
+      { genre, sort: "score", adultFilter: "exclude" },
+      1,
+      limit,
+    );
+    return { data: page.data };
+  } catch (e) {
+    return {
+      data: [],
+      error: e instanceof Error ? e.message : "anilist genre failed",
+    };
+  }
+}
+
+function dedupeAnime(list: Anime[]): { unique: Anime[]; dropped: number } {
   const byNexus = new Map<string, Anime>();
   let dropped = 0;
-  for (const a of animes) {
+  for (const a of list) {
     const id = ensureNexusId(identityFromAnime(a));
-    const key =
-      id.anilistId != null && id.anilistId > 0
-        ? `anilist:${id.anilistId}`
-        : id.malId != null && id.malId > 0
-          ? `mal:${id.malId}`
-          : id.nexusId || `raw:${a.id}`;
+    const key = id.nexusId || `id:${a.id}`;
     if (byNexus.has(key)) {
       dropped++;
       continue;
@@ -181,9 +186,10 @@ function absorb(
 export async function getMoodCandidates(
   intent: ExperienceIntent,
   _session?: IntentSession | null,
-  opts?: { perPool?: number },
+  opts?: { perPool?: number; allowOfflineSeed?: boolean },
 ): Promise<MoodCandidatesResult> {
   const perPool = opts?.perPool ?? 30;
+  const offlineSeedEnabled = resolveMoodOfflineSeed(opts?.allowOfflineSeed);
   const retrieval: MoodRetrievalSource[] = [];
   const pools: Anime[] = [];
   const slug = intent.slug;
@@ -194,15 +200,30 @@ export async function getMoodCandidates(
   absorb(retrieval, pools, await poolSimklMood(slug), 20);
   absorb(retrieval, pools, await poolTmdbMood(slug), 20);
 
-  const curated = await poolCuratedMood(slug);
-  absorb(retrieval, pools, [curated], curated.data.length);
+  if (offlineSeedEnabled) {
+    const curated = await poolCuratedMood(slug);
+    absorb(retrieval, pools, [curated], curated.data.length);
 
-  const primaryGenre =
-    (intent.genreHints && intent.genreHints[0]) ||
-    (MOOD_TAG_HINTS[slug] && MOOD_TAG_HINTS[slug][0]) ||
-    "";
-  if (primaryGenre) {
-    absorb(retrieval, pools, [await poolStaticGenre(primaryGenre)], 24);
+    const primaryGenre =
+      (intent.genreHints && intent.genreHints[0]) ||
+      (MOOD_TAG_HINTS[slug] && MOOD_TAG_HINTS[slug][0]) ||
+      "";
+    if (primaryGenre) {
+      absorb(retrieval, pools, [await poolStaticGenre(primaryGenre)], 24);
+    }
+  } else {
+    retrieval.push({
+      source: "curated:disabled",
+      requested: 0,
+      returned: 0,
+      error: offlineSeedDisabledReason(),
+    });
+    retrieval.push({
+      source: "static:disabled",
+      requested: 0,
+      returned: 0,
+      error: offlineSeedDisabledReason(),
+    });
   }
 
   // B) Soft AniList
@@ -246,10 +267,10 @@ export async function getMoodCandidates(
         retrieval.push({
           source: `anilist-genre:${g}`,
           requested: perPool,
-          returned: kept.length || r.value.data.length,
+          returned: kept.length,
           error: r.value.error,
         });
-        pools.push(...(kept.length ? kept : r.value.data.slice(0, 6)));
+        pools.push(...kept);
       } else {
         retrieval.push({
           source: `anilist-genre:${g}`,
@@ -261,35 +282,46 @@ export async function getMoodCandidates(
     });
   }
 
-  // C) Soft Jikan
+  // C) Soft Jikan genre ids
   const jikanIds = MOOD_JIKAN_GENRES[slug] || [];
   if (jikanIds.length) {
-    const jkResults = await Promise.all(
+    const jikanResults = await Promise.allSettled(
       jikanIds.slice(0, 2).map((gid) => poolJikanGenreId(gid, 20)),
     );
-    jkResults.forEach((r, i) => {
-      retrieval.push({
-        source: `jikan:genre:${jikanIds[i]}`,
-        requested: 20,
-        returned: r.data.length,
-        error: r.error,
-      });
-      pools.push(...r.data);
+    jikanResults.forEach((r, i) => {
+      const gid = jikanIds[i];
+      if (r.status === "fulfilled") {
+        retrieval.push({
+          source: `jikan:genre:${gid}`,
+          requested: 20,
+          returned: r.value.data.length,
+          error: r.value.error,
+        });
+        pools.push(...r.value.data);
+      } else {
+        retrieval.push({
+          source: `jikan:genre:${gid}`,
+          requested: 20,
+          returned: 0,
+          error: String(r.reason),
+        });
+      }
     });
   }
 
-  if (slug === "surprise") {
+  // Soft discover if still thin
+  if (pools.length < 8) {
     try {
-      const disc = await fetchDiscover("trending", 1, 24, "exclude");
+      const page = await fetchDiscover("top", 1, 24, "exclude");
       retrieval.push({
-        source: "discover:trending",
+        source: "discover:top",
         requested: 24,
-        returned: disc.data.length,
+        returned: page.data.length,
       });
-      pools.push(...disc.data);
+      pools.push(...page.data);
     } catch (e) {
       retrieval.push({
-        source: "discover:trending",
+        source: "discover:top",
         requested: 24,
         returned: 0,
         error: e instanceof Error ? e.message : "discover failed",
@@ -297,56 +329,47 @@ export async function getMoodCandidates(
     }
   }
 
-  const { unique, dropped } = dedupe(pools);
+  const { unique, dropped } = dedupeAnime(pools);
 
+  // Rank by intent fingerprint fit when possible
   const scored = unique.map((anime) => {
-    const hard = moodMatchScore(anime, intent);
-    let fpFit = 0.45;
     try {
-      fpFit = fingerprintIntentFit(
-        buildEnrichedFingerprint(anime),
-        intent,
-        null,
-      );
+      const fp = buildEnrichedFingerprint(anime);
+      const fit = fingerprintIntentFit(fp, intent);
+      const match = moodMatchScore(anime, intent);
+      return { anime, score: fit * 0.7 + match * 0.3 };
     } catch {
-      /* soft */
+      return { anime, score: moodMatchScore(anime, intent) };
     }
-    let fit = hard * 0.85 + fpFit * 0.15;
-    if (anime.source === "mood-curated") fit = Math.min(1, fit + 0.2);
-    if (String(anime.source || "").includes("shiki") || anime.id > 20_000_000)
-      fit = Math.min(1, fit + 0.05);
-    return { anime, fit, hard };
   });
+  scored.sort((a, b) => b.score - a.score);
 
-  scored.sort((a, b) => {
-    if (Math.abs(b.hard - a.hard) > 0.04) return b.hard - a.hard;
-    return b.fit - a.fit;
-  });
-
-  let final = scored;
-  const strong = scored.filter((s) => s.hard >= 0.25);
-  if (strong.length >= 10) final = strong;
-  else {
-    const mid = scored.filter((s) => s.hard >= 0.12);
-    if (mid.length >= 8) final = mid;
-  }
-  final = final.slice(0, 48);
+  const candidates: MoodCandidate[] = scored.map(({ anime }) => ({
+    identity: ensureNexusId(identityFromAnime(anime)),
+    anime,
+  }));
 
   return {
-    candidates: final.map(({ anime }) => ({
-      identity: ensureNexusId(identityFromAnime(anime)),
-      anime,
-    })),
+    candidates,
     retrieval,
     dedupeCount: dropped,
+    offlineSeedEnabled,
   };
 }
 
 export async function getMoodCandidatesBySlug(
   slug: string,
   session?: IntentSession | null,
+  opts?: { allowOfflineSeed?: boolean },
 ): Promise<MoodCandidatesResult> {
   const intent = getExperienceIntent(slug);
-  if (!intent) return { candidates: [], retrieval: [], dedupeCount: 0 };
-  return getMoodCandidates(intent, session);
+  if (!intent) {
+    return {
+      candidates: [],
+      retrieval: [],
+      dedupeCount: 0,
+      offlineSeedEnabled: resolveMoodOfflineSeed(opts?.allowOfflineSeed),
+    };
+  }
+  return getMoodCandidates(intent, session, opts);
 }
