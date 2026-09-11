@@ -42,7 +42,8 @@ import {
   getExperienceIntent,
   fingerprintIntentFit,
 } from "@/lib/viewing-intent";
-import { readIntentSession } from "@/lib/intent-session";
+import { readIntentSession, type IntentSession } from "@/lib/intent-session";
+import { weatherScoreAdjustment, type EnvironmentalSessionContext } from "@/lib/provider-evidence";
 
 export const RANKER_VERSION = "ranker_v3";
 
@@ -142,6 +143,8 @@ export function rankRecommendationsV3(
     experienceSlug?: string | null;
     fingerprints?: Map<number, AnimePreferenceFingerprint>;
     sourceAgreement?: Map<number, number>;
+    session?: IntentSession | null;
+    weatherContext?: EnvironmentalSessionContext | null;
   },
 ): RankedRecommendationV3[] {
   const exclude = new Set(
@@ -173,7 +176,8 @@ export function rankRecommendationsV3(
   }
   const exp = slug ? getExperienceIntent(slug) : undefined;
   const session =
-    typeof window !== "undefined" ? readIntentSession() : null;
+    opts?.session ??
+    (typeof window !== "undefined" ? readIntentSession() : null);
 
   const emergingVec = { ...userVec };
   for (const t of trends.filter((x) => x.direction === "up").slice(0, 4)) {
@@ -255,6 +259,12 @@ export function rankRecommendationsV3(
       W.dropRisk * dropPen;
 
     score = clamp01(score);
+    if (opts?.weatherContext) {
+      const pace = fp.experience?.pacing;
+      score = clamp01(
+        score + weatherScoreAdjustment(opts.weatherContext, pace),
+      );
+    }
 
     const reasons: string[] = [];
     if (exp && intentSim >= 0.55) {
