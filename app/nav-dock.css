@@ -28,6 +28,10 @@
  */
 body > .nav-dock,
 .nav-dock {
+  /* Escape any ancestor filter/transform stacking context */
+  filter: none !important;
+  -webkit-filter: none !important;
+  isolation: auto;
   display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
