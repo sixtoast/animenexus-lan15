@@ -4,11 +4,8 @@
  */
 import type { Anime } from "@/lib/types";
 import { fetchJikanFullAnime } from "@/lib/providers/jikan";
-import {
-  semanticEvidenceFromAnime,
-  type AnimeSemanticEvidence,
-} from "./from-anime";
-import type { SemanticTerm } from "./types";
+import { semanticEvidenceFromAnime } from "./from-anime";
+import type { AnimeSemanticEvidence, SemanticTerm } from "./types";
 import { getEvidenceBundle, setEvidenceBundle } from "./bundle-cache";
 import { EVIDENCE_SCHEMA_VERSION } from "./types";
 
