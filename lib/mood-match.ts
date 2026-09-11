@@ -77,7 +77,14 @@ function labelsOf(anime: Anime): string[] {
   return out;
 }
 
-export function moodMatchScore(anime: Anime, intent: ExperienceIntent): number {
+/**
+ * RETRIEVAL EVIDENCE ONLY — not semantic Mood fit.
+ * Prefer fingerprintIntentFit for ranking / pre-rank.
+ */
+export function retrievalEvidenceScore(
+  anime: Anime,
+  intent: ExperienceIntent,
+): number {
   const labels = labelsOf(anime);
   if (!labels.length) return 0.05;
 
@@ -108,3 +115,6 @@ export function moodMatchScore(anime: Anime, intent: ExperienceIntent): number {
 
   return Math.max(0, Math.min(1, score));
 }
+
+/** @deprecated Alias — retrieval evidence only, not semantic mood authority. */
+export const moodMatchScore = retrievalEvidenceScore;
