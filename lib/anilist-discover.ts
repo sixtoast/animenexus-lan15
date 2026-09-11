@@ -129,12 +129,12 @@ export async function fetchSeasonal(
     {
       name: "Kitsu",
       run: () =>
-        kitsuFiltered({ year: String(seasonYear), sort: "popularity" }, page, perPage),
+        kitsuFiltered({ year: seasonYear, sort: "popularity" }, page, perPage),
     },
     {
       name: "Shikimori",
       run: () =>
-        shikiFiltered({ year: String(seasonYear), sort: "popularity" }, page, perPage),
+        shikiFiltered({ year: seasonYear, sort: "popularity" }, page, perPage),
     },
   ]);
 }
