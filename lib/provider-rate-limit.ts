@@ -4,11 +4,8 @@
  */
 
 export type RateLimitConfig = {
-  /** Min ms between outbound calls for this provider */
   minIntervalMs: number;
-  /** Failures in window before open circuit */
   maxFailures: number;
-  /** Circuit open duration */
   coolDownMs: number;
 };
 
@@ -17,6 +14,7 @@ const DEFAULTS: Record<string, RateLimitConfig> = {
   jikan: { minIntervalMs: 350, maxFailures: 5, coolDownMs: 60_000 },
   kitsu: { minIntervalMs: 100, maxFailures: 6, coolDownMs: 30_000 },
   shikimori: { minIntervalMs: 120, maxFailures: 6, coolDownMs: 30_000 },
+  mal: { minIntervalMs: 200, maxFailures: 5, coolDownMs: 60_000 },
   animethemes: { minIntervalMs: 150, maxFailures: 5, coolDownMs: 45_000 },
   "trace.moe": { minIntervalMs: 500, maxFailures: 4, coolDownMs: 60_000 },
   animeschedule: { minIntervalMs: 200, maxFailures: 5, coolDownMs: 45_000 },
@@ -68,7 +66,6 @@ export function isCircuitOpen(provider: string): boolean {
   return false;
 }
 
-/** Wait until min interval elapsed; throws if circuit open. */
 export async function acquireProviderSlot(provider: string): Promise<void> {
   if (isCircuitOpen(provider)) {
     throw new Error(`[rate-limit] ${provider} circuit open`);
@@ -120,7 +117,6 @@ export function getProviderHealth(): ProviderHealthSnapshot[] {
   return out;
 }
 
-/** Run fn under rate-limit + success/failure bookkeeping. */
 export async function withProviderLimit<T>(
   provider: string,
   fn: () => Promise<T>,
