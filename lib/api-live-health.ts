@@ -124,6 +124,111 @@ async function probeShikimori(): Promise<LiveHealthRow> {
   };
 }
 
+async function probeMalOfficial(): Promise<LiveHealthRow> {
+  const id = (process.env.MAL_CLIENT_ID || "")
+    .trim()
+    .replace(/^['"]|['"]$/g, "");
+  if (!id) {
+    return {
+      id: "mal-official",
+      label: "MAL official",
+      status: "skipped",
+      latencyMs: null,
+      detail: "MAL_CLIENT_ID not set",
+      group: "catalog",
+    };
+  }
+  const r = await timedFetch(
+    "https://api.myanimelist.net/v2/anime?q=one&limit=1",
+    { headers: { "X-MAL-CLIENT-ID": id } },
+  );
+  const c = classify(r, (s) => s === 200 || s === 429);
+  return {
+    id: "mal-official",
+    label: "MAL official",
+    status: r.status === 429 ? "degraded" : c.status,
+    latencyMs: r.ms,
+    detail: c.detail,
+    group: "catalog",
+  };
+}
+
+async function probeTmdb(): Promise<LiveHealthRow> {
+  const key = (
+    process.env.TMDB_API_KEY ||
+    process.env.TMDB_READ_ACCESS_TOKEN ||
+    ""
+  )
+    .trim()
+    .replace(/^['"]|['"]$/g, "");
+  if (!key) {
+    return {
+      id: "tmdb",
+      label: "TMDB",
+      status: "skipped",
+      latencyMs: null,
+      detail: "TMDB_API_KEY not set",
+      group: "catalog",
+    };
+  }
+  const headers: Record<string, string> = {};
+  let url = "https://api.themoviedb.org/3/configuration";
+  if (key.startsWith("eyJ")) {
+    headers.Authorization = `Bearer ${key}`;
+  } else {
+    url += `?api_key=${encodeURIComponent(key)}`;
+  }
+  const r = await timedFetch(url, { headers });
+  const c = classify(r);
+  return {
+    id: "tmdb",
+    label: "TMDB",
+    status: c.status,
+    latencyMs: r.ms,
+    detail: c.detail,
+    group: "catalog",
+  };
+}
+
+async function probeSimkl(): Promise<LiveHealthRow> {
+  const id = (process.env.SIMKL_CLIENT_ID || "")
+    .trim()
+    .replace(/^['"]|['"]$/g, "");
+  if (!id) {
+    return {
+      id: "simkl",
+      label: "Simkl",
+      status: "skipped",
+      latencyMs: null,
+      detail: "SIMKL_CLIENT_ID not set",
+      group: "catalog",
+    };
+  }
+  const r = await timedFetch(
+    `https://api.simkl.com/search/anime?q=one&client_id=${encodeURIComponent(id)}&limit=1`,
+  );
+  const c = classify(r, (s) => s === 200 || s === 401 || s === 403);
+  return {
+    id: "simkl",
+    label: "Simkl",
+    status: c.status,
+    latencyMs: r.ms,
+    detail: c.detail,
+    group: "catalog",
+  };
+}
+
+async function probeStaticCatalog(): Promise<LiveHealthRow> {
+  return {
+    id: "static-catalog",
+    label: "Static seed",
+    status: "online",
+    latencyMs: 0,
+    detail: "In-process emergency seed always available",
+    group: "catalog",
+  };
+}
+
 async function probeOpenMeteo(): Promise<LiveHealthRow> {
   const r = await timedFetch(
     "https://api.open-meteo.com/v1/forecast?latitude=0&longitude=0&current_weather=true",
@@ -210,6 +315,10 @@ export async function runLiveHealthProbes(opts?: {
     probeJikan(),
     probeKitsu(),
     probeShikimori(),
+    probeMalOfficial(),
+    probeTmdb(),
+    probeSimkl(),
+    probeStaticCatalog(),
     probeOpenMeteo(),
     probeSupabase(),
     probeSiteSelf(opts?.origin),
