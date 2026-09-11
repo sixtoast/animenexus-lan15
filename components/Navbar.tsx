@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import {
   useCallback,
@@ -50,7 +51,11 @@ function isActive(pathname: string, href: string) {
 }
 
 export function Navbar() {
-  const pathname = usePathname();
+  const pathname = usePathname() || "/";
+  const [dockReady, setDockReady] = useState(false);
+  useEffect(() => {
+    setDockReady(true);
+  }, []);
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [logoPulse, setLogoPulse] = useState(false);
@@ -129,6 +134,63 @@ export function Navbar() {
     openOmniSearch();
   }
 
+  const dock = (
+    <nav className="nav-dock" aria-label="Primary mobile">
+      {DOCK.map((item) => {
+        if (item.href === "__search__") {
+          return (
+            <button
+              key={item.href}
+              type="button"
+              className="nav-dock-item nav-dock-item--search"
+              onClick={onSearch}
+            >
+              <span className="nav-dock-icon" aria-hidden>
+                {item.icon}
+              </span>
+              <span className="nav-dock-label">{item.label}</span>
+            </button>
+          );
+        }
+        if (item.href === "__more__") {
+          return (
+            <button
+              key={item.href}
+              type="button"
+              className={
+                "nav-dock-item" + (open ? " nav-dock-item--active" : "")
+              }
+              aria-expanded={open}
+              onClick={toggleMenu}
+            >
+              <span className="nav-dock-icon" aria-hidden>
+                {item.icon}
+              </span>
+              <span className="nav-dock-label">{item.label}</span>
+            </button>
+          );
+        }
+        const active = isActive(pathname, item.href);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={
+              "nav-dock-item" + (active ? " nav-dock-item--active" : "")
+            }
+            aria-current={active ? "page" : undefined}
+            onClick={() => playCue("filter_select")}
+          >
+            <span className="nav-dock-icon" aria-hidden>
+              {item.icon}
+            </span>
+            <span className="nav-dock-label">{item.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+
   return (
     <>
       <header className="navbar site-header">
@@ -194,10 +256,10 @@ export function Navbar() {
               size="sm"
               className="nav-search-btn"
               aria-label="Search"
-              title="Search ( / or ⌘K )"
+              title="Search ( / or \u2318K )"
               onClick={onSearch}
             >
-              <span aria-hidden>⌕</span>
+              <span aria-hidden>\u2315</span>
               <span className="nav-search-label">Search</span>
             </Button>
             <MotionToggle />
@@ -267,7 +329,7 @@ export function Navbar() {
               <div className="nav-mobile-head">
                 <p className="nav-mobile-kicker">More</p>
                 <p className="nav-mobile-sub">
-                  Catalog, moods, account — primary tabs stay on the dock
+                  Catalog, moods, account \u2014 primary tabs stay on the dock
                 </p>
               </div>
               <ul>
@@ -318,7 +380,7 @@ export function Navbar() {
                       closeMenu();
                     }}
                   >
-                    Log out · {session.username}
+                    Log out \u00b7 {session.username}
                   </Button>
                 ) : null}
                 <NavSoundToggle />
@@ -328,60 +390,7 @@ export function Navbar() {
         ) : null}
       </header>
 
-      <nav className="nav-dock" aria-label="Primary mobile">
-        {DOCK.map((item) => {
-          if (item.href === "__search__") {
-            return (
-              <button
-                key={item.href}
-                type="button"
-                className="nav-dock-item nav-dock-item--search"
-                onClick={onSearch}
-              >
-                <span className="nav-dock-icon" aria-hidden>
-                  {item.icon}
-                </span>
-                <span className="nav-dock-label">{item.label}</span>
-              </button>
-            );
-          }
-          if (item.href === "__more__") {
-            return (
-              <button
-                key={item.href}
-                type="button"
-                className={
-                  "nav-dock-item" + (open ? " nav-dock-item--active" : "")
-                }
-                aria-expanded={open}
-                onClick={toggleMenu}
-              >
-                <span className="nav-dock-icon" aria-hidden>
-                  {item.icon}
-                </span>
-                <span className="nav-dock-label">{item.label}</span>
-              </button>
-            );
-          }
-          const active = isActive(pathname, item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={
-                "nav-dock-item" + (active ? " nav-dock-item--active" : "")
-              }
-              aria-current={active ? "page" : undefined}
-              onClick={() => playCue("filter_select")}
-            >
-              <span className="nav-dock-icon" aria-hidden>
-                {item.icon}
-              </span>
-              <span className="nav-dock-label">{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      {dockReady ? createPortal(dock, document.body) : null}
     </>
   );
 }
