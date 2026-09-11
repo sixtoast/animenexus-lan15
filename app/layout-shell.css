@@ -103,3 +103,15 @@ main {
     gap: 16px;
   }
 }
+
+/* Insurance: dock always viewport-fixed (body filter used to break this) */
+body > .nav-dock {
+  position: fixed !important;
+  bottom: 0 !important;
+  z-index: 2500 !important;
+}
+@media (min-width: 900px) {
+  body > .nav-dock {
+    bottom: max(12px, env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
