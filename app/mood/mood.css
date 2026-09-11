@@ -85,3 +85,77 @@
   opacity: 0.75;
   line-height: 1.35;
 }
+
+/* Source mode panel — live vs offline */
+.mood-source-panel {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(240, 160, 144, 0.22);
+  background: rgba(20, 16, 14, 0.55);
+}
+
+.mood-source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+}
+
+.mood-source-panel.mood-source-badge--live .mood-source-badge {
+  background: rgba(80, 180, 120, 0.18);
+  color: #8fdfb0;
+  border: 1px solid rgba(80, 180, 120, 0.35);
+}
+
+.mood-source-panel.mood-source-badge--mixed .mood-source-badge {
+  background: rgba(232, 184, 109, 0.16);
+  color: #efc07a;
+  border: 1px solid rgba(232, 184, 109, 0.35);
+}
+
+.mood-source-panel.mood-source-badge--offline .mood-source-badge {
+  background: rgba(160, 140, 180, 0.16);
+  color: #c4b0e0;
+  border: 1px solid rgba(160, 140, 180, 0.35);
+}
+
+.mood-source-detail {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  color: var(--color-text-muted, rgba(255, 236, 220, 0.65));
+  line-height: 1.4;
+}
+
+.mood-source-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mood-source-chip {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.mood-source-chip--live {
+  background: rgba(80, 180, 120, 0.12);
+  color: #9ed9b4;
+  border: 1px solid rgba(80, 180, 120, 0.25);
+}
+
+.mood-source-chip--offline {
+  background: rgba(160, 140, 180, 0.12);
+  color: #c9b8e0;
+  border: 1px solid rgba(160, 140, 180, 0.25);
+}
