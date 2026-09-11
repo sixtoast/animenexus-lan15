@@ -15,7 +15,22 @@ export const dynamic = "force-dynamic";
 
 type Props = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+function one(v: string | string[] | undefined): string {
+  if (Array.isArray(v)) return v[0] || "";
+  return v || "";
+}
+
+/** ?offline=0|false|off disables curated/static seed for this request. */
+function offlineFromQuery(sp: Record<string, string | string[] | undefined>): boolean | undefined {
+  const raw = one(sp.offline).trim().toLowerCase();
+  if (!raw) return undefined;
+  if (["0", "false", "off", "no"].includes(raw)) return false;
+  if (["1", "true", "on", "yes"].includes(raw)) return true;
+  return undefined;
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -27,11 +42,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function MoodPage({ params }: Props) {
+export default async function MoodPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const sp = await searchParams;
   const mood = getMood(slug);
   if (!mood) notFound();
 
+  const allowOfflineSeed = offlineFromQuery(sp);
   const intent = getExperienceIntent(mood.slug);
   let error: string | null = null;
   let items: Awaited<
@@ -43,9 +60,13 @@ export default async function MoodPage({ params }: Props) {
   let modeClass = "mood-source-badge--offline";
   let liveChips: string[] = [];
   let offlineChips: string[] = [];
+  let offlineOff = false;
 
   try {
-    const result = await getMoodCandidatesBySlug(mood.slug);
+    const result = await getMoodCandidatesBySlug(mood.slug, null, {
+      allowOfflineSeed,
+    });
+    offlineOff = !result.offlineSeedEnabled;
     items = result.candidates.map((c) => c.anime);
     if (mood.minScore) {
       items = items.filter((a) => {
@@ -53,11 +74,13 @@ export default async function MoodPage({ params }: Props) {
         return s >= mood.minScore!;
       });
     }
-    const summary = summarizeRetrieval(result.retrieval);
+    const summary = summarizeRetrieval(result.retrieval, {
+      offlineSeedEnabled: result.offlineSeedEnabled,
+    });
     modeLabel = summary.label;
     modeDetail = summary.detail;
     modeClass =
-      summary.mode === "live"
+      summary.mode === "live" || summary.mode === "live-only-policy"
         ? "mood-source-badge--live"
         : summary.mode === "mixed"
           ? "mood-source-badge--mixed"
@@ -92,6 +115,7 @@ export default async function MoodPage({ params }: Props) {
             {intent?.genreHints?.length
               ? ` Hints: ${intent.genreHints.slice(0, 3).join(", ")}.`
               : ""}
+            {offlineOff ? " Offline seed is off for this view." : ""}
           </p>
           <div style={{ marginTop: 20 }}>
             <MoodChips active={mood.slug} />
@@ -129,6 +153,22 @@ export default async function MoodPage({ params }: Props) {
                 ))}
               </div>
             )}
+            <p className="meta" style={{ marginTop: 10 }}>
+              {offlineOff ? (
+                <>
+                  Offline seed off.{" "}
+                  <Link href={`/mood/${mood.slug}`}>Re-enable for this page</Link>
+                  {" · "}
+                  <span>or set env MOOD_OFFLINE_SEED=1</span>
+                </>
+              ) : (
+                <>
+                  <Link href={`/mood/${mood.slug}?offline=0`}>Disable offline seed</Link>
+                  {" · "}
+                  <span>or set env MOOD_OFFLINE_SEED=0</span>
+                </>
+              )}
+            </p>
           </div>
         ) : null}
 
