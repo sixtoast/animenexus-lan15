@@ -7,6 +7,7 @@ import { BrowseSessionStrip } from "@/components/BrowseSessionStrip";
 import { getMood } from "@/lib/moods";
 import { getExperienceIntent } from "@/lib/viewing-intent";
 import { getMoodCandidatesBySlug } from "@/lib/mood-candidates";
+import { summarizeRetrieval } from "@/lib/mood-retrieval-summary";
 import type { Metadata } from "next";
 import "./mood.css";
 
@@ -19,9 +20,9 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const mood = getMood(slug);
-  if (!mood) return { title: "Tonight \u00b7 AnimeNexus" };
+  if (!mood) return { title: "Tonight · AnimeNexus" };
   return {
-    title: `${mood.emoji} ${mood.label} \u00b7 AnimeNexus`,
+    title: `${mood.emoji} ${mood.label} · AnimeNexus`,
     description: mood.blurb,
   };
 }
@@ -37,6 +38,11 @@ export default async function MoodPage({ params }: Props) {
     ReturnType<typeof getMoodCandidatesBySlug>
   >["candidates"][number]["anime"][] = [];
   let retrievalNote = "";
+  let modeLabel = "";
+  let modeDetail = "";
+  let modeClass = "mood-source-badge--offline";
+  let liveChips: string[] = [];
+  let offlineChips: string[] = [];
 
   try {
     const result = await getMoodCandidatesBySlug(mood.slug);
@@ -47,10 +53,23 @@ export default async function MoodPage({ params }: Props) {
         return s >= mood.minScore!;
       });
     }
-    const okSources = result.retrieval.filter((r) => r.returned > 0);
-    retrievalNote = `${items.length} candidates \u00b7 ${okSources.length}/${result.retrieval.length} sources \u00b7 ${result.dedupeCount} dupes removed`;
-    if (!items.length && result.retrieval.every((r) => r.error)) {
-      error = result.retrieval.map((r) => r.error).filter(Boolean).join("; ");
+    const summary = summarizeRetrieval(result.retrieval);
+    modeLabel = summary.label;
+    modeDetail = summary.detail;
+    modeClass =
+      summary.mode === "live"
+        ? "mood-source-badge--live"
+        : summary.mode === "mixed"
+          ? "mood-source-badge--mixed"
+          : "mood-source-badge--offline";
+    liveChips = summary.liveSources;
+    offlineChips = summary.offlineSources;
+    const ok = summary.liveSources.length + summary.offlineSources.length;
+    retrievalNote = `${items.length} candidates · ${ok}/${result.retrieval.length} sources · ${result.dedupeCount} dupes removed`;
+    if (!items.length && result.retrieval.every((r) => r.error || r.returned === 0)) {
+      error =
+        result.retrieval.map((r) => r.error).filter(Boolean).join("; ") ||
+        "No sources returned data";
     }
   } catch (e) {
     error = e instanceof Error ? e.message : "Failed to build mood candidates";
@@ -62,15 +81,14 @@ export default async function MoodPage({ params }: Props) {
       <section className="hero" style={{ paddingBottom: 16 }}>
         <div className="container">
           <div className="hero-badge">
-            Viewing intent \u00b7 {mood.emoji} {mood.label}
+            Viewing intent · {mood.emoji} {mood.label}
           </div>
           <h1>
-            What kind of night \u00b7 <span>{mood.label}</span>
+            What kind of night · <span>{mood.label}</span>
           </h1>
           <p>{mood.blurb}</p>
           <p className="meta" style={{ marginTop: 8 }}>
-            Multi-source retrieval + fingerprint intent fit \u2014 not a single genre
-            filter.
+            Multi-source retrieval + intent fit — not a single genre filter.
             {intent?.genreHints?.length
               ? ` Hints: ${intent.genreHints.slice(0, 3).join(", ")}.`
               : ""}
@@ -87,8 +105,32 @@ export default async function MoodPage({ params }: Props) {
             <span className="accent">{mood.emoji}</span> Candidates for this
             intent
           </h2>
-          <span className="meta">{error ? "\u2014" : retrievalNote}</span>
+          <span className="meta">{error ? "—" : retrievalNote}</span>
         </div>
+
+        {!error && modeLabel ? (
+          <div className={`mood-source-panel ${modeClass}`} role="status">
+            <div className="mood-source-badge">{modeLabel}</div>
+            <p className="mood-source-detail">{modeDetail}</p>
+            {(liveChips.length > 0 || offlineChips.length > 0) && (
+              <div className="mood-source-chips">
+                {liveChips.map((s) => (
+                  <span key={s} className="mood-source-chip mood-source-chip--live">
+                    {s}
+                  </span>
+                ))}
+                {offlineChips.map((s) => (
+                  <span
+                    key={s}
+                    className="mood-source-chip mood-source-chip--offline"
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
 
         <BrowseSessionStrip />
 
@@ -116,7 +158,7 @@ export default async function MoodPage({ params }: Props) {
 
         <p style={{ marginTop: 28, textAlign: "center" }}>
           <Link href="/browse" className="btn btn-outline btn-sm">
-            Open full filters \u2192
+            Open full filters →
           </Link>
         </p>
       </section>
