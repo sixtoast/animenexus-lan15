@@ -10,6 +10,10 @@ function key(animeId: number): string {
   return `${animeId}:${FINGERPRINT_VERSION}`;
 }
 
+function nexusKey(nexusId: string): string {
+  return `nx:${nexusId}:${FINGERPRINT_VERSION}`;
+}
+
 export function getCachedFingerprint(
   animeId: number,
 ): AnimePreferenceFingerprint | null {
@@ -29,9 +33,49 @@ export function getCachedFingerprint(
   }
 }
 
+/** Provider-safe cache lookup (anilist:9253, mal:123, …). */
+export function getCachedFingerprintByKey(
+  nexusId: string,
+): AnimePreferenceFingerprint | null {
+  if (!nexusId) return null;
+  const k = nexusKey(nexusId);
+  const hit = mem.get(k);
+  if (hit) return hit;
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(LS_PREFIX + k);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AnimePreferenceFingerprint;
+    if (parsed?.version !== FINGERPRINT_VERSION) return null;
+    mem.set(k, parsed);
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 export function setCachedFingerprint(fp: AnimePreferenceFingerprint): void {
   const k = key(fp.animeId);
   mem.set(k, fp);
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(LS_PREFIX + k, JSON.stringify(fp));
+  } catch {
+    /* quota */
+  }
+}
+
+export function setCachedFingerprintByKey(
+  nexusId: string,
+  fp: AnimePreferenceFingerprint,
+): void {
+  if (!nexusId) {
+    setCachedFingerprint(fp);
+    return;
+  }
+  const k = nexusKey(nexusId);
+  mem.set(k, fp);
+  setCachedFingerprint(fp);
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(LS_PREFIX + k, JSON.stringify(fp));

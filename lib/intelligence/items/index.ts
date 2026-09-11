@@ -6,3 +6,4 @@ export * from "./fingerprint-sources";
 export * from "./fingerprint-similarity";
 export * from "./fingerprint-enrichment";
 export * from "./fingerprint-catalogue";
+export * from "./resolve-fingerprint";
