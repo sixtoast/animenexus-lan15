@@ -62,11 +62,12 @@ async function loadInitial(sp: Record<string, string | string[] | undefined>) {
       };
     }
     if (genre || status || format || year || exp) {
+      const yearNum = year ? parseInt(year, 10) : NaN;
       const filters: AnimeFilters = {
         genre: genre || undefined,
         status: status || undefined,
         format: format || undefined,
-        year: year || undefined,
+        year: Number.isFinite(yearNum) ? yearNum : undefined,
         sort: sort || "score",
         adultFilter: "exclude",
       };
