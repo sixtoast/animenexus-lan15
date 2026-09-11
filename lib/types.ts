@@ -109,6 +109,27 @@ export type Anime = {
   idMal?: number | null;
 };
 
+/** Local shelf entry (watchlist) */
+export type WatchlistEntry = {
+  id: number;
+  title: string;
+  image: string;
+  format?: string;
+  year?: number | string;
+  episodes?: number | string;
+  duration?: number;
+  score?: number;
+  watchStatus: WatchStatus;
+  progress: number;
+  userRating: number;
+  notes: string;
+  tags?: string[];
+  genres?: string[];
+  studios?: string[];
+  addedAt: string;
+  updatedAt: string;
+};
+
 export type PageInfo = {
   total: number;
   currentPage?: number;
@@ -123,6 +144,8 @@ export type AnimePage = {
 
 export type AnimeFilters = {
   genre?: string;
+  /** AniList-style tag filter (retrieval). */
+  tag?: string;
   format?: string;
   status?: string;
   year?: number;
