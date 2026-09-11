@@ -146,6 +146,8 @@ export type AnimeFilters = {
   genre?: string;
   /** AniList-style tag filter (retrieval). */
   tag?: string;
+  /** Studio name filter when supported by the provider. */
+  studio?: string;
   format?: string;
   status?: string;
   year?: number;
