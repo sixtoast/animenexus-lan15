@@ -25,8 +25,8 @@ type Props = {
 };
 
 /**
- * Mood pages: server already ranks by moodMatchScore. Client only filters shelf/rejects.
- * Non-mood feeds may still personalise with the ranker + optional AI judge.
+ * Mood + general feeds: rank with Ranker V3 so Energy / Attention / Intensity
+ * from IntentSession actually move the list. Server still pre-filters by mood.
  */
 export function MoodFeedClient({
   items,
@@ -42,24 +42,36 @@ export function MoodFeedClient({
   const ordered = useMemo(() => {
     if (items.length < 2) return items;
 
-    // Explicit mood pages are already ranked on the server by moodMatchScore.
-    // Do NOT re-sort by community score / neutral fingerprints — that made
-    // every mood look identical (FMA, Steins;Gate, etc.).
+    const exclude = new Set<number>([
+      ...(ready ? entries.map((e) => e.id) : []),
+      ...rejectedAnimeIds(),
+    ]);
+    const session = readIntentSession();
+
+    // Explicit mood: V3 with high viewingIntent weight + live session controls
     if (experienceSlug) {
-      const exclude = new Set<number>([
-        ...(ready ? entries.map((e) => e.id) : []),
-        ...rejectedAnimeIds(),
-      ]);
+      try {
+        const v3 = rankRecommendationsV3(items, entries, {
+          excludeIds: exclude,
+          experienceSlug,
+          session,
+        });
+        if (v3.length) {
+          const rankedIds = new Set(v3.map((r) => r.anime.id));
+          const tail = items.filter(
+            (a) => !rankedIds.has(a.id) && !exclude.has(a.id),
+          );
+          return [...v3.map((r) => r.anime), ...tail];
+        }
+      } catch {
+        /* fall through to filter-only */
+      }
       if (!exclude.size) return items;
       return items.filter((a) => !exclude.has(a.id));
     }
 
     if (!ready || entries.length < 2) return items;
 
-    const exclude = new Set<number>([
-      ...entries.map((e) => e.id),
-      ...rejectedAnimeIds(),
-    ]);
     const ranked = rankRecommendations(items, entries, {
       excludeIds: exclude,
       experienceSlug,
@@ -74,8 +86,6 @@ export function MoodFeedClient({
     setAiOrdered(null);
     setJudge(null);
     if (items.length < 4) return;
-    // Mood pages: server order is authoritative; AI judge was scrambling moods.
-    if (experienceSlug) return;
     if (!ready || entries.length < 2) return;
     if (typeof window === "undefined" || !isAIConfigured()) return;
 
@@ -88,9 +98,11 @@ export function MoodFeedClient({
           ...(ready ? entries.map((e) => e.id) : []),
           ...rejectedAnimeIds(),
         ]);
+        const session = readIntentSession();
         const v3 = rankRecommendationsV3(items, entries, {
           excludeIds: exclude,
           experienceSlug,
+          session,
         });
         const { ranked, judge: j } = await rankWithSemanticJudge(v3, entries, {
           experienceSlug,
@@ -135,10 +147,11 @@ export function MoodFeedClient({
           {entries.length < 2
             ? " by viewing intent (add shelf titles for taste personalisation)"
             : " by viewing intent + your shelf"}
+          {" · session controls applied"}
           {aiBusy
-            ? " \u00b7 refining\u2026"
+            ? " · refining…"
             : judge?.recommendations?.length
-              ? " \u00b7 AI refined"
+              ? " · AI refined"
               : ""}
         </p>
       ) : null}
