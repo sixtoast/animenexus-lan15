@@ -11,6 +11,11 @@ export type WeatherSnapshot = {
   latitude: number;
   longitude: number;
   temperatureC: number | null;
+  apparentTemperatureC: number | null;
+  humidity: number | null;
+  precipitation: number | null;
+  cloudCover: number | null;
+  windSpeed: number | null;
   weatherCode: number | null;
   isDay: boolean | null;
   label: string;
@@ -57,7 +62,8 @@ export async function fetchOpenMeteoCurrent(
         const q = new URLSearchParams({
           latitude: String(lat),
           longitude: String(lon),
-          current: "temperature_2m,weather_code,is_day",
+          current:
+            "temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day,precipitation,rain,showers,snowfall,cloud_cover,wind_speed_10m",
           timezone: "auto",
         });
         const res = await fetch(
@@ -74,6 +80,14 @@ export async function fetchOpenMeteoCurrent(
         const j = (await res.json()) as {
           current?: {
             temperature_2m?: number;
+            apparent_temperature?: number;
+            relative_humidity_2m?: number;
+            precipitation?: number;
+            rain?: number;
+            showers?: number;
+            snowfall?: number;
+            cloud_cover?: number;
+            wind_speed_10m?: number;
             weather_code?: number;
             is_day?: number;
           };
@@ -82,11 +96,29 @@ export async function fetchOpenMeteoCurrent(
         if (!c) return null;
         const code = c.weather_code ?? null;
         const { label, moodHint } = codeLabel(code);
+        const precip =
+          (typeof c.precipitation === "number" ? c.precipitation : 0) +
+          (typeof c.rain === "number" ? c.rain : 0) +
+          (typeof c.showers === "number" ? c.showers : 0) +
+          (typeof c.snowfall === "number" ? c.snowfall : 0);
         return {
           latitude: lat,
           longitude: lon,
           temperatureC:
             typeof c.temperature_2m === "number" ? c.temperature_2m : null,
+          apparentTemperatureC:
+            typeof c.apparent_temperature === "number"
+              ? c.apparent_temperature
+              : null,
+          humidity:
+            typeof c.relative_humidity_2m === "number"
+              ? c.relative_humidity_2m
+              : null,
+          precipitation: precip > 0 ? precip : null,
+          cloudCover:
+            typeof c.cloud_cover === "number" ? c.cloud_cover : null,
+          windSpeed:
+            typeof c.wind_speed_10m === "number" ? c.wind_speed_10m : null,
           weatherCode: code,
           isDay: c.is_day != null ? Boolean(c.is_day) : null,
           label,
