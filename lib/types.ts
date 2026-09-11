@@ -83,6 +83,8 @@ export type Anime = {
   description: string;
   genre: string;
   tags: string[];
+  /** Ranked semantic tags with provenance (preferred over tags[] when present). */
+  tagDetails?: AnimeTag[];
   status: MediaStatus;
   format: MediaFormat;
   year: number | string;
@@ -121,35 +123,13 @@ export type AnimePage = {
 
 export type AnimeFilters = {
   genre?: string;
-  /** Real AniList tag name — never a product semantic dim */
-  tag?: string;
+  format?: string;
   status?: string;
-  format?: string;
-  year?: string;
-  sort?: "score" | "popularity" | "title" | "year";
-  adultFilter?: "exclude" | "include" | "only";
-  source?: string;
-  studio?: string;
+  year?: number;
+  minScore?: number;
+  sort?: string;
   search?: string;
-};
-
-export type WatchlistEntry = {
-  id: number;
-  title: string;
-  image: string;
-  format?: string;
-  year?: number | string;
-  episodes?: number | string;
-  duration?: number;
-  score?: number;
-  watchStatus: WatchStatus;
-  progress: number;
-  userRating: number;
-  notes: string;
-  tags?: string[];
-  genres?: string[];
-  /** Stored when added from Detail/Browse — powers creative connections */
-  studios?: string[];
-  addedAt: string;
-  updatedAt: string;
+  adultFilter?: "exclude" | "include" | "only";
+  page?: number;
+  perPage?: number;
 };
