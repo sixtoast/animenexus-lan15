@@ -19,7 +19,11 @@ export function browseParamsFromQuery(
   const nextFormat = current.format || intent?.filters.format || undefined;
   const nextSort = current.sort || intent?.filters.sort || "score";
   const nextExp = current.experience || intent?.experienceSlug || undefined;
-  const nextYear = current.year || intent?.filters.year || undefined;
+  const yearRaw = current.year || intent?.filters.year;
+  const nextYear =
+    yearRaw === undefined || yearRaw === ""
+      ? undefined
+      : String(yearRaw);
   return {
     q: q || undefined,
     genre: nextGenre,
