@@ -15,6 +15,8 @@ import type {
 } from "./viewing-intent-types";
 import { INTENT_DIMS } from "./viewing-intent-types";
 import { EXPERIENCE_INTENTS } from "./viewing-intent-defs";
+import { buildSessionAdjustedIntent } from "./session-intent-adjust";
+export { buildSessionAdjustedIntent } from "./session-intent-adjust";
 
 export type {
   ExperienceIntent,
@@ -56,52 +58,8 @@ export function buildExperienceFingerprintTarget(
   exp: ExperienceIntent,
   session?: SessionIntentControls | IntentSession | null,
 ): { target: IntentFingerprintTarget; weights: IntentFingerprintWeights } {
-  const target: IntentFingerprintTarget = { ...exp.fingerprintTarget };
-  const weights: IntentFingerprintWeights = { ...(exp.fingerprintWeights || {}) };
-  if (!session) return { target, weights };
-  const intensity = session.intensity ?? "moderate";
-  const energy = session.energy ?? "medium";
-  const attention = session.attention ?? "medium";
-
-  if (intensity === "light") {
-    for (const k of ["experience.emotionalIntensity", "experience.actionIntensity", "emotional.tension"] as const) {
-      if (k in target) target[k] = clamp01(Math.min(target[k] as number, 0.38) * 0.7 + 0.32 * 0.3);
-      else if (k === "experience.emotionalIntensity" || k === "emotional.tension") target[k] = 0.34;
-    }
-  } else if (intensity === "maximum") {
-    target["experience.emotionalIntensity"] = Math.max(
-      (target["experience.emotionalIntensity"] as number) ?? 0, 0.78,
-    );
-    if ("experience.actionIntensity" in exp.fingerprintTarget && typeof target["experience.actionIntensity"] === "number") {
-      target["experience.actionIntensity"] = Math.min(1, (target["experience.actionIntensity"] as number) * 1.12);
-    }
-  }
-
-  if (attention === "easy") {
-    for (const k of ["experience.cognitiveLoad", "narrative.narrativeComplexity"] as const) {
-      if (k in target) target[k] = clamp01((target[k] as number) * 0.55);
-    }
-    target["experience.accessibility"] = Math.max(target["experience.accessibility"] ?? 0.5, 0.78);
-  } else if (attention === "demanding") {
-    for (const k of ["experience.cognitiveLoad", "narrative.narrativeComplexity"] as const) {
-      if (k in target) target[k] = clamp01(Math.max(target[k] as number, 0.72) * 0.4 + 0.88 * 0.6);
-      else target[k] = 0.8;
-    }
-  }
-
-  if (energy === "low") {
-    target["experience.pacing"] =
-      "experience.pacing" in target ? clamp01((target["experience.pacing"] as number) * 0.55) : 0.28;
-    if ("experience.actionIntensity" in target) {
-      target["experience.actionIntensity"] = clamp01((target["experience.actionIntensity"] as number) * 0.65);
-    }
-  } else if (energy === "high") {
-    target["experience.pacing"] =
-      "experience.pacing" in target
-        ? clamp01(Math.max(target["experience.pacing"] as number, 0.72) * 0.35 + 0.88 * 0.65)
-        : 0.82;
-  }
-  return { target, weights };
+  const adjusted = buildSessionAdjustedIntent(exp, session);
+  return { target: adjusted.target, weights: adjusted.weights };
 }
 
 export function fingerprintIntentFit(
