@@ -1,13 +1,10 @@
 /**
  * Emergency static catalog — site never fully blank.
- * 1) Optional public/data/static-catalog.json
- * 2) Builtin seed
- * 3) anime-mapper CDN by MAL id
+ * Builtin seed + anime-mapper CDN by MAL id.
+ * No fs — must stay client-safe (catalog is imported from client components).
  */
 
 import type { Anime, AnimePage, DiscoverFeed } from "../types";
-import { readFile } from "fs/promises";
-import path from "path";
 
 export const STATIC_ID_OFFSET = 50_000_000;
 
@@ -78,17 +75,6 @@ const BUILTIN: SeedItem[] = [
 
 async function loadSeed(): Promise<Anime[]> {
   if (seedCache) return seedCache;
-  try {
-    const p = path.join(process.cwd(), "public", "data", "static-catalog.json");
-    const raw = await readFile(p, "utf8");
-    const parsed = JSON.parse(raw) as SeedItem[];
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      seedCache = parsed.map(mapSeed);
-      return seedCache;
-    }
-  } catch {
-    /* builtin */
-  }
   seedCache = BUILTIN.map(mapSeed);
   return seedCache;
 }
