@@ -2,13 +2,27 @@
  * Official MyAnimeList API v2 — catalog reads with X-MAL-CLIENT-ID.
  * Requires MAL_CLIENT_ID (same app as OAuth). No user token needed for public catalog.
  * Docs: https://myanimelist.net/apiconfig/references/api/v2
+ *
+ * Must NOT import mal-oauth — that pulls next/headers and breaks client bundles
+ * (anilist is imported from AIPanel and other client components).
  */
 
 import type { Anime, AnimeFilters, AnimePage, DiscoverFeed } from "../types";
 import { withProviderLimit } from "../provider-rate-limit";
-import { cleanEnv } from "../mal-oauth";
 
 export const MAL_OFFICIAL_ID_OFFSET = 30_000_000;
+
+function cleanEnv(value: string | undefined): string {
+  if (!value) return "";
+  let v = value.trim();
+  if (
+    (v.startsWith('"') && v.endsWith('"')) ||
+    (v.startsWith("'") && v.endsWith("'"))
+  ) {
+    v = v.slice(1, -1).trim();
+  }
+  return v;
+}
 
 function clientId(): string {
   return cleanEnv(process.env.MAL_CLIENT_ID);
@@ -131,7 +145,7 @@ export async function malOfficialDiscover(
   perPage = 24,
 ): Promise<AnimePage> {
   const rankingType =
-    feed === "top" ? "all" : feed === "trending" ? "bypopularity" : "bypopularity";
+    feed === "top" ? "all" : "bypopularity";
   const offset = Math.max(0, (page - 1) * perPage);
   const json = (await malGet("/anime/ranking", {
     ranking_type: rankingType,
