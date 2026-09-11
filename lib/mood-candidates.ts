@@ -1,6 +1,6 @@
 /**
- * Mood candidate retrieval — genre-specific pools first, hard mood ranking.
- * Never fills every mood with the same global top list.
+ * Mood candidate retrieval.
+ * When AniList / Jikan / Kitsu are down: Shikimori → MAL → Simkl → TMDB → curated.
  */
 import type { Anime } from "./types";
 import { fetchDiscover, fetchFiltered } from "./anilist";
@@ -18,7 +18,15 @@ import {
   MOOD_JIKAN_GENRES,
   moodMatchScore,
 } from "./mood-match";
-import { staticFiltered } from "./providers/static-catalog";
+import {
+  poolShikiMood,
+  poolMalMood,
+  poolSimklMood,
+  poolTmdbMood,
+  poolCuratedMood,
+  poolStaticGenre,
+  type PoolResult,
+} from "./mood-fallback-pools";
 
 export type MoodRetrievalSource = {
   source: string;
@@ -78,7 +86,6 @@ function mapJikanRow(a: {
   } as Anime;
 }
 
-/** One Jikan genre id at a time — multi-id is AND and returns near-empty sets. */
 async function poolJikanGenreId(
   genreId: number,
   limit = 25,
@@ -89,9 +96,7 @@ async function poolJikanGenreId(
       headers: { Accept: "application/json" },
       next: { revalidate: 1800 },
     } as RequestInit);
-    if (!res.ok) {
-      return { data: [], error: `Jikan HTTP ${res.status}` };
-    }
+    if (!res.ok) return { data: [], error: `Jikan HTTP ${res.status}` };
     const json = (await res.json()) as {
       data?: Parameters<typeof mapJikanRow>[0][];
     };
@@ -156,67 +161,78 @@ function dedupe(animes: Anime[]) {
   return { unique: [...byNexus.values()], dropped };
 }
 
+function absorb(
+  retrieval: MoodRetrievalSource[],
+  pools: Anime[],
+  results: PoolResult[],
+  requested = 24,
+) {
+  for (const r of results) {
+    retrieval.push({
+      source: r.source,
+      requested,
+      returned: r.data.length,
+      error: r.error,
+    });
+    pools.push(...r.data);
+  }
+}
+
 export async function getMoodCandidates(
   intent: ExperienceIntent,
   _session?: IntentSession | null,
   opts?: { perPool?: number },
 ): Promise<MoodCandidatesResult> {
-  const perPool = opts?.perPool ?? 36;
+  const perPool = opts?.perPool ?? 30;
   const retrieval: MoodRetrievalSource[] = [];
   const pools: Anime[] = [];
+  const slug = intent.slug;
 
-  // 1) Jikan genre pools FIRST (works when AniList is down)
-  const jikanIds = MOOD_JIKAN_GENRES[intent.slug] || [];
-  const jikanHits: Anime[] = [];
-  if (jikanIds.length) {
-    const jkResults = await Promise.all(
-      jikanIds.slice(0, 3).map((gid) => poolJikanGenreId(gid, 25)),
-    );
-    jkResults.forEach((r, i) => {
-      const gid = jikanIds[i];
-      retrieval.push({
-        source: `jikan:genre:${gid}`,
-        requested: 25,
-        returned: r.data.length,
-        error: r.error,
-      });
-      jikanHits.push(...r.data);
-    });
-    pools.push(...jikanHits);
+  // A) Alternate providers FIRST
+  absorb(retrieval, pools, await poolShikiMood(slug), 30);
+  absorb(retrieval, pools, await poolMalMood(slug), 24);
+  absorb(retrieval, pools, await poolSimklMood(slug), 20);
+  absorb(retrieval, pools, await poolTmdbMood(slug), 20);
+
+  const curated = await poolCuratedMood(slug);
+  absorb(retrieval, pools, [curated], curated.data.length);
+
+  const primaryGenre =
+    (intent.genreHints && intent.genreHints[0]) ||
+    (MOOD_TAG_HINTS[slug] && MOOD_TAG_HINTS[slug][0]) ||
+    "";
+  if (primaryGenre) {
+    absorb(retrieval, pools, [await poolStaticGenre(primaryGenre)], 24);
   }
 
-  // 2) AniList tags
-  const tagHints = MOOD_TAG_HINTS[intent.slug] || [];
-  const tagAnimes: Anime[] = [];
+  // B) Soft AniList
+  const tagHints = MOOD_TAG_HINTS[slug] || [];
   if (tagHints.length) {
     const tagResults = await Promise.allSettled(
-      tagHints.slice(0, 3).map((tg) => poolTag(tg, perPool)),
+      tagHints.slice(0, 2).map((tg) => poolTag(tg, perPool)),
     );
     tagResults.forEach((r, i) => {
       const tg = tagHints[i];
       if (r.status === "fulfilled") {
         retrieval.push({
-          source: `tag:${tg}`,
+          source: `anilist-tag:${tg}`,
           requested: perPool,
           returned: r.value.data.length,
           error: r.value.error,
         });
-        tagAnimes.push(...r.value.data);
+        pools.push(...r.value.data);
       } else {
         retrieval.push({
-          source: `tag:${tg}`,
+          source: `anilist-tag:${tg}`,
           requested: perPool,
           returned: 0,
           error: String(r.reason),
         });
       }
     });
-    pools.push(...tagAnimes);
   }
 
-  // 3) Genre filters — drop provider results that ignore genre
-  const genres = (intent.genreHints || []).slice(0, 3);
-  const genreAnimes: Anime[] = [];
+  const genres = (intent.genreHints || []).slice(0, 2);
   if (genres.length) {
     const genreResults = await Promise.allSettled(
       genres.map((g) => poolGenre(g, perPool)),
@@ -228,94 +244,60 @@ export async function getMoodCandidates(
           (a) => moodMatchScore(a, intent) >= 0.2,
         );
         retrieval.push({
-          source: `genre:${g}`,
+          source: `anilist-genre:${g}`,
           requested: perPool,
           returned: kept.length || r.value.data.length,
           error: r.value.error,
         });
-        genreAnimes.push(...(kept.length ? kept : r.value.data.slice(0, 8)));
+        pools.push(...(kept.length ? kept : r.value.data.slice(0, 6)));
       } else {
         retrieval.push({
-          source: `genre:${g}`,
+          source: `anilist-genre:${g}`,
           requested: perPool,
           returned: 0,
           error: String(r.reason),
         });
       }
     });
-    pools.push(...genreAnimes);
   }
 
-  // 4) Static seed by mood keyword
-  try {
-    const primary =
-      (intent.genreHints && intent.genreHints[0]) ||
-      (MOOD_TAG_HINTS[intent.slug] && MOOD_TAG_HINTS[intent.slug][0]) ||
-      "";
-    if (primary) {
-      const st = await staticFiltered({ genre: primary }, 1, 24);
-      const kept = st.data.filter((a) => moodMatchScore(a, intent) >= 0.25);
+  // C) Soft Jikan
+  const jikanIds = MOOD_JIKAN_GENRES[slug] || [];
+  if (jikanIds.length) {
+    const jkResults = await Promise.all(
+      jikanIds.slice(0, 2).map((gid) => poolJikanGenreId(gid, 20)),
+    );
+    jkResults.forEach((r, i) => {
       retrieval.push({
-        source: `static:${primary}`,
-        requested: 24,
-        returned: kept.length,
+        source: `jikan:genre:${jikanIds[i]}`,
+        requested: 20,
+        returned: r.data.length,
+        error: r.error,
       });
-      pools.push(...kept);
-    }
-  } catch {
-    /* soft */
+      pools.push(...r.data);
+    });
   }
 
-  // 5) Surprise only: trending
-  if (intent.slug === "surprise") {
+  if (slug === "surprise") {
     try {
-      const disc = await fetchDiscover("trending", 1, 36, "exclude");
+      const disc = await fetchDiscover("trending", 1, 24, "exclude");
       retrieval.push({
         source: "discover:trending",
-        requested: 36,
+        requested: 24,
         returned: disc.data.length,
       });
       pools.push(...disc.data);
     } catch (e) {
       retrieval.push({
         source: "discover:trending",
-        requested: 36,
+        requested: 24,
         returned: 0,
         error: e instanceof Error ? e.message : "discover failed",
       });
     }
   }
 
-  let { unique, dropped } = dedupe(pools);
-
-  // Retry primary jikan genre if still thin — never global top
-  if (unique.length < 6 && intent.slug !== "surprise" && jikanIds[0]) {
-    const more = await poolJikanGenreId(jikanIds[0], 25);
-    retrieval.push({
-      source: `jikan:genre:${jikanIds[0]}:retry`,
-      requested: 25,
-      returned: more.data.length,
-      error: more.error,
-    });
-    ({ unique, dropped } = dedupe([...unique, ...more.data]));
-  }
-
-  if (unique.length < 4) {
-    try {
-      const st = await staticFiltered({}, 1, 40);
-      retrieval.push({
-        source: "static:seed-rank",
-        requested: 40,
-        returned: st.data.length,
-      });
-      ({ unique, dropped } = dedupe([...unique, ...st.data]));
-    } catch {
-      /* */
-    }
-  }
-
-  const tagIds = new Set(tagAnimes.map((a) => a.id));
-  const jikanIdSet = new Set(jikanHits.map((a) => a.idMal || a.id));
+  const { unique, dropped } = dedupe(pools);
 
   const scored = unique.map((anime) => {
     const hard = moodMatchScore(anime, intent);
@@ -329,9 +311,10 @@ export async function getMoodCandidates(
     } catch {
       /* soft */
     }
-    let fit = hard * 0.82 + fpFit * 0.18;
-    if (tagIds.has(anime.id)) fit = Math.min(1, fit + 0.08);
-    if (jikanIdSet.has(anime.idMal || anime.id)) fit = Math.min(1, fit + 0.1);
+    let fit = hard * 0.85 + fpFit * 0.15;
+    if (anime.source === "mood-curated") fit = Math.min(1, fit + 0.2);
+    if (String(anime.source || "").includes("shiki") || anime.id > 20_000_000)
+      fit = Math.min(1, fit + 0.05);
     return { anime, fit, hard };
   });
 
@@ -341,11 +324,11 @@ export async function getMoodCandidates(
   });
 
   let final = scored;
-  const strong = scored.filter((s) => s.hard >= 0.3);
-  if (strong.length >= 12) final = strong;
+  const strong = scored.filter((s) => s.hard >= 0.25);
+  if (strong.length >= 10) final = strong;
   else {
-    const mid = scored.filter((s) => s.hard >= 0.15);
-    if (mid.length >= 10) final = mid;
+    const mid = scored.filter((s) => s.hard >= 0.12);
+    if (mid.length >= 8) final = mid;
   }
   final = final.slice(0, 48);
 
