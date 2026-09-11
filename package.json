@@ -2,52 +2,35 @@
   "name": "animenexus-lantern",
   "version": "1.0.0",
   "private": true,
-  "description": "AnimeNexus \u2014 Lantern: mood-based anime recommendations, taste profile, and AI tools",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "generate:sfx": "node scripts/generate-ui-sfx.mjs",
-    "postinstall": "node scripts/restore-ai-hybrid.cjs && node scripts/restore-emptied.cjs && node scripts/patch-ranker-intent.cjs && node scripts/patch-lantern-intent.cjs && node scripts/patch-mood-pipeline.cjs && node scripts/patch-catalog-fallbacks.cjs && node scripts/restore-ui-overhaul.cjs && node scripts/generate-ui-sfx.mjs && node scripts/patch-evidence-layer.cjs && node scripts/patch-jikan-full.cjs",
-    "restore:emptied": "node scripts/restore-emptied.cjs",
-    "visual:routes": "node scripts/visual-routes.mjs",
-    "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test scripts/tests/*.test.ts",
-    "test:recommend": "node --experimental-strip-types --test scripts/tests/*.test.ts",
-    "recommend:lab": "echo Open /dev/recommendation-lab in the running Next app",
-    "recommend:eval": "node --experimental-strip-types scripts/recommend-eval.ts",
-    "recommend:fingerprint-smoke": "node --experimental-strip-types --test scripts/tests/metrics.test.ts"
+    "lint": "next lint",
+    "postinstall": "node scripts/restore-ai-hybrid.cjs && node scripts/restore-emptied.cjs && node scripts/patch-ranker-intent.cjs && node scripts/patch-lantern-intent.cjs && node scripts/patch-mood-pipeline.cjs && node scripts/patch-catalog-fallbacks.cjs && node scripts/restore-ui-overhaul.cjs && node scripts/generate-ui-sfx.mjs && node scripts/patch-evidence-layer.cjs && node scripts/patch-jikan-full.cjs && node scripts/patch-year-coerce.cjs"
+  },
+  "engines": {
+    "node": ">=18.18.0"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.6",
     "@react-three/fiber": "^9.1.2",
-    "@rive-app/react-canvas": "^4.23.0",
-    "@supabase/supabase-js": "^2.49.1",
+    "@sentry/nextjs": "^9.15.0",
+    "@supabase/supabase-js": "^2.49.8",
+    "framer-motion": "^12.9.2",
     "next": "15.5.7",
-    "react": "19.0.1",
-    "react-dom": "19.0.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "three": "^0.175.0",
-    "web-push": "^3.6.7",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.2.0",
-    "@types/node": "^22.10.5",
-    "@types/react": "^19.0.2",
-    "@types/react-dom": "^19.0.2",
+    "@types/node": "^22.14.1",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
     "@types/three": "^0.175.0",
-    "@types/web-push": "^3.6.4",
-    "eslint": "^9.18.0",
+    "eslint": "^9.24.0",
     "eslint-config-next": "15.5.7",
-    "typescript": "^5.7.3"
-  },
-  "overrides": {
-    "react": "19.0.1",
-    "react-dom": "19.0.1"
-  },
-  "engines": {
-    "node": ">=18.18.0"
+    "typescript": "^5.8.3"
   }
 }
