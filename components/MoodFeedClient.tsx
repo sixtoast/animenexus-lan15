@@ -16,6 +16,10 @@ import {
   rankWithSemanticJudge,
   type SemanticJudgeResult,
 } from "@/lib/intelligence/ai/semantic-judge";
+import {
+  filterOutWatched,
+  moodExcludeIds,
+} from "@/lib/watchlist-match";
 import type { Anime } from "@/lib/types";
 
 type Props = {
@@ -25,8 +29,8 @@ type Props = {
 };
 
 /**
- * Mood + general feeds: rank with Ranker V3 so Energy / Attention / Intensity
- * from IntentSession actually move the list. Server still pre-filters by mood.
+ * Mood feeds: Ranker V3 + hide completed/dropped shelf titles.
+ * Watching / planning stay visible and are flagged on the card.
  */
 export function MoodFeedClient({
   items,
@@ -39,53 +43,62 @@ export function MoodFeedClient({
   const [judge, setJudge] = useState<SemanticJudgeResult | null>(null);
   const [aiBusy, setAiBusy] = useState(false);
 
-  const ordered = useMemo(() => {
-    if (items.length < 2) return items;
+  const { pool, hiddenWatched } = useMemo(() => {
+    if (!ready || !entries.length) {
+      return { pool: items, hiddenWatched: 0 };
+    }
+    const { visible, hidden } = filterOutWatched(items, entries);
+    return { pool: visible, hiddenWatched: hidden };
+  }, [items, entries, ready]);
 
-    const exclude = new Set<number>([
-      ...(ready ? entries.map((e) => e.id) : []),
-      ...rejectedAnimeIds(),
-    ]);
+  const ordered = useMemo(() => {
+    if (pool.length < 1) return pool;
+
+    const exclude = moodExcludeIds(entries, rejectedAnimeIds());
+    // Also exclude any id that survived filterOutWatched edge cases
+    for (const e of entries) {
+      if (e.watchStatus === "completed" || e.watchStatus === "dropped") {
+        exclude.add(e.id);
+      }
+    }
     const session = readIntentSession();
 
-    // Explicit mood: V3 with high viewingIntent weight + live session controls
     if (experienceSlug) {
       try {
-        const v3 = rankRecommendationsV3(items, entries, {
+        const v3 = rankRecommendationsV3(pool, entries, {
           excludeIds: exclude,
           experienceSlug,
           session,
         });
         if (v3.length) {
           const rankedIds = new Set(v3.map((r) => r.anime.id));
-          const tail = items.filter(
+          const tail = pool.filter(
             (a) => !rankedIds.has(a.id) && !exclude.has(a.id),
           );
           return [...v3.map((r) => r.anime), ...tail];
         }
       } catch {
-        /* fall through to filter-only */
+        /* fall through */
       }
-      if (!exclude.size) return items;
-      return items.filter((a) => !exclude.has(a.id));
+      return pool.filter((a) => !exclude.has(a.id));
     }
 
-    if (!ready || entries.length < 2) return items;
+    if (!ready || entries.length < 2) return pool;
 
-    const ranked = rankRecommendations(items, entries, {
+    const ranked = rankRecommendations(pool, entries, {
       excludeIds: exclude,
       experienceSlug,
     });
-    if (!ranked.length) return items;
+    if (!ranked.length) return pool;
     const rankedIds = new Set(ranked.map((r) => r.anime.id));
-    const tail = items.filter((a) => !rankedIds.has(a.id));
+    const tail = pool.filter((a) => !rankedIds.has(a.id) && !exclude.has(a.id));
     return [...ranked.map((r) => r.anime), ...tail];
-  }, [ready, entries, items, experienceSlug, sessionKey]);
+  }, [ready, entries, pool, experienceSlug, sessionKey]);
 
   useEffect(() => {
     setAiOrdered(null);
     setJudge(null);
-    if (items.length < 4) return;
+    if (pool.length < 4) return;
     if (!ready || entries.length < 2) return;
     if (typeof window === "undefined" || !isAIConfigured()) return;
 
@@ -94,12 +107,9 @@ export function MoodFeedClient({
 
     (async () => {
       try {
-        const exclude = new Set<number>([
-          ...(ready ? entries.map((e) => e.id) : []),
-          ...rejectedAnimeIds(),
-        ]);
+        const exclude = moodExcludeIds(entries, rejectedAnimeIds());
         const session = readIntentSession();
-        const v3 = rankRecommendationsV3(items, entries, {
+        const v3 = rankRecommendationsV3(pool, entries, {
           excludeIds: exclude,
           experienceSlug,
           session,
@@ -112,7 +122,9 @@ export function MoodFeedClient({
         setJudge(j);
         if (ranked.length) {
           const ids = new Set(ranked.map((r) => r.anime.id));
-          const tail = items.filter((a) => !ids.has(a.id));
+          const tail = pool.filter(
+            (a) => !ids.has(a.id) && !exclude.has(a.id),
+          );
           setAiOrdered([...ranked.map((r) => r.anime), ...tail]);
         }
       } catch {
@@ -128,7 +140,7 @@ export function MoodFeedClient({
     return () => {
       cancelled = true;
     };
-  }, [ready, entries, items, experienceSlug, sessionKey]);
+  }, [ready, entries, pool, experienceSlug, sessionKey]);
 
   const display = aiOrdered ?? ordered;
   const trend =
@@ -147,11 +159,14 @@ export function MoodFeedClient({
           {entries.length < 2
             ? " by viewing intent (add shelf titles for taste personalisation)"
             : " by viewing intent + your shelf"}
-          {" · session controls applied"}
+          {" \u00b7 session controls applied"}
+          {hiddenWatched > 0
+            ? ` \u00b7 ${hiddenWatched} completed/dropped hidden`
+            : ""}
           {aiBusy
-            ? " · refining…"
+            ? " \u00b7 refining\u2026"
             : judge?.recommendations?.length
-              ? " · AI refined"
+              ? " \u00b7 AI refined"
               : ""}
         </p>
       ) : null}
