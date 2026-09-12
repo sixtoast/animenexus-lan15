@@ -1,0 +1,27 @@
+/* Clear bottom nav dock — toasts, AI FAB, mascot chrome */
+.anime-toast-stack {
+  bottom: calc(var(--dock-h, 64px) + 28px + env(safe-area-inset-bottom, 0px)) !important;
+  z-index: var(--z-toast, 3100) !important;
+}
+
+.ai-fab {
+  z-index: var(--z-ai-fab, 2600) !important;
+  bottom: max(96px, calc(var(--dock-h, 64px) + 28px + env(safe-area-inset-bottom))) !important;
+}
+
+.mascot-dock,
+.mascot-drag-handle,
+.mascot-thought,
+.mascot-stage,
+.mascot-root {
+  z-index: var(--z-mascot, 2550) !important;
+}
+
+.mascot-dock {
+  bottom: calc(var(--dock-h, 64px) + 16px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+.mascot-thought {
+  bottom: calc(var(--dock-h, 64px) + 120px + env(safe-area-inset-bottom, 0px)) !important;
+  z-index: calc(var(--z-mascot, 2550) + 1) !important;
+}
