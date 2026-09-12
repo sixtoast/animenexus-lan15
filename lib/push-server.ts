@@ -4,7 +4,8 @@
  */
 
 import webpush from "web-push";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 import { isInQuietHours, type PushPrefs } from "./push-prefs";
 
 export type PushSubscriptionJSON = {
@@ -48,14 +49,7 @@ function configureWebPush(): boolean {
 }
 
 function getServiceSupabase(): SupabaseClient | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  return getSupabaseServerClient();
 }
 
 export async function savePushSubscription(
@@ -82,14 +76,16 @@ export async function savePushSubscription(
       memorySubs.set(sub.endpoint, stored);
       return { stored: "supabase" };
     }
-    console.warn("[push] supabase upsert", error.message);
+    return { stored: "memory", error: error.message };
   }
 
   memorySubs.set(sub.endpoint, stored);
   return { stored: "memory" };
 }
 
-export async function removePushSubscription(endpoint: string): Promise<void> {
+export async function removePushSubscription(
+  endpoint: string,
+): Promise<void> {
   memorySubs.delete(endpoint);
   const sb = getServiceSupabase();
   if (sb) {
@@ -97,125 +93,76 @@ export async function removePushSubscription(endpoint: string): Promise<void> {
   }
 }
 
-export async function listStoredSubscriptions(): Promise<StoredPushSub[]> {
-  const out = new Map<string, StoredPushSub>();
-  for (const [k, v] of memorySubs) out.set(k, v);
-
+async function loadSubs(): Promise<StoredPushSub[]> {
   const sb = getServiceSupabase();
   if (sb) {
-    const { data, error } = await sb
-      .from("push_subscriptions")
-      .select("endpoint, p256dh, auth, prefs")
-      .limit(500);
-    if (!error && data) {
-      for (const row of data) {
-        if (!row.endpoint) continue;
-        out.set(row.endpoint, {
-          endpoint: row.endpoint,
-          keys: {
-            p256dh: row.p256dh || undefined,
-            auth: row.auth || undefined,
-          },
-          prefs: (row.prefs as Record<string, unknown>) || {},
-        });
-      }
+    const { data } = await sb.from("push_subscriptions").select("*");
+    if (data?.length) {
+      return data.map((row) => ({
+        endpoint: row.endpoint,
+        keys: {
+          p256dh: row.p256dh || undefined,
+          auth: row.auth || undefined,
+        },
+        prefs: (row.prefs as StoredPushSub["prefs"]) || {},
+      }));
     }
   }
-  return [...out.values()];
+  return [...memorySubs.values()];
 }
 
-export async function listPushSubscriptions(): Promise<PushSubscriptionJSON[]> {
-  return listStoredSubscriptions();
-}
-
-function allowsCategory(
-  prefs: StoredPushSub["prefs"],
-  category?: PushPayload["category"],
+function shouldSend(
+  sub: StoredPushSub,
+  payload: PushPayload,
 ): boolean {
-  if (!category || category === "system") return true;
-  if (!prefs) return true;
+  const prefs = (sub.prefs || {}) as Partial<PushPrefs>;
   if (prefs.enabled === false) return false;
-  const flag = prefs[category];
-  if (typeof flag === "boolean") return flag;
+  if (payload.category && prefs.categories) {
+    const cat = payload.category;
+    if (prefs.categories[cat] === false) return false;
+  }
+  if (isInQuietHours(prefs)) return false;
   return true;
-}
-
-function inQuiet(prefs: StoredPushSub["prefs"]): boolean {
-  if (!prefs) return false;
-  return isInQuietHours({
-    quietStartHour:
-      typeof prefs.quietStartHour === "number" ? prefs.quietStartHour : null,
-    quietEndHour:
-      typeof prefs.quietEndHour === "number" ? prefs.quietEndHour : null,
-  });
 }
 
 export async function sendPushToAll(
   payload: PushPayload,
-): Promise<{
-  sent: number;
-  failed: number;
-  skipped: string | null;
-  filtered: number;
-}> {
-  if (!configureWebPush()) {
-    return { sent: 0, failed: 0, skipped: "VAPID not configured", filtered: 0 };
-  }
+): Promise<{ sent: number; failed: number }> {
+  if (!configureWebPush()) return { sent: 0, failed: 0 };
 
-  const subs = await listStoredSubscriptions();
-  if (!subs.length) {
-    return { sent: 0, failed: 0, skipped: "no subscriptions", filtered: 0 };
-  }
+  const subs = await loadSubs();
+  let sent = 0;
+  let failed = 0;
 
   const body = JSON.stringify({
     title: payload.title,
     body: payload.body,
-    url: payload.url || "/tools/signals",
-    tag: payload.tag || "animenexus-signal",
+    url: payload.url || "/",
+    tag: payload.tag || "animenexus",
   });
 
-  let sent = 0;
-  let failed = 0;
-  let filtered = 0;
-
-  await Promise.all(
-    subs.map(async (sub) => {
-      if (!allowsCategory(sub.prefs, payload.category) || inQuiet(sub.prefs)) {
-        filtered += 1;
-        return;
-      }
-      if (!sub.keys?.p256dh || !sub.keys?.auth) {
-        failed += 1;
-        return;
-      }
-      try {
-        await webpush.sendNotification(
-          {
-            endpoint: sub.endpoint,
-            keys: {
-              p256dh: sub.keys.p256dh,
-              auth: sub.keys.auth,
-            },
+  for (const sub of subs) {
+    if (!shouldSend(sub, payload)) continue;
+    if (!sub.endpoint || !sub.keys?.p256dh || !sub.keys?.auth) {
+      failed++;
+      continue;
+    }
+    try {
+      await webpush.sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: {
+            p256dh: sub.keys.p256dh,
+            auth: sub.keys.auth,
           },
-          body,
-        );
-        sent += 1;
-      } catch (e: unknown) {
-        failed += 1;
-        const status =
-          e && typeof e === "object" && "statusCode" in e
-            ? Number((e as { statusCode: number }).statusCode)
-            : 0;
-        if (status === 404 || status === 410) {
-          await removePushSubscription(sub.endpoint);
-        }
-        console.warn(
-          "[push] send failed",
-          status || (e instanceof Error ? e.message : e),
-        );
-      }
-    }),
-  );
+        },
+        body,
+      );
+      sent++;
+    } catch {
+      failed++;
+    }
+  }
 
-  return { sent, failed, skipped: null, filtered };
+  return { sent, failed };
 }

@@ -13,111 +13,89 @@ function normalizeKey(raw: unknown): string | null {
   return k;
 }
 
+/** GET ?key=device_key — soft-fail empty when unconfigured */
 export async function GET(req: Request) {
   const sb = serverClient();
   if (!sb) {
     return NextResponse.json(
-      { error: "Desk cloud is not configured.", source: "unconfigured" },
-      { status: 503 },
+      { source: "unconfigured", pack: null },
+      { status: 200 },
     );
   }
 
-  const { searchParams } = new URL(req.url);
-  const key = normalizeKey(searchParams.get("key"));
+  const key = normalizeKey(new URL(req.url).searchParams.get("key"));
   if (!key) {
-    return NextResponse.json({ error: "Missing or invalid key" }, { status: 400 });
+    return NextResponse.json({ error: "Missing key" }, { status: 400 });
   }
 
   const { data, error } = await sb
     .from("desk_cloud")
-    .select("payload, updated_at")
-    .eq("key", key)
+    .select("pack, updated_at")
+    .eq("device_key", key)
     .maybeSingle();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.warn("[desk-cloud] get", error.message);
+    return NextResponse.json(
+      { source: "error", pack: null, message: error.message },
+      { status: 200 },
+    );
   }
 
   return NextResponse.json({
     source: "supabase",
-    key,
-    payload: data?.payload ?? null,
+    pack: data?.pack ?? null,
     updatedAt: data?.updated_at ?? null,
   });
 }
 
-export async function PUT(req: Request) {
+/** POST { key, pack } — upsert soft desk snapshot */
+export async function POST(req: Request) {
   const sb = serverClient();
   if (!sb) {
     return NextResponse.json(
-      { error: "Desk cloud is not configured." },
+      { error: "Supabase is not configured", source: "unconfigured" },
       { status: 503 },
     );
   }
 
-  let body: unknown;
+  let body: { key?: string; pack?: unknown };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const key =
-    typeof body === "object" && body && "key" in body
-      ? normalizeKey((body as { key: unknown }).key)
-      : null;
-  const payload =
-    typeof body === "object" && body && "payload" in body
-      ? (body as { payload: unknown }).payload
-      : null;
-
+  const key = normalizeKey(body.key);
   if (!key) {
-    return NextResponse.json({ error: "Missing or invalid key" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid key" }, { status: 400 });
+  }
+  if (!body.pack || typeof body.pack !== "object") {
+    return NextResponse.json({ error: "Invalid pack" }, { status: 400 });
   }
 
-  const { data, error } = await sb
-    .from("desk_cloud")
-    .upsert(
-      {
-        key,
-        payload,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "key" },
-    )
-    .select("key, updated_at")
-    .single();
+  // Bound payload size (~400KB JSON)
+  const encoded = JSON.stringify(body.pack);
+  if (encoded.length > 400_000) {
+    return NextResponse.json({ error: "Pack too large" }, { status: 413 });
+  }
+
+  const { error } = await sb.from("desk_cloud").upsert(
+    {
+      device_key: key,
+      pack: body.pack,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "device_key" },
+  );
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({
-    source: "supabase",
-    key: data.key,
-    updatedAt: data.updated_at,
-  });
-}
-
-export async function DELETE(req: Request) {
-  const sb = serverClient();
-  if (!sb) {
+    console.warn("[desk-cloud] upsert", error.message);
     return NextResponse.json(
-      { error: "Desk cloud is not configured." },
-      { status: 503 },
+      { error: error.message, source: "error" },
+      { status: 500 },
     );
   }
 
-  const { searchParams } = new URL(req.url);
-  const key = normalizeKey(searchParams.get("key"));
-  if (!key) {
-    return NextResponse.json({ error: "Missing or invalid key" }, { status: 400 });
-  }
-
-  const { error } = await sb.from("desk_cloud").delete().eq("key", key);
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ ok: true, key });
+  return NextResponse.json({ ok: true, source: "supabase" });
 }
