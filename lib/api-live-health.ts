@@ -134,9 +134,9 @@ async function probeMalOfficial(): Promise<LiveHealthRow> {
       group: "catalog",
     };
   }
-  const r = await timedFetch("https://api.myanimelist.net/v2/anime/1?fields=id",
-    { headers: { "X-MAL-CLIENT-ID": id } },
-  );
+  const r = await timedFetch("https://api.myanimelist.net/v2/anime/1?fields=id", {
+    headers: { "X-MAL-CLIENT-ID": id },
+  });
   const c = classify(r.ms, r.ok, r.status);
   return {
     id: "mal_official",
@@ -261,7 +261,27 @@ async function probeSupabase(): Promise<LiveHealthRow> {
   };
 }
 
-export async function probeAllLiveHealth(): Promise<LiveHealthRow[]> {
+async function probeSiteSelf(
+  origin?: string | null,
+): Promise<LiveHealthRow | null> {
+  if (!origin) return null;
+  const r = await timedFetch(
+    origin.replace(/\/$/, "") + "/api/provider-status",
+  );
+  const c = classify(r.ms, r.ok, r.status);
+  return {
+    id: "site_self",
+    label: "Site self",
+    status: c.status,
+    latencyMs: r.ms,
+    detail: c.detail,
+    group: "infra",
+  };
+}
+
+export async function probeAllLiveHealth(
+  opts?: { origin?: string | null },
+): Promise<LiveHealthRow[]> {
   const rows = await Promise.all([
     probeAnilist(),
     probeJikan(),
@@ -273,5 +293,15 @@ export async function probeAllLiveHealth(): Promise<LiveHealthRow[]> {
     probeOpenMeteo(),
     probeSupabase(),
   ]);
+  const self = await probeSiteSelf(opts?.origin);
+  if (self) rows.push(self);
   return rows;
+}
+
+/** Provider-status API entry — stable name used by routes. */
+export async function runLiveHealthProbes(opts?: {
+  origin?: string | null;
+}): Promise<{ probes: LiveHealthRow[]; checkedAt: string }> {
+  const probes = await probeAllLiveHealth(opts);
+  return { probes, checkedAt: new Date().toISOString() };
 }
