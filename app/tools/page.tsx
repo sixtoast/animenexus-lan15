@@ -1,36 +1,130 @@
 import Link from "next/link";
 import "./tools.css";
 import "../desk.css";
-import { toolPersonality, type ToolPersonalityId } from "@/lib/tool-personality";
+import {
+  ToolsHubClient,
+  OpenAiDeskButton,
+  type ToolCard,
+} from "@/components/ToolsHubClient";
 
 export const metadata = {
   title: "Tools · AnimeNexus",
   description: "Compare, fusion, radar, oracle, stats, fanzone, and more.",
 };
 
-const TOOLS: {
-  href: string;
-  emoji: string;
-  title: string;
-  blurb: string;
-  personality: ToolPersonalityId;
-}[] = [
-  { href: "/tools/tonight", emoji: "🌙", title: "Tonight", blurb: "Minutes left → shelf that fits.", personality: "generic" },
-  { href: "/tools/compare", emoji: "⚖️", title: "Compare", blurb: "Two titles side by side.", personality: "compare" },
-  { href: "/tools/fusion", emoji: "🧬", title: "Fusion", blurb: "Blend two signals + catalog children.", personality: "fusion" },
-  { href: "/tools/dislike", emoji: "🙅", title: "Dislike reverse", blurb: "Opposite genre space.", personality: "dislike" },
-  { href: "/tools/completionist", emoji: "✅", title: "Completionist", blurb: "Finish Watching, rank Planning.", personality: "completionist" },
-  { href: "/tools/radar", emoji: "📡", title: "Radar", blurb: "Upcoming scanner + prefs.", personality: "radar" },
-  { href: "/tools/signals", emoji: "🔔", title: "Signals", blurb: "Local inbox of soft changes.", personality: "radar" },
-  { href: "/tools/status", emoji: "🩺", title: "Status", blurb: "Optional API gates · soft-fail.", personality: "generic" },
-  { href: "/tools/stats", emoji: "📊", title: "Stats", blurb: "Year-in-anime editorial.", personality: "stats" },
-  { href: "/tools/challenge", emoji: "🎯", title: "Challenge", blurb: "Silhouette daily MCQ.", personality: "challenge" },
-  { href: "/tools/sauce", emoji: "🔍", title: "Sauce", blurb: "Drop, paste, URL → trace.moe.", personality: "sauce" },
-  { href: "/tools/session-cover", emoji: "🖼️", title: "Session Cover", blurb: "Editorial share cards from your shelf.", personality: "generic" },
-  { href: "/tools/oracle", emoji: "🕯️", title: "Night Desk", blurb: "Local + cloud oracle.", personality: "oracle" },
-  { href: "/tools/fanzone", emoji: "💌", title: "Fan zone", blurb: "Bingo, confessions, Taste DNA.", personality: "fanzone" },
-  { href: "/tools/motion", emoji: "🎬", title: "Motion", blurb: "Clip room (honest scaffold).", personality: "motion" },
-  { href: "/airing", emoji: "📺", title: "Airing", blurb: "Schedule + releasing now.", personality: "generic" },
+const TOOLS: ToolCard[] = [
+  {
+    href: "/tools/tonight",
+    icon: "night-desk",
+    title: "Tonight",
+    blurb: "Minutes left → shelf that fits.",
+    personality: "generic",
+  },
+  {
+    href: "/tools/compare",
+    icon: "compare",
+    title: "Compare",
+    blurb: "Two titles side by side.",
+    personality: "compare",
+  },
+  {
+    href: "/tools/fusion",
+    icon: "resonance",
+    title: "Fusion",
+    blurb: "Blend two signals + catalog children.",
+    personality: "fusion",
+  },
+  {
+    href: "/tools/dislike",
+    icon: "signal",
+    title: "Dislike reverse",
+    blurb: "Opposite genre space.",
+    personality: "dislike",
+  },
+  {
+    href: "/tools/completionist",
+    icon: "seal",
+    title: "Completionist",
+    blurb: "Finish Watching, rank Planning.",
+    personality: "completionist",
+  },
+  {
+    href: "/tools/radar",
+    icon: "radar",
+    title: "Radar",
+    blurb: "Upcoming scanner + prefs.",
+    personality: "radar",
+  },
+  {
+    href: "/tools/signals",
+    icon: "signal",
+    title: "Signals",
+    blurb: "Local inbox of soft changes.",
+    personality: "radar",
+  },
+  {
+    href: "/tools/status",
+    icon: "stats",
+    title: "Status",
+    blurb: "Optional API gates · soft-fail.",
+    personality: "generic",
+  },
+  {
+    href: "/tools/stats",
+    icon: "stats",
+    title: "Stats",
+    blurb: "Year-in-anime editorial.",
+    personality: "stats",
+  },
+  {
+    href: "/tools/challenge",
+    icon: "challenge",
+    title: "Challenge",
+    blurb: "Silhouette daily MCQ.",
+    personality: "challenge",
+  },
+  {
+    href: "/tools/sauce",
+    icon: "sauce",
+    title: "Sauce",
+    blurb: "Drop, paste, URL → trace.moe.",
+    personality: "sauce",
+  },
+  {
+    href: "/tools/session-cover",
+    icon: "living-shelf",
+    title: "Session Cover",
+    blurb: "Editorial share cards from your shelf.",
+    personality: "generic",
+  },
+  {
+    href: "/tools/oracle",
+    icon: "oracle",
+    title: "Night Desk",
+    blurb: "Local + cloud oracle.",
+    personality: "oracle",
+  },
+  {
+    href: "/tools/fanzone",
+    icon: "frequency",
+    title: "Fan zone",
+    blurb: "Bingo, confessions, Taste DNA.",
+    personality: "fanzone",
+  },
+  {
+    href: "/tools/motion",
+    icon: "daily",
+    title: "Motion",
+    blurb: "Clip room (honest scaffold).",
+    personality: "motion",
+  },
+  {
+    href: "/airing",
+    icon: "seasonal",
+    title: "Airing",
+    blurb: "Schedule + releasing now.",
+    personality: "generic",
+  },
 ];
 
 export default function ToolsHubPage() {
@@ -43,9 +137,12 @@ export default function ToolsHubPage() {
             Desk <span>tools</span>
           </h1>
           <p>
-            Same shell — different personalities. Instrument, broadcast, game,
-            archive, investigation, studio.
+            Instruments for the night — AI desk, catalog tools, and soft
+            utilities.
           </p>
+          <div style={{ marginTop: 16 }}>
+            <OpenAiDeskButton />
+          </div>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
@@ -53,26 +150,9 @@ export default function ToolsHubPage() {
           <span>
             <strong>Lantern</strong> · pick an instrument
           </span>
-          <Link href="/">← Home</Link>
+          <Link href="/">Home</Link>
         </div>
-        <div className="tools-hub">
-          {TOOLS.map((t, i) => {
-            const p = toolPersonality(t.personality);
-            return (
-              <Link
-                key={t.href}
-                href={t.href}
-                className="tools-hub-card"
-                style={{ "--i": i } as React.CSSProperties}
-              >
-                <span className="tools-hub-emoji">{t.emoji}</span>
-                <h2>{t.title}</h2>
-                <p>{t.blurb}</p>
-                <span className="tools-hub-role">{p.role}</span>
-              </Link>
-            );
-          })}
-        </div>
+        <ToolsHubClient tools={TOOLS} />
       </section>
     </main>
   );

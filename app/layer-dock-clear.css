@@ -7,6 +7,34 @@
 .ai-fab {
   z-index: var(--z-ai-fab, 2600) !important;
   bottom: max(96px, calc(var(--dock-h, 64px) + 28px + env(safe-area-inset-bottom))) !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 18px !important;
+  border: 1px solid var(--color-accent-border-strong) !important;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 176, 135, 0.22),
+    rgba(42, 28, 34, 0.95)
+  ) !important;
+  box-shadow:
+    0 10px 32px rgba(0, 0, 0, 0.45),
+    0 0 24px rgba(255, 176, 135, 0.25) !important;
+  position: fixed !important;
+}
+.ai-fab .ai-fab-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: var(--color-accent);
+}
+.ai-fab .ai-status-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
 
 .mascot-dock,
@@ -24,4 +52,50 @@
 .mascot-thought {
   bottom: calc(var(--dock-h, 64px) + 120px + env(safe-area-inset-bottom, 0px)) !important;
   z-index: calc(var(--z-mascot, 2550) + 1) !important;
+}
+
+/* More menu: always viewport-fixed, above dock */
+.nav-scrim {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2700 !important;
+}
+.nav-mobile,
+.nav-mobile.nav-mobile--frequency {
+  position: fixed !important;
+  left: max(12px, env(safe-area-inset-left)) !important;
+  right: max(12px, env(safe-area-inset-right)) !important;
+  top: max(12px, calc(env(safe-area-inset-top) + 8px)) !important;
+  bottom: auto !important;
+  z-index: 2750 !important;
+  max-height: min(
+    82dvh,
+    calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom))
+  ) !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.nav-dock-icon .nexus-icon,
+.nav-dock-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.tools-hub-icon {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: rgba(255, 176, 135, 0.1);
+  color: var(--color-accent, #ffb087);
+}
+.tools-ai-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-weight: 600;
 }
