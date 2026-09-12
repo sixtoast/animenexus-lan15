@@ -77,6 +77,7 @@ import "./archive-field.css";
 import "./memory-chapters.css";
 import "./editorial.css";
 import "./micro-interactions.css";
+import "./motion-polish.css";
 import "./micro-density.css";
 import "./reduced-motion-eq.css";
 import "./sound-settings.css";
