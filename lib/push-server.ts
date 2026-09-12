@@ -127,12 +127,25 @@ function shouldSend(
 
 export async function sendPushToAll(
   payload: PushPayload,
-): Promise<{ sent: number; failed: number }> {
-  if (!configureWebPush()) return { sent: 0, failed: 0 };
+): Promise<{
+  sent: number;
+  failed: number;
+  skipped: string | null;
+  filtered: number;
+}> {
+  if (!configureWebPush()) {
+    return {
+      sent: 0,
+      failed: 0,
+      skipped: "VAPID not configured",
+      filtered: 0,
+    };
+  }
 
   const subs = await loadSubs();
   let sent = 0;
   let failed = 0;
+  let filtered = 0;
 
   const body = JSON.stringify({
     title: payload.title,
@@ -142,7 +155,10 @@ export async function sendPushToAll(
   });
 
   for (const sub of subs) {
-    if (!shouldSend(sub, payload)) continue;
+    if (!shouldSend(sub, payload)) {
+      filtered++;
+      continue;
+    }
     if (!sub.endpoint || !sub.keys?.p256dh || !sub.keys?.auth) {
       failed++;
       continue;
@@ -164,5 +180,5 @@ export async function sendPushToAll(
     }
   }
 
-  return { sent, failed };
+  return { sent, failed, skipped: null, filtered };
 }
