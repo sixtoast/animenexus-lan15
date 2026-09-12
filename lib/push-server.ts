@@ -124,7 +124,14 @@ function shouldSend(
     if (prefs[cat] === false) return false;
   }
 
-  if (isInQuietHours(prefs)) return false;
+  if (
+    isInQuietHours({
+      quietStartHour: prefs.quietStartHour ?? null,
+      quietEndHour: prefs.quietEndHour ?? null,
+    })
+  ) {
+    return false;
+  }
   return true;
 }
 
