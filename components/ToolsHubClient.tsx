@@ -26,7 +26,7 @@ export function ToolsHubClient({ tools }: { tools: ToolCard[] }) {
             style={{ "--i": i } as React.CSSProperties}
           >
             <span className="tools-hub-icon" aria-hidden>
-              <NexusIcon name={t.icon} size={28} />
+              <NexusIcon name={t.icon} size="lg" />
             </span>
             <h2>{t.title}</h2>
             <p>{t.blurb}</p>
@@ -46,7 +46,7 @@ export function OpenAiDeskButton() {
       className="btn btn-accent tools-ai-open"
       onClick={() => window.dispatchEvent(new Event("lantern:open-ai"))}
     >
-      <NexusIcon name="lantern" size={18} />
+      <NexusIcon name="lantern" size="md" />
       <span>Lantern AI desk</span>
     </button>
   );

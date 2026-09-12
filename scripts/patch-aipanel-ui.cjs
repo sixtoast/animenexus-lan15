@@ -4,10 +4,16 @@ const file = path.join(__dirname, "..", "components", "AIPanel.tsx");
 if (!fs.existsSync(file)) process.exit(0);
 let t = fs.readFileSync(file, "utf8");
 
-if (t.includes('name="lantern"') && t.includes("lantern:open-ai")) {
+if (t.includes('name="lantern"') && t.includes("lantern:open-ai") && !t.includes("size={26}")) {
   console.log("[patch-aipanel-ui] already applied");
   process.exit(0);
 }
+
+// Fix prior bad size={26} if present
+t = t.replace(
+  /<NexusIcon name="lantern" size=\{26\} \/>/g,
+  '<NexusIcon name="lantern" size="lg" />',
+);
 
 if (!t.includes("NexusIcon")) {
   t = t.replace(
@@ -55,7 +61,7 @@ const newFab = `      <button
         onClick={() => setOpen(true)}
       >
         <span className="ai-fab-icon" aria-hidden>
-          <NexusIcon name="lantern" size={26} />
+          <NexusIcon name="lantern" size="lg" />
         </span>
         <span
           className={"ai-status-dot" + (configured ? " on" : "")}
@@ -73,7 +79,7 @@ if (t.includes(oldFab)) {
           aria-hidden
         />`,
     `        <span className="ai-fab-icon" aria-hidden>
-          <NexusIcon name="lantern" size={26} />
+          <NexusIcon name="lantern" size="lg" />
         </span>
         <span
           className={"ai-status-dot" + (configured ? " on" : "")}
