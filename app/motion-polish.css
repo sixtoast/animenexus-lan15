@@ -1,0 +1,327 @@
+/**
+ * Motion polish — builds on interaction-language + motion.css + micro-interactions.
+ * Ember / lantern feel: soft lifts, spring selects, staggered reveals.
+ * Always gated by data-reduce-motion.
+ */
+
+/* ── Refined choreography tokens ─────────────────────────── */
+:root {
+  --mp-lift: 4px;
+  --mp-press: 1px;
+  --mp-glow: rgba(240, 160, 144, 0.22);
+  --mp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --mp-ease-spring: cubic-bezier(0.34, 1.35, 0.64, 1);
+  --mp-ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --mp-fast: 110ms;
+  --mp-std: 240ms;
+  --mp-slow: 480ms;
+}
+
+/* Softer room enter */
+@keyframes roomEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes cardRise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.01);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Hero / section heads */
+.hero h1,
+.section-head h2 {
+  animation: mpHeroIn var(--mp-slow) var(--mp-ease-out) both;
+}
+
+@keyframes mpHeroIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    letter-spacing: 0.04em;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    letter-spacing: normal;
+  }
+}
+
+.hero-badge,
+.mood-source-panel {
+  animation: mpFadeUp var(--mp-std) var(--mp-ease-out) both;
+  animation-delay: 60ms;
+}
+
+@keyframes mpFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mood chips / filter chips */
+.mood-chip,
+.filter-chip,
+.chip,
+.feed-tab {
+  transition:
+    transform var(--mp-fast) var(--mp-ease-soft),
+    background var(--mp-std) var(--mp-ease-soft),
+    border-color var(--mp-std) var(--mp-ease-soft),
+    color var(--mp-fast) var(--mp-ease-soft),
+    box-shadow var(--mp-std) var(--mp-ease-out) !important;
+}
+
+.mood-chip:hover,
+.filter-chip:hover,
+.chip:hover,
+.feed-tab:hover {
+  transform: translateY(-2px);
+}
+
+.mood-chip:active,
+.filter-chip:active,
+.chip:active,
+.feed-tab:active {
+  transform: translateY(var(--mp-press)) scale(0.97);
+}
+
+.mood-chip.is-active,
+.mood-chip[aria-current="true"],
+.filter-chip.is-active,
+.filter-chip[aria-pressed="true"],
+.feed-tab.is-active,
+.feed-tab[aria-current="page"] {
+  box-shadow: 0 0 0 1px var(--mp-glow), 0 6px 20px rgba(0, 0, 0, 0.25);
+  transform: scale(1.02);
+}
+
+/* Bottom dock spring + active pulse */
+.nav-dock-item {
+  transition:
+    color var(--mp-fast) var(--mp-ease-soft),
+    background var(--mp-std) var(--mp-ease-soft),
+    transform var(--mp-std) var(--mp-ease-spring),
+    box-shadow var(--mp-std) var(--mp-ease-out) !important;
+}
+
+.nav-dock-item:hover {
+  transform: translateY(-2px);
+}
+
+.nav-dock-item:active {
+  transform: translateY(1px) scale(0.94);
+}
+
+.nav-dock-item--active,
+.nav-dock-item[aria-current="page"] {
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(240, 160, 144, 0.2);
+  animation: mpDockActive 0.55s var(--mp-ease-spring) both;
+}
+
+@keyframes mpDockActive {
+  0% {
+    transform: scale(0.92);
+  }
+  60% {
+    transform: scale(1.04) translateY(-2px);
+  }
+  100% {
+    transform: scale(1) translateY(-1px);
+  }
+}
+
+.nav-dock {
+  transition:
+    box-shadow var(--mp-std) var(--mp-ease-soft),
+    border-color var(--mp-std) var(--mp-ease-soft),
+    transform var(--mp-std) var(--mp-ease-out);
+}
+
+.nav-dock:hover {
+  box-shadow:
+    0 14px 44px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 0 36px rgba(240, 160, 144, 0.16);
+}
+
+/* Primary buttons — richer press */
+.btn,
+button.btn {
+  transition:
+    transform var(--mp-fast) var(--mp-ease-spring),
+    background var(--mp-std) var(--mp-ease-soft),
+    border-color var(--mp-fast) var(--mp-ease-soft),
+    box-shadow var(--mp-std) var(--mp-ease-out),
+    color var(--mp-fast) var(--mp-ease-soft),
+    opacity var(--mp-fast) var(--mp-ease-soft) !important;
+}
+
+.btn:hover:not(:disabled),
+button.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled),
+button.btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.97) !important;
+}
+
+.btn-accent:hover:not(:disabled) {
+  box-shadow: 0 0 24px rgba(240, 160, 144, 0.35);
+}
+
+/* Cards — slightly longer hover for material feel */
+.anime-card {
+  transition:
+    transform var(--mp-std) var(--mp-ease-out),
+    border-color var(--mp-std) var(--mp-ease-soft),
+    box-shadow var(--mp-std) var(--mp-ease-out),
+    filter var(--mp-std) var(--mp-ease-soft) !important;
+}
+
+.anime-card:hover {
+  transform: translateY(calc(-4px - var(--anime-energy, 0.4) * 2px))
+    scale(1.012) !important;
+}
+
+.anime-card.is-pressed {
+  transform: translateY(2px) scale(0.98) !important;
+  transition-duration: var(--mp-fast) !important;
+}
+
+/* Status ring pulse when watching */
+.anime-card.is-watching .card-status-ring {
+  animation: mpRingPulse 2.4s var(--mp-ease-soft) infinite;
+}
+
+@keyframes mpRingPulse {
+  0%,
+  100% {
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* State boxes */
+.state-box {
+  animation: mpFadeUp var(--mp-std) var(--mp-ease-out) both;
+}
+
+/* Modal / dialog */
+.modal-backdrop,
+.cmdk-overlay,
+[data-overlay] {
+  animation: mpOverlayIn var(--mp-std) var(--mp-ease-soft) both;
+}
+
+@keyframes mpOverlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-panel,
+.cmdk-root,
+.cmdk-dialog {
+  animation: mpPanelIn var(--mp-slow) var(--mp-ease-out) both;
+}
+
+@keyframes mpPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Toasts */
+.anime-toast {
+  animation: mpToastIn var(--mp-std) var(--mp-ease-spring) both;
+}
+
+@keyframes mpToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Links in content */
+main a:not(.btn):not(.anime-card):not(.nav-dock-item) {
+  transition:
+    color var(--mp-fast) var(--mp-ease-soft),
+    opacity var(--mp-fast) var(--mp-ease-soft),
+    text-underline-offset var(--mp-fast) var(--mp-ease-soft);
+  text-underline-offset: 2px;
+}
+
+main a:not(.btn):not(.anime-card):hover {
+  text-underline-offset: 4px;
+}
+
+/* Scroll progress thicker pulse on move */
+.scroll-progress-bar {
+  transition: width 80ms linear, opacity var(--mp-std) var(--mp-ease-soft);
+}
+
+/* Reduced motion kill-switch */
+html[data-reduce-motion="true"] .hero h1,
+html[data-reduce-motion="true"] .section-head h2,
+html[data-reduce-motion="true"] .hero-badge,
+html[data-reduce-motion="true"] .mood-source-panel,
+html[data-reduce-motion="true"] .nav-dock-item--active,
+html[data-reduce-motion="true"] .anime-card.is-watching .card-status-ring,
+html[data-reduce-motion="true"] .modal-backdrop,
+html[data-reduce-motion="true"] .modal-panel,
+html[data-reduce-motion="true"] .cmdk-root,
+html[data-reduce-motion="true"] .anime-toast,
+html[data-reduce-motion="true"] .state-box {
+  animation: none !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+html[data-reduce-motion="true"] .mood-chip:hover,
+html[data-reduce-motion="true"] .filter-chip:hover,
+html[data-reduce-motion="true"] .nav-dock-item:hover,
+html[data-reduce-motion="true"] .btn:hover,
+html[data-reduce-motion="true"] .anime-card:hover {
+  transform: none !important;
+}
