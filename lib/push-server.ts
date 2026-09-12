@@ -117,10 +117,13 @@ function shouldSend(
 ): boolean {
   const prefs = (sub.prefs || {}) as Partial<PushPrefs>;
   if (prefs.enabled === false) return false;
-  if (payload.category && prefs.categories) {
+
+  // PushPrefs stores category toggles as top-level booleans (airing / streaming / radar)
+  if (payload.category && payload.category !== "system") {
     const cat = payload.category;
-    if (prefs.categories[cat] === false) return false;
+    if (prefs[cat] === false) return false;
   }
+
   if (isInQuietHours(prefs)) return false;
   return true;
 }
