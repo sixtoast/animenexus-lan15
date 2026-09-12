@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 const MAX_LEN = 280;
 const MAX_LIST = 40;
 
 function serverClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+  return getSupabaseServerClient();
 }
 
 export async function GET() {
@@ -39,7 +32,7 @@ export async function GET() {
     items: (data ?? []).map((r) => ({
       id: r.id,
       text: r.text,
-      at: r.created_at,
+      createdAt: r.created_at,
     })),
   });
 }
@@ -48,21 +41,31 @@ export async function POST(req: Request) {
   const sb = serverClient();
   if (!sb) {
     return NextResponse.json(
-      { error: "Supabase is not configured" },
+      { error: "Confessions are not configured." },
       { status: 503 },
     );
   }
 
-  let body: { text?: string };
+  let body: unknown;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const text = (body.text ?? "").trim().slice(0, MAX_LEN);
-  if (!text) {
-    return NextResponse.json({ error: "Empty confession" }, { status: 400 });
+  const text =
+    typeof body === "object" &&
+    body &&
+    "text" in body &&
+    typeof (body as { text: unknown }).text === "string"
+      ? (body as { text: string }).text.trim()
+      : "";
+
+  if (!text || text.length > MAX_LEN) {
+    return NextResponse.json(
+      { error: `Text must be 1–${MAX_LEN} characters.` },
+      { status: 400 },
+    );
   }
 
   const { data, error } = await sb
@@ -76,6 +79,10 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({
-    item: { id: data.id, text: data.text, at: data.created_at },
+    item: {
+      id: data.id,
+      text: data.text,
+      createdAt: data.created_at,
+    },
   });
 }
