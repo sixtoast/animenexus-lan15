@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "generate:sfx": "node scripts/generate-ui-sfx.mjs",
-    "postinstall": "node scripts/restore-ai-hybrid.cjs && node scripts/restore-emptied.cjs && node scripts/patch-ranker-intent.cjs && node scripts/patch-lantern-intent.cjs && node scripts/patch-mood-pipeline.cjs && node scripts/patch-catalog-fallbacks.cjs && node scripts/restore-ui-overhaul.cjs && node scripts/generate-ui-sfx.mjs && node scripts/patch-evidence-layer.cjs && node scripts/patch-jikan-full.cjs && node scripts/patch-year-coerce.cjs && node scripts/patch-mood-candidates-session.cjs && node scripts/patch-ranker-session.cjs && node scripts/restore-api-live-health.cjs && node scripts/patch-dock-clear-import.cjs",
+    "postinstall": "node scripts/restore-ai-hybrid.cjs && node scripts/restore-emptied.cjs && node scripts/patch-ranker-intent.cjs && node scripts/patch-lantern-intent.cjs && node scripts/patch-mood-pipeline.cjs && node scripts/patch-catalog-fallbacks.cjs && node scripts/restore-ui-overhaul.cjs && node scripts/generate-ui-sfx.mjs && node scripts/patch-evidence-layer.cjs && node scripts/patch-jikan-full.cjs && node scripts/patch-year-coerce.cjs && node scripts/patch-mood-candidates-session.cjs && node scripts/patch-ranker-session.cjs && node scripts/restore-api-live-health.cjs && node scripts/patch-dock-clear-import.cjs && node scripts/restore-navbar.cjs && node scripts/restore-aipanel.cjs",
     "restore:emptied": "node scripts/restore-emptied.cjs",
     "visual:routes": "node scripts/visual-routes.mjs",
     "typecheck": "tsc --noEmit",
