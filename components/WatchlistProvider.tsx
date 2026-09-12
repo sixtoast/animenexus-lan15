@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import type { Anime, WatchStatus, WatchlistEntry } from "@/lib/types";
+import { findWatchlistEntry } from "@/lib/watchlist-match";
 import {
   animeToEntry,
   readWatchlist,
@@ -59,23 +60,23 @@ export function WatchlistProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const getEntry = useCallback(
-    (id: number) => entries.find((e) => e.id === id),
+    (id: number) => findWatchlistEntry(entries, id),
     [entries],
   );
 
   const isInList = useCallback(
-    (id: number) => entries.some((e) => e.id === id),
+    (id: number) => Boolean(findWatchlistEntry(entries, id)),
     [entries],
   );
 
   const add = useCallback(
     (anime: Anime, status: WatchStatus = "planning"): boolean => {
       const prev = entries;
-      const existing = prev.find((e) => e.id === anime.id);
+      const existing = findWatchlistEntry(prev, anime) || prev.find((e) => e.id === anime.id);
       let next: WatchlistEntry[];
       if (existing) {
         next = prev.map((e) =>
-          e.id === anime.id
+          e.id === existing.id
             ? {
                 ...e,
                 ...animeToEntry(anime, status),
