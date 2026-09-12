@@ -1,7 +1,46 @@
-const fs=require("fs");
-const path=require("path");
-const zlib=require("zlib");
-const body=zlib.inflateSync(Buffer.from("eNrFWWtu20gS/u9T1BJGIHkkUk6ywEJeWas4XozHT1g2MItsIFNUSeqIZHO6m/ZoFQFziD3DHmxOstXNh0iJcpyMkEkAg+pHddVXVV/1gwURFwoWMEHVjyN36Eq8EfwTeupe+LCEseABWP9wfDZ0ZDrA8Xg4ZhPraM85ONiDA7hgjwgCXW/qDpnP1BwiwYcoYcwFRPHQZx44wCPFeOj60Ls5k7ae10fxiKLJQ39uwxXSN/h8IkGiJ1BJG/p8rECxAHmszBRnbw9/NSqreYRm4b5yVSyhAxbJYSFa8BmsEU6EO8JR8oM/heZDzlgUUePRppQf0fXV9JY/kaDFHgAbtUEqwcLJEf3y3SH6xQZpFm0XFEiGKQy9+SV1hHEwJHM+04fv674RKpeVZEwEj6NVw5K0cuU89GAch56Gylg++icqb1qj8bHIpze0hiFT3Tbc4i8xSnVGv3RrCtalBuRvrVarsVdvA3k0YBL/vgA+a8OQcx/d8Cg3ItH1CILCNwrRzVaD5bHBhNwuCbIWiX5Pltohf6rVj/IOT1HEdCDEJ+gNCdwTHirBfR9FcZRWUNAwieou0bVWq0Pn2Ey3XT2xVm+s7DBTlZgbDTIhArV97pPLFIwNPgROIx0CYNs2S/HQ/ySbUNi1kxWSH1mXRzGLbbBC3pSKC7SSjqVZFWgdFYswl6vRo6VtPstFpxDq1uQ769FgrlCCJuGWytail7QyqQ01rKfSK5Yau77E9ZVaX1wAtPPagBQhNCn0kI/hVAhKxS6gHaCU7gSBjDbI0SrMp5woKTdmhJGfY07hIjJnGf8ZeJZ7y729PFY935WSjee1VRQ1iuHWWAs3CsvF1kRaT5ZlkpNjqP2Fz+DVq3QadDodaNVz7HJpSco3cjlWHKb05BM/GCO1MJL1+XNR1tvW4UbLm8xDekYg4Rje/LVVvWhGOquFH/YXgVwG8iFZFCpmpay1dc4yVTZV6rgD25Yv2/zw493dDewvkv7lw8rsknlv61+jE9SMVD0tFfgyGMq6QNHC5QbtmeLRC6mSSOKCFX2VeLpISSIngwJjWlOlItl2HNImmv5C3JJItD1uZVQRoJpyYnrr5rp/l6bAFEl5QYYswNIUhqFq3lGZsGiYG0VUy1ytpfNJcg13z/MwUlV9sEwEDvlo3oaf+tdXdhLPOksWQLQtqN1awA3lYy2iP+3DRoTixnzVF6TdiLkLKkWUkfSfBNa1xGWRc8nyPPOEHcgGCE1P9DfBul70URLG2t4Ui9TktLxZhPnFqjVzqFditkKNM+uZxszPnp18Ja1pgbMIFJfquhG73eE/sZkb7sDdbsTsT1qWHXB0Ht86ZGuAzqG1A9iM3DXQjN5Qu+xd1P8c4M6ZkvG3A2dWzNGbaWE24xpGB0cTTODr6vD84LOAqY+dw9TORTFXKvPgMRzZJOiHNB+SjNiBH4yWa344L7R9Zw/0p2zGAi7YrrwgM4E2D9G4wnhBdo0Hqh1g3UvaS/cmxFdWkssBXuGvsWxeuMRiYqcOyBVcc0J/rf07O+LS9a/HY+Yx13+RK4haO1CjqR7timwMH21K48HJxdnp1d3g7L3eC1hW3SbWDpI9rNmCsNGWTZuBJnD9AU+VsLIdWYYPiYfr9c68cmbnk9WswnnCzzet+a7mikNJ33xiFWqw2k68lEaDuQk7UzVDVM7j64xMu2OG/kh22CivpcVQ/LlJejUTvZqkV9sUsV0VrwqEn8H3O4fgXTAavij2ZjiHjlmgGH93l+/fDeiAPDg//ReFX3X/7Wnv/aB3cnLa7w/urs9Pr7KRlpUHad9sNWq0Sha/zwWtIq03glWvtZMg1YK0vRvxiaFg3jTQlPXyEDUDH4pxqqYY8EeGo6HNxcR5k15QxMJUoS4NGdDqnf0FKcpHeH97dsKDiKg1VLUKnJYPO2LJAqoVmO4sMNdQfKZOsWD2rcTYP7s8/6PUKPX6G2HWL7X+kThb03E34VZiRGMBnSACp5L3THeTBjZ1tH8V62lAs3DKjmZfLsMF6Krg/P4hdh1heIkK+a62Qhp1TkKbgZZqoH88dMZcoOdK1SVbmIpH2Gm98jkdrdJvLxaClO0oDOhERaYLHLwOrB3ltdZnYPRZw15b37wsdPwJOZ5e0n4Bfx8V6GH5HV9yU6nv79ILy9Wdmx5HHZVXxEnuZ9dZz6R+OnMz+9c71u4zXpT96S8Km7Pw0fUp7a5Of74b3Ny/uzg7GfTvb3rvev3Twf3tBdRiMmboCoQswn7/7X92ph7FF9DudcLC+gZ7sHAs3HXiMKynZ9Z3a/zXs5+CrOoVpj2r+zM5aLAQGPmuhzXn386+09B0Dz+A5QiUSudgBQOmq1LOEv+1ywWk0iO9q+urdKtTKCeZ9r1YTckb/zFlvA0P75D8JmB/8a2Ck8oOm6Sc3w6mW7ItjHxYxdIbba9brS10XXb3lihY3SlnOnXBsFN69Ug/C+8bq9u6OpST5lmWKQp/2F/oAeZCTo9FIbRN2aVdZlsG3mZMPbfjUNhHf6xJPcmr7hrjlB4oyi8xyYDjwt1vkpkZshlTfamWJNO2hbM+XZOuj4xiuJlYuqs6Icn6gSTzN0q0Qii076xKrLskfeWqvF/1/RXaxj2Rkl29i6n2k86ZbZ768LFU1PnT6nUmHW+7vl/7kJ1mCre7jVVbegFYaElvtgothZuWQmvp2F9oT85ixenJBrjQUtivFMflRVQ3fiyEgvZablw5xA2Adhqj+V079dQNJHYUy2nyuxAtuse4yjk40GAVw1A/lAJVfCrEv//2Xx0lOl9DN0CgIjaC4ZymxwqlrR9Gq30t4nDlqhvzKlvLPL01J0mh0qth8prbhjWnH4E3RW+Go56qfipMX4FLcJXjTqtSSp50TqMoWr8o6peuGtE4P+tfp0e2ehLk/wcauoXs","base64")).toString("utf8");
-const file=path.join(__dirname,"..","lib","api-live-health.ts");
-fs.writeFileSync(file,body);
-console.log("[restore] api-live-health", body.length);
+/**
+ * api-live-health is committed in-repo.
+ * Do not overwrite with a compressed blob (fragile over long base64).
+ * Only patch a missing export if an older empty/broken file is present.
+ */
+const fs = require("fs");
+const path = require("path");
+
+const file = path.join(__dirname, "..", "lib", "api-live-health.ts");
+
+if (!fs.existsSync(file)) {
+  console.log("[restore] api-live-health missing — skip (expect committed file)");
+  process.exit(0);
+}
+
+let t = fs.readFileSync(file, "utf8");
+
+if (t.includes("runLiveHealthProbes")) {
+  console.log("[restore] api-live-health ok (runLiveHealthProbes present)", t.length);
+  process.exit(0);
+}
+
+// Minimal append if export was stripped but module otherwise present
+if (t.includes("probeAllLiveHealth") && !t.includes("runLiveHealthProbes")) {
+  t +=
+    "\n\n/** Provider-status API entry — stable name used by routes. */\n" +
+    "export async function runLiveHealthProbes(opts?: {\n" +
+    "  origin?: string | null;\n" +
+    "}): Promise<{ probes: import('./api-live-health').LiveHealthRow[]; checkedAt: string }> {\n" +
+    "  const probes = await probeAllLiveHealth(opts);\n" +
+    "  return { probes, checkedAt: new Date().toISOString() };\n" +
+    "}\n";
+  // Fix relative type import — use local LiveHealthRow from same file
+  t = t.replace(
+    "import('./api-live-health').LiveHealthRow[]",
+    "LiveHealthRow[]",
+  );
+  fs.writeFileSync(file, t);
+  console.log("[restore] api-live-health appended runLiveHealthProbes");
+  process.exit(0);
+}
+
+console.log(
+  "[restore] api-live-health unexpected content; leaving as-is",
+  t.length,
+);
