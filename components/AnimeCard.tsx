@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Anime } from "@/lib/types";
 import { useWatchlist } from "@/components/WatchlistProvider";
+import { findWatchlistEntry } from "@/lib/watchlist-match";
 import { AnimeImage } from "@/components/AnimeImage";
 import {
   materialCssVars,
@@ -42,14 +43,14 @@ function isFinePointer(): boolean {
 
 export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
   const router = useRouter();
-  const { getEntry, ready } = useWatchlist();
-  const entry = ready ? getEntry(anime.id) : undefined;
+  const { entries, ready } = useWatchlist();
+  const entry = ready ? findWatchlistEntry(entries, anime) : undefined;
   const status = entry?.watchStatus;
   const [recent, setRecent] = useState(false);
   const [pressed, setPressed] = useState(false);
   const cardRef = useRef<HTMLAnchorElement>(null);
   const rafRef = useRef(0);
-  const score = anime.score > 0 ? anime.score.toFixed(1) : "—";
+  const score = anime.score > 0 ? anime.score.toFixed(1) : "\u2014";
   const vt = getAnimeViewTransitionName(anime.id);
   const href = `/anime/${anime.id}`;
 
@@ -101,22 +102,22 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
             ? "Paused"
             : status === "dropped"
               ? "Dropped"
-              : "On shelf"
+              : undefined
     : recent
-      ? "Recently opened"
+      ? "Recently viewed"
       : recommended
-        ? "Recommended for your shelf"
+        ? "Recommended"
         : undefined;
 
   function onPointerMove(e: React.PointerEvent) {
     if (!isFinePointer()) return;
     const el = cardRef.current;
     if (!el) return;
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width;
+    const y = (e.clientY - r.top) / r.height;
+    cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(() => {
-      const r = el.getBoundingClientRect();
-      const x = (e.clientX - r.left) / r.width;
-      const y = (e.clientY - r.top) / r.height;
       el.style.setProperty("--ptr-x", `${(x * 100).toFixed(1)}%`);
       el.style.setProperty("--ptr-y", `${(y * 100).toFixed(1)}%`);
       el.style.setProperty("--ptr-nx", (x - 0.5).toFixed(3));
@@ -203,8 +204,8 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
       <div className="card-body">
         <div className="card-title">{anime.title}</div>
         <div className="card-meta">
-          <span>{anime.year || "—"}</span>
-          <span className="card-score">★ {score}</span>
+          <span>{anime.year || "\u2014"}</span>
+          <span className="card-score">\u2605 {score}</span>
         </div>
       </div>
     </Link>
