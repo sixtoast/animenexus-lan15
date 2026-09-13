@@ -5,6 +5,23 @@ import { useEffect, useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useToast } from "@/components/ToastProvider";
 import { useMotion } from "@/components/MotionProvider";
+import { NexusIcon } from "@/components/ui/NexusIcon";
+import type { NexusIconName } from "@/lib/icons/registry";
+
+function FabItem({
+  icon,
+  children,
+}: {
+  icon: NexusIconName;
+  children: React.ReactNode;
+}) {
+  return (
+    <>
+      <NexusIcon name={icon} size="sm" />
+      <span>{children}</span>
+    </>
+  );
+}
 
 export function FabMenu() {
   const [open, setOpen] = useState(false);
@@ -19,126 +36,59 @@ export function FabMenu() {
       window.setTimeout(() => setPulse(false), 700);
     };
     window.addEventListener("animenexus:lantern-pulse", onPulse);
-    return () => window.removeEventListener("animenexus:lantern-pulse", onPulse);
+    return () =>
+      window.removeEventListener("animenexus:lantern-pulse", onPulse);
   }, []);
 
   return (
     <div className={`fab-root${open ? " open" : ""}`}>
       {open ? (
         <div className="fab-menu" role="menu">
-          <Link
-            href="/tools/challenge"
-            className="fab-item"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-          >
-            🎯 Challenge
+          <Link href="/tools/challenge" className="fab-item" role="menuitem" onClick={() => setOpen(false)}>
+            <FabItem icon="challenge">Challenge</FabItem>
           </Link>
-          <Link
-            href="/seasonal"
-            className="fab-item"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-          >
-            📅 Seasonal
+          <Link href="/seasonal" className="fab-item" role="menuitem" onClick={() => setOpen(false)}>
+            <FabItem icon="seasonal">Seasonal</FabItem>
           </Link>
-          <Link
-            href="/tools/oracle"
-            className="fab-item"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-          >
-            🕯️ Night Desk
+          <Link href="/tools/oracle" className="fab-item" role="menuitem" onClick={() => setOpen(false)}>
+            <FabItem icon="oracle">Night Desk</FabItem>
           </Link>
-          <Link
-            href="/tools/sauce"
-            className="fab-item"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-          >
-            🔍 Sauce
+          <Link href="/tools/sauce" className="fab-item" role="menuitem" onClick={() => setOpen(false)}>
+            <FabItem icon="sauce">Sauce</FabItem>
           </Link>
-          <button
-            type="button"
-            className="fab-item"
-            role="menuitem"
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent("animenexus:tonight"));
-              document.documentElement.dataset.session = "tonight";
-              setOpen(false);
-            }}
-          >
-            🌙 Tonight
+          <button type="button" className="fab-item" role="menuitem" onClick={() => {
+            window.dispatchEvent(new CustomEvent("animenexus:tonight"));
+            document.documentElement.dataset.session = "tonight";
+            setOpen(false);
+          }}>
+            <FabItem icon="night-desk">Tonight</FabItem>
           </button>
-          <button
-            type="button"
-            className="fab-item"
-            role="menuitem"
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent("animenexus:break"));
-              document.documentElement.dataset.session = "break";
-              setOpen(false);
-            }}
-          >
-            ☕ Break
+          <button type="button" className="fab-item" role="menuitem" onClick={() => {
+            window.dispatchEvent(new CustomEvent("animenexus:break"));
+            document.documentElement.dataset.session = "break";
+            setOpen(false);
+          }}>
+            <FabItem icon="daily">Break</FabItem>
           </button>
-          <button
-            type="button"
-            className="fab-item"
-            role="menuitem"
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent("animenexus:flashback"));
-              setOpen(false);
-            }}
-          >
-            📼 Flashback
+          <button type="button" className="fab-item" role="menuitem" onClick={() => {
+            toggleTheme();
+            showToast(theme === "dark" ? "Light frequency" : "Night frequency");
+            setOpen(false);
+          }}>
+            <FabItem icon={theme === "dark" ? "theme-light" : "theme-dark"}>
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </FabItem>
           </button>
-          <Link
-            href="/daily"
-            className="fab-item"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-          >
-            ☀️ Daily
-          </Link>
-          <button
-            type="button"
-            className="fab-item"
-            role="menuitem"
-            onClick={() => {
-              toggleTheme();
-              showToast(
-                theme === "dark" ? "Light frequency" : "Dark frequency",
-                theme === "dark" ? "☀️" : "🌙",
-              );
-              setOpen(false);
-            }}
-          >
-            {theme === "dark" ? "☀️ Light theme" : "🌙 Dark theme"}
+          <button type="button" className="fab-item" role="menuitem" onClick={() => {
+            toggleMotion();
+            setOpen(false);
+          }}>
+            <FabItem icon={reducedMotion ? "frequency" : "empty"}>
+              {reducedMotion ? "Full motion" : "Reduce motion"}
+            </FabItem>
           </button>
-          <button
-            type="button"
-            className="fab-item"
-            role="menuitem"
-            onClick={() => {
-              toggleMotion();
-              // reducedMotion is pre-toggle; after toggle it's the opposite
-              showToast(
-                reducedMotion ? "Motion on · 3D mascot" : "Motion reduced",
-                reducedMotion ? "✨" : "⏸️",
-              );
-              setOpen(false);
-            }}
-          >
-            {reducedMotion ? "✨ Full motion" : "⏸️ Reduce motion"}
-          </button>
-          <Link
-            href="/browse"
-            className="fab-item"
-            role="menuitem"
-            onClick={() => setOpen(false)}
-          >
-            🎲 Browse
+          <Link href="/browse" className="fab-item" role="menuitem" onClick={() => setOpen(false)}>
+            <FabItem icon="browse">Browse</FabItem>
           </Link>
         </div>
       ) : null}
@@ -149,7 +99,7 @@ export function FabMenu() {
         aria-label={open ? "Close quick menu" : "Open quick menu"}
         onClick={() => setOpen((v) => !v)}
       >
-        {open ? "×" : "✦"}
+        <NexusIcon name={open ? "empty" : "lantern"} size="md" />
       </button>
     </div>
   );

@@ -53,11 +53,12 @@ function resolveOpts(
   if (emojiOrOpts && typeof emojiOrOpts === "object") {
     return emojiOrOpts;
   }
-  return {
-    emoji: typeof emojiOrOpts === "string" ? emojiOrOpts : undefined,
-    milestone,
-    tone: "neutral",
-  };
+  // Legacy second-arg was an emoji glyph — map to tone, never render emoji.
+  const glyph = typeof emojiOrOpts === "string" ? emojiOrOpts : "";
+  let tone: "neutral" | "success" | "error" = "neutral";
+  if (/[\u{1F600}-\u{1F64F}\u26A0\u274C]/u.test(glyph)) tone = "error";
+  else if (milestone || /[\u2705\u2726\u2713]/u.test(glyph)) tone = "success";
+  return { milestone: milestone || undefined, tone };
 }
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
@@ -81,7 +82,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         else if (tr.cue === "seal") playCue("seal");
         else if (tr.cue === "success") playCue("success");
         else if (tr.cue === "complete") playCue("complete");
-        // micro: no cue
       } else if (tone === "success") playCue("success");
       else if (tone === "error") playCue("error");
       else if (opts.milestone) playCue("complete");
@@ -92,7 +92,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {
           id,
           message,
-          emoji: opts.emoji,
           milestone: opts.milestone || opts.successTier === "milestone",
           tone,
           successTier: opts.successTier,
@@ -128,8 +127,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 size="sm"
                 className="anime-toast-mark"
               />
-            ) : t.emoji ? (
-              <span className="anime-toast-emoji">{t.emoji}</span>
             ) : null}
             <span>{t.message}</span>
           </div>
