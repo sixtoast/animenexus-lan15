@@ -1,21 +1,15 @@
 const fs = require("fs");
 const path = require("path");
 const root = path.join(__dirname, "..");
-require("./restore-cmp-part1.cjs");
-require("./restore-cmp-part2.cjs");
-const a = fs.readFileSync(
-  path.join(root, "components/CompareClient.part1.txt"),
-  "utf8",
-);
-const b = fs.readFileSync(
-  path.join(root, "components/CompareClient.part2.txt"),
-  "utf8",
-);
-fs.writeFileSync(path.join(root, "components/CompareClient.tsx"), a + b);
-try {
-  fs.unlinkSync(path.join(root, "components/CompareClient.part1.txt"));
-} catch (e) {}
-try {
-  fs.unlinkSync(path.join(root, "components/CompareClient.part2.txt"));
-} catch (e) {}
-console.log("[restore] cmp-client joined", (a + b).length);
+const p1 = path.join(root, "components/CompareClient.part1.txt");
+const p2 = path.join(root, "components/CompareClient.part2.txt");
+const out = path.join(root, "components/CompareClient.tsx");
+if (fs.existsSync(p1) && fs.existsSync(p2)) {
+  const body = fs.readFileSync(p1, "utf8") + fs.readFileSync(p2, "utf8");
+  fs.writeFileSync(out, body);
+  console.log("[restore] cmp-client joined", body.length);
+} else if (fs.existsSync(out) && fs.statSync(out).size > 500) {
+  console.log("[restore] cmp-client already present");
+} else {
+  console.log("[restore] cmp-client parts missing");
+}
