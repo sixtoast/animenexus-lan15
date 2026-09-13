@@ -98,91 +98,79 @@
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 1px;
-  padding: 6px 11px;
+  padding: 8px 14px;
   border-radius: 50px;
-  color: var(--color-text-muted);
-  font-weight: 550;
-  font-size: 0.78rem;
-  letter-spacing: 0.01em;
-  border: 1px solid transparent;
-  line-height: 1.15;
-  transition:
-    color var(--ix-trans-fast, 90ms ease),
-    opacity var(--ix-trans-fast, 90ms ease),
-    background var(--ix-trans-fast, 90ms ease);
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: color 0.2s ease;
 }
 
 .nav-link-label {
-  display: block;
+  line-height: 1.2;
 }
 
 .nav-link-poetic {
-  display: none;
-  font-size: 0.58rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   opacity: 0.55;
 }
 
-@media (min-width: 1100px) {
-  .nav-link-poetic {
-    display: block;
-  }
-}
-
 .nav-link:hover {
   color: #fff;
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.04);
 }
 
-/* Active text sits on sliding indicator */
 .nav-link.active {
-  color: #2a1210;
-  background: transparent;
-  border-color: transparent;
-  font-weight: 700;
-  box-shadow: none;
+  color: #1a1210;
 }
 
 .nav-link.active .nav-link-poetic {
   opacity: 0.75;
-  color: inherit;
 }
 
-.nav-link.active:hover {
-  color: #2a1210;
-  background: transparent;
-}
-
-.nav-right {
+.nav-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
-/* Theme token crossfade — avoid expensive filters */
-html {
-  transition:
-    color 280ms var(--ix-ease-soft, ease),
-    background-color 280ms var(--ix-ease-soft, ease);
+.nav-search-btn {
+  gap: 6px;
 }
 
+.nav-search-label {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .nav-desktop {
+    display: flex;
+  }
+  .nav-toggle {
+    display: none;
+  }
+  .nav-search-label {
+    display: inline;
+  }
+}
+
+/* Theme token crossfade — avoid expensive filters */
 html[data-theme="light"] .navbar {
   background: rgba(255, 250, 246, 0.82);
   border-bottom-color: rgba(120, 70, 55, 0.12);
 }
 
-/* Mobile Frequency sheet */
+/* Mobile Frequency sheet — portaled to body (not trapped by navbar backdrop-filter) */
 .nav-scrim {
   position: fixed;
   inset: 0;
   top: 0;
-  z-index: 98;
+  /* Above sticky navbar (100) and bottom dock (2500) when portaled to body */
+  z-index: 2600;
   border: none;
   background: rgba(6, 4, 3, 0.55);
   backdrop-filter: blur(6px);
@@ -218,7 +206,7 @@ html[data-theme="light"] .navbar {
   left: 12px;
   right: 12px;
   top: 64px;
-  z-index: 99;
+  z-index: 2601;
   border: 1px solid rgba(240, 160, 144, 0.22);
   border-radius: 16px;
   background:
@@ -280,19 +268,19 @@ html[data-theme="light"] .navbar {
 }
 
 .nav-mobile-sub {
-  font-size: 0.78rem;
-  color: var(--color-text-muted);
   margin: 0;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
   line-height: 1.35;
 }
 
 .nav-mobile ul {
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .nav-mobile-link {
@@ -300,17 +288,11 @@ html[data-theme="light"] .navbar {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 13px 14px;
+  padding: 12px 14px;
   border-radius: 12px;
-  color: var(--color-text-muted);
-  font-weight: 550;
-  font-size: 0.95rem;
-  border: 1px solid transparent;
-  transition:
-    background var(--ix-trans-fast, 90ms ease),
-    color var(--ix-trans-fast, 90ms ease),
-    border-color var(--ix-trans-fast, 90ms ease);
-  min-height: 48px;
+  color: rgba(255, 255, 255, 0.88);
+  text-decoration: none;
+  transition: background 0.15s ease;
 }
 
 .nav-mobile-main {
@@ -321,92 +303,53 @@ html[data-theme="light"] .navbar {
 
 .nav-mobile-label {
   font-weight: 600;
-  color: inherit;
+  font-size: 0.95rem;
 }
 
 .nav-mobile-poetic {
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.65;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.03em;
 }
 
 .nav-mobile-chev {
   opacity: 0.35;
-  font-size: 0.9rem;
 }
 
 .nav-mobile-link:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(240, 160, 144, 0.1);
 }
 
 .nav-mobile-link.active {
+  background: rgba(240, 160, 144, 0.16);
   color: #fff;
-  background: rgba(240, 160, 144, 0.12);
-  border-color: rgba(240, 160, 144, 0.28);
 }
 
 .nav-mobile-here {
-  font-size: 0.62rem;
+  font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-accent);
-  padding: 3px 8px;
-  border-radius: 50px;
-  border: 1px solid rgba(240, 160, 144, 0.3);
-  animation: hereIn 200ms var(--ix-ease-soft, ease) both;
-}
-
-@keyframes hereIn {
-  from {
-    opacity: 0;
-    transform: translateX(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 
 .nav-mobile-foot {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(240, 160, 144, 0.12);
-}
-
-@media (min-width: 900px) {
-  .nav-desktop {
-    display: flex;
-  }
-
-  .nav-toggle {
-    display: none !important;
-  }
-
-  .nav-mobile,
-  .nav-scrim {
-    display: none !important;
-  }
-}
-
-html[data-reduce-motion="true"] .nav-indicator,
-html[data-reduce-motion="true"] .nav-mobile,
-html[data-reduce-motion="true"] .nav-scrim,
-html[data-reduce-motion="true"] .logo--pulse span {
-  transition: none;
-  animation: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(240, 160, 144, 0.1);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nav-indicator {
-    transition: none;
-  }
   .nav-mobile,
-  .nav-scrim,
-  .nav-mobile-here,
-  .logo--pulse span {
-    animation: none;
+  .nav-scrim {
+    animation: none !important;
   }
+}
+
+html[data-reduce-motion="true"] .nav-mobile,
+html[data-reduce-motion="true"] .nav-scrim {
+  animation: none !important;
 }
