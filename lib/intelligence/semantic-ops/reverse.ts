@@ -97,11 +97,15 @@ export function buildDislikeProfile(
     if (avoid[key] != null) continue;
     const src = dimValue(source, key);
     const conf = dimConfidence(source, key);
-    if (src < 0.72 || conf < 0.35) continue;
+    if (conf < 0.3) continue;
+    // 1) Strong established user preference → full preserve authority
     if (userVec && typeof userVec[key] === "number" && userVec[key]! >= 0.62) {
       preserve[key] = src;
-    } else if (explicit && src >= 0.8) {
-      preserve[key] = src;
+      continue;
+    }
+    // 2) Source-trait strength alone is only a weak hint (NOT full preserve)
+    if (src >= 0.8 && conf >= 0.35) {
+      preserve[key] = Math.min(src, 0.45);
     }
   }
 
