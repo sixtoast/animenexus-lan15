@@ -187,9 +187,23 @@ class ErrorBoundaryToProcedural extends Component<
 }
 
 export function GltfCompanion(props: GltfCompanionProps) {
-  const [loadFailed, setLoadFailed] = useState(false);
+  const [glbAvailable, setGlbAvailable] = useState<boolean | null>(null);
 
-  if (loadFailed) {
+  useEffect(() => {
+    let cancelled = false;
+    fetch(GLB_PATH, { method: "HEAD" })
+      .then((res) => {
+        if (!cancelled) setGlbAvailable(res.ok);
+      })
+      .catch(() => {
+        if (!cancelled) setGlbAvailable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (glbAvailable !== true) {
     return (
       <LanternKoMesh
         expression={props.expression}
@@ -201,7 +215,7 @@ export function GltfCompanion(props: GltfCompanionProps) {
   }
 
   return (
-    <ErrorBoundaryToProcedural onError={() => setLoadFailed(true)}>
+    <ErrorBoundaryToProcedural onError={() => setGlbAvailable(false)}>
       <Suspense
         fallback={
           <LanternKoMesh
@@ -218,8 +232,5 @@ export function GltfCompanion(props: GltfCompanionProps) {
   );
 }
 
-try {
-  useGLTF.preload(GLB_PATH);
-} catch {
-  /* optional */
+/* preload intentionally removed — companion.glb is optional and may not exist */
 }
