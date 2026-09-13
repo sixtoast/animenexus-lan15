@@ -14,6 +14,7 @@ import {
   parentBalanceScore,
 } from "@/lib/intelligence/semantic-ops/fuse";
 import { compareFingerprints } from "@/lib/intelligence/semantic-ops/compare";
+import { retrieveAnimeCandidates } from "@/lib/intelligence/candidates/retrieve";
 
 const W_HYBRID = 0.8;
 const W_BALANCE = 0.12;
@@ -26,6 +27,7 @@ type FusionHit = {
   fitB: number;
   balance: number;
   finalScore: number;
+  candidateSources: string[];
 };
 
 function pct(n: number) {
@@ -39,6 +41,8 @@ export function FusionClient() {
   const [leanA, setLeanA] = useState(0.5);
   const [hits, setHits] = useState<FusionHit[]>([]);
   const [loading, setLoading] = useState(false);
+  const [poolSize, setPoolSize] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   const ratio = useMemo(() => normalizeRatio(leanA), [leanA]);
 
@@ -50,44 +54,35 @@ export function FusionClient() {
     if (!a || !b) return;
     setLoading(true);
     setHits([]);
+    setPoolSize(0);
+    setError(null);
     try {
       const ra = getBestAvailableFingerprint(a);
       const rb = getBestAvailableFingerprint(b);
       const fused = fuseFingerprints(ra.fingerprint, rb.fingerprint, leanA);
 
-      const pools: Anime[] = [];
-      const seen = new Set<number>([a.id, b.id, ...entries.map((e) => e.id)]);
-
-      async function pull(url: string) {
-        try {
-          const res = await fetch(url);
-          if (!res.ok) return;
-          const j = await res.json();
-          for (const x of (j.data || j.media || []) as Anime[]) {
-            if (!x?.id || seen.has(x.id)) continue;
-            seen.add(x.id);
-            pools.push(x);
-          }
-        } catch {
-          /* isolate */
-        }
-      }
-
-      const tags = [...new Set([...(a.tags || []), ...(b.tags || [])])].slice(0, 4);
-      await Promise.all([
-        tags.length
-          ? pull(`/api/recommend?mode=popular&genres=${encodeURIComponent(tags.join(","))}`)
-          : Promise.resolve(),
-        pull(`/api/recommend?mode=popular`),
-        pull(`/api/recommend?mode=score`),
-      ]);
+      const { candidates, uniqueCandidateCount } =
+        await retrieveAnimeCandidates({
+          intent: "fusion",
+          seeds: [a, b],
+          excludeIds: [a.id, b.id, ...entries.map((e) => e.id)],
+          limit: 120,
+        });
+      setPoolSize(uniqueCandidateCount);
 
       const ranked: FusionHit[] = [];
-      for (const anime of pools.slice(0, 120)) {
+      for (const rec of candidates.slice(0, 120)) {
+        const anime = rec.anime;
         const rc = getBestAvailableFingerprint(anime);
-        const fFit = fusionFit(rc.fingerprint, fused.target, fused.matchWeights);
-        const fitA = compareFingerprints(rc.fingerprint, ra.fingerprint).similarity;
-        const fitB = compareFingerprints(rc.fingerprint, rb.fingerprint).similarity;
+        const fFit = fusionFit(
+          rc.fingerprint,
+          fused.target,
+          fused.matchWeights,
+        );
+        const fitA = compareFingerprints(rc.fingerprint, ra.fingerprint)
+          .similarity;
+        const fitB = compareFingerprints(rc.fingerprint, rb.fingerprint)
+          .similarity;
         const balance = parentBalanceScore(fitA, fitB, fused.ratio);
         const quality = anime.score > 0 ? Math.min(1, anime.score / 10) : 0.45;
         ranked.push({
@@ -96,11 +91,20 @@ export function FusionClient() {
           fitA,
           fitB,
           balance,
-          finalScore: fFit * W_HYBRID + balance * W_BALANCE + quality * W_QUALITY,
+          finalScore:
+            fFit * W_HYBRID + balance * W_BALANCE + quality * W_QUALITY,
+          candidateSources: rec.sources,
         });
       }
       ranked.sort((x, y) => y.finalScore - x.finalScore);
       setHits(ranked.slice(0, 16));
+      if (!candidates.length) {
+        setError(
+          "No candidates returned — catalog APIs may be offline. Try again shortly.",
+        );
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Fusion failed");
     } finally {
       setLoading(false);
     }
@@ -113,7 +117,8 @@ export function FusionClient() {
         <AnimeSearchPicker label="Parent B" selected={b} onSelect={setB} />
       </div>
       <label className="filter-label" style={{ display: "block", marginTop: 12 }}>
-        Lean toward A ({Math.round(ratio.weightA * 100)}% / {Math.round(ratio.weightB * 100)}% B)
+        Lean toward A ({Math.round(ratio.weightA * 100)}% /{" "}
+        {Math.round(ratio.weightB * 100)}% B)
         <input
           type="range"
           min={0.2}
@@ -135,9 +140,14 @@ export function FusionClient() {
         </button>
       </div>
       <p className="tools-hint">
-        Target fingerprint = weighted average of A and B (not LLM). Rank =
-        fusion fit ~80% + parent balance ~12% + quality ~8%. Genres only aid discovery.
+        Target = weighted A/B fingerprints. Rank = fusion fit ~80% + parent
+        balance ~12% + quality ~8%. Genres only aid discovery.
       </p>
+      {error ? (
+        <p className="tools-hint" role="alert">
+          {error}
+        </p>
+      ) : null}
       {hits.length > 0 ? (
         <ul className="tools-results" style={{ marginTop: 16 }}>
           {hits.map((h) => (
@@ -145,14 +155,21 @@ export function FusionClient() {
               <Link href={`/anime/${h.anime.id}`}>{h.anime.title}</Link>
               <span className="tools-hint">
                 {" "}
-                hybrid {pct(h.fusionFit)} · A {pct(h.fitA)} · B {pct(h.fitB)} · bal {pct(h.balance)}
+                hybrid {pct(h.fusionFit)} · A {pct(h.fitA)} · B {pct(h.fitB)} ·
+                bal {pct(h.balance)}
               </span>
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="tools-hint">Pick two parents and build a hybrid target.</p>
-      )}
+      ) : !loading ? (
+        <p className="tools-hint">
+          {a && b
+            ? poolSize === 0
+              ? "No hybrid candidates yet — press Build hybrid again or check API status."
+              : "Pick two parents and build a hybrid target."
+            : "Pick two parents and build a hybrid target."}
+        </p>
+      ) : null}
     </div>
   );
 }
