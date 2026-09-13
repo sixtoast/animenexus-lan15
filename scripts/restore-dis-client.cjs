@@ -1,6 +1,75 @@
+/** Soft restore/patch DislikeClient for ReverseHit.userFit + correct preference APIs. */
 const fs = require("fs");
 const path = require("path");
-const b64 =
-  "InVzZSBjbGllbnQiOwoKaW1wb3J0IHsgdXNlRWZmZWN0LCB1c2VNZW1vLCB1c2VTdGF0ZSB9IGZyb20gInJlYWN0IjsKaW1wb3J0IExpbmsgZnJvbSAibmV4dC9saW5rIjsKaW1wb3J0IHR5cGUgeyBBbmltZSB9IGZyb20gIkAvbGliL3R5cGVzIjsKaW1wb3J0IHsgQW5pbWVTZWFyY2hQaWNrZXIgfSBmcm9tICJAL2NvbXBvbmVudHMvQW5pbWVTZWFyY2hQaWNrZXIiOwppbXBvcnQgeyB1c2VXYXRjaGxpc3QgfSBmcm9tICJAL2NvbXBvbmVudHMvV2F0Y2hsaXN0UHJvdmlkZXIiOwppbXBvcnQgeyBlbWl0TmV4dXMgfSBmcm9tICJAL2xpYi9uZXh1cyI7CmltcG9ydCB7IGdldEJlc3RBdmFpbGFibGVGaW5nZXJwcmludCB9IGZyb20gIkAvbGliL2ludGVsbGlnZW5jZS9pdGVtcy9yZXNvbHZlLWZpbmdlcnByaW50IjsKaW1wb3J0IHsKICBESVNMSUtFX1JFQVNPTl9NQVAsCiAgYnVpbGREaXNsaWtlUHJvZmlsZSwKICBzY29yZVJldmVyc2VDYW5kaWRhdGUsCiAgdHlwZSBkaXNsaWtlUmVhc29uSWQsCn0gZnJvbSAiQC9saWIvaW50ZWxsaWdlbmNlL3NlbWFudGljLW9wcy9yZXZlcnNlIjsKaW1wb3J0IHsgZml0VG9Vc2VyVmVjdG9yIH0gZnJvbSAiQC9saWIvaW50ZWxsaWdlbmNlL3NlbWFudGljLW9wcy9jb21wYXJlIjsKaW1wb3J0IHsKICBibGVuZFVzZXJWZWN0b3IsCiAgYnVpbGRVc2VyUHJlZmVyZW5jZVZlY3RvciwKfSBmcm9tICJAL2xpYi9pbnRlbGxpZ2VuY2UvcHJlZmVyZW5jZS91c2VyLXByZWZlcmVuY2UtdmVjdG9yIjsKCnR5cGUgUmV2ZXJzZUhpdCA9IHsKICBhbmltZTogQW5pbWU7CiAgYXZvaWRhbmNlU2F0aXNmYWN0aW9uOiBudW1iZXI7CiAgcHJlc2VydmF0aW9uU2F0aXNmYWN0aW9uOiBudW1iZXI7CiAgdXNlckZpdDogbnVtYmVyOwogIGZpbmFsU2NvcmU6IG51bWJlcjsKICByZWFzb25Tb3VyY2U6ICJleHBsaWNpdCIgfCAiaW5mZXJyZWQiOwp9OwoKZnVuY3Rpb24gcGN0KG46IG51bWJlcikgewogIHJldHVybiBgJHtNYXRoLnJvdW5kKG4gKiAxMDApfSVgOwp9CgpleHBvcnQgZnVuY3Rpb24gRGlzbGlrZUNsaWVudCgpIHsKICBjb25zdCB7IGVudHJpZXMgfSA9IHVzZVdhdGNobGlzdCgpOwogIGNvbnN0IFthbmltZSwgc2V0QW5pbWVdID0gdXNlU3RhdGU8QW5pbWUgfCBudWxsPihudWxsKTsKICBjb25zdCBbcmVhc29ucywgc2V0UmVhc29uc10gPSB1c2VTdGF0ZTxEaXNsaWtlUmVhc29uSWRbXT4oW10pOwogIGNvbnN0IFtoaXRzLCBzZXRIaXRzXSA9IHVzZVN0YXRlPFJldmVyc2VIaXRbXT4oW10pOwogIGNvbnN0IFtsb2FkaW5nLCBzZXRMb2FkaW5nXSA9IHVzZVN0YXRlKGZhbHNlKTsKCiAgdXNlRWZmZWN0KCgpID0+IHsKICAgIGVtaXROZXh1cyh7IHR5cGU6ICJ0b29sX29wZW5lZCIsIHRvb2w6ICJkaXNsaWtlIiB9KTsKICB9LCBbXSk7CgogIGZ1bmN0aW9uIHRvZ2dsZVJlYXNvbihpZDogRGlzbGlrZVJlYXNvbklkKSB7CiAgICBzZXRSZWFzb25zKChwcmV2KSA9PgogICAgICBwcmV2LmluY2x1ZGVzKGlkKSA/IHByZXYuZmlsdGVyKCh4KSA9PiB4ICE9PSBpZCkgOiBbLi4ucHJldiwgaWRdLAogICAgKTsKICB9CgogIGFzeW5jIGZ1bmN0aW9uIHJ1bigpIHsKICAgIGlmICghYW5pbWUpIHJldHVybjsKICAgIHNldExvYWRpbmcoKHRydWUpOwogICAgc2V0SGl0cyhbXSk7CiAgICB0cnkgewogICAgICBjb25zdCBycyA9IGdldEJlc3RBdmFpbGFibGVGaW5nZXJwcmludChhbmltZSk7CiAgICAgIGxldCB1c2VyVmVjOiBSZWNvcmQ8c3RyaW5nLCBudW1iZXI+IHwgbnVsbCA9IG51bGw7CiAgICAgIHRyeSB7CiAgICAgICAgaWYgKGVudHJpZXMubGVuZ3RoID49IDIpIHsKICAgICAgICAgIGNvbnN0IHVzZXIgPSBidWlsZFVzZXJQcmVmZXJlbmNlVmVjdG9yKGVudHJpZXMpOwogICAgICAgICAgdXNlclZlYyA9IGJsZW5kVXNlclZlY3Rvcih1c2VyLCB7CiAgICAgICAgICAgIHN0YWJsZTogMC43LAogICAgICAgICAgICBtZWRpdW1UZXJtOiAwLjIsCiAgICAgICAgICAgIHJlY2VudDogMC4xLAogICAgICAgICAgICBzZXNzaW9uOiAwLAogICAgICAgICAgfSk7CiAgICAgICAgfQogICAgICB9IGNhdGNoIHsKICAgICAgICB1c2VyVmVjID0gbnVsbDsKICAgICAgfQoKICAgICAgY29uc3QgcHJvZmlsZSA9IGJ1aWxkRGlzbGlrZVByb2ZpbGUocnMuZmluZ2VycHJpbnQsIHJlYXNvbnMsIHVzZXJWZWMpOwoKICAgICAgY29uc3QgcG9vbHM6IEFuaW1lW10gPSBbXTsKICAgICAgY29uc3Qgc2VlbiA9IG5ldyBTZXQ8bnVtYmVyPihbYW5pbWUuaWRdKTsKCiAgICAgIGFzeW5jIGZ1bmN0aW9uIHB1bGwodXJsOiBzdHJpbmcpIHsKICAgICAgICB0cnkgewogICAgICAgICAgY29uc3QgcmVzID0gYXdhaXQgZmV0Y2godXJsKTsKICAgICAgICAgIGlmICghcmVzLm9rKSByZXR1cm47CiAgICAgICAgICBjb25zdCBqID0gYXdhaXQgcmVzLmpzb24oKTsKICAgICAgICAgIGZvciAoY29uc3QgeCBvZiAoai5kYXRhIHx8IFtdKSBhcyBBbmltZVtdKSB7CiAgICAgICAgICAgIGlmICgheD8uaWQgfHwgc2Vlbi5oYXMoeC5pZCkpIGNvbnRpbnVlOwogICAgICAgICAgICBzZWVuLmFkZCh4LmlkKTsKICAgICAgICAgICAgcG9vbHMucHVzaCh4KTsKICAgICAgICAgIH0KICAgICAgICB9IGNhdGNoIHsKICAgICAgICAgIC8qIGlzb2xhdGUgKi8KICAgICAgICB9CiAgICAgIH0KCiAgICAgIC8vIERvIE5PVCBleGNsdWRlIHNvdXJjZSBnZW5yZXMg4oCUIGRpc2NvdmVyeSBvbmx5CiAgICAgIGF3YWl0IHB1bGwoYC9hcGkvcmVjb21tZW5kP21vZGU9cG9wdWxhci`);
-  // truncated intentionally - use full script from file
-console.log("[restore] dis-client incomplete push");
+const file = path.join(__dirname, "..", "components", "DislikeClient.tsx");
+if (!fs.existsSync(file)) {
+  console.log("[restore] dis-client skip — file missing");
+  process.exit(0);
+}
+let t = fs.readFileSync(file, "utf8");
+
+const badPush = `out.push({
+          anime: c,
+          ...scored,
+          reasonSource: profile.reasonSource,
+        });`;
+const goodPush = `out.push({
+          anime: c,
+          ...scored,
+          userFit,
+          reasonSource: profile.reasonSource,
+        });`;
+if (t.includes(badPush)) {
+  t = t.replace(badPush, goodPush);
+  console.log("[restore] dis-client added userFit");
+}
+
+const brokenLiked = `const liked = entries
+        .filter((e) => e.watchStatus === "completed" || e.userRating >= 7)
+        .slice(0, 40)
+        .map((e) => ({
+          id: e.id,
+          title: e.title,
+          genres: e.genres,
+          score: e.score,
+        })) as Anime[];
+
+      const userVec =
+        liked.length > 0
+          ? blendUserVector(
+              liked.map((a) => getBestAvailableFingerprint(a).fingerprint),
+            )
+          : buildUserPreferenceVector([]);
+
+      const sourceFp = getBestAvailableFingerprint(anime);
+      const profile = buildDislikeProfile(
+        { animeId: anime.id, fingerprint: sourceFp.fingerprint },
+        reasons,
+        userVec,
+      );`;
+
+const fixedRun = `const rs = getBestAvailableFingerprint(anime);
+      let userVec: Record<string, number> | null = null;
+      try {
+        if (entries.length >= 2) {
+          const user = buildUserPreferenceVector(entries);
+          userVec = blendUserVector(user, {
+            stable: 0.7,
+            mediumTerm: 0.2,
+            recent: 0.1,
+            session: 0,
+          });
+        }
+      } catch {
+        userVec = null;
+      }
+
+      const profile = buildDislikeProfile(rs.fingerprint, reasons, userVec);`;
+
+if (t.includes(brokenLiked)) {
+  t = t.replace(brokenLiked, fixedRun);
+  console.log("[restore] dis-client fixed preference/profile");
+}
+
+fs.writeFileSync(file, t);
+console.log("[restore] dis-client done", t.length);
