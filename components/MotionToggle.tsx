@@ -2,6 +2,7 @@
 
 import { useMotion } from "@/components/MotionProvider";
 import { Button } from "@/components/ui/Button";
+import { NexusIcon } from "@/components/ui/NexusIcon";
 
 /** Manual reduced-motion override (Sprint 34). */
 export function MotionToggle() {
@@ -19,7 +20,7 @@ export function MotionToggle() {
       aria-pressed={reducedMotion}
       className="motion-toggle-btn"
     >
-      {reducedMotion ? "⏸" : "✦"}
+      <NexusIcon name={reducedMotion ? "empty" : "frequency"} size="sm" />
     </Button>
   );
 }

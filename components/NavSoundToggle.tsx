@@ -2,6 +2,7 @@
 
 import { useSound } from "@/components/SoundProvider";
 import { Button } from "@/components/ui/Button";
+import { NexusIcon } from "@/components/ui/NexusIcon";
 import { playCue, unlockSound } from "@/lib/sound-engine";
 
 /** Quick mute / unmute in the nav bar. */
@@ -27,9 +28,7 @@ export function NavSoundToggle() {
         }
       }}
     >
-      <span aria-hidden style={{ fontSize: 14 }}>
-        {on ? "🔊" : "🔇"}
-      </span>
+      <NexusIcon name={on ? "signal" : "empty"} size="sm" />
     </Button>
   );
 }
