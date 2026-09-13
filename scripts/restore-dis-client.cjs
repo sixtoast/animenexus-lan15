@@ -1,31 +1,16 @@
 const fs = require("fs");
 const path = require("path");
-const file = path.join(__dirname, "..", "components", "DislikeClient.tsx");
-if (!fs.existsSync(file)) {
-  console.log("[restore] dis-client skip — file missing");
+const root = path.join(__dirname, "..");
+const p1 = path.join(root, "components", "DislikeClient.p1.txt");
+const p2 = path.join(root, "components", "DislikeClient.p2.txt");
+if (!fs.existsSync(p1) || !fs.existsSync(p2)) {
+  console.log("[restore] dis-client skip — parts missing");
   process.exit(0);
 }
-let t = fs.readFileSync(file, "utf8");
-const bad = `out.push({
-          anime: c,
-          ...scored,
-          reasonSource: profile.reasonSource,
-        });`;
-const good = `out.push({
-          anime: c,
-          ...scored,
-          userFit,
-          reasonSource: profile.reasonSource,
-        });`;
-if (t.includes(bad)) {
-  t = t.replace(bad, good);
-  fs.writeFileSync(file, t);
-  console.log("[restore] dis-client added userFit to ReverseHit");
-} else if (
-  t.includes("userFit,\n          reasonSource") ||
-  t.includes("userFit,\r\n          reasonSource")
-) {
-  console.log("[restore] dis-client userFit already present");
-} else {
-  console.log("[restore] dis-client skip (no matching push pattern)");
+const body = fs.readFileSync(p1, "utf8") + fs.readFileSync(p2, "utf8");
+if (!body.includes("userFit")) {
+  console.log("[restore] dis-client invalid parts");
+  process.exit(0);
 }
+fs.writeFileSync(path.join(root, "components", "DislikeClient.tsx"), body);
+console.log("[restore] dis-client joined", body.length);
