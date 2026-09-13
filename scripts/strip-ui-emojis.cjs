@@ -14,8 +14,10 @@ function walk(dir, acc = []) {
 }
 
 const root = path.join(__dirname, "..");
+
+// Simple: showToast(msg, "glyph") or showToast(msg, "glyph", true)
 const pat =
-  /showToast\(\s*((?:`(?:\\.|[^`])*`|"(?:\\.|[^"])*"|'(?:\\.|[^'])*'|[^,)]+)\s*,\s*("(?:\\.|[^"])*"|'(?:\\.|[^'])*')\s*(,\s*(true|false))?\s*\)/g;
+  /showToast\(\s*((?:`[^`]*`|"[^"]*"|'[^']*'|[^,)]+))\s*,\s*("[^"]*"|'[^']*')\s*(,\s*(true|false))?\s*\)/g;
 
 let total = 0;
 for (const file of walk(path.join(root, "components"))) {
@@ -24,11 +26,11 @@ for (const file of walk(path.join(root, "components"))) {
     const g = String(glyph).slice(1, -1);
     const isEmoji =
       [...g].some((c) => c.charCodeAt(0) > 127) ||
-      ["✦", "⚠", "✓", "×", "★"].includes(g);
+      ["\u2726", "\u26a0", "\u2713", "\u00d7", "\u2605"].includes(g);
     if (!isEmoji && g.length > 3 && /^[\x00-\x7F]*$/.test(g)) return m;
     total++;
-    if (flag === "true") return `showToast(${msg}, { milestone: true })`;
-    return `showToast(${msg})`;
+    if (flag === "true") return "showToast(" + msg + ", { milestone: true })";
+    return "showToast(" + msg + ")";
   });
   let n2 = next
     .replace(/\{exp\?\.emoji \? `\$\{exp\.emoji\} ` : ""\}/g, "")
