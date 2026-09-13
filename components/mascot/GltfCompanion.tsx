@@ -233,4 +233,3 @@ export function GltfCompanion(props: GltfCompanionProps) {
 }
 
 /* preload intentionally removed — companion.glb is optional and may not exist */
-}
