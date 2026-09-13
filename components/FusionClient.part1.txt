@@ -1,0 +1,87 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import type { Anime } from "@/lib/types";
+import { AnimeSearchPicker } from "@/components/AnimeSearchPicker";
+import { AnimeCard } from "@/components/AnimeCard";
+import { useWatchlist } from "@/components/WatchlistProvider";
+import { emitNexus } from "@/lib/nexus";
+import { getBestAvailableFingerprint } from "@/lib/intelligence/items/resolve-fingerprint";
+import {
+  fuseFingerprints,
+  fusionFit,
+  normalizeRatio,
+  parentBalanceScore,
+} from "@/lib/intelligence/semantic-ops/fuse";
+import { compareFingerprints } from "@/lib/intelligence/semantic-ops/compare";
+import { SignalEmpty } from "@/components/SignalEmpty";
+
+/** Ranking mix — hybrid dominates; balance modest; quality bounded. */
+const W_HYBRID = 0.8;
+const W_BALANCE = 0.12;
+const W_QUALITY = 0.08;
+
+type FusionHit = {
+  anime: Anime;
+  fusionFit: number;
+  fitA: number;
+  fitB: number;
+  balance: number;
+  quality: number;
+  finalScore: number;
+  fingerprintSource: string;
+};
+
+function pct(n: number): string {
+  return `${Math.round(n * 100)}%`;
+}
+
+export function FusionClient() {
+  const { entries } = useWatchlist();
+  const [a, setA] = useState<Anime | null>(null);
+  const [b, setB] = useState<Anime | null>(null);
+  const [leanA, setLeanA] = useState(0.5);
+  const [hits, setHits] = useState<FusionHit[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [debug, setDebug] = useState<string>("");
+
+  const ratio = useMemo(() => normalizeRatio(leanA), [leanA]);
+
+  useEffect(() => {
+    emitNexus({ type: "tool_opened", tool: "fusion" });
+  }, []);
+
+  async function run() {
+    if (!a || !b) return;
+    setLoading(true);
+    setHits([]);
+    try {
+      const ra = getBestAvailableFingerprint(a);
+      const rb = getBestAvailableFingerprint(b);
+      const fused = fuseFingerprints(ra.fingerprint, rb.fingerprint, leanA);
+
+      if (process.env.NODE_ENV === "development") {
+        setDebug(
+          JSON.stringify(
+            {
+              sourceA: { nexusId: ra.nexusId, source: ra.source, conf: ra.confidence?.overall },
+              sourceB: { nexusId: rb.nexusId, source: rb.source, conf: rb.confidence?.overall },
+              ratio: fused.ratio,
+              distinctiveA: fused.distinctiveA,
+              distinctiveB: fused.distinctiveB,
+              targetSample: {
+                cognitiveLoad: fused.target.experience.cognitiveLoad,
+                tension: fused.target.emotional.tension,
+                romance: fused.target.emotional.romance,
+                relationshipFocus: fused.target.narrative.relationshipFocus,
+              },
+            },
+            null,
+            2,
+          ),
+        );
+      }
+
+      const pools: Anime[] = [];
+      const seen = new Set<number>([a.id, b.id, ...entries.map((e) => e.id)]);
