@@ -54,26 +54,32 @@ export function DislikeClient() {
     setLoading(true);
     setHits([]);
     try {
-      const rs = getBestAvailableFingerprint(anime);
-      let userVec: Record<string, number> | null = null;
-      try {
-        if (entries.length >= 2) {
-          const user = buildUserPreferenceVector(entries);
-          userVec = blendUserVector(user, {
-            stable: 0.7,
-            mediumTerm: 0.2,
-            recent: 0.1,
-            session: 0,
-          });
-        }
-      } catch {
-        userVec = null;
-      }
+      const liked = entries
+        .filter((e) => e.watchStatus === "completed" || e.userRating >= 7)
+        .slice(0, 40)
+        .map((e) => ({
+          id: e.id,
+          title: e.title,
+          genres: e.genres,
+          score: e.score,
+        })) as Anime[];
 
-      const profile = buildDislikeProfile(rs.fingerprint, reasons, userVec);
+      const userVec =
+        liked.length > 0
+          ? blendUserVector(
+              liked.map((a) => getBestAvailableFingerprint(a).fingerprint),
+            )
+          : buildUserPreferenceVector([]);
+
+      const sourceFp = getBestAvailableFingerprint(anime);
+      const profile = buildDislikeProfile(
+        { animeId: anime.id, fingerprint: sourceFp.fingerprint },
+        reasons,
+        userVec,
+      );
 
       const pools: Anime[] = [];
-      const seen = new Set<number>([anime.id, ...entries.map((e) => e.id)]);
+      const seen = new Set<number>([anime.id]);
 
       async function pull(url: string) {
         try {
@@ -110,6 +116,7 @@ export function DislikeClient() {
         out.push({
           anime: c,
           ...scored,
+          userFit,
           reasonSource: profile.reasonSource,
         });
       }
@@ -151,35 +158,33 @@ export function DislikeClient() {
           </button>
         ))}
       </div>
-      <div className="daily-actions" style={{ marginTop: 12 }}>
+      <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
         <button
           type="button"
           className="btn btn-accent"
           disabled={!anime || loading}
           onClick={() => void run()}
         >
-          {loading ? "Searching…" : "Find alternatives"}
+          {loading ? "Scoring…" : "Find alternatives"}
         </button>
       </div>
-      {hits.length > 0 ? (
+
+      {hits.length > 0 && (
         <ul className="tools-results" style={{ marginTop: 16 }}>
           {hits.map((h) => (
-            <li key={h.anime.id}>
-              <Link href={`/anime/${h.anime.id}`}>{h.anime.title}</Link>
-              <span className="tools-hint">
-                {" "}
+            <li key={h.anime.id} className="tools-result-row">
+              <Link href={`/anime/${h.anime.id}`} className="tools-result-link">
+                <strong>{h.anime.title}</strong>
+              </Link>
+              <span className="tools-meta">
                 avoid {pct(h.avoidanceSatisfaction)} · keep{" "}
                 {pct(h.preservationSatisfaction)} · you {pct(h.userFit)} ·{" "}
-                {h.reasonSource}
+                {pct(h.finalScore)} score
+                {h.reasonSource === "inferred" ? " · inferred" : ""}
               </span>
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="tools-hint">
-          Pick a title and optional reasons. Results keep what still works and
-          change what you rejected.
-        </p>
       )}
     </div>
   );
