@@ -1,13 +1,14 @@
-/** Soft restore/patch DislikeClient for ReverseHit.userFit + correct preference APIs. */
+/** Ensure ReverseHit includes userFit; fix broken blend/build calls if present. */
 const fs = require("fs");
 const path = require("path");
 const file = path.join(__dirname, "..", "components", "DislikeClient.tsx");
 if (!fs.existsSync(file)) {
-  console.log("[restore] dis-client skip — file missing");
+  console.log("[patch-dislike] skip — file missing");
   process.exit(0);
 }
 let t = fs.readFileSync(file, "utf8");
 
+// Always ensure userFit is on the push object
 const badPush = `out.push({
           anime: c,
           ...scored,
@@ -21,9 +22,12 @@ const goodPush = `out.push({
         });`;
 if (t.includes(badPush)) {
   t = t.replace(badPush, goodPush);
-  console.log("[restore] dis-client added userFit");
+  console.log("[patch-dislike] added userFit to ReverseHit push");
+} else if (t.includes("userFit,\n          reasonSource")) {
+  console.log("[patch-dislike] userFit already present");
 }
 
+// Fix incorrect rewrite of run() preference + profile construction
 const brokenLiked = `const liked = entries
         .filter((e) => e.watchStatus === "completed" || e.userRating >= 7)
         .slice(0, 40)
@@ -68,8 +72,8 @@ const fixedRun = `const rs = getBestAvailableFingerprint(anime);
 
 if (t.includes(brokenLiked)) {
   t = t.replace(brokenLiked, fixedRun);
-  console.log("[restore] dis-client fixed preference/profile");
+  console.log("[patch-dislike] restored preference/profile construction");
 }
 
 fs.writeFileSync(file, t);
-console.log("[restore] dis-client done", t.length);
+console.log("[patch-dislike] done", t.length);
