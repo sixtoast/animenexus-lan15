@@ -3,10 +3,6 @@ const path = require("path");
 const file = path.join(__dirname, "..", "components", "Navbar.tsx");
 if (!fs.existsSync(file)) process.exit(0);
 let t = fs.readFileSync(file, "utf8");
-if (t.includes("NexusIcon name={item.icon}") && t.includes("lantern:open-ai") && !t.includes("size={20}")) {
-  console.log("[patch-navbar-ui] already applied");
-  process.exit(0);
-}
 
 if (!t.includes("NexusIcon")) {
   t = t.replace(
@@ -26,7 +22,6 @@ t = t.replace(
 ];`,
 );
 
-// Prefer size tokens, not numbers
 t = t.replace(
   /<NexusIcon name=\{item\.icon\} size=\{20\} \/>/g,
   '<NexusIcon name={item.icon} size="md" />',
