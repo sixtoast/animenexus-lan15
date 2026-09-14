@@ -125,16 +125,28 @@ describe("production fuseFingerprints", () => {
       0.5,
     );
     const near = fusionFit(
-      fp({ comfort: 0.92, pacing: 0.28 }),
+      fp({ comfort: 0.6, pacing: 0.6 }),
       fused.target,
       fused.matchWeights,
     );
     const mid = fusionFit(
-      fp({ comfort: 0.55, pacing: 0.55 }),
+      fp({ comfort: 0.75, pacing: 0.35 }),
       fused.target,
       fused.matchWeights,
     );
-    assert.ok(typeof near === "number" && typeof mid === "number");
+    const far = fusionFit(
+      fp({ comfort: 0.1, pacing: 0.95, tension: 0.95, cognitiveLoad: 0.95 }),
+      fused.target,
+      fused.matchWeights,
+    );
+    assert.ok(
+      near > mid,
+      `Expected near fusion fit (${near}) to exceed mid (${mid})`,
+    );
+    assert.ok(
+      mid > far,
+      `Expected mid fusion fit (${mid}) to exceed far (${far})`,
+    );
   });
 });
 
