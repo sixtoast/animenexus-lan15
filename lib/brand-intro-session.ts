@@ -12,7 +12,7 @@ export const BRAND_INTRO_TIMING = {
   signal: 300,
   presence: 560,
   mark: 700,
-  wordmark: 920,
+  wordmark: 1000,
   exit: 1520,
   reducedExit: 520,
   exitFade: 280,
