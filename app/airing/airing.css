@@ -1,37 +1,115 @@
 .airing-day-groups {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 10px;
   margin-top: 16px;
+}
+
+.airing-day-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.airing-day-count {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.airing-day-toolbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.airing-day-btn {
+  appearance: none;
+  border: 1px solid var(--color-border);
+  background: var(--color-secondary);
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: var(--transition, border-color 0.15s ease);
+}
+
+.airing-day-btn:hover {
+  border-color: var(--color-accent);
 }
 
 .airing-day-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--color-secondary);
+  overflow: hidden;
 }
 
 .airing-day-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
   margin: 0;
-  font-size: 0.95rem;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.92rem;
   font-weight: 650;
-  letter-spacing: 0.02em;
-  color: var(--color-text);
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--color-border);
-  position: sticky;
-  top: 0;
-  background: var(--color-bg, var(--color-secondary));
-  z-index: 1;
+  letter-spacing: 0.01em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.airing-day-heading:hover {
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+.airing-day-chevron {
+  flex-shrink: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid var(--color-text-muted);
+  border-bottom: 2px solid var(--color-text-muted);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+  margin-right: 2px;
+}
+
+.airing-day-chevron.is-open {
+  transform: rotate(45deg);
+}
+
+.airing-day-heading-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.airing-day-badge {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 2px 8px;
 }
 
 .airing-schedule {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   margin: 0;
-  padding: 0;
+  padding: 0 10px 12px;
 }
 
 .airing-row {
@@ -39,11 +117,11 @@
   gap: 12px;
   align-items: center;
   padding: 10px 12px;
-  background: var(--color-secondary);
+  background: var(--color-bg, transparent);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-sm, 6px);
   color: inherit;
-  transition: var(--transition);
+  transition: var(--transition, border-color 0.15s ease);
   text-decoration: none;
 }
 

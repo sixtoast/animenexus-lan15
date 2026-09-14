@@ -1,21 +1,21 @@
-import Link from "next/link";
-import { fetchAiring, fetchAiringSchedule } from "@/lib/anilist-discover";
-import { AnimeCard } from "@/components/AnimeCard";
+import { fetchAiringSchedule } from "@/lib/anilist-discover";
 import { CalendarExportLinks } from "@/components/CalendarExportLinks";
+import {
+  AiringScheduleGroups,
+  type AiringDayGroup,
+  type AiringScheduleItem,
+} from "@/components/AiringScheduleGroups";
 import "./airing.css";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Airing · AnimeNexus",
-  description: "Currently releasing and upcoming episode schedule.",
+  description: "Episode air dates for the next two months, grouped by day.",
 };
 
-type ScheduleRow = {
-  airingAt: number;
-  episode: number;
-  media: { id: number; title: string; image?: string };
-};
+/** ~60 days */
+const HOURS_AHEAD = 24 * 60;
 
 /** Local calendar day key YYYY-MM-DD */
 function dayKey(tsSec: number): string {
@@ -46,29 +46,14 @@ function formatDayHeading(tsSec: number, now = new Date()): string {
     year: "numeric",
   });
 
-  if (isSameLocalDay(d, now)) return `Today (${long})`;
-  if (isSameLocalDay(d, tomorrow)) return `Tomorrow (${long})`;
+  if (isSameLocalDay(d, now)) return `Today · ${long}`;
+  if (isSameLocalDay(d, tomorrow)) return `Tomorrow · ${long}`;
   return long;
 }
 
-function formatTimeOnly(tsSec: number): string {
-  try {
-    return new Date(tsSec * 1000).toLocaleTimeString(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  } catch {
-    return "";
-  }
-}
-
-function groupScheduleByDay(rows: ScheduleRow[]): {
-  key: string;
-  heading: string;
-  items: ScheduleRow[];
-}[] {
+function groupScheduleByDay(rows: AiringScheduleItem[]): AiringDayGroup[] {
   const sorted = [...rows].sort((a, b) => a.airingAt - b.airingAt);
-  const map = new Map<string, ScheduleRow[]>();
+  const map = new Map<string, AiringScheduleItem[]>();
   for (const row of sorted) {
     const k = dayKey(row.airingAt);
     if (!map.has(k)) map.set(k, []);
@@ -83,20 +68,35 @@ function groupScheduleByDay(rows: ScheduleRow[]): {
 }
 
 export default async function AiringPage() {
-  let popular;
   let schedule: Awaited<ReturnType<typeof fetchAiringSchedule>> = [];
   try {
-    popular = await fetchAiring(1, 24);
-  } catch {
-    popular = { data: [], pagination: { total: 0, hasNextPage: false } };
-  }
-  try {
-    schedule = await fetchAiringSchedule(72);
+    schedule = await fetchAiringSchedule(HOURS_AHEAD);
   } catch {
     schedule = [];
   }
 
-  const groups = groupScheduleByDay(schedule.slice(0, 48));
+  const groups = groupScheduleByDay(
+    schedule.map((row) => ({
+      airingAt: row.airingAt,
+      episode: row.episode,
+      media: {
+        id: row.media.id,
+        title: row.media.title,
+        image: row.media.image,
+      },
+    })),
+  );
+
+  const todayKey = dayKey(Math.floor(Date.now() / 1000));
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowKey = dayKey(Math.floor(tomorrow.getTime() / 1000));
+  const defaultOpenKeys = groups
+    .filter((g) => g.key === todayKey || g.key === tomorrowKey)
+    .map((g) => g.key);
+  if (defaultOpenKeys.length === 0 && groups[0]) {
+    defaultOpenKeys.push(groups[0].key);
+  }
 
   return (
     <main>
@@ -107,64 +107,19 @@ export default async function AiringPage() {
             Currently <span>airing</span>
           </h1>
           <p>
-            Popular releasing titles and the next ~72 hours of episode drops,
-            grouped by day.
+            Episode drops for the next ~2 months, grouped by day. Collapse days
+            you are not watching to scan further ahead.
           </p>
           <CalendarExportLinks />
         </div>
       </section>
 
-      <section className="container" style={{ paddingBottom: 32 }}>
-        <h2 className="section-title">Upcoming episodes</h2>
-        {groups.length === 0 ? (
-          <p className="tools-hint">Schedule quiet or unreachable.</p>
-        ) : (
-          <div className="airing-day-groups">
-            {groups.map((group) => (
-              <section key={group.key} className="airing-day-group">
-                <h3 className="airing-day-heading">{group.heading}</h3>
-                <ul className="airing-schedule">
-                  {group.items.map((row) => (
-                    <li key={`${row.media.id}-${row.episode}-${row.airingAt}`}>
-                      <Link
-                        href={`/anime/${row.media.id}`}
-                        className="airing-row"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={row.media.image || ""} alt="" />
-                        <div className="airing-row-body">
-                          <div className="airing-title">{row.media.title}</div>
-                          <div className="airing-meta">
-                            Ep {row.episode}
-                          </div>
-                        </div>
-                        <time
-                          className="airing-time"
-                          dateTime={new Date(row.airingAt * 1000).toISOString()}
-                        >
-                          {formatTimeOnly(row.airingAt)}
-                        </time>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
-        )}
-      </section>
-
       <section className="container" style={{ paddingBottom: 48 }}>
-        <h2 className="section-title">Popular releasing</h2>
-        {popular.data.length === 0 ? (
-          <p className="tools-hint">No airing data.</p>
-        ) : (
-          <div className="anime-grid">
-            {popular.data.map((a) => (
-              <AnimeCard key={a.id} anime={a} />
-            ))}
-          </div>
-        )}
+        <h2 className="section-title">Upcoming episodes</h2>
+        <AiringScheduleGroups
+          groups={groups}
+          defaultOpenKeys={defaultOpenKeys}
+        />
       </section>
     </main>
   );
