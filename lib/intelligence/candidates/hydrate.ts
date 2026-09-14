@@ -19,7 +19,7 @@ function fromMem(nexusId: string, animeId?: number): Anime | null {
   if (nexusId && mem.has(`nx:${nexusId}`)) return mem.get(`nx:${nexusId}`)!;
   if (animeId && mem.has(`id:${animeId}`)) return mem.get(`id:${animeId}`)!;
   const parsed = parseNexusId(nexusId);
-  if (parsed.provider && parsed.id) {
+  if (parsed && parsed.provider && parsed.id) {
     const k = `${parsed.provider}:${parsed.id}`;
     if (mem.has(k)) return mem.get(k)!;
   }
@@ -44,6 +44,8 @@ export async function hydrateCandidateByNexusId(
   if (opts?.allowNetwork === false) return null;
 
   const parsed = parseNexusId(nexusId);
+  if (!parsed) return null;
+
   try {
     if (parsed.provider === "anilist" && parsed.id) {
       const id = parseInt(parsed.id, 10);
