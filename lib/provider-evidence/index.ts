@@ -4,3 +4,4 @@ export * from "./from-anime";
 export * from "./weather-context";
 export * from "./bundle-cache";
 export * from "./enrich";
+export * from "./simkl-behaviour";
