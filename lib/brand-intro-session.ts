@@ -8,12 +8,12 @@ export const LEGACY_INTRO_KEY = "animenexus.intro.dismissed.v1";
 
 /** Timeline (ms) — production + tests share these values. */
 export const BRAND_INTRO_TIMING = {
-  spark: 150,
-  signal: 340,
-  presence: 610,
-  mark: 760,
-  wordmark: 950,
-  exit: 1360,
+  spark: 120,
+  signal: 300,
+  presence: 560,
+  mark: 700,
+  wordmark: 920,
+  exit: 1450,
   reducedExit: 520,
   exitFade: 180,
   reducedExitFade: 80,
@@ -38,7 +38,6 @@ export function shouldShowBrandIntro(
     if (!s) return true;
     return s.getItem(BRAND_SESSION_KEY) !== "1";
   } catch {
-    // Storage throws (private mode) → fail open so visual still works once
     return true;
   }
 }
