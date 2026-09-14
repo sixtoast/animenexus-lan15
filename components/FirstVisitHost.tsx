@@ -18,10 +18,6 @@ export type SessionTouchPayload = {
   sessionOpens: number;
 };
 
-/**
- * Used by LanternMemoryBoot + HeroGreeting.
- * Keep these exports here unless they are deliberately migrated together.
- */
 export function readSessionTouch(): SessionTouchPayload | null {
   if (typeof window === "undefined") return null;
   try {
@@ -38,7 +34,7 @@ export function writeSessionTouch(payload: SessionTouchPayload) {
   try {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(payload));
   } catch {
-    // Private browsing / unavailable storage.
+    /* private mode */
   }
 }
 
@@ -58,10 +54,6 @@ type IntroPhase =
   | "wordmark"
   | "exit";
 
-/**
- * AnimeNexus brand ignition — The First Light.
- * Once per browser session; DOM + CSS only; sound is enhancement.
- */
 export function FirstVisitHost() {
   const { reducedMotion, ready } = useMotion();
   const [visible, setVisible] = useState(false);
@@ -126,7 +118,8 @@ export function FirstVisitHost() {
 
     schedule(T.spark, () => {
       setPhase("spark");
-      playCue("ui_tap", { gain: 0.45 });
+      // Sonic logo — no-ops while audio locked (expected on cold launch).
+      playCue("brand_ignite", { gain: 0.85 });
     });
 
     schedule(T.signal, () => {
@@ -143,7 +136,6 @@ export function FirstVisitHost() {
 
     schedule(T.wordmark, () => {
       setPhase("wordmark");
-      playCue("resonance", { gain: 0.65 });
     });
 
     schedule(T.exit, () => {
@@ -156,14 +148,10 @@ export function FirstVisitHost() {
   useEffect(() => {
     if (!visible) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        finish();
-      }
+      if (event.key === "Escape") finish();
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-    };
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [finish, visible]);
 
   useEffect(() => {
