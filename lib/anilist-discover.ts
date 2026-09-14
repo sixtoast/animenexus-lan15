@@ -315,10 +315,21 @@ export async function fetchAiringSchedule(
 > {
   const now = Math.floor(Date.now() / 1000);
   const until = now + hoursAhead * 3600;
+  /** ~2 months of daily slots can exceed one page; paginate until window filled. */
+  const perPage = 50;
+  const maxPages = 40; // hard cap to protect rate limits
+  const out: {
+    airingAt: number;
+    episode: number;
+    media: Anime;
+  }[] = [];
+  const seen = new Set<string>();
+
   try {
     const query = `
-    query ($greater: Int, $lesser: Int) {
-      Page(page: 1, perPage: 50) {
+    query ($page: Int, $perPage: Int, $greater: Int, $lesser: Int) {
+      Page(page: $page, perPage: $perPage) {
+        pageInfo { hasNextPage }
         airingSchedules(
           airingAt_greater: $greater
           airingAt_lesser: $lesser
@@ -333,27 +344,42 @@ export async function fetchAiringSchedule(
       }
     }
   `;
-    const data = await gql<{
-      Page: {
-        airingSchedules: {
-          airingAt: number;
-          episode: number;
-          media: Record<string, unknown> | null;
-        }[];
-      };
-    }>(query, { greater: now, lesser: until });
 
-    return (data.Page.airingSchedules || [])
-      .filter((row) => row.media)
-      .map((row) => ({
-        airingAt: row.airingAt,
-        episode: row.episode,
-        media: mapAniListMedia(row.media!),
-      }));
+    for (let page = 1; page <= maxPages; page++) {
+      const data = await gql<{
+        Page: {
+          pageInfo?: { hasNextPage?: boolean };
+          airingSchedules: {
+            airingAt: number;
+            episode: number;
+            media: Record<string, unknown> | null;
+          }[];
+        };
+      }>(query, { page, perPage, greater: now, lesser: until });
+
+      const rows = data.Page.airingSchedules || [];
+      for (const row of rows) {
+        if (!row.media) continue;
+        const media = mapAniListMedia(row.media);
+        const key = `${media.id}-${row.episode}-${row.airingAt}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({
+          airingAt: row.airingAt,
+          episode: row.episode,
+          media,
+        });
+      }
+
+      if (!data.Page.pageInfo?.hasNextPage || rows.length === 0) break;
+    }
+
+    out.sort((a, b) => a.airingAt - b.airingAt);
+    return out;
   } catch {
     // Schedule is AniList-specific; degrade to empty rather than invent times
     console.warn("[anime-api] airing schedule unavailable (AniList down)");
-    return [];
+    return out;
   }
 }
 
