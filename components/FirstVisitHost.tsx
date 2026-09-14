@@ -118,8 +118,7 @@ export function FirstVisitHost() {
 
     schedule(T.spark, () => {
       setPhase("spark");
-      // Sonic logo — no-ops while audio locked (expected on cold launch).
-      playCue("brand_ignite", { gain: 0.85 });
+      playCue("ui_tap", { gain: 0.45 });
     });
 
     schedule(T.signal, () => {
@@ -136,6 +135,7 @@ export function FirstVisitHost() {
 
     schedule(T.wordmark, () => {
       setPhase("wordmark");
+      playCue("resonance", { gain: 0.65 });
     });
 
     schedule(T.exit, () => {
