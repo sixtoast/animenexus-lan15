@@ -64,7 +64,6 @@ function writeTone(
 
     let s;
     if (kind === "noise") {
-      // Deterministic soft noise (not pure white)
       const r =
         ((i * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff * 2 - 1;
       s = r * 0.28 + Math.sin(2 * Math.PI * freq * t) * 0.12;
@@ -81,7 +80,6 @@ function writeTone(
       if (freq2) s = 0.62 * s + 0.38 * Math.sin(2 * Math.PI * freq2 * t);
     }
 
-    // Mild brightness tilt (high freqs attenuated when brightness < 1)
     if (bright < 1 && kind !== "noise") {
       s *= 0.7 + 0.3 * bright;
     }
@@ -97,8 +95,8 @@ function writeTone(
   header.write("WAVE", 8);
   header.write("fmt ", 12);
   header.writeUInt32LE(16, 16);
-  header.writeUInt16LE(1, 20); // PCM
-  header.writeUInt16LE(1, 22); // mono
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(1, 22);
   header.writeUInt32LE(RATE, 24);
   header.writeUInt32LE(RATE * 2, 28);
   header.writeUInt16LE(2, 32);
@@ -109,10 +107,6 @@ function writeTone(
   fs.writeFileSync(filePath, Buffer.concat([header, data]));
 }
 
-/**
- * Mastered cue table — one product voice.
- * Ordinary UI stays short/quiet; celebration/object richer; warning darker.
- */
 const cues = {
   ui_tap: { cat: "ui", freq: 640, ms: 26, kind: "click", peakScale: 0.85 },
   nav_tick: { cat: "navigation", freq: 500, ms: 30 },
@@ -150,10 +144,81 @@ const cues = {
   },
 };
 
+/**
+ * Sonic logo — brand_ignite (~0.8s)
+ * physical lantern click → glassy harmonic bloom → warm resolve
+ */
+function writeBrandIgnite(filePath) {
+  const ms = 820;
+  const dur = ms / 1000;
+  const n = Math.floor(RATE * dur);
+  const data = Buffer.alloc(n * 2);
+  const peak = 0.14;
+
+  for (let i = 0; i < n; i++) {
+    const t = i / RATE;
+    let s = 0;
+
+    if (t < 0.045) {
+      const local = t / 0.045;
+      const noise =
+        (((i * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff) * 2 - 1;
+      s +=
+        noise * 0.35 * Math.exp(-t * 80) +
+        Math.sin(2 * Math.PI * 2100 * t) * Math.exp(-t * 120) * 0.4;
+      s *= 1 - local * 0.3;
+    }
+
+    if (t >= 0.04 && t < 0.42) {
+      const u = (t - 0.04) / 0.38;
+      const env = Math.sin(Math.PI * Math.min(1, u * 1.15)) * Math.exp(-u * 1.4);
+      const f1 = 520 + u * 90;
+      const f2 = 780 + u * 40;
+      const f3 = 1040;
+      s +=
+        env *
+        (0.42 * Math.sin(2 * Math.PI * f1 * t) +
+          0.28 * Math.sin(2 * Math.PI * f2 * t) +
+          0.18 * Math.sin(2 * Math.PI * f3 * t) * Math.exp(-u * 3));
+    }
+
+    if (t >= 0.38) {
+      const u = (t - 0.38) / 0.44;
+      const env = Math.exp(-u * 2.2) * (1 - u * 0.15);
+      s +=
+        env *
+        (0.5 * Math.sin(2 * Math.PI * 280 * t) +
+          0.28 * Math.sin(2 * Math.PI * 420 * t) +
+          0.12 * Math.sin(2 * Math.PI * 560 * t));
+    }
+
+    const val = softClip(s * peak);
+    data.writeInt16LE((val * 32767) | 0, i * 2);
+  }
+
+  const header = Buffer.alloc(44);
+  const dataSize = data.length;
+  header.write("RIFF", 0);
+  header.writeUInt32LE(36 + dataSize, 4);
+  header.write("WAVE", 8);
+  header.write("fmt ", 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(1, 22);
+  header.writeUInt32LE(RATE, 24);
+  header.writeUInt32LE(RATE * 2, 28);
+  header.writeUInt16LE(2, 32);
+  header.writeUInt16LE(16, 34);
+  header.write("data", 36);
+  header.writeUInt32LE(dataSize, 40);
+  fs.writeFileSync(filePath, Buffer.concat([header, data]));
+}
+
 fs.mkdirSync(outDir, { recursive: true });
 for (const [name, opts] of Object.entries(cues)) {
   writeTone(path.join(outDir, `${name}.wav`), opts);
 }
+writeBrandIgnite(path.join(outDir, "brand_ignite.wav"));
 console.log(
-  `Mastered ${Object.keys(cues).length} cues @ ${RATE} Hz → ${outDir}`,
+  `Mastered ${Object.keys(cues).length + 1} cues @ ${RATE} Hz → ${outDir}`,
 );
