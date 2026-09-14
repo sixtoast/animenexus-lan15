@@ -23,7 +23,7 @@ html[data-brand-boot="pending"] .nx-brand-intro {
 
 /* =========================================================
    AnimeNexus — The First Light
-   Artistic pass: one light source causes every event.
+   Art Pass 2: handoff overlap, eye cleanup, collapse, scale.
    ========================================================= */
 
 .nx-brand-intro {
@@ -72,10 +72,14 @@ html[data-brand-intro="active"] {
     filter 260ms ease;
 }
 
-.nx-brand-intro[data-phase="signal"] .nx-brand-intro__field,
-.nx-brand-intro[data-phase="presence"] .nx-brand-intro__field {
-  opacity: 0.52;
+.nx-brand-intro[data-phase="signal"] .nx-brand-intro__field {
+  opacity: 0.68;
   transform: perspective(760px) rotateX(63deg) scale(1.09) translateY(0);
+}
+
+.nx-brand-intro[data-phase="presence"] .nx-brand-intro__field {
+  opacity: 0.48;
+  transform: perspective(760px) rotateX(63deg) scale(1.05) translateY(-1%);
 }
 
 /* Geometry is pulled back into the mark instead of staying as decoration. */
@@ -110,11 +114,12 @@ html[data-brand-intro="active"] {
   width: 5px;
   height: 5px;
   border-radius: 999px;
-  background: var(--intro-hot);
+  background: #fffaf0;
   box-shadow:
-    0 0 7px var(--intro-hot),
-    0 0 18px rgba(242, 200, 145, 0.9),
-    0 0 46px rgba(232, 165, 152, 0.34);
+    0 0 5px #fffaf0,
+    0 0 10px var(--intro-hot),
+    0 0 22px rgba(242, 200, 145, 0.95),
+    0 0 48px rgba(232, 165, 152, 0.4);
   transform: translate(-50%, -50%);
 }
 
@@ -136,8 +141,10 @@ html[data-brand-intro="active"] {
 }
 
 .nx-brand-intro[data-phase="presence"] .nx-brand-intro__source {
-  opacity: 0.34;
-  transform: translate(-50%, -50%) scale(0.74);
+  /* Suppress core so eye beat is exactly two points, not a face. */
+  opacity: 0.1;
+  transform: translate(-50%, -50%) scale(0.55);
+  filter: blur(2px);
 }
 
 .nx-brand-intro[data-phase="mark"] .nx-brand-intro__source,
@@ -201,11 +208,26 @@ html[data-brand-intro="active"] {
   animation-delay: 110ms !important;
 }
 
-/* During mark formation the propagation reverses: the nexus folds inward. */
-.nx-brand-intro[data-phase="mark"] .nx-brand-intro__signal,
+/* During mark formation the propagation reverses: rings converge on the mark aperture. */
+.nx-brand-intro[data-phase="mark"] .nx-brand-intro__signal {
+  opacity: 0.42;
+  transform: translate(-50%, -50%) scale(0.12);
+  transition:
+    transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    opacity 200ms ease;
+}
+
+.nx-brand-intro[data-phase="mark"] .nx-brand-intro__signal-ring {
+  border-color: rgba(232, 165, 152, 0.55);
+  animation: none !important;
+  width: 100%;
+  height: 100%;
+  opacity: 0.55;
+}
+
 .nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__signal {
-  opacity: 0.16;
-  transform: translate(-50%, -50%) scale(0.19);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.08);
 }
 
 @keyframes nxBrandSignal {
@@ -256,6 +278,7 @@ html[data-brand-intro="active"] {
 /* Brand is centred first. Type arrives later, so the mark gets its own beat. */
 .nx-brand-intro__brand {
   position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   gap: 18px;
@@ -373,7 +396,7 @@ html[data-brand-intro="active"] {
 }
 
 .nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__sub {
-  opacity: 0.92;
+  opacity: 1;
   transform: translateY(0);
 }
 
@@ -387,6 +410,7 @@ html[data-brand-intro="active"] {
   border-radius: 999px;
   pointer-events: none;
   opacity: 0;
+  z-index: 1;
   background: rgba(255, 230, 203, 0.34);
   box-shadow:
     0 0 54px 20px rgba(232, 165, 152, 0.15),
@@ -402,39 +426,62 @@ html[data-brand-intro="active"] {
   transform: translate(-50%, -50%) scale(4.5);
 }
 
+/* Soft pre-handoff glow while wordmark rests — light begins before exit. */
+.nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__handoff {
+  opacity: 0.4;
+  transform: scale(0.48);
+}
+
 /* The final light becomes the application's ambient light as the dark plate leaves. */
 .nx-brand-intro__handoff {
   position: absolute;
-  inset: -30vmax;
+  inset: -35vmax;
   pointer-events: none;
   opacity: 0;
+  z-index: 0;
   background: radial-gradient(
-    circle at 50% 50%,
-    rgba(255, 232, 217, 0.12) 0%,
-    rgba(232, 165, 152, 0.075) 13%,
-    rgba(232, 165, 152, 0.025) 28%,
-    transparent 48%
+    circle at 50% 48%,
+    rgba(255, 240, 220, 0.18) 0%,
+    rgba(232, 165, 152, 0.11) 12%,
+    rgba(232, 165, 152, 0.045) 26%,
+    transparent 46%
   );
-  transform: scale(0.22);
+  transform: scale(0.18);
   transition:
-    opacity 240ms ease,
-    transform 720ms cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 280ms ease,
+    transform 680ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/*
+ * Exit: plate goes transparent, handoff expands, brand dissolves.
+ * Parent opacity stays 1 so the handoff layer remains visible —
+ * JS unmounts after exitFade (280ms). Homepage is already under
+ * the intro once data-brand-boot is cleared at exit start.
+ */
 .nx-brand-intro[data-phase="exit"] {
   background: transparent;
-  opacity: 0;
+  /* Do NOT set opacity: 0 here — that hid the handoff in Art Pass 1. */
   pointer-events: none;
 }
 
 .nx-brand-intro[data-phase="exit"] .nx-brand-intro__handoff {
-  opacity: 1;
-  transform: scale(1);
+  opacity: 0.85;
+  transform: scale(1.05);
+  transition:
+    opacity 260ms ease,
+    transform 560ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .nx-brand-intro[data-phase="exit"] .nx-brand-intro__brand {
   opacity: 0;
-  transform: translateY(-2px) scale(1.015);
+  transform: translateY(-3px) scale(1.02);
+  transition:
+    opacity 220ms ease,
+    transform 280ms ease;
+}
+
+.nx-brand-intro[data-phase="exit"] .nx-brand-intro__flare {
+  opacity: 0;
 }
 
 .nx-brand-intro[data-phase="exit"] .nx-brand-intro__field,
@@ -442,21 +489,28 @@ html[data-brand-intro="active"] {
 .nx-brand-intro[data-phase="exit"] .nx-brand-intro__presence,
 .nx-brand-intro[data-phase="exit"] .nx-brand-intro__source {
   opacity: 0;
+  transition: opacity 120ms ease;
 }
 
 @media (max-width: 520px) {
   .nx-brand-intro__brand {
-    gap: 13px;
+    gap: 14px;
   }
 
   .nx-brand-intro__lantern {
-    width: 42px;
-    height: 56px;
+    /* ~20% larger lockup than Art Pass 1 (42×56 → 50×66) */
+    width: 50px;
+    height: 66px;
     transform-origin: center;
   }
 
+  .nx-brand-intro__name {
+    font-size: clamp(2.35rem, 7.2vw, 3.2rem);
+  }
+
   .nx-brand-intro__sub {
-    font-size: 0.58rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.3em;
   }
 }
 
