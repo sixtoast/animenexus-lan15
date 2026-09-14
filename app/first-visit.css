@@ -5,6 +5,20 @@ html[data-brand-boot="pending"] {
 html[data-brand-boot="pending"] body {
   background-color: #070609;
 }
+/* Hide interactive chrome until boot resolves (intro owns first paint) */
+html[data-brand-boot="pending"] .app-shell,
+html[data-brand-boot="pending"] .site-footer,
+html[data-brand-boot="pending"] nav,
+html[data-brand-boot="pending"] .nav-root,
+html[data-brand-boot="pending"] header {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+/* Intro overlay always interactive when mounted */
+html[data-brand-boot="pending"] .nx-brand-intro {
+  opacity: 1;
+  pointer-events: auto;
+}
 
 /* =========================================================
    AnimeNexus — The First Light
@@ -242,7 +256,6 @@ html[data-brand-intro="active"] {
     scale(1);
 }
 
-/* SVG brand symbol */
 .nx-brand-intro__lantern {
   position: relative;
   width: 48px;
