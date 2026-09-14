@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMotion } from "@/components/MotionProvider";
 import { playCue } from "@/lib/sound-engine";
+import { LanternMark } from "@/components/LanternMark";
 
 const LEGACY_INTRO_KEY = "animenexus.intro.dismissed.v1";
 const BRAND_SESSION_KEY = "animenexus.brand_intro.shown.v1";
@@ -144,8 +145,8 @@ export function FirstVisitHost() {
 
     schedule(150, () => {
       setPhase("spark");
-      // Enhancement only. playCue safely no-ops while audio is locked.
-      playCue("ui_tap", { gain: 0.48 });
+      // Sonic logo — enhancement only; no-ops while audio locked.
+      playCue("brand_ignite", { gain: 0.85 });
     });
 
     schedule(340, () => {
@@ -162,8 +163,6 @@ export function FirstVisitHost() {
 
     schedule(950, () => {
       setPhase("wordmark");
-      // Existing Lantern-category resonance cue.
-      playCue("resonance", { gain: 0.72 });
     });
 
     schedule(1360, () => {
@@ -214,10 +213,7 @@ export function FirstVisitHost() {
       </div>
       <div className="nx-brand-intro__brand">
         <div className="nx-brand-intro__lantern" aria-hidden>
-          <span className="nx-brand-intro__lantern-handle" />
-          <span className="nx-brand-intro__lantern-shell">
-            <span className="nx-brand-intro__lantern-core" />
-          </span>
+          <LanternMark className="nx-brand-intro__mark" />
         </div>
         <div className="nx-brand-intro__type">
           <span className="nx-brand-intro__name">AnimeNexus</span>
