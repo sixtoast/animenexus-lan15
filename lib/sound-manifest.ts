@@ -34,7 +34,8 @@ export type SoundCueId =
   | "resonance"
   | "modal_open"
   | "modal_close"
-  | "signal_acquired";
+  | "signal_acquired"
+  | "brand_ignite";
 
 export type SoundCueDef = {
   id: SoundCueId;
@@ -58,15 +59,22 @@ export const SOUND_CUES: Record<SoundCueId, SoundCueDef> = {
   error: { id: "error", category: "warning", src: "/audio/ui/error.wav", gain: 0.34, cooldownMs: 250 },
   success: { id: "success", category: "celebration", src: "/audio/ui/success.wav", gain: 0.34, cooldownMs: 280 },
   oracle_tune: { id: "oracle_tune", category: "tool", src: "/audio/ui/oracle_tune.wav", gain: 0.32, cooldownMs: 200 },
-  radar_ping: { id: "radar_ping", category: "tool", src: "/audio/ui/radar_ping.wav", gain: 0.28, cooldownMs: 90 },
-  challenge_ok: { id: "challenge_ok", category: "celebration", src: "/audio/ui/challenge_ok.wav", gain: 0.36, cooldownMs: 300 },
-  challenge_bad: { id: "challenge_bad", category: "warning", src: "/audio/ui/challenge_bad.wav", gain: 0.32, cooldownMs: 300 },
-  memory_focus: { id: "memory_focus", category: "lantern", src: "/audio/ui/memory_focus.wav", gain: 0.28, cooldownMs: 250 },
-  shelf_settle: { id: "shelf_settle", category: "object", src: "/audio/ui/shelf_settle.wav", gain: 0.28, cooldownMs: 180 },
+  radar_ping: { id: "radar_ping", category: "tool", src: "/audio/ui/radar_ping.wav", gain: 0.28, cooldownMs: 180 },
+  challenge_ok: { id: "challenge_ok", category: "tool", src: "/audio/ui/challenge_ok.wav", gain: 0.34, cooldownMs: 220 },
+  challenge_bad: { id: "challenge_bad", category: "warning", src: "/audio/ui/challenge_bad.wav", gain: 0.32, cooldownMs: 220 },
+  memory_focus: { id: "memory_focus", category: "lantern", src: "/audio/ui/memory_focus.wav", gain: 0.3, cooldownMs: 200 },
+  shelf_settle: { id: "shelf_settle", category: "object", src: "/audio/ui/shelf_settle.wav", gain: 0.26, cooldownMs: 160 },
   resonance: { id: "resonance", category: "lantern", src: "/audio/ui/resonance.wav", gain: 0.3, cooldownMs: 220 },
-  modal_open: { id: "modal_open", category: "navigation", src: "/audio/ui/modal_open.wav", gain: 0.28, cooldownMs: 180 },
-  modal_close: { id: "modal_close", category: "navigation", src: "/audio/ui/modal_close.wav", gain: 0.26, cooldownMs: 180 },
+  modal_open: { id: "modal_open", category: "navigation", src: "/audio/ui/modal_open.wav", gain: 0.28, cooldownMs: 200 },
+  modal_close: { id: "modal_close", category: "navigation", src: "/audio/ui/modal_close.wav", gain: 0.26, cooldownMs: 200 },
   signal_acquired: { id: "signal_acquired", category: "tool", src: "/audio/ui/signal_acquired.wav", gain: 0.34, cooldownMs: 280 },
+  brand_ignite: {
+    id: "brand_ignite",
+    category: "lantern",
+    src: "/audio/ui/brand_ignite.wav",
+    gain: 0.42,
+    cooldownMs: 1200,
+  },
 };
 
 export const PRELOAD_CUES: SoundCueId[] = [
