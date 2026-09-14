@@ -4,9 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useMotion } from "@/components/MotionProvider";
 import { playCue } from "@/lib/sound-engine";
 import { LanternMark } from "@/components/LanternMark";
+import {
+  BRAND_INTRO_TIMING,
+  markBrandIntroShown,
+  shouldShowBrandIntro,
+} from "@/lib/brand-intro-session";
 
-const LEGACY_INTRO_KEY = "animenexus.intro.dismissed.v1";
-const BRAND_SESSION_KEY = "animenexus.brand_intro.shown.v1";
 const SESSION_KEY = "animenexus.session_touch.v1";
 
 export type SessionTouchPayload = {
@@ -39,25 +42,12 @@ export function writeSessionTouch(payload: SessionTouchPayload) {
   }
 }
 
-/** Session gate for brand ident — exported for unit tests. */
-export function wasBrandIntroShownThisSession(): boolean {
-  if (typeof window === "undefined") return true;
-  try {
-    return sessionStorage.getItem(BRAND_SESSION_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-export function markBrandIntroShownThisSession() {
-  try {
-    sessionStorage.setItem(BRAND_SESSION_KEY, "1");
-    // Retire the previous one-time onboarding overlay semantics.
-    localStorage.setItem(LEGACY_INTRO_KEY, "1");
-  } catch {
-    // Storage may be unavailable.
-  }
-}
+export {
+  shouldShowBrandIntro,
+  markBrandIntroShown,
+  BRAND_SESSION_KEY,
+  BRAND_INTRO_TIMING,
+} from "@/lib/brand-intro-session";
 
 type IntroPhase =
   | "dark"
@@ -69,17 +59,8 @@ type IntroPhase =
   | "exit";
 
 /**
- * AnimeNexus brand ignition.
- *
- * Visual only:
- * - runs once per browser session
- * - does not replay on client-side navigation
- * - tap/click/Escape skips immediately
- * - sound is enhancement only
- * - honours AnimeNexus MotionProvider
- *
- * Audio may not play on a true cold browser launch because browsers prohibit
- * autoplay before user interaction. The intro must still work perfectly silent.
+ * AnimeNexus brand ignition — The First Light.
+ * Once per browser session; DOM + CSS only; sound is enhancement.
  */
 export function FirstVisitHost() {
   const { reducedMotion, ready } = useMotion();
@@ -95,22 +76,33 @@ export function FirstVisitHost() {
     timers.current = [];
   }, []);
 
+  const clearBoot = useCallback(() => {
+    document.documentElement.removeAttribute("data-brand-intro");
+    document.documentElement.removeAttribute("data-brand-boot");
+  }, []);
+
   const finish = useCallback(() => {
     clearTimers();
-    markBrandIntroShownThisSession();
-    document.documentElement.removeAttribute("data-brand-intro");
+    markBrandIntroShown();
+    clearBoot();
     setPhase("exit");
+    const fade = reducedMotion
+      ? BRAND_INTRO_TIMING.reducedExitFade
+      : BRAND_INTRO_TIMING.exitFade;
     const exitTimer = window.setTimeout(() => {
       setVisible(false);
-    }, reducedMotion ? 80 : 180);
+    }, fade);
     timers.current.push(exitTimer);
-  }, [clearTimers, reducedMotion]);
+  }, [clearTimers, clearBoot, reducedMotion]);
 
   useEffect(() => {
     if (!ready || hasStarted.current) return;
     hasStarted.current = true;
 
-    if (wasBrandIntroShownThisSession()) return;
+    if (!shouldShowBrandIntro()) {
+      clearBoot();
+      return;
+    }
 
     setVisible(true);
     document.documentElement.setAttribute("data-brand-intro", "active");
@@ -120,7 +112,7 @@ export function FirstVisitHost() {
       timers.current.push(
         window.setTimeout(() => {
           finish();
-        }, 520),
+        }, BRAND_INTRO_TIMING.reducedExit),
       );
       return clearTimers;
     }
@@ -129,48 +121,37 @@ export function FirstVisitHost() {
       timers.current.push(window.setTimeout(callback, delay));
     };
 
-    /*
-     * THE FIRST LIGHT
-     *
-     * 0ms     darkness
-     * 150ms   ignition point
-     * 340ms   Nexus signal/grid wakes
-     * 610ms   Lantern presence / eyes
-     * 760ms   lantern mark resolves
-     * 950ms   AnimeNexus wordmark resolves
-     * 1360ms  transition into the room
-     * ~1540ms overlay removed
-     */
+    const T = BRAND_INTRO_TIMING;
     setPhase("dark");
 
-    schedule(150, () => {
+    schedule(T.spark, () => {
       setPhase("spark");
-      // Sonic logo — enhancement only; no-ops while audio locked.
-      playCue("brand_ignite", { gain: 0.85 });
+      playCue("ui_tap", { gain: 0.45 });
     });
 
-    schedule(340, () => {
+    schedule(T.signal, () => {
       setPhase("signal");
     });
 
-    schedule(610, () => {
+    schedule(T.presence, () => {
       setPhase("presence");
     });
 
-    schedule(760, () => {
+    schedule(T.mark, () => {
       setPhase("mark");
     });
 
-    schedule(950, () => {
+    schedule(T.wordmark, () => {
       setPhase("wordmark");
+      playCue("resonance", { gain: 0.65 });
     });
 
-    schedule(1360, () => {
+    schedule(T.exit, () => {
       finish();
     });
 
     return clearTimers;
-  }, [clearTimers, finish, ready, reducedMotion]);
+  }, [clearTimers, clearBoot, finish, ready, reducedMotion]);
 
   useEffect(() => {
     if (!visible) return;
@@ -188,9 +169,9 @@ export function FirstVisitHost() {
   useEffect(() => {
     return () => {
       clearTimers();
-      document.documentElement.removeAttribute("data-brand-intro");
+      clearBoot();
     };
-  }, [clearTimers]);
+  }, [clearTimers, clearBoot]);
 
   if (!visible) return null;
 
