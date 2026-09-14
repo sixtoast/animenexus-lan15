@@ -34,7 +34,8 @@ export type SoundCueId =
   | "resonance"
   | "modal_open"
   | "modal_close"
-  | "signal_acquired";
+  | "signal_acquired"
+  | "brand_ignite";
 
 export type SoundCueDef = {
   id: SoundCueId;
@@ -67,6 +68,13 @@ export const SOUND_CUES: Record<SoundCueId, SoundCueDef> = {
   modal_open: { id: "modal_open", category: "navigation", src: "/audio/ui/modal_open.wav", gain: 0.28, cooldownMs: 200 },
   modal_close: { id: "modal_close", category: "navigation", src: "/audio/ui/modal_close.wav", gain: 0.26, cooldownMs: 200 },
   signal_acquired: { id: "signal_acquired", category: "tool", src: "/audio/ui/signal_acquired.wav", gain: 0.34, cooldownMs: 280 },
+  brand_ignite: {
+    id: "brand_ignite",
+    category: "lantern",
+    src: "/audio/ui/brand_ignite.wav",
+    gain: 0.42,
+    cooldownMs: 1200,
+  },
 };
 
 export const PRELOAD_CUES: SoundCueId[] = [
@@ -83,7 +91,6 @@ export const PRELOAD_CUES: SoundCueId[] = [
 export const SOUND_PREF_KEY = "anime_nexus_sound";
 
 export type SoundPrefs = {
-  /** Master enabled — default on; toggle in Account → Sound */
   enabled: boolean;
   master: number;
   ui: number;
@@ -96,7 +103,6 @@ export type SoundPrefs = {
 };
 
 export const DEFAULT_SOUND_PREFS: SoundPrefs = {
-  /** On by default; user can disable in Account → Sound */
   enabled: true,
   master: 0.4,
   ui: 1,

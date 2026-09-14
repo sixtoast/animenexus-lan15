@@ -36,13 +36,13 @@ export const SONIC_MATERIAL: Record<SoundCueId, SonicMaterial> = {
   error: "warning",
   challenge_bad: "warning",
   complete: "ceremony",
+  brand_ignite: "ceremony",
 };
 
 export function materialForCue(id: SoundCueId): SonicMaterial {
   return SONIC_MATERIAL[id];
 }
 
-/** Guard: ordinary UI should not fire success/ceremony materials */
 export function isOrdinaryTouch(id: SoundCueId): boolean {
   return SONIC_MATERIAL[id] === "touch";
 }
