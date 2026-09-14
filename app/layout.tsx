@@ -147,7 +147,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-brand-boot="pending">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -163,9 +163,12 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon.svg" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('anime_nexus_theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');var v=localStorage.getItem('anime_nexus_view_mode');if(v)document.documentElement.dataset.viewMode=v;var h=new Date().getHours();var tod=h<5||h>=21?'late-night':h<12?'morning':h<17?'afternoon':'evening';document.documentElement.dataset.tod=tod;var m=localStorage.getItem('anime_nexus_motion');var sys=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;var reduced=m==='reduced'||(m!=='full'&&sys);document.documentElement.dataset.motion=m||'system';if(reduced)document.documentElement.setAttribute('data-reduce-motion','true');else document.documentElement.removeAttribute('data-reduce-motion');document.documentElement.setAttribute('data-sakura','off');document.documentElement.dataset.cinemaFocus='ambient';document.documentElement.dataset.cinemaDepth='layered';document.documentElement.dataset.cinemaMotion=reduced?'still':'full';}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('anime_nexus_theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');var v=localStorage.getItem('anime_nexus_view_mode');if(v)document.documentElement.dataset.viewMode=v;var h=new Date().getHours();var tod=h<5||h>=21?'late-night':h<12?'morning':h<17?'afternoon':'evening';document.documentElement.dataset.tod=tod;var m=localStorage.getItem('anime_nexus_motion');var sys=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;var reduced=m==='reduced'||(m!=='full'&&sys);document.documentElement.dataset.motion=m||'system';if(reduced)document.documentElement.setAttribute('data-reduce-motion','true');else document.documentElement.removeAttribute('data-reduce-motion');document.documentElement.setAttribute('data-sakura','off');document.documentElement.dataset.cinemaFocus='ambient';document.documentElement.dataset.cinemaDepth='layered';document.documentElement.dataset.cinemaMotion=reduced?'still':'full';var shown=sessionStorage.getItem('animenexus.brand_intro.shown.v1')==='1';if(shown){document.documentElement.removeAttribute('data-brand-boot');}else{document.documentElement.setAttribute('data-brand-boot','pending');}}catch(e){try{document.documentElement.removeAttribute('data-brand-boot');}catch(_){}}})();`,
           }}
         />
+        <noscript>
+          <style>{`html { background: #070609; }`}</style>
+        </noscript>
       </head>
       <body>
         <ThemeProvider>
