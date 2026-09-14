@@ -1,3 +1,11 @@
+/* Pre-hydration launch surface — no homepage flash before intro gate */
+html[data-brand-boot="pending"] {
+  background-color: #070609;
+}
+html[data-brand-boot="pending"] body {
+  background-color: #070609;
+}
+
 /* =========================================================
    AnimeNexus — The First Light
    Session brand ignition
