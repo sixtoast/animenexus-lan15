@@ -78,6 +78,22 @@ export function DislikeClient() {
 
       const profile = buildDislikeProfile(rs.fingerprint, reasons, userVec);
 
+      try {
+        const { indexFingerprint } = await import(
+          "@/lib/intelligence/candidates/semantic-index"
+        );
+        const { ensureNexusId, identityFromAnime } = await import(
+          "@/lib/anime-identity"
+        );
+        indexFingerprint(
+          ensureNexusId(identityFromAnime(anime)).nexusId ||
+            `anilist:${anime.id}`,
+          rs.fingerprint,
+        );
+      } catch {
+        /* index optional */
+      }
+
       const { candidates, providersAttempted, uniqueCandidateCount } =
         await retrieveAnimeCandidates({
           intent: "reverse",
@@ -85,6 +101,7 @@ export function DislikeClient() {
           excludeIds: [anime.id, ...entries.map((e) => e.id)],
           personal: [],
           limit: 120,
+          targetFingerprint: rs.fingerprint,
         });
       setMeta({
         attempted: providersAttempted,
@@ -94,7 +111,10 @@ export function DislikeClient() {
       const out: ReverseHit[] = [];
       for (const rec of candidates.slice(0, 80)) {
         const c = rec.anime;
-        const rc = getBestAvailableFingerprint(c);
+        const rc =
+          rec.fingerprint != null
+            ? { fingerprint: rec.fingerprint }
+            : getBestAvailableFingerprint(c);
         const userFit = userVec
           ? fitToUserVector(rc.fingerprint, userVec)
           : 0.5;
