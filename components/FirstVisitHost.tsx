@@ -171,6 +171,9 @@ export function FirstVisitHost() {
       onPointerDown={finish}
     >
       <div className="nx-brand-intro__field" />
+      <div className="nx-brand-intro__source" aria-hidden>
+        <span className="nx-brand-intro__wick" />
+      </div>
       <div className="nx-brand-intro__signal" aria-hidden>
         <span className="nx-brand-intro__signal-ring nx-brand-intro__signal-ring--one" />
         <span className="nx-brand-intro__signal-ring nx-brand-intro__signal-ring--two" />
@@ -189,6 +192,7 @@ export function FirstVisitHost() {
           <span className="nx-brand-intro__sub">Lantern</span>
         </div>
       </div>
+      <div className="nx-brand-intro__handoff" aria-hidden />
       <div className="nx-brand-intro__flare" aria-hidden />
     </div>
   );
