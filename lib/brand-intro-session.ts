@@ -13,9 +13,9 @@ export const BRAND_INTRO_TIMING = {
   presence: 560,
   mark: 700,
   wordmark: 920,
-  exit: 1450,
+  exit: 1520,
   reducedExit: 520,
-  exitFade: 180,
+  exitFade: 280,
   reducedExitFade: 80,
 } as const;
 

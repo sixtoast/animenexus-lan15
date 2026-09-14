@@ -79,7 +79,7 @@ describe("brand intro session gate (production)", () => {
 
   it("timing constants are shared production values", () => {
     assert.equal(BRAND_INTRO_TIMING.spark, 120);
-    assert.equal(BRAND_INTRO_TIMING.exit, 1450);
+    assert.equal(BRAND_INTRO_TIMING.exit, 1520);
     assert.equal(BRAND_INTRO_TIMING.reducedExit, 520);
   });
 });
