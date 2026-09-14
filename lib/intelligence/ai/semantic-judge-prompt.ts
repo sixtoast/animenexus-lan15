@@ -25,12 +25,7 @@ You MUST use the supplied AnimeNexus data as your source of truth.
 
 EVIDENCE CONTRACT
 
-Use ONLY the supplied structured evidence.
-Do not use model memory to invent anime facts.
-Do not invent genres, tags, themes, relations, ratings, user preferences, or provider classifications.
-Do not alter calculated scores.
-Distinguish explicit user evidence, learned preference, provider evidence, and semantic inference.
-If evidence is insufficient, express uncertainty.
+${AI_EVIDENCE_CONTRACT}
 
 Do not invent anime that are not present in the candidate list unless the request explicitly allows external discovery.
 
