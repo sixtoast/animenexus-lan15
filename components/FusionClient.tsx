@@ -61,19 +61,44 @@ export function FusionClient() {
       const rb = getBestAvailableFingerprint(b);
       const fused = fuseFingerprints(ra.fingerprint, rb.fingerprint, leanA);
 
+      try {
+        const { indexFingerprint } = await import(
+          "@/lib/intelligence/candidates/semantic-index"
+        );
+        const { ensureNexusId, identityFromAnime } = await import(
+          "@/lib/anime-identity"
+        );
+        indexFingerprint(
+          ensureNexusId(identityFromAnime(a)).nexusId || `anilist:${a.id}`,
+          ra.fingerprint,
+        );
+        indexFingerprint(
+          ensureNexusId(identityFromAnime(b)).nexusId || `anilist:${b.id}`,
+          rb.fingerprint,
+        );
+      } catch {
+        /* index optional */
+      }
+
       const { candidates, uniqueCandidateCount } =
         await retrieveAnimeCandidates({
           intent: "fusion",
           seeds: [a, b],
           excludeIds: [a.id, b.id, ...entries.map((e) => e.id)],
           limit: 120,
+          targetFingerprint: fused.target,
+          fingerprintA: ra.fingerprint,
+          fingerprintB: rb.fingerprint,
         });
       setPoolSize(uniqueCandidateCount);
 
       const ranked: FusionHit[] = [];
       for (const rec of candidates.slice(0, 120)) {
         const anime = rec.anime;
-        const rc = getBestAvailableFingerprint(anime);
+        const rc =
+          rec.fingerprint != null
+            ? { fingerprint: rec.fingerprint }
+            : getBestAvailableFingerprint(anime);
         const fFit = fusionFit(
           rc.fingerprint,
           fused.target,
