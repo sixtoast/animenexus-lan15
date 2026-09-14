@@ -23,7 +23,7 @@ html[data-brand-boot="pending"] .nx-brand-intro {
 
 /* =========================================================
    AnimeNexus — The First Light
-   Art Pass 2: handoff overlap, eye cleanup, collapse, scale.
+   Art Pass 3: centred mark formation → aperture match → glide.
    ========================================================= */
 
 .nx-brand-intro {
@@ -208,26 +208,29 @@ html[data-brand-intro="active"] {
   animation-delay: 110ms !important;
 }
 
-/* During mark formation the propagation reverses: rings converge on the mark aperture. */
+/* Mark: rings converge to LanternMark aperture radius before absorb. */
 .nx-brand-intro[data-phase="mark"] .nx-brand-intro__signal {
-  opacity: 0.42;
-  transform: translate(-50%, -50%) scale(0.12);
+  opacity: 0.55;
+  transform: translate(-50%, -50%) scale(0.055);
   transition:
-    transform 280ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    opacity 200ms ease;
+    transform 300ms cubic-bezier(0.18, 0.75, 0.22, 1),
+    opacity 220ms ease;
 }
 
 .nx-brand-intro[data-phase="mark"] .nx-brand-intro__signal-ring {
-  border-color: rgba(232, 165, 152, 0.55);
+  border-color: rgba(242, 200, 145, 0.7);
   animation: none !important;
   width: 100%;
   height: 100%;
-  opacity: 0.55;
+  opacity: 0.7;
 }
 
 .nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__signal {
   opacity: 0;
-  transform: translate(-50%, -50%) scale(0.08);
+  transform: translate(-50%, -50%) scale(0.04);
+  transition:
+    opacity 160ms ease,
+    transform 200ms ease;
 }
 
 @keyframes nxBrandSignal {
@@ -275,24 +278,30 @@ html[data-brand-intro="active"] {
   transform: translate(-50%, -50%) scale(1);
 }
 
-/* Brand is centred first. Type arrives later, so the mark gets its own beat. */
+/* Brand centres on the lantern during mark; gap opens for wordmark glide. */
 .nx-brand-intro__brand {
   position: relative;
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 18px;
+  justify-content: center;
+  gap: 0;
   opacity: 0;
   transform: translateY(4px) scale(0.988);
   transition:
     opacity 180ms ease,
-    transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    gap 420ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .nx-brand-intro[data-phase="mark"] .nx-brand-intro__brand,
 .nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__brand {
   opacity: 1;
   transform: translateY(0) scale(1);
+}
+
+.nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__brand {
+  gap: 18px;
 }
 
 .nx-brand-intro__lantern {
@@ -350,6 +359,20 @@ html[data-brand-intro="active"] {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  /* Mark phase: zero width so the brand centres on the lantern alone. */
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition:
+    max-width 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 280ms ease,
+    margin 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Wordmark: type expands → lockup recentres and mark glides left. */
+.nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__type {
+  max-width: 18rem;
+  opacity: 1;
 }
 
 /* Light reveals the letters from the mark outward. */
@@ -441,9 +464,9 @@ html[data-brand-intro="active"] {
   z-index: 0;
   background: radial-gradient(
     circle at 50% 48%,
-    rgba(255, 240, 220, 0.18) 0%,
-    rgba(232, 165, 152, 0.11) 12%,
-    rgba(232, 165, 152, 0.045) 26%,
+    rgba(255, 240, 220, 0.2) 0%,
+    rgba(232, 165, 152, 0.125) 12%,
+    rgba(232, 165, 152, 0.05) 26%,
     transparent 46%
   );
   transform: scale(0.18);
@@ -465,7 +488,7 @@ html[data-brand-intro="active"] {
 }
 
 .nx-brand-intro[data-phase="exit"] .nx-brand-intro__handoff {
-  opacity: 0.85;
+  opacity: 0.92;
   transform: scale(1.05);
   transition:
     opacity 260ms ease,
@@ -493,7 +516,7 @@ html[data-brand-intro="active"] {
 }
 
 @media (max-width: 520px) {
-  .nx-brand-intro__brand {
+  .nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__brand {
     gap: 14px;
   }
 
