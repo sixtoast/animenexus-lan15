@@ -95,13 +95,11 @@ export async function GET(req: NextRequest) {
 
   if (id > 0 && id < SHIKI_ID_OFFSET) {
     try {
-      const { fetchMediaLinks } = await import("@/lib/anilist-detail");
-      const links = await fetchMediaLinks(id);
+      // fetchMediaLinks is module-private after restore-emptied; use public export
+      const { fetchRelationsOnly } = await import("@/lib/anilist-detail");
+      const rels = await fetchRelationsOnly(id);
       sources.push("anilist_links");
-      for (const rel of [
-        ...(links.recommendations || []),
-        ...(links.relations || []),
-      ]) {
+      for (const rel of rels || []) {
         if (!rel?.id || byKey.has(rel.id)) continue;
         byKey.set(rel.id, {
           id: rel.id,
