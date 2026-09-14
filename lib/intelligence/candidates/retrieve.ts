@@ -1,6 +1,6 @@
 /**
  * Shared candidate retrieval for Fusion / Reverse / tools.
- * Retrieval finds possibilities — semantic engines decide fit.
+ * Includes seed-driven Shikimori-similar / Jikan recommendations via /api/seed-candidates.
  */
 import type { Anime } from "@/lib/types";
 import { identityFromAnime, ensureNexusId } from "@/lib/anime-identity";
@@ -13,6 +13,10 @@ export type CandidateSource =
   | "recommend_score"
   | "recommend_genres"
   | "seed_genres"
+  | "seed_shikimori_similar"
+  | "seed_jikan_recommendations"
+  | "seed_anilist_links"
+  | "seed_fallback"
   | "personal"
   | "cache";
 
@@ -47,16 +51,27 @@ function nexusOf(a: Anime): string {
 
 async function pullJson(
   url: string,
-): Promise<{ data: Anime[]; ok: boolean }> {
+): Promise<{ data: Anime[]; ok: boolean; meta?: Record<string, unknown> }> {
   try {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return { data: [], ok: false };
     const j = await res.json();
     const data = (j.data || j.media || []) as Anime[];
-    return { data: Array.isArray(data) ? data : [], ok: true };
+    return {
+      data: Array.isArray(data) ? data : [],
+      ok: true,
+      meta: j as Record<string, unknown>,
+    };
   } catch {
     return { data: [], ok: false };
   }
+}
+
+function mapSeedSource(raw: string): CandidateSource {
+  if (raw.includes("shikimori")) return "seed_shikimori_similar";
+  if (raw.includes("jikan")) return "seed_jikan_recommendations";
+  if (raw.includes("anilist")) return "seed_anilist_links";
+  return "seed_fallback";
 }
 
 export async function retrieveAnimeCandidates(
@@ -86,12 +101,38 @@ export async function retrieveAnimeCandidates(
         nexusId: nexusOf(a),
         sources: [source],
         providerIds: {
-          anilist: a.id,
+          anilist: a.anilist_id || (a.id < 20_000_000 ? a.id : undefined),
           mal: a.idMal || undefined,
         },
       });
     }
   }
+
+  const seedJobs = (opts.seeds || []).slice(0, 4).map(async (seed) => {
+    const mal =
+      seed.idMal ||
+      (typeof (seed as { mal_id?: number }).mal_id === "number"
+        ? (seed as { mal_id?: number }).mal_id
+        : 0) ||
+      0;
+    const q = new URLSearchParams();
+    if (seed.id) q.set("id", String(seed.id));
+    if (mal) q.set("malId", String(mal));
+    q.set("limit", "16");
+    const name = `seed_candidates:${seed.id}`;
+    attempted.push(name);
+    const { data, ok, meta } = await pullJson(`/api/seed-candidates?${q}`);
+    if (!ok || !data.length) return;
+    const srcList = (meta?.sources as string[]) || [];
+    const source =
+      srcList.length > 0
+        ? mapSeedSource(srcList[0])
+        : ("seed_fallback" as CandidateSource);
+    ingest(data, source);
+    for (const s of srcList.slice(1)) {
+      ingest(data, mapSeedSource(s));
+    }
+  });
 
   const genreHints = [
     ...(opts.providerHints || []),
@@ -137,17 +178,15 @@ export async function retrieveAnimeCandidates(
     });
   }
 
-  const settled = await Promise.allSettled(
-    jobs.map(async (j) => {
+  const settled = await Promise.allSettled([
+    ...seedJobs,
+    ...jobs.map(async (j) => {
       attempted.push(j.name);
       const { data } = await pullJson(j.url);
-      return { source: j.source, data };
+      ingest(data, j.source);
     }),
-  );
-
-  for (const s of settled) {
-    if (s.status === "fulfilled") ingest(s.value.data, s.value.source);
-  }
+  ]);
+  void settled;
 
   if (opts.personal?.length) {
     ingest(
