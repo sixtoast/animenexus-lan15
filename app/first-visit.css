@@ -2,10 +2,11 @@
 html[data-brand-boot="pending"] {
   background-color: #070609;
 }
+
 html[data-brand-boot="pending"] body {
   background-color: #070609;
 }
-/* Hide interactive chrome until boot resolves (intro owns first paint) */
+
 html[data-brand-boot="pending"] .app-shell,
 html[data-brand-boot="pending"] .site-footer,
 html[data-brand-boot="pending"] nav,
@@ -14,7 +15,7 @@ html[data-brand-boot="pending"] header {
   opacity: 0 !important;
   pointer-events: none !important;
 }
-/* Intro overlay always interactive when mounted */
+
 html[data-brand-boot="pending"] .nx-brand-intro {
   opacity: 1;
   pointer-events: auto;
@@ -22,12 +23,12 @@ html[data-brand-boot="pending"] .nx-brand-intro {
 
 /* =========================================================
    AnimeNexus — The First Light
-   Session brand ignition
+   Artistic pass: one light source causes every event.
    ========================================================= */
 
 .nx-brand-intro {
   --intro-accent: var(--color-accent, #e8a598);
-  --intro-hot: #ffe8d9;
+  --intro-hot: #fff2df;
   --intro-gold: #f2c891;
   --intro-bg: #070609;
 
@@ -39,16 +40,13 @@ html[data-brand-boot="pending"] .nx-brand-intro {
   display: grid;
   place-items: center;
   background:
-    radial-gradient(
-      circle at 50% 50%,
-      rgba(232, 165, 152, 0.035),
-      transparent 28%
-    ),
+    radial-gradient(circle at 50% 50%, rgba(232, 165, 152, 0.028), transparent 24%),
     var(--intro-bg);
   cursor: pointer;
   opacity: 1;
   transition:
     opacity 180ms ease,
+    background-color 380ms ease,
     visibility 180ms ease;
 }
 
@@ -56,144 +54,168 @@ html[data-brand-intro="active"] {
   overflow: hidden;
 }
 
+/* Catalogue geometry only exists where the First Light reaches. */
 .nx-brand-intro__field {
   position: absolute;
-  inset: -20%;
+  inset: -22%;
   opacity: 0;
   background-image:
-    linear-gradient(
-      rgba(232, 165, 152, 0.045) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      rgba(232, 165, 152, 0.045) 1px,
-      transparent 1px
-    );
-  background-size: 54px 54px;
-  mask-image:
-    radial-gradient(
-      circle at center,
-      black 0%,
-      rgba(0, 0, 0, 0.75) 22%,
-      transparent 62%
-    );
-  transform:
-    perspective(700px)
-    rotateX(62deg)
-    scale(1.35)
-    translateY(8%);
+    linear-gradient(rgba(232, 165, 152, 0.042) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232, 165, 152, 0.042) 1px, transparent 1px);
+  background-size: 50px 50px;
+  mask-image: radial-gradient(circle at center, black 0%, rgba(0, 0, 0, 0.72) 20%, transparent 60%);
+  transform: perspective(760px) rotateX(63deg) scale(1.34) translateY(9%);
+  transform-origin: center;
   transition:
-    opacity 400ms ease,
-    transform 800ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    opacity 310ms ease,
+    transform 780ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 260ms ease;
 }
 
 .nx-brand-intro[data-phase="signal"] .nx-brand-intro__field,
-.nx-brand-intro[data-phase="presence"] .nx-brand-intro__field,
-.nx-brand-intro[data-phase="mark"] .nx-brand-intro__field,
-.nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__field {
-  opacity: 0.55;
-  transform:
-    perspective(700px)
-    rotateX(62deg)
-    scale(1.1)
-    translateY(0);
+.nx-brand-intro[data-phase="presence"] .nx-brand-intro__field {
+  opacity: 0.52;
+  transform: perspective(760px) rotateX(63deg) scale(1.09) translateY(0);
 }
 
-.nx-brand-intro::before {
+/* Geometry is pulled back into the mark instead of staying as decoration. */
+.nx-brand-intro[data-phase="mark"] .nx-brand-intro__field,
+.nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__field {
+  opacity: 0.12;
+  filter: blur(1.5px);
+  transform: perspective(760px) rotateX(63deg) scale(0.82) translateY(-2%);
+}
+
+/* Physical ignition source. */
+.nx-brand-intro__source {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34px;
+  height: 46px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.36);
+  transition:
+    opacity 80ms linear,
+    transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 220ms ease;
+}
+
+.nx-brand-intro__source::before {
   content: "";
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
   border-radius: 999px;
   background: var(--intro-hot);
   box-shadow:
-    0 0 8px var(--intro-hot),
-    0 0 20px var(--intro-accent),
-    0 0 50px rgba(232, 165, 152, 0.28);
-  opacity: 0;
-  transform:
-    translate(-50%, -50%)
-    scale(0.1);
+    0 0 7px var(--intro-hot),
+    0 0 18px rgba(242, 200, 145, 0.9),
+    0 0 46px rgba(232, 165, 152, 0.34);
+  transform: translate(-50%, -50%);
 }
 
-.nx-brand-intro[data-phase="spark"]::before,
-.nx-brand-intro[data-phase="signal"]::before,
-.nx-brand-intro[data-phase="presence"]::before {
+.nx-brand-intro__wick {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 5px);
+  width: 1px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 232, 217, 0.7);
+  transform: translateX(-50%);
+}
+
+.nx-brand-intro[data-phase="spark"] .nx-brand-intro__source,
+.nx-brand-intro[data-phase="signal"] .nx-brand-intro__source {
   opacity: 1;
-  animation:
-    nxBrandSpark 520ms
-    cubic-bezier(0.12, 0.76, 0.22, 1)
-    both;
+  animation: nxBrandIgnite 310ms cubic-bezier(0.14, 0.82, 0.2, 1) both;
 }
 
-@keyframes nxBrandSpark {
+.nx-brand-intro[data-phase="presence"] .nx-brand-intro__source {
+  opacity: 0.34;
+  transform: translate(-50%, -50%) scale(0.74);
+}
+
+.nx-brand-intro[data-phase="mark"] .nx-brand-intro__source,
+.nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__source {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.2);
+  filter: blur(4px);
+}
+
+@keyframes nxBrandIgnite {
   0% {
-    transform:
-      translate(-50%, -50%)
-      scale(0.1);
+    transform: translate(-50%, -50%) scale(0.12) translateY(2px);
   }
-  45% {
-    transform:
-      translate(-50%, -50%)
-      scale(3.2);
+  42% {
+    transform: translate(-50%, -50%) scale(1.22) translateY(-1px);
+  }
+  68% {
+    transform: translate(-50%, -50%) scale(0.82) translateY(0);
   }
   100% {
-    transform:
-      translate(-50%, -50%)
-      scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
+/* Nexus propagation. */
 .nx-brand-intro__signal {
   position: absolute;
-  width: min(62vw, 560px);
+  width: min(64vw, 570px);
   aspect-ratio: 1;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
+  transition:
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 180ms ease;
 }
 
 .nx-brand-intro__signal-ring {
   position: absolute;
-  inset: 50%;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
   border-radius: 50%;
-  border: 1px solid rgba(232, 165, 152, 0.32);
+  border: 1px solid rgba(232, 165, 152, 0.34);
   opacity: 0;
-  transform:
-    translate(-50%, -50%)
-    scale(0.04);
+  transform: translate(-50%, -50%);
 }
 
 .nx-brand-intro[data-phase="signal"] .nx-brand-intro__signal-ring,
-.nx-brand-intro[data-phase="presence"] .nx-brand-intro__signal-ring,
-.nx-brand-intro[data-phase="mark"] .nx-brand-intro__signal-ring,
-.nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__signal-ring {
-  animation:
-    nxBrandSignal 700ms
-    cubic-bezier(0.18, 0.72, 0.24, 1)
-    forwards;
+.nx-brand-intro[data-phase="presence"] .nx-brand-intro__signal-ring {
+  animation: nxBrandSignal 590ms cubic-bezier(0.18, 0.72, 0.24, 1) forwards;
 }
 
 .nx-brand-intro__signal-ring--two {
-  animation-delay: 70ms !important;
+  animation-delay: 55ms !important;
 }
 
 .nx-brand-intro__signal-ring--three {
-  animation-delay: 140ms !important;
+  animation-delay: 110ms !important;
+}
+
+/* During mark formation the propagation reverses: the nexus folds inward. */
+.nx-brand-intro[data-phase="mark"] .nx-brand-intro__signal,
+.nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__signal {
+  opacity: 0.16;
+  transform: translate(-50%, -50%) scale(0.19);
 }
 
 @keyframes nxBrandSignal {
   0% {
     width: 0;
     height: 0;
-    opacity: 0.8;
+    opacity: 0.78;
   }
-  70% {
-    opacity: 0.24;
+  60% {
+    opacity: 0.28;
   }
   100% {
     width: 100%;
@@ -202,82 +224,97 @@ html[data-brand-intro="active"] {
   }
 }
 
+/* A single uncanny beat. This is presence, not a mascot entrance. */
 .nx-brand-intro__presence {
   position: absolute;
   left: 50%;
-  top: calc(50% - 30px);
+  top: calc(50% - 28px);
   display: flex;
-  gap: 22px;
+  gap: 21px;
   opacity: 0;
-  transform:
-    translate(-50%, -50%)
-    scale(0.94);
+  transform: translate(-50%, -50%) scale(0.94);
   transition:
-    opacity 90ms ease,
-    transform 140ms ease;
+    opacity 68ms linear,
+    transform 105ms ease;
 }
 
 .nx-brand-intro__eye {
-  width: 5px;
-  height: 8px;
-  border-radius: 50%;
+  width: 4px;
+  height: 7px;
+  border-radius: 55% 55% 48% 48%;
   background: #ffd595;
   box-shadow:
-    0 0 7px rgba(255, 213, 149, 0.8),
-    0 0 18px rgba(232, 165, 152, 0.48);
+    0 0 6px rgba(255, 213, 149, 0.86),
+    0 0 15px rgba(232, 165, 152, 0.44);
 }
 
 .nx-brand-intro[data-phase="presence"] .nx-brand-intro__presence {
-  opacity: 0.9;
-  transform:
-    translate(-50%, -50%)
-    scale(1);
+  opacity: 0.92;
+  transform: translate(-50%, -50%) scale(1);
 }
 
+/* Brand is centred first. Type arrives later, so the mark gets its own beat. */
 .nx-brand-intro__brand {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 17px;
+  gap: 18px;
   opacity: 0;
-  transform:
-    translateY(5px)
-    scale(0.985);
+  transform: translateY(4px) scale(0.988);
   transition:
-    opacity 220ms ease,
-    transform 340ms cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 180ms ease,
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .nx-brand-intro[data-phase="mark"] .nx-brand-intro__brand,
 .nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__brand {
   opacity: 1;
-  transform:
-    translateY(0)
-    scale(1);
+  transform: translateY(0) scale(1);
 }
 
 .nx-brand-intro__lantern {
   position: relative;
-  width: 48px;
-  height: 64px;
+  width: 51px;
+  height: 66px;
   flex: 0 0 auto;
   opacity: 0;
   color: var(--intro-accent);
-  transform:
-    scale(0.72)
-    rotate(-3deg);
-  filter: drop-shadow(0 0 18px rgba(232, 165, 152, 0.28));
+  transform: scale(0.52);
+  filter:
+    drop-shadow(0 0 10px rgba(255, 232, 217, 0.16))
+    drop-shadow(0 0 24px rgba(232, 165, 152, 0.24));
   transition:
-    opacity 180ms ease,
-    transform 420ms cubic-bezier(0.16, 1.3, 0.3, 1);
+    opacity 120ms ease,
+    transform 390ms cubic-bezier(0.14, 1.18, 0.26, 1),
+    filter 350ms ease;
 }
 
 .nx-brand-intro[data-phase="mark"] .nx-brand-intro__lantern,
 .nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__lantern {
   opacity: 1;
-  transform:
-    scale(1)
-    rotate(0);
+  transform: scale(1);
+}
+
+.nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__lantern {
+  animation: nxBrandResolvePulse 430ms ease-out both;
+}
+
+@keyframes nxBrandResolvePulse {
+  0% {
+    filter:
+      drop-shadow(0 0 10px rgba(255, 232, 217, 0.16))
+      drop-shadow(0 0 24px rgba(232, 165, 152, 0.24));
+  }
+  38% {
+    filter:
+      drop-shadow(0 0 16px rgba(255, 232, 217, 0.28))
+      drop-shadow(0 0 38px rgba(232, 165, 152, 0.38));
+  }
+  100% {
+    filter:
+      drop-shadow(0 0 10px rgba(255, 232, 217, 0.16))
+      drop-shadow(0 0 25px rgba(232, 165, 152, 0.25));
+  }
 }
 
 .nx-brand-intro__mark {
@@ -292,7 +329,9 @@ html[data-brand-intro="active"] {
   min-width: 0;
 }
 
+/* Light reveals the letters from the mark outward. */
 .nx-brand-intro__name {
+  position: relative;
   font-family: var(--font-display, "Cormorant Garamond", serif);
   font-size: clamp(2.15rem, 6vw, 3.55rem);
   line-height: 0.92;
@@ -300,12 +339,15 @@ html[data-brand-intro="active"] {
   letter-spacing: -0.035em;
   color: #f7eee9;
   opacity: 0;
-  transform: translateX(-8px);
-  filter: blur(5px);
+  clip-path: inset(0 100% 0 0);
+  transform: translateX(-5px);
+  filter: blur(3px);
+  text-shadow: 0 0 22px rgba(232, 165, 152, 0.08);
   transition:
-    opacity 270ms ease,
-    transform 380ms cubic-bezier(0.16, 1, 0.3, 1),
-    filter 340ms ease;
+    opacity 90ms ease,
+    clip-path 420ms cubic-bezier(0.2, 0.75, 0.22, 1),
+    transform 400ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 320ms ease;
 }
 
 .nx-brand-intro__sub {
@@ -319,12 +361,13 @@ html[data-brand-intro="active"] {
   opacity: 0;
   transform: translateY(3px);
   transition:
-    opacity 240ms ease 80ms,
-    transform 300ms ease 80ms;
+    opacity 230ms ease 150ms,
+    transform 280ms ease 150ms;
 }
 
 .nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__name {
   opacity: 1;
+  clip-path: inset(0 0 0 0);
   transform: translateX(0);
   filter: blur(0);
 }
@@ -334,6 +377,7 @@ html[data-brand-intro="active"] {
   transform: translateY(0);
 }
 
+/* Fine flare at resolution, kept subordinate to the mark. */
 .nx-brand-intro__flare {
   position: absolute;
   left: 50%;
@@ -345,32 +389,59 @@ html[data-brand-intro="active"] {
   opacity: 0;
   background: rgba(255, 230, 203, 0.34);
   box-shadow:
-    0 0 60px 22px rgba(232, 165, 152, 0.16),
-    0 0 140px 45px rgba(232, 165, 152, 0.08);
-  transform:
-    translate(-50%, -50%)
-    scale(0.2);
+    0 0 54px 20px rgba(232, 165, 152, 0.15),
+    0 0 130px 44px rgba(232, 165, 152, 0.075);
+  transform: translate(-50%, -50%) scale(0.2);
   transition:
-    opacity 280ms ease,
-    transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 240ms ease,
+    transform 620ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__flare {
-  opacity: 1;
-  transform:
-    translate(-50%, -50%)
-    scale(5);
+  opacity: 0.9;
+  transform: translate(-50%, -50%) scale(4.5);
+}
+
+/* The final light becomes the application's ambient light as the dark plate leaves. */
+.nx-brand-intro__handoff {
+  position: absolute;
+  inset: -30vmax;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 232, 217, 0.12) 0%,
+    rgba(232, 165, 152, 0.075) 13%,
+    rgba(232, 165, 152, 0.025) 28%,
+    transparent 48%
+  );
+  transform: scale(0.22);
+  transition:
+    opacity 240ms ease,
+    transform 720ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .nx-brand-intro[data-phase="exit"] {
+  background: transparent;
   opacity: 0;
   pointer-events: none;
 }
 
+.nx-brand-intro[data-phase="exit"] .nx-brand-intro__handoff {
+  opacity: 1;
+  transform: scale(1);
+}
+
 .nx-brand-intro[data-phase="exit"] .nx-brand-intro__brand {
-  transform:
-    translateY(-3px)
-    scale(1.025);
+  opacity: 0;
+  transform: translateY(-2px) scale(1.015);
+}
+
+.nx-brand-intro[data-phase="exit"] .nx-brand-intro__field,
+.nx-brand-intro[data-phase="exit"] .nx-brand-intro__signal,
+.nx-brand-intro[data-phase="exit"] .nx-brand-intro__presence,
+.nx-brand-intro[data-phase="exit"] .nx-brand-intro__source {
+  opacity: 0;
 }
 
 @media (max-width: 520px) {
@@ -379,8 +450,8 @@ html[data-brand-intro="active"] {
   }
 
   .nx-brand-intro__lantern {
-    width: 40px;
-    height: 54px;
+    width: 42px;
+    height: 56px;
     transform-origin: center;
   }
 
@@ -389,36 +460,25 @@ html[data-brand-intro="active"] {
   }
 }
 
+/* Reduced motion = static brand recognition, not a compressed animation. */
 html[data-reduce-motion="true"] .nx-brand-intro,
 html[data-reduce-motion="true"] .nx-brand-intro * {
   animation: none !important;
   transition-duration: 80ms !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .nx-brand-intro,
-  .nx-brand-intro * {
-    animation: none !important;
-    transition-duration: 80ms !important;
-  }
-}
-
-html[data-reduce-motion="true"] .nx-brand-intro__field {
-  display: none;
-}
-
+html[data-reduce-motion="true"] .nx-brand-intro__field,
 html[data-reduce-motion="true"] .nx-brand-intro__signal,
-html[data-reduce-motion="true"] .nx-brand-intro__presence {
+html[data-reduce-motion="true"] .nx-brand-intro__presence,
+html[data-reduce-motion="true"] .nx-brand-intro__source,
+html[data-reduce-motion="true"] .nx-brand-intro__flare,
+html[data-reduce-motion="true"] .nx-brand-intro__handoff {
   display: none;
 }
 
 html[data-reduce-motion="true"]
   .nx-brand-intro[data-phase="wordmark"]
-  .nx-brand-intro__brand {
-  opacity: 1;
-  transform: none;
-}
-
+  .nx-brand-intro__brand,
 html[data-reduce-motion="true"]
   .nx-brand-intro[data-phase="wordmark"]
   .nx-brand-intro__lantern,
@@ -431,28 +491,32 @@ html[data-reduce-motion="true"]
   opacity: 1;
   transform: none;
   filter: none;
+  clip-path: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nx-brand-intro__field {
-    display: none;
+  .nx-brand-intro,
+  .nx-brand-intro * {
+    animation: none !important;
+    transition-duration: 80ms !important;
   }
 
+  .nx-brand-intro__field,
   .nx-brand-intro__signal,
-  .nx-brand-intro__presence {
+  .nx-brand-intro__presence,
+  .nx-brand-intro__source,
+  .nx-brand-intro__flare,
+  .nx-brand-intro__handoff {
     display: none;
   }
 
-  .nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__brand {
-    opacity: 1;
-    transform: none;
-  }
-
+  .nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__brand,
   .nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__lantern,
   .nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__name,
   .nx-brand-intro[data-phase="wordmark"] .nx-brand-intro__sub {
     opacity: 1;
     transform: none;
     filter: none;
+    clip-path: none;
   }
 }
