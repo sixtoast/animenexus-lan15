@@ -36,6 +36,7 @@ export const SONIC_MATERIAL: Record<SoundCueId, SonicMaterial> = {
   error: "warning",
   challenge_bad: "warning",
   complete: "ceremony",
+  brand_ignite: "ceremony",
 };
 
 export function materialForCue(id: SoundCueId): SonicMaterial {
