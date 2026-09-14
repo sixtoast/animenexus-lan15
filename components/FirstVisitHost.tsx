@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useMotion } from "@/components/MotionProvider";
 import { playCue } from "@/lib/sound-engine";
 
-const INTRO_KEY = "animenexus.intro.dismissed.v1";
+const LEGACY_INTRO_KEY = "animenexus.intro.dismissed.v1";
+const BRAND_SESSION_KEY = "animenexus.brand_intro.shown.v1";
 const SESSION_KEY = "animenexus.session_touch.v1";
 
 export type SessionTouchPayload = {
@@ -12,7 +14,10 @@ export type SessionTouchPayload = {
   sessionOpens: number;
 };
 
-/** Written by LanternMemoryBoot for greetings / intro. */
+/**
+ * Used by LanternMemoryBoot + HeroGreeting.
+ * Keep these exports here unless they are deliberately migrated together.
+ */
 export function readSessionTouch(): SessionTouchPayload | null {
   if (typeof window === "undefined") return null;
   try {
@@ -24,131 +29,202 @@ export function readSessionTouch(): SessionTouchPayload | null {
   }
 }
 
-export function writeSessionTouch(p: SessionTouchPayload) {
+export function writeSessionTouch(payload: SessionTouchPayload) {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(p));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(payload));
   } catch {
-    /* private mode */
+    // Private browsing / unavailable storage.
   }
 }
 
-function introDismissed(): boolean {
+/** Session gate for brand ident — exported for unit tests. */
+export function wasBrandIntroShownThisSession(): boolean {
+  if (typeof window === "undefined") return true;
   try {
-    return localStorage.getItem(INTRO_KEY) === "1";
+    return sessionStorage.getItem(BRAND_SESSION_KEY) === "1";
   } catch {
-    return true;
+    return false;
   }
 }
 
-function dismissIntro() {
+export function markBrandIntroShownThisSession() {
   try {
-    localStorage.setItem(INTRO_KEY, "1");
+    sessionStorage.setItem(BRAND_SESSION_KEY, "1");
+    // Retire the previous one-time onboarding overlay semantics.
+    localStorage.setItem(LEGACY_INTRO_KEY, "1");
   } catch {
-    /* */
+    // Storage may be unavailable.
   }
 }
+
+type IntroPhase =
+  | "dark"
+  | "spark"
+  | "signal"
+  | "presence"
+  | "mark"
+  | "wordmark"
+  | "exit";
 
 /**
- * One-time first light (Sprint 45 quality).
- * CSS → soft SFX → copy. No forced Rive/3D intro movie.
+ * AnimeNexus brand ignition.
+ *
+ * Visual only:
+ * - runs once per browser session
+ * - does not replay on client-side navigation
+ * - tap/click/Escape skips immediately
+ * - sound is enhancement only
+ * - honours AnimeNexus MotionProvider
+ *
+ * Audio may not play on a true cold browser launch because browsers prohibit
+ * autoplay before user interaction. The intro must still work perfectly silent.
  */
 export function FirstVisitHost() {
-  const [open, setOpen] = useState(false);
-  const [phase, setPhase] = useState(0);
+  const { reducedMotion, ready } = useMotion();
+  const [visible, setVisible] = useState(false);
+  const [phase, setPhase] = useState<IntroPhase>("dark");
+  const timers = useRef<number[]>([]);
+  const hasStarted = useRef(false);
 
-  const close = useCallback(() => {
-    dismissIntro();
-    setOpen(false);
+  const clearTimers = useCallback(() => {
+    for (const timer of timers.current) {
+      window.clearTimeout(timer);
+    }
+    timers.current = [];
   }, []);
 
+  const finish = useCallback(() => {
+    clearTimers();
+    markBrandIntroShownThisSession();
+    document.documentElement.removeAttribute("data-brand-intro");
+    setPhase("exit");
+    const exitTimer = window.setTimeout(() => {
+      setVisible(false);
+    }, reducedMotion ? 80 : 180);
+    timers.current.push(exitTimer);
+  }, [clearTimers, reducedMotion]);
+
   useEffect(() => {
-    if (introDismissed()) return;
-    const touch = readSessionTouch();
-    if (touch && !touch.isFirstVisit && touch.sessionOpens > 1) return;
+    if (!ready || hasStarted.current) return;
+    hasStarted.current = true;
 
-    const reduced =
-      typeof document !== "undefined" &&
-      document.documentElement.getAttribute("data-reduce-motion") === "true";
+    if (wasBrandIntroShownThisSession()) return;
 
-    setOpen(true);
-    if (reduced) {
-      setPhase(3);
-      const t = window.setTimeout(close, 2200);
-      return () => window.clearTimeout(t);
+    setVisible(true);
+    document.documentElement.setAttribute("data-brand-intro", "active");
+
+    if (reducedMotion) {
+      setPhase("wordmark");
+      timers.current.push(
+        window.setTimeout(() => {
+          finish();
+        }, 520),
+      );
+      return clearTimers;
     }
 
-    setPhase(0);
-    // Soft ignition (touch only — not a success fanfare)
-    const s0 = window.setTimeout(() => {
-      try {
-        playCue("ui_tap");
-      } catch {
-        /* sound opt-in / blocked */
-      }
-    }, 350);
-    const t1 = window.setTimeout(() => setPhase(1), 400);
-    const s1 = window.setTimeout(() => {
-      try {
-        playCue("seal");
-      } catch {
-        /* */
-      }
-    }, 1000);
-    const t2 = window.setTimeout(() => setPhase(2), 1100);
-    const t3 = window.setTimeout(() => setPhase(3), 1800);
-    const t4 = window.setTimeout(close, 3600);
-    return () => {
-      window.clearTimeout(s0);
-      window.clearTimeout(s1);
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-      window.clearTimeout(t3);
-      window.clearTimeout(t4);
+    const schedule = (delay: number, callback: () => void) => {
+      timers.current.push(window.setTimeout(callback, delay));
     };
-  }, [close]);
+
+    /*
+     * THE FIRST LIGHT
+     *
+     * 0ms     darkness
+     * 150ms   ignition point
+     * 340ms   Nexus signal/grid wakes
+     * 610ms   Lantern presence / eyes
+     * 760ms   lantern mark resolves
+     * 950ms   AnimeNexus wordmark resolves
+     * 1360ms  transition into the room
+     * ~1540ms overlay removed
+     */
+    setPhase("dark");
+
+    schedule(150, () => {
+      setPhase("spark");
+      // Enhancement only. playCue safely no-ops while audio is locked.
+      playCue("ui_tap", { gain: 0.48 });
+    });
+
+    schedule(340, () => {
+      setPhase("signal");
+    });
+
+    schedule(610, () => {
+      setPhase("presence");
+    });
+
+    schedule(760, () => {
+      setPhase("mark");
+    });
+
+    schedule(950, () => {
+      setPhase("wordmark");
+      // Existing Lantern-category resonance cue.
+      playCue("resonance", { gain: 0.72 });
+    });
+
+    schedule(1360, () => {
+      finish();
+    });
+
+    return clearTimers;
+  }, [clearTimers, finish, ready, reducedMotion]);
 
   useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+    if (!visible) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        finish();
+      }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, close]);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [finish, visible]);
 
-  if (!open) return null;
+  useEffect(() => {
+    return () => {
+      clearTimers();
+      document.documentElement.removeAttribute("data-brand-intro");
+    };
+  }, [clearTimers]);
+
+  if (!visible) return null;
 
   return (
     <div
-      className={"first-visit" + (phase >= 2 ? " is-lit" : "")}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Welcome to AnimeNexus"
-      data-first-visit-phase={phase}
+      className="nx-brand-intro"
+      data-phase={phase}
+      aria-hidden="true"
+      onPointerDown={finish}
     >
-      <div className="first-visit-inner">
-        <div
-          className={
-            "first-visit-glow" +
-            (phase >= 1 ? " on" : "") +
-            (phase >= 3 ? " settled" : "")
-          }
-          aria-hidden
-        />
-        <p className="first-visit-kicker">Lantern</p>
-        <h2 className="first-visit-title">
-          {phase < 2 ? "A frequency opens…" : "The desk is yours."}
-        </h2>
-        <p className="first-visit-body">
-          {phase < 3
-            ? "Browse, seal, and the room starts remembering — on this browser only."
-            : "Skip anytime. No account required for the shelf."}
-        </p>
-        <button type="button" className="btn btn-outline btn-sm" onClick={close}>
-          Skip introduction
-        </button>
+      <div className="nx-brand-intro__field" />
+      <div className="nx-brand-intro__signal" aria-hidden>
+        <span className="nx-brand-intro__signal-ring nx-brand-intro__signal-ring--one" />
+        <span className="nx-brand-intro__signal-ring nx-brand-intro__signal-ring--two" />
+        <span className="nx-brand-intro__signal-ring nx-brand-intro__signal-ring--three" />
       </div>
+      <div className="nx-brand-intro__presence" aria-hidden>
+        <span className="nx-brand-intro__eye" />
+        <span className="nx-brand-intro__eye" />
+      </div>
+      <div className="nx-brand-intro__brand">
+        <div className="nx-brand-intro__lantern" aria-hidden>
+          <span className="nx-brand-intro__lantern-handle" />
+          <span className="nx-brand-intro__lantern-shell">
+            <span className="nx-brand-intro__lantern-core" />
+          </span>
+        </div>
+        <div className="nx-brand-intro__type">
+          <span className="nx-brand-intro__name">AnimeNexus</span>
+          <span className="nx-brand-intro__sub">Lantern</span>
+        </div>
+      </div>
+      <div className="nx-brand-intro__flare" aria-hidden />
     </div>
   );
 }
