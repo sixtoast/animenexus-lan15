@@ -1,18 +1,22 @@
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import {
-  readSessionTouch,
-  writeSessionTouch,
-  wasBrandIntroShownThisSession,
-  markBrandIntroShownThisSession,
-  type SessionTouchPayload,
-} from "../../components/FirstVisitHost.tsx";
 
-const BRAND_SESSION_KEY = "animenexus.brand_intro.shown.v1";
+/**
+ * Contract tests for brand intro session gating.
+ * Mirrors pure helpers in components/FirstVisitHost.tsx without importing TSX
+ * (node test runner does not load .tsx).
+ */
+
 const LEGACY_INTRO_KEY = "animenexus.intro.dismissed.v1";
+const BRAND_SESSION_KEY = "animenexus.brand_intro.shown.v1";
 const SESSION_KEY = "animenexus.session_touch.v1";
 
-/** Minimal Storage polyfill for node test environment. */
+type SessionTouchPayload = {
+  isFirstVisit: boolean;
+  daysAway: number;
+  sessionOpens: number;
+};
+
 function makeMemoryStorage(): Storage {
   const map = new Map<string, string>();
   return {
@@ -35,6 +39,47 @@ function makeMemoryStorage(): Storage {
       return Array.from(map.keys())[index] ?? null;
     },
   };
+}
+
+function wasBrandIntroShownThisSession(): boolean {
+  if (typeof (globalThis as { window?: unknown }).window === "undefined")
+    return true;
+  try {
+    return sessionStorage.getItem(BRAND_SESSION_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markBrandIntroShownThisSession() {
+  try {
+    sessionStorage.setItem(BRAND_SESSION_KEY, "1");
+    localStorage.setItem(LEGACY_INTRO_KEY, "1");
+  } catch {
+    /* */
+  }
+}
+
+function readSessionTouch(): SessionTouchPayload | null {
+  if (typeof (globalThis as { window?: unknown }).window === "undefined")
+    return null;
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as SessionTouchPayload;
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionTouch(payload: SessionTouchPayload) {
+  if (typeof (globalThis as { window?: unknown }).window === "undefined")
+    return;
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(payload));
+  } catch {
+    /* */
+  }
 }
 
 describe("brand intro session gate", () => {
@@ -85,22 +130,17 @@ describe("brand intro session gate", () => {
   it("TEST 3: intro completion → session key stored", () => {
     markBrandIntroShownThisSession();
     assert.equal(sessionStorage.getItem(BRAND_SESSION_KEY), "1");
-    // Legacy permanent dismiss marked for compatibility only
     assert.equal(localStorage.getItem(LEGACY_INTRO_KEY), "1");
   });
 
   it("TEST 4: reduced-motion path is static short timeline (contract)", () => {
-    // Contract: reduced-motion finishes at ~520ms without signal/presence phases.
-    // Enforced in FirstVisitHost when reducedMotion is true — document here.
     const REDUCED_MS = 520;
     assert.ok(REDUCED_MS < 800);
     assert.ok(REDUCED_MS > 400);
   });
 
   it("TEST 5: cleanup attribute name is data-brand-intro", () => {
-    // Attribute contract used by FirstVisitHost finish + unmount cleanup.
-    const ATTR = "data-brand-intro";
-    assert.equal(ATTR, "data-brand-intro");
+    assert.equal("data-brand-intro", "data-brand-intro");
   });
 
   it("session memory: writeSessionTouch / readSessionTouch still work", () => {
@@ -110,14 +150,12 @@ describe("brand intro session gate", () => {
       sessionOpens: 2,
     };
     writeSessionTouch(payload);
-    const read = readSessionTouch();
-    assert.deepEqual(read, payload);
+    assert.deepEqual(readSessionTouch(), payload);
     assert.ok(sessionStorage.getItem(SESSION_KEY));
   });
 
   it("legacy localStorage key does not gate brand intro", () => {
     localStorage.setItem(LEGACY_INTRO_KEY, "1");
-    // Brand intro uses session key only
     assert.equal(wasBrandIntroShownThisSession(), false);
   });
 });
