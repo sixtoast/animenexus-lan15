@@ -1,5 +1,5 @@
 import type { MascotAnim, MascotEmotions } from "@/lib/mascot/types";
-import type { ExpressionKey } from "@/components/mascot/LanternKoMeshV2";
+import type { ExpressionKey } from "@/components/mascot/expression-bridge";
 
 export type LanternKo2DProps = {
   expression: ExpressionKey;
