@@ -37,12 +37,7 @@ const ATTENTION: { id: IntentAttention; label: string }[] = [
   { id: "demanding", label: "Demanding" },
 ];
 
-/**
- * Tonight Intent UI (R3)
- * Primary: what should tonight do to you?
- * Secondary: Energy · Attention · Intensity
- * Passive default from shelf + time of day.
- */
+/** Tonight Intent — NL primary via Command Palette; dials secondary. */
 export function TonightIntentPanel({ compact }: Props) {
   const { entries, ready } = useWatchlist();
   const rev = useSessionRevision();
@@ -107,47 +102,66 @@ export function TonightIntentPanel({ compact }: Props) {
         }`
       : "Reading your desk…";
 
+  function openLanternSearch() {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("animenexus:open-search"));
+    }
+  }
+
   return (
     <div
       className={
         "tonight-intent" + (compact ? " tonight-intent-compact" : "")
       }
     >
-      <p className="tonight-intent-q">
-        What do you want tonight to do to you?
+      <p className="tonight-intent-freq">Tonight's frequency</p>
+      <p className="tonight-intent-q">What do you want to feel?</p>
+
+      <button
+        type="button"
+        className="tonight-intent-nl"
+        onClick={openLanternSearch}
+      >
+        Tell Lantern in your own words
+        <span className="tonight-intent-nl-arrow" aria-hidden>
+          ↗
+        </span>
+      </button>
+
+      <p className="tonight-intent-examples meta">
+        e.g. something quiet after a long day · 12 episodes, strong fights ·
+        outside my usual taste
       </p>
 
-      <p className="tonight-intent-passive">
-        {passiveLine}
-        <button
-          type="button"
-          className="tonight-intent-adjust"
-          onClick={() => setAdjustOpen((v) => !v)}
-        >
-          {adjustOpen ? "Hide" : "Adjust"}
-        </button>
-      </p>
+      <p className="tonight-intent-passive">{passiveLine}</p>
 
-      <div className="tonight-intent-choices" role="list">
-        {EXPERIENCE_INTENTS.map((e) => {
-          const active = slug === e.slug;
-          return (
-            <button
-              key={e.slug}
-              type="button"
-              role="listitem"
-              className={"tonight-intent-chip" + (active ? " active" : "")}
-              title={e.blurb}
-              onClick={() => applySlug(e.slug)}
-            >
-              <span aria-hidden>{e.emoji}</span>
-              <span>{e.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      <details
+        className="tonight-intent-secondary"
+        open={adjustOpen}
+        onToggle={(e) =>
+          setAdjustOpen((e.target as HTMLDetailsElement).open)
+        }
+      >
+        <summary className="tonight-intent-dials-summary">Prefer dials?</summary>
 
-      {adjustOpen ? (
+        <div className="tonight-intent-choices" role="list">
+          {EXPERIENCE_INTENTS.map((e) => {
+            const active = slug === e.slug;
+            return (
+              <button
+                key={e.slug}
+                type="button"
+                role="listitem"
+                className={"tonight-intent-chip" + (active ? " active" : "")}
+                title={e.blurb}
+                onClick={() => applySlug(e.slug)}
+              >
+                <span>{e.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
         <div className="tonight-intent-dials">
           <DialRow
             label="Energy"
@@ -175,7 +189,7 @@ export function TonightIntentPanel({ compact }: Props) {
             </p>
           ) : null}
         </div>
-      ) : null}
+      </details>
     </div>
   );
 }
