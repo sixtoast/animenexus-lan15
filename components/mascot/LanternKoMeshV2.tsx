@@ -5,7 +5,8 @@
  *
  * Engine state (expression / emotions / anim / lookBias) stays authoritative.
  * This mesh only expresses continuous channels from resolveFaceRigPose.
- * Proportions & secondary motion aligned with lib/mascot/expression.ts.
+ * Visual tuning: socket-safe pupils, soft mouth blend, adaptive head lag,
+ * readable face detail at ACTOR_SCALE ~0.38.
  */
 
 import * as THREE from "three";
@@ -200,6 +201,12 @@ const ARM_LEN = HEAD_R * 0.55;
 const TIP_R = HEAD_R * 0.16;
 const STEM_LEN = HEAD_R * 0.38;
 
+/**
+ * Face feature scale boost for ACTOR_SCALE ~0.38.
+ * Slightly larger pupils/lids/brows/mouth/cheeks so expression reads on mobile.
+ */
+const FACE = 1.14;
+
 const PALETTE = {
   skin: "#f0a898",
   blush: "#f0a090",
@@ -208,7 +215,7 @@ const PALETTE = {
   mouth: "#c4786a",
   tip: "#ffd9a8",
   brow: "#2a1810",
-  /** Amber iris / pupil — Lantern-ko identity (not reference-mascot orange hair). */
+  /** Amber iris / pupil — Lantern-ko identity. */
   pupil: "#f2b86f",
 };
 
@@ -235,6 +242,52 @@ export type LanternKoMeshProps = {
 
 function damp(current: number, target: number, lambda: number, dt: number) {
   return THREE.MathUtils.damp(current, target, lambda, dt);
+}
+
+/** Soft weights for continuous mouth from curve/open (no hard pops). */
+function mouthWeights(
+  curve: number,
+  open: number,
+  expression: ExpressionKey,
+): Record<MouthVariant, number> {
+  const w: Record<MouthVariant, number> = {
+    smile: 0,
+    bigSmile: 0,
+    frown: 0,
+    openO: 0,
+    flat: 0,
+    wobble: 0,
+  };
+
+  if (open > 0.35) {
+    // Open mouth dominates; blend residual curve into smile/frown slightly
+    w.openO = Math.min(1, (open - 0.2) / 0.55);
+    if (curve > 0.15) w.smile = Math.max(0, 1 - w.openO) * Math.min(1, curve);
+    else if (curve < -0.15)
+      w.frown = Math.max(0, 1 - w.openO) * Math.min(1, -curve);
+    else w.flat = Math.max(0, 1 - w.openO) * 0.4;
+  } else if (curve > 0.55) {
+    w.bigSmile = Math.min(1, (curve - 0.35) / 0.45);
+    w.smile = Math.max(0, 1 - w.bigSmile);
+  } else if (curve > 0.12) {
+    w.smile = Math.min(1, (curve - 0.05) / 0.4);
+    w.flat = Math.max(0, 1 - w.smile) * 0.35;
+  } else if (curve < -0.25) {
+    w.frown = Math.min(1, (-curve - 0.1) / 0.5);
+    w.flat = Math.max(0, 1 - w.frown) * 0.3;
+  } else if (expression === "confused") {
+    w.wobble = 0.75;
+    w.flat = 0.25;
+  } else {
+    w.flat = 1;
+  }
+
+  // Normalize
+  const sum = Object.values(w).reduce((a, b) => a + b, 0) || 1;
+  for (const k of Object.keys(w) as MouthVariant[]) {
+    w[k] /= sum;
+  }
+  return w;
 }
 
 export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
@@ -358,10 +411,9 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
         blinkAmount.current,
       );
 
-      // Stable eyeballs: gaze moves amber pupil; lids close over the eye.
-      // Do not scale the whole eyeball to blink.
-      const pupilX = rigPose.pupilX * HEAD_R * 0.045;
-      const pupilY = rigPose.pupilY * HEAD_R * 0.035;
+      // Socket-safe pupil travel (tighter multipliers keep iris inside dark eye).
+      const pupilX = rigPose.pupilX * HEAD_R * 0.03;
+      const pupilY = rigPose.pupilY * HEAD_R * 0.022;
       if (pupilL.current && pupilR.current) {
         pupilL.current.position.x = damp(
           pupilL.current.position.x,
@@ -388,39 +440,58 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
           dt,
         );
       }
+
+      // Lids: deeper close for sleep; slightly slower damp when nearly shut.
       if (lidL.current && lidR.current) {
-        const closeL = 1 - Math.min(1, rigPose.eyeOpenL);
-        const closeR = 1 - Math.min(1, rigPose.eyeOpenR);
+        const closeL = 1 - Math.min(1, Math.max(0, rigPose.eyeOpenL));
+        const closeR = 1 - Math.min(1, Math.max(0, rigPose.eyeOpenR));
+        const deepL = closeL > 0.82;
+        const deepR = closeR > 0.82;
+        const lambdaL = deepL ? 11 : 16;
+        const lambdaR = deepR ? 11 : 16;
+        // Scale up to ~1.18 so lids fully cover the enlarged pupil at sleep.
         lidL.current.scale.y = damp(
           lidL.current.scale.y,
-          0.08 + closeL * 1.08,
-          16,
+          0.07 + closeL * 1.12,
+          lambdaL,
           dt,
         );
         lidR.current.scale.y = damp(
           lidR.current.scale.y,
-          0.08 + closeR * 1.08,
-          16,
+          0.07 + closeR * 1.12,
+          lambdaR,
           dt,
         );
         lidL.current.position.y = damp(
           lidL.current.position.y,
-          HEAD_R * (0.12 - closeL * 0.1),
-          16,
+          HEAD_R * (0.13 - closeL * 0.11),
+          lambdaL,
           dt,
         );
         lidR.current.position.y = damp(
           lidR.current.position.y,
-          HEAD_R * (0.12 - closeR * 0.1),
-          16,
+          HEAD_R * (0.13 - closeR * 0.11),
+          lambdaR,
           dt,
         );
       }
 
-      // Eyes lead; head follows more slowly. lookBias is engine-authoritative.
+      // Adaptive head follow: calm lag when looking gently; faster on attention snaps.
       if (head.current) {
-        headAim.current.x = damp(headAim.current.x, rigPose.headYaw, 5.2, dt);
-        headAim.current.y = damp(headAim.current.y, rigPose.headPitch, 5.2, dt);
+        const lookMag = Math.hypot(lookBias.x, lookBias.y);
+        const headLambda = 3.8 + Math.min(5.5, lookMag * 7);
+        headAim.current.x = damp(
+          headAim.current.x,
+          rigPose.headYaw,
+          headLambda,
+          dt,
+        );
+        headAim.current.y = damp(
+          headAim.current.y,
+          rigPose.headPitch,
+          headLambda,
+          dt,
+        );
         head.current.rotation.y = headAim.current.x;
         head.current.rotation.x = headAim.current.y;
         head.current.rotation.z = damp(
@@ -458,44 +529,39 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
         );
       }
 
-      const resolvedMouth: MouthVariant =
-        rigPose.mouthOpen > 0.48
-          ? "openO"
-          : rigPose.mouthCurve > 0.62
-            ? "bigSmile"
-            : rigPose.mouthCurve > 0.18
-              ? "smile"
-              : rigPose.mouthCurve < -0.32
-                ? "frown"
-                : expression === "confused"
-                  ? "wobble"
-                  : "flat";
-
+      // Continuous soft mouth blend (addresses discrete-variant limitation).
+      const weights = mouthWeights(
+        rigPose.mouthCurve,
+        rigPose.mouthOpen,
+        expression,
+      );
+      const wideScale = 0.85 + rigPose.mouthWide * 0.35;
       (Object.keys(mouthRefs.current) as MouthVariant[]).forEach((key) => {
         const m = mouthRefs.current[key];
         if (!m) return;
-        const active = key === resolvedMouth;
-        const target = active ? 1 : 0;
-        const scale = damp(m.scale.x || 0.0001, target, 14, dt);
+        const target = weights[key] * wideScale;
+        const scale = damp(m.scale.x || 0.0001, Math.max(target, 0.0001), 12, dt);
         const s = Math.max(scale, 0.0001);
         m.scale.setScalar(s);
-        m.visible = s > 0.02;
+        m.visible = s > 0.015;
       });
 
       if (cheekL.current && cheekR.current) {
         const matL = cheekL.current.material as THREE.MeshStandardMaterial;
         const matR = cheekR.current.material as THREE.MeshStandardMaterial;
-        matL.opacity = damp(matL.opacity, rigPose.blush, 6, dt);
-        matR.opacity = damp(matR.opacity, rigPose.blush, 6, dt);
+        // Blush reads more strongly at high values (embarrassed / shy).
+        const blushVis = Math.pow(rigPose.blush, 0.85);
+        matL.opacity = damp(matL.opacity, blushVis, 6, dt);
+        matR.opacity = damp(matR.opacity, blushVis, 6, dt);
       }
 
       if (tip.current) {
         const mat = tip.current.material as THREE.MeshStandardMaterial;
         const pulseHz =
-          0.55 + emotions.energy * 0.8 +
+          0.55 +
+          emotions.energy * 0.8 +
           (EXPRESSIONS[expression]?.pulse ?? 0.4) * 0.15;
-        const pulse =
-          0.55 + Math.sin(t * pulseHz * Math.PI * 2) * 0.4;
+        const pulse = 0.55 + Math.sin(t * pulseHz * Math.PI * 2) * 0.4;
         mat.emissiveIntensity = pulse;
         if (glow.current) {
           const gMat = glow.current.material as THREE.MeshBasicMaterial;
@@ -539,6 +605,13 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
       else if (ref) ref.current = node;
     };
 
+    const eyeRSize = HEAD_R * 0.12 * FACE;
+    const pupilRSize = HEAD_R * 0.058 * FACE;
+    const lidRSize = HEAD_R * 0.14 * FACE;
+    const browW = HEAD_R * 0.28 * FACE;
+    const browH = HEAD_R * 0.042 * FACE;
+    const cheekRSize = HEAD_R * 0.22 * FACE;
+
     return (
       <group ref={setRoot}>
         <group ref={bodyGroup} name="Body" position={[0, -HEAD_R * 0.7, 0]}>
@@ -581,14 +654,14 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             ref={cheekL}
             position={[-HEAD_R * 0.52, -HEAD_R * 0.08, HEAD_R * 0.78]}
           >
-            <sphereGeometry args={[HEAD_R * 0.2, 12, 12]} />
+            <sphereGeometry args={[cheekRSize, 12, 12]} />
             <primitive object={materials.blush} attach="material" />
           </mesh>
           <mesh
             ref={cheekR}
             position={[HEAD_R * 0.52, -HEAD_R * 0.08, HEAD_R * 0.78]}
           >
-            <sphereGeometry args={[HEAD_R * 0.2, 12, 12]} />
+            <sphereGeometry args={[cheekRSize, 12, 12]} />
             <meshStandardMaterial
               color={PALETTE.blush}
               roughness={0.5}
@@ -604,7 +677,7 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             name="EyeL"
             position={[-HEAD_R * 0.32, HEAD_R * 0.02, HEAD_R * 0.9]}
           >
-            <sphereGeometry args={[HEAD_R * 0.12, 14, 14]} />
+            <sphereGeometry args={[eyeRSize, 14, 14]} />
             <primitive object={materials.eye} attach="material" />
           </mesh>
           <mesh
@@ -612,7 +685,7 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             name="EyeR"
             position={[HEAD_R * 0.32, HEAD_R * 0.02, HEAD_R * 0.9]}
           >
-            <sphereGeometry args={[HEAD_R * 0.12, 14, 14]} />
+            <sphereGeometry args={[eyeRSize, 14, 14]} />
             <primitive object={materials.eye} attach="material" />
           </mesh>
 
@@ -622,7 +695,7 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             name="PupilL"
             position={[-HEAD_R * 0.32, HEAD_R * 0.02, HEAD_R * 1.01]}
           >
-            <sphereGeometry args={[HEAD_R * 0.055, 12, 12]} />
+            <sphereGeometry args={[pupilRSize, 12, 12]} />
             <primitive object={materials.pupil} attach="material" />
           </mesh>
           <mesh
@@ -630,7 +703,7 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             name="PupilR"
             position={[HEAD_R * 0.32, HEAD_R * 0.02, HEAD_R * 1.01]}
           >
-            <sphereGeometry args={[HEAD_R * 0.055, 12, 12]} />
+            <sphereGeometry args={[pupilRSize, 12, 12]} />
             <primitive object={materials.pupil} attach="material" />
           </mesh>
 
@@ -638,29 +711,29 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
           <mesh
             ref={lidL}
             name="EyelidL"
-            position={[-HEAD_R * 0.32, HEAD_R * 0.12, HEAD_R * 1.015]}
-            scale={[1, 0.08, 1]}
+            position={[-HEAD_R * 0.32, HEAD_R * 0.13, HEAD_R * 1.015]}
+            scale={[1, 0.07, 1]}
           >
-            <sphereGeometry args={[HEAD_R * 0.135, 14, 10]} />
+            <sphereGeometry args={[lidRSize, 14, 10]} />
             <primitive object={materials.lid} attach="material" />
           </mesh>
           <mesh
             ref={lidR}
             name="EyelidR"
-            position={[HEAD_R * 0.32, HEAD_R * 0.12, HEAD_R * 1.015]}
-            scale={[1, 0.08, 1]}
+            position={[HEAD_R * 0.32, HEAD_R * 0.13, HEAD_R * 1.015]}
+            scale={[1, 0.07, 1]}
           >
-            <sphereGeometry args={[HEAD_R * 0.135, 14, 10]} />
+            <sphereGeometry args={[lidRSize, 14, 10]} />
             <primitive object={materials.lid} attach="material" />
           </mesh>
 
-          {/* Specular highlights (fixed relative to eye centre) */}
+          {/* Specular highlights */}
           <mesh position={[-HEAD_R * 0.28, HEAD_R * 0.06, HEAD_R * 0.98]}>
-            <sphereGeometry args={[HEAD_R * 0.035, 8, 8]} />
+            <sphereGeometry args={[HEAD_R * 0.038 * FACE, 8, 8]} />
             <primitive object={materials.hl} attach="material" />
           </mesh>
           <mesh position={[HEAD_R * 0.36, HEAD_R * 0.06, HEAD_R * 0.98]}>
-            <sphereGeometry args={[HEAD_R * 0.035, 8, 8]} />
+            <sphereGeometry args={[HEAD_R * 0.038 * FACE, 8, 8]} />
             <primitive object={materials.hl} attach="material" />
           </mesh>
 
@@ -669,7 +742,7 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             name="BrowL"
             position={[-HEAD_R * 0.32, browBaseY, HEAD_R * 0.85]}
           >
-            <boxGeometry args={[HEAD_R * 0.26, HEAD_R * 0.04, HEAD_R * 0.05]} />
+            <boxGeometry args={[browW, browH, HEAD_R * 0.05]} />
             <primitive object={materials.brow} attach="material" />
           </mesh>
           <mesh
@@ -677,7 +750,7 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             name="BrowR"
             position={[HEAD_R * 0.32, browBaseY, HEAD_R * 0.85]}
           >
-            <boxGeometry args={[HEAD_R * 0.26, HEAD_R * 0.04, HEAD_R * 0.05]} />
+            <boxGeometry args={[browW, browH, HEAD_R * 0.05]} />
             <primitive object={materials.brow} attach="material" />
           </mesh>
 
@@ -691,7 +764,7 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
               visible={false}
             >
               <torusGeometry
-                args={[HEAD_R * 0.15, HEAD_R * 0.028, 8, 16, Math.PI]}
+                args={[HEAD_R * 0.16 * FACE, HEAD_R * 0.03 * FACE, 8, 16, Math.PI]}
               />
               <primitive object={materials.mouth} attach="material" />
             </mesh>
@@ -704,7 +777,13 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
               visible={false}
             >
               <torusGeometry
-                args={[HEAD_R * 0.17, HEAD_R * 0.032, 8, 16, Math.PI]}
+                args={[
+                  HEAD_R * 0.18 * FACE,
+                  HEAD_R * 0.034 * FACE,
+                  8,
+                  16,
+                  Math.PI,
+                ]}
               />
               <primitive object={materials.mouth} attach="material" />
             </mesh>
@@ -716,7 +795,7 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
               visible={false}
             >
               <torusGeometry
-                args={[HEAD_R * 0.13, HEAD_R * 0.026, 8, 16, Math.PI]}
+                args={[HEAD_R * 0.14 * FACE, HEAD_R * 0.028 * FACE, 8, 16, Math.PI]}
               />
               <primitive object={materials.mouth} attach="material" />
             </mesh>
@@ -727,7 +806,9 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
               scale={0.0001}
               visible={false}
             >
-              <torusGeometry args={[HEAD_R * 0.08, HEAD_R * 0.05, 10, 16]} />
+              <torusGeometry
+                args={[HEAD_R * 0.085 * FACE, HEAD_R * 0.052 * FACE, 10, 16]}
+              />
               <primitive object={materials.mouth} attach="material" />
             </mesh>
             <mesh
@@ -738,7 +819,11 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
               visible={false}
             >
               <boxGeometry
-                args={[HEAD_R * 0.18, HEAD_R * 0.022, HEAD_R * 0.02]}
+                args={[
+                  HEAD_R * 0.2 * FACE,
+                  HEAD_R * 0.024 * FACE,
+                  HEAD_R * 0.02,
+                ]}
               />
               <primitive object={materials.mouth} attach="material" />
             </mesh>
@@ -751,7 +836,13 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
               visible={false}
             >
               <torusGeometry
-                args={[HEAD_R * 0.12, HEAD_R * 0.028, 8, 16, Math.PI * 0.7]}
+                args={[
+                  HEAD_R * 0.13 * FACE,
+                  HEAD_R * 0.03 * FACE,
+                  8,
+                  16,
+                  Math.PI * 0.7,
+                ]}
               />
               <primitive object={materials.mouth} attach="material" />
             </mesh>
