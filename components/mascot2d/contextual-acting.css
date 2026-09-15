@@ -1,0 +1,36 @@
+/* Contextual acting is visual-only. The mascot brain still owns intention and navigation. */
+[data-mascot-renderer="2d"] [data-scene="inspect-card"][data-anim="idle"] .headRig{animation:mascot2d-card-peer 2.4s ease-in-out infinite;transform-origin:50% 82%}
+[data-mascot-renderer="2d"] [data-scene="inspect-card"][data-anim="idle"] .body{animation:mascot2d-card-lean 2.4s ease-in-out infinite}
+[data-mascot-renderer="2d"] [data-scene="inspect-card"][data-anim="idle"] .armRight{transform:rotate(-42deg)}
+[data-mascot-renderer="2d"] [data-scene="inspect-card"][data-anim="idle"] .lantern{animation:mascot2d-card-lantern 2.4s ease-in-out infinite}
+
+[data-mascot-renderer="2d"] [data-scene="inspect-panel"][data-anim="idle"] .headRig{animation:mascot2d-panel-peek 2.8s ease-in-out infinite}
+[data-mascot-renderer="2d"] [data-scene="inspect-panel"][data-anim="idle"] .body{transform:translate(calc(var(--depth-body-x) - 4px),var(--depth-body-y)) rotate(-2deg)}
+[data-mascot-renderer="2d"] [data-scene="inspect-panel"][data-anim="idle"] .armLeft{transform:rotate(26deg)}
+[data-mascot-renderer="2d"] [data-scene="inspect-panel"][data-anim="idle"] .lantern{animation:mascot2d-panel-tip 2.8s ease-in-out infinite}
+
+[data-mascot-renderer="2d"] [data-scene="inspect-search"][data-anim="idle"] .headRig{animation:mascot2d-search-scan 2.6s ease-in-out infinite}
+[data-mascot-renderer="2d"] [data-scene="inspect-search"][data-anim="idle"] .lantern b{animation:mascot2d-search-pulse 1.3s ease-in-out infinite}
+[data-mascot-renderer="2d"] [data-scene="inspect-search"][data-anim="idle"] .armRight{transform:rotate(-28deg)}
+
+[data-mascot-renderer="2d"] [data-scene="guide"][data-anim="idle"] .body{transform:translate(var(--depth-body-x),calc(var(--depth-body-y) - 2px))}
+[data-mascot-renderer="2d"] [data-scene="guide"][data-anim="idle"] .armRight{animation:mascot2d-present 1.8s ease-in-out infinite alternate;z-index:7}
+[data-mascot-renderer="2d"] [data-scene="guide"][data-anim="idle"] .headRig{transform:translate(var(--head-x),calc(var(--head-y) - 2px)) rotate(calc(var(--yaw) + 2deg))}
+[data-mascot-renderer="2d"] [data-scene="guide"][data-anim="idle"] .lantern b{filter:brightness(1.18)}
+
+@keyframes mascot2d-card-peer{0%,100%{transform:translate(var(--head-x),var(--head-y)) rotate(calc(var(--yaw) - 2deg))}50%{transform:translate(calc(var(--head-x) + 3px),calc(var(--head-y) + 4px)) rotate(calc(var(--yaw) + 4deg))}}
+@keyframes mascot2d-card-lean{0%,100%{transform:translate(var(--depth-body-x),var(--depth-body-y)) rotate(0)}50%{transform:translate(calc(var(--depth-body-x) + 2px),calc(var(--depth-body-y) + 2px)) rotate(1.5deg)}}
+@keyframes mascot2d-card-lantern{0%,100%{transform:translate(var(--depth-tip-x),var(--depth-tip-y)) rotate(-2deg)}50%{transform:translate(calc(var(--depth-tip-x) + 4px),calc(var(--depth-tip-y) + 3px)) rotate(7deg)}}
+@keyframes mascot2d-panel-peek{0%,100%{transform:translate(calc(var(--head-x) - 3px),var(--head-y)) rotate(calc(var(--yaw) - 3deg))}50%{transform:translate(calc(var(--head-x) + 5px),calc(var(--head-y) - 1px)) rotate(calc(var(--yaw) + 4deg))}}
+@keyframes mascot2d-panel-tip{0%,100%{transform:translate(var(--depth-tip-x),var(--depth-tip-y)) rotate(-5deg)}50%{transform:translate(calc(var(--depth-tip-x) + 5px),calc(var(--depth-tip-y) - 2px)) rotate(8deg)}}
+@keyframes mascot2d-search-scan{0%,100%{transform:translate(calc(var(--head-x) - 3px),var(--head-y)) rotate(calc(var(--yaw) - 2deg))}50%{transform:translate(calc(var(--head-x) + 3px),var(--head-y)) rotate(calc(var(--yaw) + 2deg))}}
+@keyframes mascot2d-search-pulse{0%,100%{filter:brightness(1);transform:scale(1)}50%{filter:brightness(1.22);transform:scale(1.06)}}
+@keyframes mascot2d-present{from{transform:rotate(-62deg)}to{transform:rotate(-78deg)}}
+
+@media(prefers-reduced-motion:reduce){
+ [data-mascot-renderer="2d"] [data-scene] .headRig,
+ [data-mascot-renderer="2d"] [data-scene] .body,
+ [data-mascot-renderer="2d"] [data-scene] .armRight,
+ [data-mascot-renderer="2d"] [data-scene] .lantern,
+ [data-mascot-renderer="2d"] [data-scene] .lantern b{animation:none!important}
+}
