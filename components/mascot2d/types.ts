@@ -10,6 +10,8 @@ export type LanternKo2DProps = {
   speed?: number;
   justLanded?: boolean;
   className?: string;
+  /** 0 disables the depth offsets, 1 is the production 2.5D amount. */
+  depth?: number;
 };
 
 export type LanternKo2DLayer =
@@ -21,6 +23,7 @@ export type LanternKo2DLayer =
   | "eyes"
   | "brows"
   | "mouth"
-  | "hair"
+  | "hair-back"
+  | "hair-front"
   | "hood"
   | "lantern";
