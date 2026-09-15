@@ -3,20 +3,36 @@
 [data-mascot-renderer="2d"] [data-scene="inspect-card"][data-anim="idle"] .body{animation:mascot2d-card-lean 2.4s ease-in-out infinite}
 [data-mascot-renderer="2d"] [data-scene="inspect-card"][data-anim="idle"] .armRight{transform:rotate(-42deg)}
 [data-mascot-renderer="2d"] [data-scene="inspect-card"][data-anim="idle"] .lantern{animation:mascot2d-card-lantern 2.4s ease-in-out infinite}
-
 [data-mascot-renderer="2d"] [data-scene="inspect-panel"][data-anim="idle"] .headRig{animation:mascot2d-panel-peek 2.8s ease-in-out infinite}
 [data-mascot-renderer="2d"] [data-scene="inspect-panel"][data-anim="idle"] .body{transform:translate(calc(var(--depth-body-x) - 4px),var(--depth-body-y)) rotate(-2deg)}
 [data-mascot-renderer="2d"] [data-scene="inspect-panel"][data-anim="idle"] .armLeft{transform:rotate(26deg)}
 [data-mascot-renderer="2d"] [data-scene="inspect-panel"][data-anim="idle"] .lantern{animation:mascot2d-panel-tip 2.8s ease-in-out infinite}
-
 [data-mascot-renderer="2d"] [data-scene="inspect-search"][data-anim="idle"] .headRig{animation:mascot2d-search-scan 2.6s ease-in-out infinite}
 [data-mascot-renderer="2d"] [data-scene="inspect-search"][data-anim="idle"] .lantern b{animation:mascot2d-search-pulse 1.3s ease-in-out infinite}
 [data-mascot-renderer="2d"] [data-scene="inspect-search"][data-anim="idle"] .armRight{transform:rotate(-28deg)}
-
 [data-mascot-renderer="2d"] [data-scene="guide"][data-anim="idle"] .body{transform:translate(var(--depth-body-x),calc(var(--depth-body-y) - 2px))}
 [data-mascot-renderer="2d"] [data-scene="guide"][data-anim="idle"] .armRight{animation:mascot2d-present 1.8s ease-in-out infinite alternate;z-index:7}
 [data-mascot-renderer="2d"] [data-scene="guide"][data-anim="idle"] .headRig{transform:translate(var(--head-x),calc(var(--head-y) - 2px)) rotate(calc(var(--yaw) + 2deg))}
 [data-mascot-renderer="2d"] [data-scene="guide"][data-anim="idle"] .lantern b{filter:brightness(1.18)}
+
+/* Perch poses are chosen by LiveMascot2D from the actual landmark dimensions. */
+[data-mascot-renderer="2d"] [data-perch="sit"][data-anim="idle"] .body{transform:translate(var(--depth-body-x),calc(var(--depth-body-y) + 13px)) scaleY(.9);animation:none}
+[data-mascot-renderer="2d"] [data-perch="sit"][data-anim="idle"] .legs{transform:translateY(12px) rotate(7deg);transform-origin:50% 5%;animation:mascot2d-sit-feet 2.8s ease-in-out infinite alternate}
+[data-mascot-renderer="2d"] [data-perch="sit"][data-anim="idle"] .backCloak{transform:translate(var(--depth-back-x),calc(var(--depth-back-y) + 9px)) scaleY(.94);animation:none}
+[data-mascot-renderer="2d"] [data-perch="sit"][data-anim="idle"] .headRig{transform:translate(var(--head-x),calc(var(--head-y) + 5px)) rotate(var(--yaw))}
+[data-mascot-renderer="2d"] [data-perch="crouch"][data-anim="idle"] .body{transform:translate(var(--depth-body-x),calc(var(--depth-body-y) + 8px)) scale(1.035,.9);animation:none}
+[data-mascot-renderer="2d"] [data-perch="crouch"][data-anim="idle"] .legs{transform:scaleY(.72) translateY(15px)}
+[data-mascot-renderer="2d"] [data-perch="crouch"][data-anim="idle"] .headRig{transform:translate(var(--head-x),calc(var(--head-y) + 7px)) rotate(calc(var(--yaw) + 2deg));animation:none}
+[data-mascot-renderer="2d"] [data-perch="crouch"][data-anim="idle"] .armLeft{transform:rotate(20deg)}
+[data-mascot-renderer="2d"] [data-perch="crouch"][data-anim="idle"] .armRight{transform:rotate(-20deg)}
+[data-mascot-renderer="2d"] [data-perch="peek-left"][data-anim="idle"]{transform:translateX(-9px)}
+[data-mascot-renderer="2d"] [data-perch="peek-left"][data-anim="idle"] .body{transform:translate(calc(var(--depth-body-x) + 7px),var(--depth-body-y)) rotate(3deg);animation:none}
+[data-mascot-renderer="2d"] [data-perch="peek-left"][data-anim="idle"] .headRig{animation:mascot2d-peek-left 2.5s ease-in-out infinite}
+[data-mascot-renderer="2d"] [data-perch="peek-left"][data-anim="idle"] .armRight{transform:rotate(-48deg)}
+[data-mascot-renderer="2d"] [data-perch="peek-right"][data-anim="idle"]{transform:translateX(9px)}
+[data-mascot-renderer="2d"] [data-perch="peek-right"][data-anim="idle"] .body{transform:translate(calc(var(--depth-body-x) - 7px),var(--depth-body-y)) rotate(-3deg);animation:none}
+[data-mascot-renderer="2d"] [data-perch="peek-right"][data-anim="idle"] .headRig{animation:mascot2d-peek-right 2.5s ease-in-out infinite}
+[data-mascot-renderer="2d"] [data-perch="peek-right"][data-anim="idle"] .armLeft{transform:rotate(48deg)}
 
 @keyframes mascot2d-card-peer{0%,100%{transform:translate(var(--head-x),var(--head-y)) rotate(calc(var(--yaw) - 2deg))}50%{transform:translate(calc(var(--head-x) + 3px),calc(var(--head-y) + 4px)) rotate(calc(var(--yaw) + 4deg))}}
 @keyframes mascot2d-card-lean{0%,100%{transform:translate(var(--depth-body-x),var(--depth-body-y)) rotate(0)}50%{transform:translate(calc(var(--depth-body-x) + 2px),calc(var(--depth-body-y) + 2px)) rotate(1.5deg)}}
@@ -26,11 +42,7 @@
 @keyframes mascot2d-search-scan{0%,100%{transform:translate(calc(var(--head-x) - 3px),var(--head-y)) rotate(calc(var(--yaw) - 2deg))}50%{transform:translate(calc(var(--head-x) + 3px),var(--head-y)) rotate(calc(var(--yaw) + 2deg))}}
 @keyframes mascot2d-search-pulse{0%,100%{filter:brightness(1);transform:scale(1)}50%{filter:brightness(1.22);transform:scale(1.06)}}
 @keyframes mascot2d-present{from{transform:rotate(-62deg)}to{transform:rotate(-78deg)}}
-
-@media(prefers-reduced-motion:reduce){
- [data-mascot-renderer="2d"] [data-scene] .headRig,
- [data-mascot-renderer="2d"] [data-scene] .body,
- [data-mascot-renderer="2d"] [data-scene] .armRight,
- [data-mascot-renderer="2d"] [data-scene] .lantern,
- [data-mascot-renderer="2d"] [data-scene] .lantern b{animation:none!important}
-}
+@keyframes mascot2d-sit-feet{from{transform:translateY(12px) rotate(5deg)}to{transform:translateY(14px) rotate(10deg)}}
+@keyframes mascot2d-peek-left{0%,100%{transform:translate(calc(var(--head-x) + 2px),var(--head-y)) rotate(calc(var(--yaw) + 2deg))}50%{transform:translate(calc(var(--head-x) + 9px),calc(var(--head-y) - 1px)) rotate(calc(var(--yaw) + 6deg))}}
+@keyframes mascot2d-peek-right{0%,100%{transform:translate(calc(var(--head-x) - 2px),var(--head-y)) rotate(calc(var(--yaw) - 2deg))}50%{transform:translate(calc(var(--head-x) - 9px),calc(var(--head-y) - 1px)) rotate(calc(var(--yaw) - 6deg))}}
+@media(prefers-reduced-motion:reduce){[data-mascot-renderer="2d"] [data-scene] .headRig,[data-mascot-renderer="2d"] [data-scene] .body,[data-mascot-renderer="2d"] [data-scene] .armRight,[data-mascot-renderer="2d"] [data-scene] .lantern,[data-mascot-renderer="2d"] [data-scene] .lantern b,[data-mascot-renderer="2d"] [data-perch] .headRig,[data-mascot-renderer="2d"] [data-perch] .body,[data-mascot-renderer="2d"] [data-perch] .legs{animation:none!important}}
