@@ -1,1 +1,243 @@
-PLACEHOLDER
+import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
+import { Navbar } from "@/components/Navbar";
+import { SkipToContent } from "@/components/SkipToContent";
+import { WatchlistProvider } from "@/components/WatchlistProvider";
+import { SessionProvider } from "@/components/SessionProvider";
+import { DeskCloudAutoSync } from "@/components/DeskCloudAutoSync";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { MotionProvider } from "@/components/MotionProvider";
+import { CreativeRuntimeProvider } from "@/components/CreativeRuntimeProvider";
+import { ToastProvider } from "@/components/ToastProvider";
+import { SoundProvider } from "@/components/SoundProvider";
+import { ScrollProgress } from "@/components/ScrollProgress";
+import { AIPanel } from "@/components/AIPanel";
+import { CommandPalette } from "@/components/CommandPalette";
+import { PwaRegister } from "@/components/PwaRegister";
+import { SessionTools } from "@/components/SessionTools";
+import { ConfettiHost } from "@/components/ConfettiBurst";
+import { ShortcutsHelp } from "@/components/ShortcutsHelp";
+import { SoftBtnSounds } from "@/components/SoftBtnSounds";
+import { GlobalNavKeys } from "@/components/GlobalNavKeys";
+import { RouteAnnouncer } from "@/components/RouteAnnouncer";
+import { OfflineBanner } from "@/components/OfflineBanner";
+import { BackToTop } from "@/components/BackToTop";
+import { SessionUrlHydrate } from "@/components/SessionUrlHydrate";
+import { LoadingTheater } from "@/components/LoadingTheater";
+import { RoomEnter } from "@/components/RoomEnter";
+import { RouteTune } from "@/components/RouteTune";
+import { LanternMemoryBoot } from "@/components/LanternMemoryBoot";
+import { SealMomentHost } from "@/components/SealMoment";
+import { FirstVisitHost } from "@/components/FirstVisitHost";
+import { EnvironmentController } from "@/components/EnvironmentController";
+import { CinematographyController } from "@/components/CinematographyController";
+import { NexusRouteBeacon } from "@/components/NexusRouteBeacon";
+import { MascotHost } from "@/components/mascot/MascotHost";
+import { MascotErrorBoundary } from "@/components/mascot/MascotErrorBoundary";
+import { ErrorReportingBoot } from "@/components/ErrorReportingBoot";
+import "./tokens.css";
+import "./globals.css";
+import "./button.css";
+import "./modal.css";
+import "./quote.css";
+import "./ritual.css";
+import "./seal-env.css";
+import "./signal-motion.css";
+import "./card-polish.css";
+import "./nav-polish.css";
+import "./nav-brand-fix.css";
+import "./nav-dock.css";
+import "./layout-shell.css";
+import "./mascot.css";
+import "./sprint-a.css";
+import "./ai-panel.css";
+import "./cmdk.css";
+import "./cmdk-intent.css";
+import "./quick-outcome.css";
+import "./exp-pack.css";
+import "./ancestry.css";
+import "./session-tools.css";
+import "./oracle-vibe.css";
+import "./motion.css";
+import "./motion-cohesion.css";
+import "./view-transitions.css";
+import "./token-cohesion.css";
+import "./desk.css";
+import "./ui-lift.css";
+import "./first-visit.css";
+import "./signal-error.css";
+import "./signal-empty.css";
+import "./home-dash.css";
+import "./mobile.css";
+import "./product-editing.css";
+import "./a11y.css";
+import "./cinematography.css";
+import "./shelf-preview.css";
+import "./living-shelf.css";
+import "./archive-field.css";
+import "./memory-chapters.css";
+import "./editorial.css";
+import "./micro-interactions.css";
+import "./motion-polish.css";
+import "./micro-density.css";
+import "./reduced-motion-eq.css";
+import "./sound-settings.css";
+import "./browse-micro.css";
+import "./load-choreography.css";
+import "./loading-quality.css";
+import "./watchlist-micro.css";
+import "./detail-micro.css";
+import "./oracle-micro.css";
+import "./oracle-instrument.css";
+import "./radar-micro.css";
+import "./radar-instrument.css";
+import "./taste-micro.css";
+import "./challenge-micro.css";
+import "./account-micro.css";
+import "./loading-symbol.css";
+import "./outcome-mark.css";
+import "./empty-illustration.css";
+import "./feature-tip.css";
+import "./nexus-icon.css";
+import "./nexus-icon-optical.css";
+import "./rive.css";
+import "./tool-identity.css";
+import "./restraint.css";
+
+export const metadata: Metadata = {
+  title: "AnimeNexus \u2014 Lantern",
+  description:
+    "Mood-based anime recommendations, a deep taste profile, and AI-powered tools \u2014 late-night broadcast console.",
+  applicationName: "AnimeNexus",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icon.svg" }],
+  },
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : "https://animenexus.vercel.app"),
+  ),
+  openGraph: {
+    title: "AnimeNexus \u2014 Lantern",
+    description:
+      "Mood-based anime recommendations, taste profile, and AI tools \u2014 late-night broadcast console.",
+    images: [
+      { url: "/api/og?kind=site", width: 1200, height: 630, alt: "AnimeNexus" },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AnimeNexus \u2014 Lantern",
+    images: ["/api/og?kind=site"],
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0c0a0f",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" suppressHydrationWarning data-brand-boot="pending">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+          rel="stylesheet"
+        />
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/icon.svg" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('anime_nexus_theme');if(t==='light')document.documentElement.setAttribute('data-theme','light');var v=localStorage.getItem('anime_nexus_view_mode');if(v)document.documentElement.dataset.viewMode=v;var h=new Date().getHours();var tod=h<5||h>=21?'late-night':h<12?'morning':h<17?'afternoon':'evening';document.documentElement.dataset.tod=tod;var m=localStorage.getItem('anime_nexus_motion');var sys=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;var reduced=m==='reduced'||(m!=='full'&&sys);document.documentElement.dataset.motion=m||'system';if(reduced)document.documentElement.setAttribute('data-reduce-motion','true');else document.documentElement.removeAttribute('data-reduce-motion');document.documentElement.setAttribute('data-sakura','off');document.documentElement.dataset.cinemaFocus='ambient';document.documentElement.dataset.cinemaDepth='layered';document.documentElement.dataset.cinemaMotion=reduced?'still':'full';var shown=sessionStorage.getItem('animenexus.brand_intro.shown.v1')==='1';if(shown){document.documentElement.removeAttribute('data-brand-boot');}else{document.documentElement.setAttribute('data-brand-boot','pending');setTimeout(function(){if(document.documentElement.getAttribute('data-brand-boot')==='pending'&&!document.querySelector('.nx-brand-intro')){document.documentElement.removeAttribute('data-brand-boot');}},2500);}}catch(e){try{document.documentElement.removeAttribute('data-brand-boot');}catch(_){}}})();`,
+          }}
+        />
+        <noscript>
+          <style>{`html { background: #070609; }`}</style>
+        </noscript>
+      </head>
+      <body>
+        <ThemeProvider>
+          <MotionProvider>
+            <CreativeRuntimeProvider>
+              <ToastProvider>
+                <SoundProvider>
+                  <WatchlistProvider>
+                    <SessionProvider>
+                      <DeskCloudAutoSync />
+                      <ErrorReportingBoot />
+                      <SkipToContent />
+                      <LanternMemoryBoot />
+                      <Suspense fallback={null}>
+                        <SessionUrlHydrate />
+                      </Suspense>
+                      <NexusRouteBeacon />
+                      <EnvironmentController />
+                      <CinematographyController />
+                      <ScrollProgress />
+                      <PwaRegister />
+                      <RouteTune />
+                      <OfflineBanner />
+                      <Navbar />
+                      <div className="app-shell" id="main-content" tabIndex={-1}>
+                        <RoomEnter>{children}</RoomEnter>
+                      </div>
+                      <MascotErrorBoundary>
+                        <MascotHost />
+                      </MascotErrorBoundary>
+                      <AIPanel />
+                      <CommandPalette />
+                      <SessionTools />
+                      <ConfettiHost />
+                      <SealMomentHost />
+                      <FirstVisitHost />
+                      <ShortcutsHelp />
+                      <SoftBtnSounds />
+                      <GlobalNavKeys />
+                      <RouteAnnouncer />
+                      <BackToTop />
+                      <LoadingTheater />
+                      <footer className="site-footer">
+                        <div className="container site-footer-inner">
+                          <span>AnimeNexus \u00b7 Lantern</span>
+                          <span className="site-footer-sep" aria-hidden>
+                            \u00b7
+                          </span>
+                          <span>
+                            Data via{" "}
+                            <a
+                              href="https://anilist.co"
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              AniList
+                            </a>
+                          </span>
+                        </div>
+                      </footer>
+                    </SessionProvider>
+                  </WatchlistProvider>
+                </SoundProvider>
+              </ToastProvider>
+            </CreativeRuntimeProvider>
+          </MotionProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
