@@ -18,10 +18,11 @@ test("rig adapter keeps continuous channels bounded", () => {
   const pose = resolveFaceRigPose("curious", emotions, "idle", 1, { x: 1, y: -1 }, 0);
   assert.ok(pose.eyeOpenL >= 0 && pose.eyeOpenL <= 1.4);
   assert.ok(pose.eyeOpenR >= 0 && pose.eyeOpenR <= 1.4);
-  assert.ok(pose.pupilX >= -0.55 && pose.pupilX <= 0.55);
-  assert.ok(pose.pupilY >= -0.4 && pose.pupilY <= 0.4);
+  // Socket-safe pupil travel after visual tuning pass
+  assert.ok(pose.pupilX >= -0.42 && pose.pupilX <= 0.42);
+  assert.ok(pose.pupilY >= -0.28 && pose.pupilY <= 0.28);
   assert.ok(pose.blush >= 0 && pose.blush <= 1);
-  assert.ok(pose.headYaw >= -0.08 && pose.headYaw <= 0.08);
+  assert.ok(pose.headYaw >= -0.09 && pose.headYaw <= 0.09);
 });
 
 test("blink closes eyes without moving the engine state", () => {
@@ -41,6 +42,19 @@ test("animation adds presentation bias rather than replacing expression", () => 
 test("sleep forces closed eyes", () => {
   const sleepy: MascotEmotions = { ...emotions, sleepiness: 0.9 };
   const pose = resolveFaceRigPose("neutral", sleepy, "sleep", 1, { x: 0.5, y: 0.5 }, 0);
-  assert.ok(pose.eyeOpenL < 0.35);
-  assert.ok(pose.eyeOpenR < 0.35);
+  assert.ok(pose.eyeOpenL < 0.25);
+  assert.ok(pose.eyeOpenR < 0.25);
+});
+
+test("embarrassed boosts blush for mobile readability", () => {
+  const pose = resolveFaceRigPose("embarrassed", emotions, "idle", 1, { x: 0, y: 0 }, 0);
+  assert.ok(pose.blush >= 0.75);
+});
+
+test("micro-saccades keep pupils inside socket", () => {
+  for (let t = 0; t < 10; t += 0.37) {
+    const pose = resolveFaceRigPose("curious", emotions, "idle", t, { x: 0.8, y: -0.6 }, 0);
+    assert.ok(pose.pupilX >= -0.42 && pose.pupilX <= 0.42);
+    assert.ok(pose.pupilY >= -0.28 && pose.pupilY <= 0.28);
+  }
 });
