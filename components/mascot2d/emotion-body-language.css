@@ -1,10 +1,10 @@
 /* Continuous whole-body emotion pose. Values are fed by the inertia-smoothed emotion state so silhouette changes blend instead of snapping between mood selectors. */
 [aria-label="Lantern-ko 2.5D"] [data-layer="body"]{translate:var(--emotion-body-x) var(--emotion-body-y);scale:1 var(--emotion-scale-y);transform-origin:50% 18%}
-[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"]{rotate:var(--emotion-arm-left);transform-origin:70% 18%}
-[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"]{rotate:var(--emotion-arm-right);transform-origin:30% 18%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"]{rotate:var(--emotion-arm-left);translate:0 var(--emotion-arm-y);scale:var(--emotion-arm-scale) 1;transform-origin:70% 18%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"]{rotate:var(--emotion-arm-right);translate:0 var(--emotion-arm-y);scale:var(--emotion-arm-scale) 1;transform-origin:30% 18%}
 [aria-label="Lantern-ko 2.5D"] [data-layer="torso"]{translate:0 var(--emotion-torso-y)}
 [aria-label="Lantern-ko 2.5D"] [data-layer="bow"]{translate:0 var(--emotion-bow-y)}
 [aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]{translate:var(--emotion-hair-x) var(--emotion-hair-y)}
-[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-left"],[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-right"]{transform-origin:50% 8%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-left"],[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-right"]{translate:0 var(--emotion-cloak-y);scale:var(--emotion-cloak-front-scale) 1;transform-origin:50% 8%}
 [aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]{transform-origin:50% 2%}
-@media(prefers-reduced-motion:reduce){[aria-label="Lantern-ko 2.5D"] [data-layer="body"]{translate:0 0;scale:1}[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"],[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"],[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"],[aria-label="Lantern-ko 2.5D"] [data-layer="torso"],[aria-label="Lantern-ko 2.5D"] [data-layer="bow"]{rotate:0deg;translate:0 0;scale:1}}
+@media(prefers-reduced-motion:reduce){[aria-label="Lantern-ko 2.5D"] [data-layer="body"]{translate:0 0;scale:1}[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"],[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"],[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"],[aria-label="Lantern-ko 2.5D"] [data-layer="torso"],[aria-label="Lantern-ko 2.5D"] [data-layer="bow"],[aria-label="Lantern-ko 2.5D"] [data-layer^="cloak-front-"]{rotate:0deg;translate:0 0;scale:1}}
