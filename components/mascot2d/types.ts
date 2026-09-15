@@ -22,6 +22,8 @@ export type LanternKo2DProps = {
   depth?: number;
   /** Speech activity only. Text/audio interpretation remains outside the renderer. */
   speaking?: boolean;
+  /** User-input/listening activity. The host decides when the user is actively composing. */
+  listening?: boolean;
 };
 
 export type LanternKo2DLayer =
