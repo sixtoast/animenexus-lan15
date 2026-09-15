@@ -1,0 +1,5 @@
+/* Listening is quieter than speaking: eye/head attention with only a small forward posture response. */
+[aria-label="Lantern-ko 2.5D"][data-listening="true"] [data-layer="body"]{translate:0 calc(var(--listen-lean)*-.7px)}
+[aria-label="Lantern-ko 2.5D"][data-listening="true"] [data-layer="bow"]{translate:0 calc(var(--listen-lean)*-.35px)}
+[aria-label="Lantern-ko 2.5D"][data-listen-act="acknowledge"] [data-layer="hair-front"]{translate:0 calc(var(--listen-nod)*.35px)}
+@media(prefers-reduced-motion:reduce){[aria-label="Lantern-ko 2.5D"] [data-layer="body"],[aria-label="Lantern-ko 2.5D"] [data-layer="bow"],[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]{translate:0 0}}
