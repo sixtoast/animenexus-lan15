@@ -2,6 +2,7 @@
 
 /**
  * GltfCompanion — load /public/mascot/companion.glb or fall back to LanternKoMesh.
+ * V3: continuous face channels via resolveFaceRigPose; optional Pupil/Eyelid nodes.
  */
 
 import * as THREE from "three";
@@ -16,11 +17,9 @@ import {
 } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useGLTF, useAnimations } from "@react-three/drei";
-import {
-  LanternKoMesh,
-  EXPRESSIONS,
-  type ExpressionKey,
-} from "./LanternKoMeshV2";
+import { LanternKoMesh, type ExpressionKey } from "./LanternKoMeshV2";
+import type { MascotAnim, MascotEmotions } from "@/lib/mascot/types";
+import { resolveFaceRigPose } from "@/lib/mascot/rig-adapter";
 
 const GLB_PATH = "/mascot/companion.glb";
 const REQUIRED_NODES = ["Head", "Tip"] as const;
@@ -33,11 +32,17 @@ const OPTIONAL_NODES = [
   "Mouth",
   "EyeL",
   "EyeR",
+  "PupilL",
+  "PupilR",
+  "EyelidL",
+  "EyelidR",
 ] as const;
 
 export type GltfCompanionProps = {
   expression: ExpressionKey;
-  anim: string;
+  emotions: MascotEmotions;
+  lookBias?: { x: number; y: number };
+  anim: MascotAnim;
   justLanded?: boolean;
   yaw?: number;
   speed?: number;
@@ -49,6 +54,8 @@ function damp(current: number, target: number, lambda: number, dt: number) {
 
 function LoadedGlbCompanion({
   expression,
+  emotions,
+  lookBias = { x: 0, y: 0 },
   anim,
   justLanded = false,
   yaw = 0,
@@ -85,26 +92,81 @@ function LoadedGlbCompanion({
   }, [anim, actions, names, hasClips]);
 
   const squashEnv = useRef(0);
+  const blinkTimer = useRef(2.2);
+  const blinkAmount = useRef(0);
+  const headGaze = useRef(new THREE.Vector2(0, 0));
   const tipLag = useRef(new THREE.Vector2(0, 0));
 
   useFrame((state, dtRaw) => {
     if (!hasRequiredNodes) return;
     const dt = Math.min(dtRaw, 0.05);
-    const pose = EXPRESSIONS[expression] ?? EXPRESSIONS.neutral;
     const t = state.clock.elapsedTime;
+
+    blinkTimer.current -= dt;
+    if (blinkTimer.current <= 0) {
+      blinkAmount.current = 1;
+      blinkTimer.current = 2.5 + Math.random() * 3;
+    }
+    blinkAmount.current = Math.max(0, blinkAmount.current - dt * 7);
+
+    const pose = resolveFaceRigPose(
+      expression,
+      emotions,
+      anim,
+      t,
+      lookBias,
+      blinkAmount.current,
+    );
 
     const browL = nodes.BrowL;
     const browR = nodes.BrowR;
     if (browL && browR) {
-      browL.rotation.z = damp(browL.rotation.z, pose.brow[0], 8, dt);
-      browR.rotation.z = damp(browR.rotation.z, pose.brow[1], 8, dt);
+      browL.rotation.z = damp(browL.rotation.z, pose.browL, 8, dt);
+      browR.rotation.z = damp(browR.rotation.z, pose.browR, 8, dt);
     }
 
     const eyeL = nodes.EyeL;
     const eyeR = nodes.EyeR;
-    if (eyeL && eyeR) {
-      eyeL.scale.y = damp(eyeL.scale.y, pose.eyeY, 12, dt);
-      eyeR.scale.y = damp(eyeR.scale.y, pose.eyeY, 12, dt);
+    const lidL = nodes.EyelidL;
+    const lidR = nodes.EyelidR;
+    if (lidL && lidR) {
+      lidL.scale.y = damp(
+        lidL.scale.y,
+        Math.max(0.03, 1 - pose.eyeOpenL),
+        14,
+        dt,
+      );
+      lidR.scale.y = damp(
+        lidR.scale.y,
+        Math.max(0.03, 1 - pose.eyeOpenR),
+        14,
+        dt,
+      );
+    } else if (eyeL && eyeR) {
+      // Legacy GLBs have no lids — scale eye only as compatibility fallback.
+      eyeL.scale.y = damp(eyeL.scale.y, pose.eyeOpenL, 12, dt);
+      eyeR.scale.y = damp(eyeR.scale.y, pose.eyeOpenR, 12, dt);
+    }
+
+    const pupilL = nodes.PupilL;
+    const pupilR = nodes.PupilR;
+    if (pupilL && pupilR) {
+      const px = pose.pupilX * 0.035;
+      const py = pose.pupilY * 0.025;
+      pupilL.position.x = damp(pupilL.position.x, px, 18, dt);
+      pupilR.position.x = damp(pupilR.position.x, px, 18, dt);
+      pupilL.position.y = damp(pupilL.position.y, py, 18, dt);
+      pupilR.position.y = damp(pupilR.position.y, py, 18, dt);
+    }
+
+    const head = nodes.Head;
+    if (head) {
+      // Eyes lead (pupil lambda 18); head follows slower (5.5).
+      headGaze.current.x = damp(headGaze.current.x, pose.headYaw, 5.5, dt);
+      headGaze.current.y = damp(headGaze.current.y, pose.headPitch, 5.5, dt);
+      head.rotation.y = headGaze.current.x;
+      head.rotation.x = headGaze.current.y;
+      head.rotation.z = damp(head.rotation.z, pose.headRoll, 6, dt);
     }
 
     const mouth = nodes.Mouth as THREE.Mesh | undefined;
@@ -112,8 +174,14 @@ function LoadedGlbCompanion({
       const dict = mouth.morphTargetDictionary;
       for (const key of Object.keys(dict)) {
         const idx = dict[key];
-        const target =
-          key.toLowerCase() === pose.mouth.toLowerCase() ? 1 : 0;
+        const k = key.toLowerCase();
+        const target = k.includes("smile")
+          ? Math.max(0, pose.mouthCurve)
+          : k.includes("frown")
+            ? Math.max(0, -pose.mouthCurve)
+            : k.includes("open")
+              ? pose.mouthOpen
+              : 0;
         mouth.morphTargetInfluences[idx] = damp(
           mouth.morphTargetInfluences[idx],
           target,
@@ -128,7 +196,8 @@ function LoadedGlbCompanion({
       const mat = tip.material as THREE.MeshStandardMaterial | undefined;
       if (mat && "emissiveIntensity" in mat) {
         mat.emissiveIntensity =
-          0.55 + Math.sin(t * pose.pulse * Math.PI * 2) * 0.4;
+          0.55 +
+          Math.sin(t * (0.55 + emotions.energy * 0.8) * Math.PI * 2) * 0.4;
       }
       const targetX = Math.sin(t * 2.2) * 0.05 * (0.4 + speed);
       const targetZ = -yaw * 0.15;
@@ -156,6 +225,9 @@ function LoadedGlbCompanion({
     return (
       <LanternKoMesh
         expression={expression}
+        emotions={emotions}
+        lookBias={lookBias}
+        anim={anim}
         justLanded={justLanded}
         yaw={yaw}
         speed={speed}
@@ -188,11 +260,43 @@ class ErrorBoundaryToProcedural extends Component<
 
 export function GltfCompanion(props: GltfCompanionProps) {
   const [loadFailed, setLoadFailed] = useState(false);
+  const [glbAvailable, setGlbAvailable] = useState<boolean | null>(null);
 
-  if (loadFailed) {
+  useEffect(() => {
+    let cancelled = false;
+    fetch(GLB_PATH, { method: "HEAD" })
+      .then((r) => {
+        if (!cancelled) setGlbAvailable(r.ok);
+      })
+      .catch(() => {
+        if (!cancelled) setGlbAvailable(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loadFailed || glbAvailable === false) {
     return (
       <LanternKoMesh
         expression={props.expression}
+        emotions={props.emotions}
+        lookBias={props.lookBias}
+        anim={props.anim}
+        justLanded={props.justLanded}
+        yaw={props.yaw}
+        speed={props.speed}
+      />
+    );
+  }
+
+  if (glbAvailable === null) {
+    return (
+      <LanternKoMesh
+        expression={props.expression}
+        emotions={props.emotions}
+        lookBias={props.lookBias}
+        anim={props.anim}
         justLanded={props.justLanded}
         yaw={props.yaw}
         speed={props.speed}
@@ -206,6 +310,9 @@ export function GltfCompanion(props: GltfCompanionProps) {
         fallback={
           <LanternKoMesh
             expression={props.expression}
+            emotions={props.emotions}
+            lookBias={props.lookBias}
+            anim={props.anim}
             justLanded={props.justLanded}
             yaw={props.yaw}
             speed={props.speed}
@@ -216,10 +323,4 @@ export function GltfCompanion(props: GltfCompanionProps) {
       </Suspense>
     </ErrorBoundaryToProcedural>
   );
-}
-
-try {
-  useGLTF.preload(GLB_PATH);
-} catch {
-  /* optional */
 }
