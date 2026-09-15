@@ -12,6 +12,8 @@ export type LanternKo2DProps = {
   speed?: number;
   justLanded?: boolean;
   className?: string;
+  /** Existing brain/UI context. Rendering only, never decides behaviour. */
+  context?: { intention?: string | null; lastLandmarkType?: string | null };
   /** 0 disables the depth offsets, 1 is the production 2.5D amount. */
   depth?: number;
 };
