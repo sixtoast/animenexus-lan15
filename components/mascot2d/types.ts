@@ -1,6 +1,8 @@
 import type { MascotAnim, MascotEmotions } from "@/lib/mascot/types";
 import type { ExpressionKey } from "@/components/mascot/expression-bridge";
 
+export type PerchPose = "stand" | "sit" | "crouch" | "peek-left" | "peek-right";
+
 export type LanternKo2DProps = {
   expression: ExpressionKey;
   emotions: MascotEmotions;
@@ -14,6 +16,8 @@ export type LanternKo2DProps = {
   className?: string;
   /** Existing brain/UI context. Rendering only, never decides behaviour. */
   context?: { intention?: string | null; lastLandmarkType?: string | null };
+  /** Physical pose selected from the real landmark geometry. */
+  perchPose?: PerchPose;
   /** 0 disables the depth offsets, 1 is the production 2.5D amount. */
   depth?: number;
 };
