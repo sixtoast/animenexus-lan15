@@ -153,6 +153,7 @@ export function PlaceholderChibi() {
   });
 
   const emotions = useMascotStore((s) => s.emotions);
+  const lookBias = useMascotStore((s) => s.lookBias);
   const anim = useMascotStore((s) => s.anim);
   const expression = expressionFromAnim(
     anim,
@@ -221,6 +222,8 @@ export function PlaceholderChibi() {
     >
       <GltfCompanion
         expression={expression}
+        emotions={emotions}
+        lookBias={lookBias}
         anim={anim}
         yaw={facing.current}
         speed={speedRef.current}
