@@ -1,17 +1,20 @@
 "use client";
-import {useEffect,useMemo,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
 import type {CSSProperties} from "react";
 import type {LanternKo2DProps} from "./types";
 import {FaceRig2D} from "./FaceRig2D";
 import styles from "./lantern-ko-2d.module.css";
 import "./artwork.css";
 const clamp=(v:number,lo=-1,hi=1)=>Math.min(hi,Math.max(lo,v));
+type IdleBeat={x:number;y:number;tilt:number;shift:number;lantern:number};
+const STILL:IdleBeat={x:0,y:0,tilt:0,shift:0,lantern:0};
 export function LanternKo2D({expression,emotions,lookBias={x:0,y:0},anim,yaw=0,speed=0,justLanded=false,className="",depth=1}:LanternKo2DProps){
- const [blink,setBlink]=useState(false);
- useEffect(()=>{let timer=0,off=false;const schedule=()=>{timer=window.setTimeout(()=>{if(off)return;setBlink(true);window.setTimeout(()=>!off&&setBlink(false),110);schedule()},2300+Math.random()*3300)};schedule();return()=>{off=true;window.clearTimeout(timer)}},[]);
- const pose=useMemo(()=>({gx:clamp(lookBias.x)*5.2,gy:clamp(lookBias.y)*3.6,blush:clamp(.18+emotions.happiness*.34+emotions.stress*.4,0,1)}),[lookBias.x,lookBias.y,emotions.happiness,emotions.stress]);
+ const [blink,setBlink]=useState(false),[idleBeat,setIdleBeat]=useState<IdleBeat>(STILL);const idleRef=useRef(anim==="idle");idleRef.current=anim==="idle";
+ useEffect(()=>{let timer=0,off=false;const schedule=()=>{timer=window.setTimeout(()=>{if(off)return;setBlink(true);window.setTimeout(()=>!off&&setBlink(false),105);schedule()},2200+Math.random()*3600)};schedule();return()=>{off=true;window.clearTimeout(timer)}},[]);
+ useEffect(()=>{let timer=0,off=false;const schedule=()=>{timer=window.setTimeout(()=>{if(off)return;if(idleRef.current){const energy=clamp(emotions.energy,0,1),curiosity=clamp(emotions.curiosity,0,1),attention=clamp(emotions.attention,0,1),dir=Math.random()>.5?1:-1;setIdleBeat({x:dir*(1.2+curiosity*2.5),y:(Math.random()-.45)*(1.1+attention*1.5),tilt:dir*(.7+curiosity*1.4),shift:(Math.random()-.5)*(1.2+energy),lantern:dir*(1+curiosity*2)});window.setTimeout(()=>!off&&setIdleBeat(STILL),650+Math.random()*850)}schedule()},2600+Math.random()*3800)};schedule();return()=>{off=true;window.clearTimeout(timer)}},[emotions.energy,emotions.curiosity,emotions.attention]);
+ const pose=useMemo(()=>({gx:clamp(lookBias.x)*5.2+idleBeat.x,gy:clamp(lookBias.y)*3.6+idleBeat.y,blush:clamp(.18+emotions.happiness*.34+emotions.stress*.4,0,1)}),[lookBias.x,lookBias.y,emotions.happiness,emotions.stress,idleBeat]);
  const px=clamp(lookBias.x)*clamp(depth,0,1),py=clamp(lookBias.y)*clamp(depth,0,1),motion=anim==="run"?1:anim==="walk"?.62:anim==="jump"?.82:.28;
- const vars={"--head-x":`${px*2.4}px`,"--head-y":`${py*1.6}px`,"--yaw":`${clamp(yaw,-.6,.6)*3}deg`,"--energy":Math.max(.2,emotions.energy),"--speed":Math.min(1,speed),"--motion":motion,"--depth-back-x":`${-px*1.4}px`,"--depth-back-y":`${-py*.5}px`,"--depth-body-x":`${px*.7}px`,"--depth-body-y":`${py*.35}px`,"--depth-hair-x":`${px*1.4}px`,"--depth-hair-y":`${py*.8}px`,"--depth-front-x":`${px*2.1}px`,"--depth-front-y":`${py*1.1}px`,"--depth-tip-x":`${px*2.8}px`,"--depth-tip-y":`${py*1.5}px`} as CSSProperties;
+ const vars={"--head-x":`${px*2.4}px`,"--head-y":`${py*1.6}px`,"--yaw":`${clamp(yaw,-.6,.6)*3+idleBeat.tilt}deg`,"--idle-shift":`${idleBeat.shift}px`,"--idle-tip":`${idleBeat.lantern}deg`,"--energy":Math.max(.2,emotions.energy),"--speed":Math.min(1,speed),"--motion":motion,"--depth-back-x":`${-px*1.4}px`,"--depth-back-y":`${-py*.5}px`,"--depth-body-x":`${px*.7}px`,"--depth-body-y":`${py*.35}px`,"--depth-hair-x":`${px*1.4}px`,"--depth-hair-y":`${py*.8}px`,"--depth-front-x":`${px*2.1}px`,"--depth-front-y":`${py*1.1}px`,"--depth-tip-x":`${px*2.8}px`,"--depth-tip-y":`${py*1.5}px`} as CSSProperties;
  return <div className={`${styles.root} ${justLanded?styles.landed:""} ${className}`} style={vars} data-expression={expression} data-anim={anim} aria-label="Lantern-ko 2.5D">
   <div className={styles.shadow}/><div className={styles.backCloak} data-layer="back-cloak"/>
   <div className={styles.body} data-layer="body"><div className={styles.legs} data-layer="legs"/><div className={`${styles.arm} ${styles.armLeft}`} data-layer="arm-left"/><div className={`${styles.arm} ${styles.armRight}`} data-layer="arm-right"/><div className={styles.torso}/><div className={styles.bow} data-layer="bow"/><div className={styles.cloakFrontLeft} data-layer="cloak-front-left"/><div className={styles.cloakFrontRight} data-layer="cloak-front-right"/></div>
