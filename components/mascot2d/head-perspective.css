@@ -1,0 +1,20 @@
+/* Live2D-like perspective pass for the stable DOM renderer. Kept separate so the base rig remains recoverable. */
+[aria-label="Lantern-ko 2.5D"] [data-layer="face"]{
+ transform:translate(var(--face-shift-x),var(--face-shift-y)) scaleX(var(--face-scale-x));
+ transform-origin:50% 55%;
+ transition:transform 180ms cubic-bezier(.2,.8,.2,1),border-radius 180ms ease;
+}
+[aria-label="Lantern-ko 2.5D"] [data-layer="hood"]{
+ transform:translate(calc(var(--depth-back-x) + var(--hood-turn-x)),var(--depth-back-y));
+ transition:transform 210ms cubic-bezier(.2,.8,.2,1);
+}
+[aria-label="Lantern-ko 2.5D"] [data-layer="hair-back"]{
+ transform:translate(calc(var(--depth-hair-x) + var(--hair-turn-x)),var(--depth-hair-y));
+}
+[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]{
+ transform:translate(calc(var(--depth-front-x) + var(--hair-turn-x)),var(--depth-front-y)) skewX(calc(var(--head-turn)*-1.1deg));
+}
+[aria-label="Lantern-ko 2.5D"][data-turn="left"] [data-layer="face"]{border-radius:46% 51% 48% 43%}
+[aria-label="Lantern-ko 2.5D"][data-turn="right"] [data-layer="face"]{border-radius:51% 46% 43% 48%}
+[aria-label="Lantern-ko 2.5D"][data-turn="front"] [data-layer="face"]{border-radius:49% 49% 46% 46%}
+@media(prefers-reduced-motion:reduce){[aria-label="Lantern-ko 2.5D"] [data-layer="face"],[aria-label="Lantern-ko 2.5D"] [data-layer="hood"]{transition:none}}
