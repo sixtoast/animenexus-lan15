@@ -5,6 +5,7 @@ import type {LanternKo2DProps} from "./types";
 import {FaceRig2D} from "./FaceRig2D";
 import styles from "./lantern-ko-2d.module.css";
 import "./artwork.css";
+import "./head-perspective.css";
 const clamp=(v:number,lo=-1,hi=1)=>Math.min(hi,Math.max(lo,v));
 type IdleBeat={x:number;y:number;tilt:number;shift:number;lantern:number};const STILL:IdleBeat={x:0,y:0,tilt:0,shift:0,lantern:0};
 export function LanternKo2D({expression,emotions,lookBias={x:0,y:0},gazeOverride={x:0,y:0},anim,yaw=0,speed=0,justLanded=false,className="",context,perchPose="stand",depth=1}:LanternKo2DProps){
