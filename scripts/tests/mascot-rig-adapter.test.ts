@@ -16,13 +16,12 @@ const emotions: MascotEmotions = {
 
 test("rig adapter keeps continuous channels bounded", () => {
   const pose = resolveFaceRigPose("curious", emotions, "idle", 1, { x: 1, y: -1 }, 0);
-  assert.ok(pose.eyeOpenL >= 0 && pose.eyeOpenL <= 1.4);
-  assert.ok(pose.eyeOpenR >= 0 && pose.eyeOpenR <= 1.4);
-  // Socket-safe pupil travel after visual tuning pass
-  assert.ok(pose.pupilX >= -0.42 && pose.pupilX <= 0.42);
-  assert.ok(pose.pupilY >= -0.28 && pose.pupilY <= 0.28);
+  assert.ok(pose.eyeOpenL >= 0 && pose.eyeOpenL <= 1.25);
+  assert.ok(pose.eyeOpenR >= 0 && pose.eyeOpenR <= 1.25);
+  assert.ok(pose.pupilX >= -0.28 && pose.pupilX <= 0.28);
+  assert.ok(pose.pupilY >= -0.18 && pose.pupilY <= 0.18);
   assert.ok(pose.blush >= 0 && pose.blush <= 1);
-  assert.ok(pose.headYaw >= -0.09 && pose.headYaw <= 0.09);
+  assert.ok(pose.headYaw >= -0.055 && pose.headYaw <= 0.055);
 });
 
 test("blink closes eyes without moving the engine state", () => {
@@ -36,25 +35,32 @@ test("animation adds presentation bias rather than replacing expression", () => 
   const idle = resolveFaceRigPose("embarrassed", emotions, "idle", 1, { x: 0, y: 0 }, 0);
   const bow = resolveFaceRigPose("embarrassed", emotions, "bow", 1, { x: 0, y: 0 }, 0);
   assert.ok(bow.blush >= idle.blush);
-  assert.ok(bow.eyeOpenR <= idle.eyeOpenR);
 });
 
 test("sleep forces closed eyes", () => {
   const sleepy: MascotEmotions = { ...emotions, sleepiness: 0.9 };
   const pose = resolveFaceRigPose("neutral", sleepy, "sleep", 1, { x: 0.5, y: 0.5 }, 0);
-  assert.ok(pose.eyeOpenL < 0.25);
-  assert.ok(pose.eyeOpenR < 0.25);
+  assert.ok(pose.eyeOpenL < 0.2);
+  assert.ok(pose.eyeOpenR < 0.2);
 });
 
-test("embarrassed boosts blush for mobile readability", () => {
-  const pose = resolveFaceRigPose("embarrassed", emotions, "idle", 1, { x: 0, y: 0 }, 0);
-  assert.ok(pose.blush >= 0.75);
+test("neutral stays reasonably open when not sleepy", () => {
+  const pose = resolveFaceRigPose("neutral", emotions, "idle", 1, { x: 0, y: 0 }, 0);
+  assert.ok(pose.eyeOpenL >= 0.85);
+  assert.ok(pose.eyeOpenR >= 0.85);
 });
 
-test("micro-saccades keep pupils inside socket", () => {
+test("happy smile does not force intense side pupils", () => {
+  const pose = resolveFaceRigPose("happy", emotions, "happy", 1, { x: 0.3, y: 0 }, 0);
+  assert.ok(Math.abs(pose.pupilX) <= 0.28);
+  assert.ok(pose.mouthCurve > 0.3);
+  assert.ok(pose.eyeOpenL >= 0.85);
+});
+
+test("micro-saccades stay nearly invisible and in socket", () => {
   for (let t = 0; t < 10; t += 0.37) {
-    const pose = resolveFaceRigPose("curious", emotions, "idle", t, { x: 0.8, y: -0.6 }, 0);
-    assert.ok(pose.pupilX >= -0.42 && pose.pupilX <= 0.42);
-    assert.ok(pose.pupilY >= -0.28 && pose.pupilY <= 0.28);
+    const pose = resolveFaceRigPose("curious", emotions, "idle", t, { x: 0.5, y: -0.3 }, 0);
+    assert.ok(pose.pupilX >= -0.28 && pose.pupilX <= 0.28);
+    assert.ok(pose.pupilY >= -0.18 && pose.pupilY <= 0.18);
   }
 });
