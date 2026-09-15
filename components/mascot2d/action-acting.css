@@ -1,0 +1,19 @@
+/* Animation principles layered over the existing action clips: anticipation -> commit -> follow-through -> rest. */
+[aria-label="Lantern-ko 2.5D"] [data-layer="body"],[aria-label="Lantern-ko 2.5D"] .headRig{transition-duration:150ms}
+[aria-label="Lantern-ko 2.5D"][data-action-phase="anticipate"] [data-layer="body"]{translate:0 calc(var(--emotion-body-y) + 2px);scale:.985 calc(var(--emotion-scale-y)*.985)}
+[aria-label="Lantern-ko 2.5D"][data-action-phase="anticipate"] .headRig{translate:0 1px;scale:.992}
+[aria-label="Lantern-ko 2.5D"][data-action-phase="anticipate"] [data-layer="back-cloak"]{translate:0 -1px}
+[aria-label="Lantern-ko 2.5D"][data-action-phase="commit"] [data-layer="body"]{translate:0 calc(var(--emotion-body-y) - 1px);scale:1.012 calc(var(--emotion-scale-y)*1.008)}
+[aria-label="Lantern-ko 2.5D"][data-action-phase="commit"] .headRig{translate:0 -1.5px;scale:1.006}
+[aria-label="Lantern-ko 2.5D"][data-action-phase="commit"] [data-layer="hair-back"]{scale:1.01}
+[aria-label="Lantern-ko 2.5D"][data-action-phase="commit"] [data-layer="back-cloak"]{scale:1.012}
+[aria-label="Lantern-ko 2.5D"][data-action-phase="follow"] [data-layer="body"]{translate:0 calc(var(--emotion-body-y) + .7px);scale:.996 calc(var(--emotion-scale-y)*.998)}
+[aria-label="Lantern-ko 2.5D"][data-action-phase="follow"] .headRig{translate:0 .6px;scale:.998}
+[aria-label="Lantern-ko 2.5D"][data-anim="wave"][data-action-phase="anticipate"] [data-layer="arm-right"]{rotate:-7deg;translate:-2px 1px}
+[aria-label="Lantern-ko 2.5D"][data-anim="point"][data-action-phase="anticipate"] [data-layer="arm-right"]{rotate:5deg;translate:-2px 1px}
+[aria-label="Lantern-ko 2.5D"][data-anim="jump"][data-action-phase="anticipate"] [data-layer="body"]{translate:0 calc(var(--emotion-body-y) + 4px);scale:1.02 calc(var(--emotion-scale-y)*.965)}
+[aria-label="Lantern-ko 2.5D"][data-anim="jump"][data-action-phase="commit"] [data-layer="body"]{translate:0 calc(var(--emotion-body-y) - 3px);scale:.985 calc(var(--emotion-scale-y)*1.025)}
+[aria-label="Lantern-ko 2.5D"][data-anim="bow"][data-action-phase="anticipate"] .headRig{translate:0 -1px;rotate:-1deg}
+[aria-label="Lantern-ko 2.5D"][data-anim="nod"][data-action-phase="anticipate"] .headRig{translate:0 -2px}
+[aria-label="Lantern-ko 2.5D"][data-anim="celebrate"][data-action-phase="commit"] [data-layer="arm-left"],[aria-label="Lantern-ko 2.5D"][data-anim="celebrate"][data-action-phase="commit"] [data-layer="arm-right"]{translate:0 -2px;scale:1.035}
+@media(prefers-reduced-motion:reduce){[aria-label="Lantern-ko 2.5D"][data-action-phase] [data-layer="body"],[aria-label="Lantern-ko 2.5D"][data-action-phase] .headRig,[aria-label="Lantern-ko 2.5D"][data-action-phase] [data-layer="arm-left"],[aria-label="Lantern-ko 2.5D"][data-action-phase] [data-layer="arm-right"],[aria-label="Lantern-ko 2.5D"][data-action-phase] [data-layer="hair-back"],[aria-label="Lantern-ko 2.5D"][data-action-phase] [data-layer="back-cloak"]{translate:0 0;scale:1;rotate:0deg}}
