@@ -2,8 +2,7 @@
 
 /**
  * GltfCompanion — load /public/mascot/companion.glb or fall back to LanternKoMesh.
- * V3: continuous face channels via resolveFaceRigPose; optional Pupil/Eyelid nodes.
- * Visual pass: socket-safe pupil travel, adaptive head lag, deeper sleep lids.
+ * V3 continuous face channels; cute-again pupil/lid parity with procedural mesh.
  */
 
 import * as THREE from "three";
@@ -93,7 +92,7 @@ function LoadedGlbCompanion({
   }, [anim, actions, names, hasClips]);
 
   const squashEnv = useRef(0);
-  const blinkTimer = useRef(2.2);
+  const blinkTimer = useRef(2.8);
   const blinkAmount = useRef(0);
   const headGaze = useRef(new THREE.Vector2(0, 0));
   const tipLag = useRef(new THREE.Vector2(0, 0));
@@ -106,9 +105,13 @@ function LoadedGlbCompanion({
     blinkTimer.current -= dt;
     if (blinkTimer.current <= 0) {
       blinkAmount.current = 1;
-      blinkTimer.current = 2.5 + Math.random() * 3;
+      blinkTimer.current = 2.4 + Math.random() * 3.6;
     }
-    blinkAmount.current = Math.max(0, blinkAmount.current - dt * 7);
+    if (blinkAmount.current > 0.55) {
+      blinkAmount.current = Math.max(0, blinkAmount.current - dt * 9);
+    } else {
+      blinkAmount.current = Math.max(0, blinkAmount.current - dt * 5.5);
+    }
 
     const pose = resolveFaceRigPose(
       expression,
@@ -133,12 +136,12 @@ function LoadedGlbCompanion({
     if (lidL && lidR) {
       const closeL = 1 - Math.min(1, Math.max(0, pose.eyeOpenL));
       const closeR = 1 - Math.min(1, Math.max(0, pose.eyeOpenR));
-      const lambdaL = closeL > 0.82 ? 11 : 14;
-      const lambdaR = closeR > 0.82 ? 11 : 14;
-      lidL.scale.y = damp(lidL.scale.y, Math.max(0.03, closeL), lambdaL, dt);
-      lidR.scale.y = damp(lidR.scale.y, Math.max(0.03, closeR), lambdaR, dt);
+      const lambdaL = closeL > 0.85 ? 10 : 14;
+      const lambdaR = closeR > 0.85 ? 10 : 14;
+      // Soft mapping: modest neutral close, full only when nearly shut.
+      lidL.scale.y = damp(lidL.scale.y, 0.06 + closeL * 0.88, lambdaL, dt);
+      lidR.scale.y = damp(lidR.scale.y, 0.06 + closeR * 0.88, lambdaR, dt);
     } else if (eyeL && eyeR) {
-      // Legacy GLBs have no lids — scale eye only as compatibility fallback.
       eyeL.scale.y = damp(eyeL.scale.y, pose.eyeOpenL, 12, dt);
       eyeR.scale.y = damp(eyeR.scale.y, pose.eyeOpenR, 12, dt);
     }
@@ -146,20 +149,18 @@ function LoadedGlbCompanion({
     const pupilL = nodes.PupilL;
     const pupilR = nodes.PupilR;
     if (pupilL && pupilR) {
-      // Socket-safe travel (matches procedural mesh tuning).
-      const px = pose.pupilX * 0.028;
-      const py = pose.pupilY * 0.02;
-      pupilL.position.x = damp(pupilL.position.x, px, 18, dt);
-      pupilR.position.x = damp(pupilR.position.x, px, 18, dt);
-      pupilL.position.y = damp(pupilL.position.y, py, 18, dt);
-      pupilR.position.y = damp(pupilR.position.y, py, 18, dt);
+      const px = pose.pupilX * 0.02;
+      const py = pose.pupilY * 0.014;
+      pupilL.position.x = damp(pupilL.position.x, px, 16, dt);
+      pupilR.position.x = damp(pupilR.position.x, px, 16, dt);
+      pupilL.position.y = damp(pupilL.position.y, py, 16, dt);
+      pupilR.position.y = damp(pupilR.position.y, py, 16, dt);
     }
 
     const head = nodes.Head;
     if (head) {
-      // Adaptive lag: calm when gentle look; faster on attention snaps.
       const lookMag = Math.hypot(lookBias.x, lookBias.y);
-      const headLambda = 3.8 + Math.min(5.5, lookMag * 7);
+      const headLambda = 3.6 + Math.min(5, lookMag * 6);
       headGaze.current.x = damp(headGaze.current.x, pose.headYaw, headLambda, dt);
       headGaze.current.y = damp(
         headGaze.current.y,
@@ -169,7 +170,7 @@ function LoadedGlbCompanion({
       );
       head.rotation.y = headGaze.current.x;
       head.rotation.x = headGaze.current.y;
-      head.rotation.z = damp(head.rotation.z, pose.headRoll, 6, dt);
+      head.rotation.z = damp(head.rotation.z, pose.headRoll, 5.5, dt);
     }
 
     const mouth = nodes.Mouth as THREE.Mesh | undefined;
@@ -188,7 +189,7 @@ function LoadedGlbCompanion({
         mouth.morphTargetInfluences[idx] = damp(
           mouth.morphTargetInfluences[idx],
           target,
-          12,
+          11,
           dt,
         );
       }
@@ -199,8 +200,8 @@ function LoadedGlbCompanion({
       const mat = tip.material as THREE.MeshStandardMaterial | undefined;
       if (mat && "emissiveIntensity" in mat) {
         mat.emissiveIntensity =
-          0.55 +
-          Math.sin(t * (0.55 + emotions.energy * 0.8) * Math.PI * 2) * 0.4;
+          0.5 +
+          Math.sin(t * (0.5 + emotions.energy * 0.7) * Math.PI * 2) * 0.35;
       }
       const targetX = Math.sin(t * 2.2) * 0.05 * (0.4 + speed);
       const targetZ = -yaw * 0.15;
