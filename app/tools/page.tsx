@@ -8,7 +8,7 @@ import {
 } from "@/components/ToolsHubClient";
 
 export const metadata = {
-  title: "Tools · AnimeNexus",
+  title: "Tools \u00b7 AnimeNexus",
   description: "Compare, fusion, radar, oracle, stats, fanzone, and more.",
 };
 
@@ -17,7 +17,7 @@ const TOOLS: ToolCard[] = [
     href: "/tools/tonight",
     icon: "night-desk",
     title: "Tonight",
-    blurb: "Minutes left → shelf that fits.",
+    blurb: "Minutes left \u2192 shelf that fits.",
     personality: "generic",
   },
   {
@@ -66,7 +66,7 @@ const TOOLS: ToolCard[] = [
     href: "/tools/status",
     icon: "stats",
     title: "Status",
-    blurb: "Optional API gates · soft-fail.",
+    blurb: "Optional API gates \u00b7 soft-fail.",
     personality: "generic",
   },
   {
@@ -87,7 +87,7 @@ const TOOLS: ToolCard[] = [
     href: "/tools/sauce",
     icon: "sauce",
     title: "Sauce",
-    blurb: "Drop, paste, URL → trace.moe.",
+    blurb: "Drop, paste, URL \u2192 trace.moe.",
     personality: "sauce",
   },
   {
@@ -130,28 +130,24 @@ const TOOLS: ToolCard[] = [
 export default function ToolsHubPage() {
   return (
     <main>
-      <section className="hero" style={{ paddingBottom: 12 }}>
+      <section className="hero tools-hero" style={{ paddingBottom: 8 }}>
         <div className="container">
-          <div className="hero-badge">Night Desk · tools</div>
+          <div className="hero-badge">Night Desk \u00b7 instruments</div>
           <h1>
             Desk <span>tools</span>
           </h1>
-          <p>
-            Instruments for the night — AI desk, catalog tools, and soft
-            utilities.
+          <p className="tools-hero-lead">
+            A cabinet of instruments \u2014 not an app-store grid.
           </p>
-          <div style={{ marginTop: 16 }}>
+          <div style={{ marginTop: 12 }}>
             <OpenAiDeskButton />
           </div>
         </div>
       </section>
-      <section className="container" style={{ paddingBottom: 48 }}>
-        <div className="desk-band">
-          <span>
-            <strong>Lantern</strong> · pick an instrument
-          </span>
-          <Link href="/">Home</Link>
-        </div>
+      <section
+        className="container tools-cabinet-section"
+        style={{ paddingBottom: 48 }}
+      >
         <ToolsHubClient tools={TOOLS} />
       </section>
     </main>
