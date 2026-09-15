@@ -2,7 +2,7 @@
 import {useCallback,useEffect,useRef,useState} from "react";
 import {useMascotStore} from "@/lib/mascot/store";
 import {worldToScreen,screenToWorld} from "@/lib/mascot/world-coords";
-import {buildTerrain,getHomePlatform,nearestPlatform,platformById,planHops,type TerrainPlatform} from "@/lib/mascot/page-terrain";
+import {buildTerrain,getHomePlatform,nearestPlatform,planHops,type TerrainPlatform} from "@/lib/mascot/page-terrain";
 import {clearMovementCommand,issueMovementCommand,peekMovementCommand} from "@/lib/mascot/movement-command";
 import {areInteractionsEnabled} from "@/lib/mascot/a11y";
 import {wireStoreMovement} from "@/lib/mascot/wire-movement";
@@ -12,6 +12,7 @@ import {Mascot2DEngineAdapter} from "./Mascot2DEngineAdapter";
 import type {PerchPose} from "./types";
 type Point={x:number;y:number};type Phase="idle"|"anticipate"|"travel";type Interaction="none"|"hover"|"grab"|"poke";type PosePhase="stable"|"balance"|"settle";
 const HOME:Point={x:1.05,y:-.72},clamp=(n:number,a:number,b:number)=>Math.max(a,Math.min(b,n));
+const platformById=(platforms:TerrainPlatform[],id:string|null|undefined):TerrainPlatform|null=>id?platforms.find(p=>p.id===id)??null:null;
 const perch=(p:TerrainPlatform,fromX=p.x):Point=>{const top=p.y+p.hh;if(["card","search","modal","drawer","dropdown"].includes(p.type)){const side=fromX<=p.x?-1:1,edge=Math.min(Math.max(p.hw*.68,.055),p.type==="card"?.22:.32);return{x:p.x+side*edge,y:top}}return{x:p.x,y:top}};
 const choosePerchPose=(p:TerrainPlatform,at:Point):PerchPose=>{const wide=p.hw>.18,tall=p.hh>.28,side=at.x<=p.x?"left":"right";if(["modal","drawer","dropdown"].includes(p.type)&&tall)return side==="left"?"peek-left":"peek-right";if(p.type==="card"&&wide)return"sit";if((p.type==="card"||p.type==="search")&&p.hh>.13)return"crouch";return"stand"};
 export function LiveMascot2D({reducedMotion=false}:{reducedMotion?:boolean}){
