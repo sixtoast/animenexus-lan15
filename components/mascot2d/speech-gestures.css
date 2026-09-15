@@ -1,0 +1,7 @@
+/* Speech gestures are deliberately small: they support dialogue instead of competing with it. */
+[aria-label="Lantern-ko 2.5D"][data-speaking="true"] [data-layer="body"]{translate:calc(var(--speech-lean)*1.1px) calc(var(--speech-emphasis)*-.8px)}
+[aria-label="Lantern-ko 2.5D"][data-speaking="true"] [data-layer="arm-left"]{rotate:calc(var(--speech-left)*-13deg);translate:calc(var(--speech-left)*-2px) calc(var(--speech-left)*-2px);transform-origin:70% 18%}
+[aria-label="Lantern-ko 2.5D"][data-speaking="true"] [data-layer="arm-right"]{rotate:calc(var(--speech-right)*13deg);translate:calc(var(--speech-right)*2px) calc(var(--speech-right)*-2px);transform-origin:30% 18%}
+[aria-label="Lantern-ko 2.5D"][data-speaking="true"] [data-layer="bow"]{translate:0 calc(var(--speech-emphasis)*-1px)}
+[aria-label="Lantern-ko 2.5D"][data-speech-gesture="emphasis"] [data-layer="cloak-front-left"],[aria-label="Lantern-ko 2.5D"][data-speech-gesture="emphasis"] [data-layer="cloak-front-right"]{translate:0 calc(var(--speech-emphasis)*-.7px)}
+@media(prefers-reduced-motion:reduce){[aria-label="Lantern-ko 2.5D"] [data-layer="body"],[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"],[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"],[aria-label="Lantern-ko 2.5D"] [data-layer="bow"]{translate:0 0;rotate:0deg}}
