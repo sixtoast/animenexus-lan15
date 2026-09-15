@@ -1,13 +1,18 @@
 "use client";
 
 /**
- * Procedural Lantern-ko mesh — proportions & secondary motion from Claude
- * live demo, expression keys aligned with lib/mascot/expression.ts.
+ * Procedural Lantern-ko mesh — V3 continuous face rig.
+ *
+ * Engine state (expression / emotions / anim / lookBias) stays authoritative.
+ * This mesh only expresses continuous channels from resolveFaceRigPose.
+ * Proportions & secondary motion aligned with lib/mascot/expression.ts.
  */
 
 import * as THREE from "three";
 import { forwardRef, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
+import type { MascotAnim, MascotEmotions } from "@/lib/mascot/types";
+import { resolveFaceRigPose } from "@/lib/mascot/rig-adapter";
 
 export type ExpressionKey =
   | "neutral"
@@ -203,10 +208,26 @@ const PALETTE = {
   mouth: "#c4786a",
   tip: "#ffd9a8",
   brow: "#2a1810",
+  /** Amber iris / pupil — Lantern-ko identity (not reference-mascot orange hair). */
+  pupil: "#f2b86f",
+};
+
+const DEFAULT_EMOTIONS: MascotEmotions = {
+  curiosity: 0.5,
+  energy: 0.5,
+  happiness: 0.5,
+  boredom: 0.2,
+  sleepiness: 0.1,
+  attention: 0.5,
+  confidence: 0.5,
+  stress: 0.1,
 };
 
 export type LanternKoMeshProps = {
   expression?: ExpressionKey;
+  emotions?: MascotEmotions;
+  lookBias?: { x: number; y: number };
+  anim?: MascotAnim;
   yaw?: number;
   speed?: number;
   justLanded?: boolean;
@@ -218,7 +239,15 @@ function damp(current: number, target: number, lambda: number, dt: number) {
 
 export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
   function LanternKoMesh(
-    { expression = "neutral", yaw = 0, speed = 0, justLanded = false },
+    {
+      expression = "neutral",
+      emotions = DEFAULT_EMOTIONS,
+      lookBias = { x: 0, y: 0 },
+      anim = "idle",
+      yaw = 0,
+      speed = 0,
+      justLanded = false,
+    },
     ref,
   ) {
     const root = useRef<THREE.Group>(null);
@@ -231,6 +260,10 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
     const glow = useRef<THREE.Mesh>(null);
     const eyeL = useRef<THREE.Mesh>(null);
     const eyeR = useRef<THREE.Mesh>(null);
+    const pupilL = useRef<THREE.Mesh>(null);
+    const pupilR = useRef<THREE.Mesh>(null);
+    const lidL = useRef<THREE.Mesh>(null);
+    const lidR = useRef<THREE.Mesh>(null);
     const browL = useRef<THREE.Mesh>(null);
     const browR = useRef<THREE.Mesh>(null);
     const cheekL = useRef<THREE.Mesh>(null);
@@ -245,6 +278,9 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
     });
 
     const squashEnv = useRef(0);
+    const blinkTimer = useRef(2.2);
+    const blinkAmount = useRef(0);
+    const headAim = useRef(new THREE.Vector2(0, 0));
     const settlePhase = useRef(0);
     const tipLag = useRef(new THREE.Vector2(0, 0));
     const browBaseY = HEAD_R * 0.22;
@@ -288,50 +324,157 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
         depthWrite: false,
       });
       const hl = new THREE.MeshBasicMaterial({ color: PALETTE.eyeHighlight });
-      return { skin, blush, eye, mouth, brow, tipMat, glowMat, hl };
+      const pupil = new THREE.MeshStandardMaterial({
+        color: PALETTE.pupil,
+        roughness: 0.25,
+        emissive: "#5a2f12",
+        emissiveIntensity: 0.08,
+      });
+      const lid = new THREE.MeshStandardMaterial({
+        color: PALETTE.skin,
+        roughness: 0.45,
+      });
+      return { skin, blush, eye, mouth, brow, tipMat, glowMat, hl, pupil, lid };
     }, []);
 
     useFrame((state, delta) => {
       const dt = Math.min(delta, 0.05);
       const t = state.clock.elapsedTime;
-      const pose = EXPRESSIONS[expression] ?? EXPRESSIONS.neutral;
 
-      if (eyeL.current && eyeR.current) {
-        eyeL.current.scale.y = damp(eyeL.current.scale.y, pose.eyeY, 12, dt);
-        eyeR.current.scale.y = damp(eyeR.current.scale.y, pose.eyeY, 12, dt);
+      // Procedural blink below Utility AI — does not issue BLINK actions.
+      blinkTimer.current -= dt;
+      if (blinkTimer.current <= 0) {
+        blinkAmount.current = 1;
+        blinkTimer.current = 2.5 + Math.random() * 3;
+      }
+      blinkAmount.current = Math.max(0, blinkAmount.current - dt * 7);
+
+      const rigPose = resolveFaceRigPose(
+        expression,
+        emotions,
+        anim,
+        t,
+        lookBias,
+        blinkAmount.current,
+      );
+
+      // Stable eyeballs: gaze moves amber pupil; lids close over the eye.
+      // Do not scale the whole eyeball to blink.
+      const pupilX = rigPose.pupilX * HEAD_R * 0.045;
+      const pupilY = rigPose.pupilY * HEAD_R * 0.035;
+      if (pupilL.current && pupilR.current) {
+        pupilL.current.position.x = damp(
+          pupilL.current.position.x,
+          -HEAD_R * 0.32 + pupilX,
+          18,
+          dt,
+        );
+        pupilR.current.position.x = damp(
+          pupilR.current.position.x,
+          HEAD_R * 0.32 + pupilX,
+          18,
+          dt,
+        );
+        pupilL.current.position.y = damp(
+          pupilL.current.position.y,
+          HEAD_R * 0.02 + pupilY,
+          18,
+          dt,
+        );
+        pupilR.current.position.y = damp(
+          pupilR.current.position.y,
+          HEAD_R * 0.02 + pupilY,
+          18,
+          dt,
+        );
+      }
+      if (lidL.current && lidR.current) {
+        const closeL = 1 - Math.min(1, rigPose.eyeOpenL);
+        const closeR = 1 - Math.min(1, rigPose.eyeOpenR);
+        lidL.current.scale.y = damp(
+          lidL.current.scale.y,
+          0.08 + closeL * 1.08,
+          16,
+          dt,
+        );
+        lidR.current.scale.y = damp(
+          lidR.current.scale.y,
+          0.08 + closeR * 1.08,
+          16,
+          dt,
+        );
+        lidL.current.position.y = damp(
+          lidL.current.position.y,
+          HEAD_R * (0.12 - closeL * 0.1),
+          16,
+          dt,
+        );
+        lidR.current.position.y = damp(
+          lidR.current.position.y,
+          HEAD_R * (0.12 - closeR * 0.1),
+          16,
+          dt,
+        );
+      }
+
+      // Eyes lead; head follows more slowly. lookBias is engine-authoritative.
+      if (head.current) {
+        headAim.current.x = damp(headAim.current.x, rigPose.headYaw, 5.2, dt);
+        headAim.current.y = damp(headAim.current.y, rigPose.headPitch, 5.2, dt);
+        head.current.rotation.y = headAim.current.x;
+        head.current.rotation.x = headAim.current.y;
+        head.current.rotation.z = damp(
+          head.current.rotation.z,
+          rigPose.headRoll,
+          6,
+          dt,
+        );
       }
 
       if (browL.current && browR.current) {
         browL.current.rotation.z = damp(
           browL.current.rotation.z,
-          pose.brow[0],
+          rigPose.browL,
           8,
           dt,
         );
         browR.current.rotation.z = damp(
           browR.current.rotation.z,
-          pose.brow[1],
+          rigPose.browR,
           8,
           dt,
         );
         browL.current.position.y = damp(
           browL.current.position.y,
-          browBaseY + pose.browY,
+          browBaseY,
           8,
           dt,
         );
         browR.current.position.y = damp(
           browR.current.position.y,
-          browBaseY + pose.browY,
+          browBaseY,
           8,
           dt,
         );
       }
 
+      const resolvedMouth: MouthVariant =
+        rigPose.mouthOpen > 0.48
+          ? "openO"
+          : rigPose.mouthCurve > 0.62
+            ? "bigSmile"
+            : rigPose.mouthCurve > 0.18
+              ? "smile"
+              : rigPose.mouthCurve < -0.32
+                ? "frown"
+                : expression === "confused"
+                  ? "wobble"
+                  : "flat";
+
       (Object.keys(mouthRefs.current) as MouthVariant[]).forEach((key) => {
         const m = mouthRefs.current[key];
         if (!m) return;
-        const active = key === pose.mouth;
+        const active = key === resolvedMouth;
         const target = active ? 1 : 0;
         const scale = damp(m.scale.x || 0.0001, target, 14, dt);
         const s = Math.max(scale, 0.0001);
@@ -342,13 +485,17 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
       if (cheekL.current && cheekR.current) {
         const matL = cheekL.current.material as THREE.MeshStandardMaterial;
         const matR = cheekR.current.material as THREE.MeshStandardMaterial;
-        matL.opacity = damp(matL.opacity, pose.cheek, 6, dt);
-        matR.opacity = damp(matR.opacity, pose.cheek, 6, dt);
+        matL.opacity = damp(matL.opacity, rigPose.blush, 6, dt);
+        matR.opacity = damp(matR.opacity, rigPose.blush, 6, dt);
       }
 
       if (tip.current) {
         const mat = tip.current.material as THREE.MeshStandardMaterial;
-        const pulse = 0.55 + Math.sin(t * pose.pulse * Math.PI * 2) * 0.4;
+        const pulseHz =
+          0.55 + emotions.energy * 0.8 +
+          (EXPRESSIONS[expression]?.pulse ?? 0.4) * 0.15;
+        const pulse =
+          0.55 + Math.sin(t * pulseHz * Math.PI * 2) * 0.4;
         mat.emissiveIntensity = pulse;
         if (glow.current) {
           const gMat = glow.current.material as THREE.MeshBasicMaterial;
@@ -369,7 +516,11 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
       squashEnv.current = damp(squashEnv.current, 0, 6, dt);
       const sq = squashEnv.current;
       if (bodyGroup.current) {
-        bodyGroup.current.scale.set(1 + sq * 0.12, 1 - sq * 0.18, 1 + sq * 0.12);
+        bodyGroup.current.scale.set(
+          1 + sq * 0.12,
+          1 - sq * 0.18,
+          1 + sq * 0.12,
+        );
       }
       settlePhase.current += dt * 9;
       const wobble = Math.sin(settlePhase.current) * sq * 0.25;
@@ -377,7 +528,8 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
       if (armR.current) armR.current.rotation.x = -wobble;
 
       if (root.current) {
-        root.current.position.y = Math.sin(t * 1.4) * 0.015 * (0.5 + speed);
+        root.current.position.y =
+          Math.sin(t * 1.4) * 0.015 * (0.5 + speed);
       }
     });
 
@@ -446,6 +598,7 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             />
           </mesh>
 
+          {/* Stable dark eyeball */}
           <mesh
             ref={eyeL}
             name="EyeL"
@@ -463,6 +616,45 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             <primitive object={materials.eye} attach="material" />
           </mesh>
 
+          {/* Amber pupil / iris — independent gaze */}
+          <mesh
+            ref={pupilL}
+            name="PupilL"
+            position={[-HEAD_R * 0.32, HEAD_R * 0.02, HEAD_R * 1.01]}
+          >
+            <sphereGeometry args={[HEAD_R * 0.055, 12, 12]} />
+            <primitive object={materials.pupil} attach="material" />
+          </mesh>
+          <mesh
+            ref={pupilR}
+            name="PupilR"
+            position={[HEAD_R * 0.32, HEAD_R * 0.02, HEAD_R * 1.01]}
+          >
+            <sphereGeometry args={[HEAD_R * 0.055, 12, 12]} />
+            <primitive object={materials.pupil} attach="material" />
+          </mesh>
+
+          {/* Independent eyelids — close over stable eyes */}
+          <mesh
+            ref={lidL}
+            name="EyelidL"
+            position={[-HEAD_R * 0.32, HEAD_R * 0.12, HEAD_R * 1.015]}
+            scale={[1, 0.08, 1]}
+          >
+            <sphereGeometry args={[HEAD_R * 0.135, 14, 10]} />
+            <primitive object={materials.lid} attach="material" />
+          </mesh>
+          <mesh
+            ref={lidR}
+            name="EyelidR"
+            position={[HEAD_R * 0.32, HEAD_R * 0.12, HEAD_R * 1.015]}
+            scale={[1, 0.08, 1]}
+          >
+            <sphereGeometry args={[HEAD_R * 0.135, 14, 10]} />
+            <primitive object={materials.lid} attach="material" />
+          </mesh>
+
+          {/* Specular highlights (fixed relative to eye centre) */}
           <mesh position={[-HEAD_R * 0.28, HEAD_R * 0.06, HEAD_R * 0.98]}>
             <sphereGeometry args={[HEAD_R * 0.035, 8, 8]} />
             <primitive object={materials.hl} attach="material" />
@@ -498,7 +690,9 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
               scale={0.0001}
               visible={false}
             >
-              <torusGeometry args={[HEAD_R * 0.15, HEAD_R * 0.028, 8, 16, Math.PI]} />
+              <torusGeometry
+                args={[HEAD_R * 0.15, HEAD_R * 0.028, 8, 16, Math.PI]}
+              />
               <primitive object={materials.mouth} attach="material" />
             </mesh>
             <mesh
@@ -509,7 +703,9 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
               scale={0.0001}
               visible={false}
             >
-              <torusGeometry args={[HEAD_R * 0.17, HEAD_R * 0.032, 8, 16, Math.PI]} />
+              <torusGeometry
+                args={[HEAD_R * 0.17, HEAD_R * 0.032, 8, 16, Math.PI]}
+              />
               <primitive object={materials.mouth} attach="material" />
             </mesh>
             <mesh
@@ -519,7 +715,9 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
               scale={0.0001}
               visible={false}
             >
-              <torusGeometry args={[HEAD_R * 0.13, HEAD_R * 0.026, 8, 16, Math.PI]} />
+              <torusGeometry
+                args={[HEAD_R * 0.13, HEAD_R * 0.026, 8, 16, Math.PI]}
+              />
               <primitive object={materials.mouth} attach="material" />
             </mesh>
             <mesh
@@ -539,7 +737,9 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
               scale={0.0001}
               visible={false}
             >
-              <boxGeometry args={[HEAD_R * 0.18, HEAD_R * 0.022, HEAD_R * 0.02]} />
+              <boxGeometry
+                args={[HEAD_R * 0.18, HEAD_R * 0.022, HEAD_R * 0.02]}
+              />
               <primitive object={materials.mouth} attach="material" />
             </mesh>
             <mesh
@@ -559,7 +759,9 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
 
           <group ref={tipGroup} name="Tip" position={[0, HEAD_R * 0.92, 0]}>
             <mesh position={[0, STEM_LEN * 0.5, 0]}>
-              <cylinderGeometry args={[TIP_R * 0.22, TIP_R * 0.28, STEM_LEN, 8]} />
+              <cylinderGeometry
+                args={[TIP_R * 0.22, TIP_R * 0.28, STEM_LEN, 8]}
+              />
               <primitive object={materials.skin} attach="material" />
             </mesh>
             <mesh ref={tip} position={[0, STEM_LEN + TIP_R * 0.85, 0]}>
