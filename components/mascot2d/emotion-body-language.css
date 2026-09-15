@@ -1,13 +1,10 @@
-/* Emotion is expressed through silhouette and posture, not only the face. Continuous variables handle blending; mood selectors add small characteristic accents. */
-[aria-label="Lantern-ko 2.5D"] [data-layer="body"]{translate:0 var(--emotion-body-y);scale:1 var(--emotion-scale-y)}
-[aria-label="Lantern-ko 2.5D"][data-mood="happy"] [data-layer="arm-left"]{rotate:-2deg}
-[aria-label="Lantern-ko 2.5D"][data-mood="happy"] [data-layer="arm-right"]{rotate:2deg}
-[aria-label="Lantern-ko 2.5D"][data-mood="curious"] [data-layer="hair-front"]{translate:1px -1px}
-[aria-label="Lantern-ko 2.5D"][data-mood="curious"] [data-layer="lantern"]{transform-origin:50% 2%}
-[aria-label="Lantern-ko 2.5D"][data-mood="sleepy"] [data-layer="arm-left"],[aria-label="Lantern-ko 2.5D"][data-mood="sleepy"] [data-layer="arm-right"]{translate:0 2px;scale:.985 1}
-[aria-label="Lantern-ko 2.5D"][data-mood="bored"] [data-layer="arm-left"]{rotate:1.5deg;translate:0 1px}
-[aria-label="Lantern-ko 2.5D"][data-mood="bored"] [data-layer="arm-right"]{rotate:-1.5deg;translate:0 1px}
-[aria-label="Lantern-ko 2.5D"][data-mood="confident"] [data-layer="torso"]{translate:0 -1px}
-[aria-label="Lantern-ko 2.5D"][data-mood="confident"] [data-layer="bow"]{translate:0 -1px}
-[aria-label="Lantern-ko 2.5D"][data-mood="stressed"] [data-layer="arm-left"],[aria-label="Lantern-ko 2.5D"][data-mood="stressed"] [data-layer="arm-right"]{scale:.98 1;translate:0 -1px}
+/* Continuous whole-body emotion pose. Values are fed by the inertia-smoothed emotion state so silhouette changes blend instead of snapping between mood selectors. */
+[aria-label="Lantern-ko 2.5D"] [data-layer="body"]{translate:var(--emotion-body-x) var(--emotion-body-y);scale:1 var(--emotion-scale-y);transform-origin:50% 18%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"]{rotate:var(--emotion-arm-left);transform-origin:70% 18%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"]{rotate:var(--emotion-arm-right);transform-origin:30% 18%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="torso"]{translate:0 var(--emotion-torso-y)}
+[aria-label="Lantern-ko 2.5D"] [data-layer="bow"]{translate:0 var(--emotion-bow-y)}
+[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]{translate:var(--emotion-hair-x) var(--emotion-hair-y)}
+[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-left"],[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-right"]{transform-origin:50% 8%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]{transform-origin:50% 2%}
 @media(prefers-reduced-motion:reduce){[aria-label="Lantern-ko 2.5D"] [data-layer="body"]{translate:0 0;scale:1}[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"],[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"],[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"],[aria-label="Lantern-ko 2.5D"] [data-layer="torso"],[aria-label="Lantern-ko 2.5D"] [data-layer="bow"]{rotate:0deg;translate:0 0;scale:1}}
