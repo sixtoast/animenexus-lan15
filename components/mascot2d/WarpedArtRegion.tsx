@@ -1,12 +1,14 @@
 "use client";
-import {useEffect,useRef} from "react";
+import {useCallback,useEffect,useRef} from "react";
 
-type Props={src:string;className?:string;headX:number;headY:number;width?:number;height?:number};
-/** Small affine mesh renderer for the approved raster. It bends sampled artwork instead of rotating a flat duplicate. */
-export function WarpedArtRegion({src,className,headX,headY,width=210,height=268}:Props){
+type MeshKind="face"|"hair-left"|"hair-right"|"cloak";
+type Props={src:string;className?:string;headX:number;headY:number;motion?:number;kind?:MeshKind;width?:number;height?:number};
+const clip=(ctx:CanvasRenderingContext2D,kind:MeshKind,w:number,h:number)=>{ctx.beginPath();if(kind==="face")ctx.ellipse(w*.5,h*.30,w*.245,h*.185,0,0,Math.PI*2);else if(kind==="hair-left"){ctx.moveTo(w*.07,h*.18);ctx.lineTo(w*.49,h*.14);ctx.lineTo(w*.48,h*.66);ctx.lineTo(w*.13,h*.72);ctx.closePath()}else if(kind==="hair-right"){ctx.moveTo(w*.51,h*.14);ctx.lineTo(w*.93,h*.18);ctx.lineTo(w*.87,h*.72);ctx.lineTo(w*.52,h*.66);ctx.closePath()}else{ctx.moveTo(w*.13,h*.32);ctx.lineTo(w*.87,h*.32);ctx.lineTo(w*.94,h*.92);ctx.lineTo(w*.68,h*.98);ctx.lineTo(w*.51,h*.72);ctx.lineTo(w*.32,h*.98);ctx.lineTo(w*.07,h*.91);ctx.closePath()}ctx.clip()};
+/** Raster deformation surface. Each material gets its own topology response instead of sharing a rigid transform. */
+export function WarpedArtRegion({src,className,headX,headY,motion=0,kind="face",width=210,height=268}:Props){
  const ref=useRef<HTMLCanvasElement>(null),image=useRef<HTMLImageElement|null>(null);
- useEffect(()=>{const img=new Image();img.crossOrigin="anonymous";img.src=src;img.onload=()=>{image.current=img;draw()};return()=>{image.current=null}},[src]);
- const draw=()=>{const canvas=ref.current,img=image.current;if(!canvas||!img)return;const ctx=canvas.getContext("2d");if(!ctx)return;ctx.clearRect(0,0,width,height);ctx.save();ctx.beginPath();ctx.ellipse(width*.5,height*.30,width*.245,height*.185,0,0,Math.PI*2);ctx.clip();const cols=6,rows=5,cw=width/cols,ch=height/rows,sx=img.naturalWidth/cols,sy=img.naturalHeight/rows;for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){const nx=(x+.5)/cols-.5,ny=(y+.5)/rows-.30,fall=Math.max(0,1-Math.hypot(nx*.95,ny*.75));const dx=headX*(5.2+nx*4.4)*fall,dy=headY*(3.2-ny*2.2)*fall,stretch=1+Math.abs(headX)*.022*fall;ctx.save();ctx.translate(x*cw+dx,y*ch+dy);ctx.scale(stretch,1+Math.abs(headY)*.012*fall);ctx.drawImage(img,x*sx,y*sy,sx+1,sy+1,0,0,cw+1,ch+1);ctx.restore()}ctx.restore()};
- useEffect(()=>{draw()},[headX,headY,width,height]);
+ const draw=useCallback(()=>{const canvas=ref.current,img=image.current;if(!canvas||!img)return;const ctx=canvas.getContext("2d");if(!ctx)return;ctx.clearRect(0,0,width,height);ctx.save();clip(ctx,kind,width,height);const cols=kind==="cloak"?7:6,rows=kind==="cloak"?7:6,cw=width/cols,ch=height/rows,sx=img.naturalWidth/cols,sy=img.naturalHeight/rows;for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){const u=(x+.5)/cols,v=(y+.5)/rows,nx=u-.5,ny=v-.5;let dx=0,dy=0,scaleX=1,scaleY=1,rot=0;if(kind==="face"){const fall=Math.max(0,1-Math.hypot(nx*.95,(v-.30)*.75));dx=headX*(5.2+nx*4.4)*fall;dy=headY*(3.2-(v-.30)*2.2)*fall;scaleX+=Math.abs(headX)*.022*fall;scaleY+=Math.abs(headY)*.012*fall}else if(kind==="hair-left"||kind==="hair-right"){const side=kind==="hair-left"?-1:1,root=Math.max(0,(v-.13)/.62),edge=Math.max(.2,Math.abs(nx)*1.55);dx=(-headX*3.4+side*motion*1.1)*root*edge;dy=(Math.abs(headX)*1.6+motion*1.2)*root*root;rot=(-headX*.018+side*motion*.006)*root}else{const hang=Math.max(0,(v-.30)/.68),side=nx*2;dx=(-headX*2.1*hang)+(side*motion*.75*hang);dy=(Math.abs(headX)*1.1+motion*1.7)*hang*hang;scaleX+=motion*.012*hang;rot=(-headX*.008+side*motion*.004)*hang}ctx.save();ctx.translate(x*cw+dx+cw/2,y*ch+dy+ch/2);ctx.rotate(rot);ctx.scale(scaleX,scaleY);ctx.drawImage(img,x*sx,y*sy,sx+1,sy+1,-cw/2,-ch/2,cw+1,ch+1);ctx.restore()}ctx.restore()},[headX,headY,height,kind,motion,width]);
+ useEffect(()=>{const img=new Image();img.crossOrigin="anonymous";img.src=src;img.onload=()=>{image.current=img;draw()};return()=>{image.current=null}},[src,draw]);
+ useEffect(()=>{draw()},[draw]);
  return <canvas ref={ref} className={className} width={width} height={height} aria-hidden/>;
 }
