@@ -1,0 +1,8 @@
+/* Target acquisition hierarchy: eyes lead, head follows, torso joins only for larger lateral targets. */
+[aria-label="Lantern-ko 2.5D"] [data-layer="body"]{transform-origin:50% 72%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="torso"]{transform-origin:50% 74%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="back-cloak"]{translate:calc(var(--target-body-turn)*-1.1px) 0}
+[aria-label="Lantern-ko 2.5D"] [data-layer="bow"]{translate:calc(var(--target-body-turn)*1.1px) 0}
+[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"]{translate:calc(var(--target-body-turn)*-.7px) 0}
+[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"]{translate:calc(var(--target-body-turn)*.7px) 0}
+@media(prefers-reduced-motion:reduce){[aria-label="Lantern-ko 2.5D"] [data-layer="back-cloak"],[aria-label="Lantern-ko 2.5D"] [data-layer="bow"],[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"],[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"]{translate:0 0}}
