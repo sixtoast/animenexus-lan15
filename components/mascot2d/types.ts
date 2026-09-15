@@ -5,6 +5,8 @@ export type LanternKo2DProps = {
   expression: ExpressionKey;
   emotions: MascotEmotions;
   lookBias?: { x: number; y: number };
+  /** Renderer-local gaze layered over the brain-owned look bias. */
+  gazeOverride?: { x: number; y: number };
   anim: MascotAnim;
   yaw?: number;
   speed?: number;
