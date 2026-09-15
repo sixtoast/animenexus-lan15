@@ -7,16 +7,19 @@
  *   Actor / Locomotion → CharacterRenderer → GltfCompanion | LanternKoMesh
  *
  * RULE: This module must never decide behaviour, intention, or terrain.
- * It only renders pose inputs (expression, anim, yaw, speed, land).
+ * It only renders pose inputs (expression, emotions, lookBias, anim, yaw, speed, land).
  */
 
 import type { ExpressionKey } from "./LanternKoMeshV2";
+import type { MascotAnim, MascotEmotions } from "@/lib/mascot/types";
 import { GltfCompanion } from "./GltfCompanion";
 
 export type CharacterRendererProps = {
   expression: ExpressionKey;
+  emotions: MascotEmotions;
+  lookBias?: { x: number; y: number };
   /** Locomotion / social anim label from store (idle, walk, jump, …) */
-  anim: string;
+  anim: MascotAnim;
   yaw?: number;
   speed?: number;
   justLanded?: boolean;
@@ -30,6 +33,8 @@ export type CharacterRendererProps = {
  */
 export function CharacterRenderer({
   expression,
+  emotions,
+  lookBias = { x: 0, y: 0 },
   anim,
   yaw = 0,
   speed = 0,
@@ -40,6 +45,8 @@ export function CharacterRenderer({
     <group scale={scale}>
       <GltfCompanion
         expression={expression}
+        emotions={emotions}
+        lookBias={lookBias}
         anim={anim}
         yaw={yaw}
         speed={speed}
