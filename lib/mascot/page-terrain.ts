@@ -10,8 +10,10 @@ export type TerrainPlatform={id:string;type:string;x:number;y:number;hw:number;h
 export {screenToWorld,worldToScreen,domRectToWorld};
 
 export function nearestPlatform(platforms:TerrainPlatform[],x:number,y:number):TerrainPlatform|null{if(!platforms.length)return null;let best:TerrainPlatform|null=null,bestDist=Infinity;for(const p of platforms){const top=p.y+p.hh,dx=Math.max(Math.abs(x-p.x)-p.hw,0),dy=y-top,d=Math.hypot(dx,dy*.6);if(d<bestDist){bestDist=d;best=p}}return best}
-/** Stable id lookup used by renderers that need to remain attached while DOM geometry changes. */
+/** Stable id lookup used by live renderers to remain attached while DOM geometry changes. */
 export function platformById(platforms:TerrainPlatform[],id:string|null|undefined):TerrainPlatform|null{return id?platforms.find(p=>p.id===id)??null:null}
+/** Compare two snapshots of the same platform for lightweight environmental reactions. */
+export function platformDelta(previous:TerrainPlatform,current:TerrainPlatform){return{dx:current.x-previous.x,dy:current.y-previous.y,dw:current.hw-previous.hw,dh:current.hh-previous.hh,distance:Math.hypot(current.x-previous.x,current.y-previous.y)}}
 export function rectToPlatformFromDom(id:string,type:string,r:DOMRect,priority:number):TerrainPlatform|null{const vw=window.innerWidth||1,vh=window.innerHeight||1;if(r.width<10||r.height<10)return null;if(r.bottom<40||r.top>vh-40||r.right<40||r.left>vw-40)return null;const mapped=domRectToWorld(r);if(!mapped)return null;return{id,type,x:mapped.center.x,y:mapped.center.y,hw:mapped.hw,hh:mapped.hh,priority,clientX:mapped.clientX,clientY:mapped.clientY}}
 export function rectToPlatform(lm:Landmark,_scrollY:number):TerrainPlatform|null{if(!lm.rect)return null;return rectToPlatformFromDom(lm.id,lm.type,lm.rect,lm.priority)}
 function isOpenOverlay(el:Element):boolean{if(el.hasAttribute("hidden")||el.getAttribute("aria-hidden")==="true")return false;if(el.classList.contains("open")||el.getAttribute("data-open")==="true")return true;if(el.getAttribute("role")==="dialog"){const style=window.getComputedStyle(el);if(style.display==="none"||style.visibility==="hidden")return false;const r=el.getBoundingClientRect();return r.width>40&&r.height>40}const style=window.getComputedStyle(el);return style.display!=="none"&&style.visibility!=="hidden"}
