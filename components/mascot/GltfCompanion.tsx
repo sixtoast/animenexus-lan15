@@ -3,6 +3,7 @@
 /**
  * GltfCompanion — load /public/mascot/companion.glb or fall back to LanternKoMesh.
  * V3: continuous face channels via resolveFaceRigPose; optional Pupil/Eyelid nodes.
+ * Visual pass: socket-safe pupil travel, adaptive head lag, deeper sleep lids.
  */
 
 import * as THREE from "three";
@@ -130,18 +131,12 @@ function LoadedGlbCompanion({
     const lidL = nodes.EyelidL;
     const lidR = nodes.EyelidR;
     if (lidL && lidR) {
-      lidL.scale.y = damp(
-        lidL.scale.y,
-        Math.max(0.03, 1 - pose.eyeOpenL),
-        14,
-        dt,
-      );
-      lidR.scale.y = damp(
-        lidR.scale.y,
-        Math.max(0.03, 1 - pose.eyeOpenR),
-        14,
-        dt,
-      );
+      const closeL = 1 - Math.min(1, Math.max(0, pose.eyeOpenL));
+      const closeR = 1 - Math.min(1, Math.max(0, pose.eyeOpenR));
+      const lambdaL = closeL > 0.82 ? 11 : 14;
+      const lambdaR = closeR > 0.82 ? 11 : 14;
+      lidL.scale.y = damp(lidL.scale.y, Math.max(0.03, closeL), lambdaL, dt);
+      lidR.scale.y = damp(lidR.scale.y, Math.max(0.03, closeR), lambdaR, dt);
     } else if (eyeL && eyeR) {
       // Legacy GLBs have no lids — scale eye only as compatibility fallback.
       eyeL.scale.y = damp(eyeL.scale.y, pose.eyeOpenL, 12, dt);
@@ -151,8 +146,9 @@ function LoadedGlbCompanion({
     const pupilL = nodes.PupilL;
     const pupilR = nodes.PupilR;
     if (pupilL && pupilR) {
-      const px = pose.pupilX * 0.035;
-      const py = pose.pupilY * 0.025;
+      // Socket-safe travel (matches procedural mesh tuning).
+      const px = pose.pupilX * 0.028;
+      const py = pose.pupilY * 0.02;
       pupilL.position.x = damp(pupilL.position.x, px, 18, dt);
       pupilR.position.x = damp(pupilR.position.x, px, 18, dt);
       pupilL.position.y = damp(pupilL.position.y, py, 18, dt);
@@ -161,9 +157,16 @@ function LoadedGlbCompanion({
 
     const head = nodes.Head;
     if (head) {
-      // Eyes lead (pupil lambda 18); head follows slower (5.5).
-      headGaze.current.x = damp(headGaze.current.x, pose.headYaw, 5.5, dt);
-      headGaze.current.y = damp(headGaze.current.y, pose.headPitch, 5.5, dt);
+      // Adaptive lag: calm when gentle look; faster on attention snaps.
+      const lookMag = Math.hypot(lookBias.x, lookBias.y);
+      const headLambda = 3.8 + Math.min(5.5, lookMag * 7);
+      headGaze.current.x = damp(headGaze.current.x, pose.headYaw, headLambda, dt);
+      headGaze.current.y = damp(
+        headGaze.current.y,
+        pose.headPitch,
+        headLambda,
+        dt,
+      );
       head.rotation.y = headGaze.current.x;
       head.rotation.x = headGaze.current.y;
       head.rotation.z = damp(head.rotation.z, pose.headRoll, 6, dt);
@@ -185,7 +188,7 @@ function LoadedGlbCompanion({
         mouth.morphTargetInfluences[idx] = damp(
           mouth.morphTargetInfluences[idx],
           target,
-          14,
+          12,
           dt,
         );
       }
