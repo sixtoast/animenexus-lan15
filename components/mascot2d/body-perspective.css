@@ -1,0 +1,13 @@
+/* Body-depth pass for the stable 2.5D renderer. Turn direction decides which shoulder/arm/cloak panel is visually nearer. */
+[aria-label="Lantern-ko 2.5D"] [data-layer="body"]{transform:translate(calc(var(--depth-body-x) + var(--torso-turn-x)),var(--depth-body-y)) scaleX(var(--body-scale-x));transform-origin:50% 18%;transition:transform 210ms cubic-bezier(.2,.8,.2,1)}
+[aria-label="Lantern-ko 2.5D"] [data-layer="torso"]{transform:skewX(var(--torso-skew));transform-origin:50% 12%;transition:transform 190ms cubic-bezier(.2,.8,.2,1)}
+[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"],[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"]{transition:transform 190ms cubic-bezier(.2,.8,.2,1),filter 190ms ease}
+[aria-label="Lantern-ko 2.5D"][data-turn="left"] [data-layer="arm-left"],[aria-label="Lantern-ko 2.5D"][data-turn="right"] [data-layer="arm-right"]{scale:var(--near-shoulder) 1;translate:var(--near-arm-x) 0;filter:brightness(1.025)}
+[aria-label="Lantern-ko 2.5D"][data-turn="left"] [data-layer="arm-right"],[aria-label="Lantern-ko 2.5D"][data-turn="right"] [data-layer="arm-left"]{scale:var(--far-shoulder) .985;translate:var(--far-arm-x) 1px;filter:brightness(.96)}
+[aria-label="Lantern-ko 2.5D"] [data-layer="back-cloak"]{transform:translate(calc(var(--depth-back-x) + var(--cloak-turn-x)),var(--depth-back-y)) scaleX(calc(1 - var(--turn-amount)*.025));transition:transform 260ms cubic-bezier(.2,.8,.2,1)}
+[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-left"],[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-right"]{transition:transform 220ms cubic-bezier(.2,.8,.2,1),filter 180ms ease}
+[aria-label="Lantern-ko 2.5D"][data-turn="left"] [data-layer="cloak-front-left"],[aria-label="Lantern-ko 2.5D"][data-turn="right"] [data-layer="cloak-front-right"]{scale:var(--cloak-near-scale) 1;translate:calc(var(--torso-turn-x)*.35) 0;filter:brightness(1.025)}
+[aria-label="Lantern-ko 2.5D"][data-turn="left"] [data-layer="cloak-front-right"],[aria-label="Lantern-ko 2.5D"][data-turn="right"] [data-layer="cloak-front-left"]{scale:var(--cloak-far-scale) .99;translate:calc(var(--torso-turn-x)*.6) 1px;filter:brightness(.95)}
+[aria-label="Lantern-ko 2.5D"][data-turn="left"] [data-layer="bow"]{transform:translateX(-2px) rotate(-1.4deg) scaleX(.97)}
+[aria-label="Lantern-ko 2.5D"][data-turn="right"] [data-layer="bow"]{transform:translateX(2px) rotate(1.4deg) scaleX(.97)}
+@media(prefers-reduced-motion:reduce){[aria-label="Lantern-ko 2.5D"] [data-layer="body"],[aria-label="Lantern-ko 2.5D"] [data-layer="torso"],[aria-label="Lantern-ko 2.5D"] [data-layer^="arm-"],[aria-label="Lantern-ko 2.5D"] [data-layer="back-cloak"],[aria-label="Lantern-ko 2.5D"] [data-layer^="cloak-front-"]{transition:none}}
