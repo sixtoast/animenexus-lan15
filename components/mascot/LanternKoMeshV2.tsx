@@ -314,13 +314,11 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
       const dt = Math.min(delta, 0.05);
       const t = state.clock.elapsedTime;
 
-      // Varied blink interval — not machine-regular.
       blinkTimer.current -= dt;
       if (blinkTimer.current <= 0) {
         blinkAmount.current = 1;
         blinkTimer.current = 2.4 + Math.random() * 3.6;
       }
-      // Soft open curve after close (not mechanical shutter).
       if (blinkAmount.current > 0.55) {
         blinkAmount.current = Math.max(0, blinkAmount.current - dt * 9);
       } else {
@@ -336,7 +334,6 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
         blinkAmount.current,
       );
 
-      // Tight travel so pupils stay central in the large amber iris.
       const pupilX = rigPose.pupilX * HEAD_R * 0.022;
       const pupilY = rigPose.pupilY * HEAD_R * 0.016;
       const eyeSep = HEAD_R * FACE_TUNING.eyeSeparation;
@@ -369,18 +366,15 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
         );
       }
       if (irisL.current && irisR.current) {
-        // Iris stays fixed; only pupil moves (anime style).
         irisL.current.position.x = -eyeSep;
         irisR.current.position.x = eyeSep;
         irisL.current.position.y = eyeBaseY;
         irisR.current.position.y = eyeBaseY;
       }
 
-      // Soft anime upper lids — modest neutral, full only on sleep.
       if (lidL.current && lidR.current) {
         const closeL = 1 - Math.min(1, Math.max(0, rigPose.eyeOpenL));
         const closeR = 1 - Math.min(1, Math.max(0, rigPose.eyeOpenR));
-        // Map: 0 open → scale.y ~0.06; full close → ~0.95 (covers iris, not a plate).
         const targetYL = 0.06 + closeL * 0.88;
         const targetYR = 0.06 + closeR * 0.88;
         const lambdaL = closeL > 0.85 ? 10 : 14;
@@ -507,12 +501,13 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
       else if (ref) ref.current = node;
     };
 
-    const irisR = HEAD_R * FACE_TUNING.irisScale;
-    const pupilR = HEAD_R * FACE_TUNING.pupilScale;
-    const hlR = HEAD_R * FACE_TUNING.highlightScale;
+    // Size constants must not collide with irisR / pupilR / lidR refs above.
+    const irisSize = HEAD_R * FACE_TUNING.irisScale;
+    const pupilSize = HEAD_R * FACE_TUNING.pupilScale;
+    const hlSize = HEAD_R * FACE_TUNING.highlightScale;
     const eyeSep = HEAD_R * FACE_TUNING.eyeSeparation;
     const eyeBaseY = HEAD_R * FACE_TUNING.eyeY;
-    const lidR = HEAD_R * (FACE_TUNING.irisScale + 0.012);
+    const lidSize = HEAD_R * (FACE_TUNING.irisScale + 0.012);
 
     return (
       <group ref={setRoot}>
@@ -546,7 +541,6 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
         </group>
 
         <group ref={head} name="Head" position={[0, HEAD_R * 0.55, 0]}>
-          {/* Dark hood silhouette — frames the cream head from behind/above */}
           <mesh
             position={[0, HEAD_R * 0.08, -HEAD_R * 0.15]}
             scale={[1.18, 1.12, 1.05]}
@@ -555,7 +549,6 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             <primitive object={materials.hood} attach="material" />
           </mesh>
 
-          {/* Cream bob — side framing */}
           <mesh position={[-HEAD_R * 0.72, -HEAD_R * 0.05, HEAD_R * 0.1]}>
             <sphereGeometry args={[HEAD_R * 0.38, 12, 10]} />
             <primitive object={materials.hair} attach="material" />
@@ -564,7 +557,6 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             <sphereGeometry args={[HEAD_R * 0.38, 12, 10]} />
             <primitive object={materials.hair} attach="material" />
           </mesh>
-          {/* Soft bangs across forehead */}
           <mesh position={[0, HEAD_R * 0.55, HEAD_R * 0.55]} scale={[1.15, 0.45, 0.55]}>
             <sphereGeometry args={[HEAD_R * 0.42, 12, 8]} />
             <primitive object={materials.hairShade} attach="material" />
@@ -604,23 +596,21 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             />
           </mesh>
 
-          {/* Soft dark rim (tiny — amber dominates) */}
           <mesh position={[-eyeSep, eyeBaseY, HEAD_R * 0.88]}>
-            <sphereGeometry args={[irisR * 1.08, 14, 12]} />
+            <sphereGeometry args={[irisSize * 1.08, 14, 12]} />
             <primitive object={materials.eyeRim} attach="material" />
           </mesh>
           <mesh position={[eyeSep, eyeBaseY, HEAD_R * 0.88]}>
-            <sphereGeometry args={[irisR * 1.08, 14, 12]} />
+            <sphereGeometry args={[irisSize * 1.08, 14, 12]} />
             <primitive object={materials.eyeRim} attach="material" />
           </mesh>
 
-          {/* Large amber iris — primary eye mass */}
           <mesh
             ref={irisL}
             name="IrisL"
             position={[-eyeSep, eyeBaseY, HEAD_R * 0.94]}
           >
-            <sphereGeometry args={[irisR, 16, 14]} />
+            <sphereGeometry args={[irisSize, 16, 14]} />
             <primitive object={materials.amber} attach="material" />
           </mesh>
           <mesh
@@ -628,17 +618,16 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             name="IrisR"
             position={[eyeSep, eyeBaseY, HEAD_R * 0.94]}
           >
-            <sphereGeometry args={[irisR, 16, 14]} />
+            <sphereGeometry args={[irisSize, 16, 14]} />
             <primitive object={materials.amber} attach="material" />
           </mesh>
 
-          {/* Dark pupil inside amber */}
           <mesh
             ref={pupilL}
             name="PupilL"
             position={[-eyeSep, eyeBaseY, HEAD_R * 1.02]}
           >
-            <sphereGeometry args={[pupilR, 12, 10]} />
+            <sphereGeometry args={[pupilSize, 12, 10]} />
             <primitive object={materials.pupil} attach="material" />
           </mesh>
           <mesh
@@ -646,28 +635,26 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             name="PupilR"
             position={[eyeSep, eyeBaseY, HEAD_R * 1.02]}
           >
-            <sphereGeometry args={[pupilR, 12, 10]} />
+            <sphereGeometry args={[pupilSize, 12, 10]} />
             <primitive object={materials.pupil} attach="material" />
           </mesh>
 
-          {/* Restrained cream catchlight */}
           <mesh position={[-eyeSep + HEAD_R * 0.035, eyeBaseY + HEAD_R * 0.04, HEAD_R * 1.06]}>
-            <sphereGeometry args={[hlR, 8, 8]} />
+            <sphereGeometry args={[hlSize, 8, 8]} />
             <primitive object={materials.highlight} attach="material" />
           </mesh>
           <mesh position={[eyeSep + HEAD_R * 0.035, eyeBaseY + HEAD_R * 0.04, HEAD_R * 1.06]}>
-            <sphereGeometry args={[hlR, 8, 8]} />
+            <sphereGeometry args={[hlSize, 8, 8]} />
             <primitive object={materials.highlight} attach="material" />
           </mesh>
 
-          {/* Soft upper lids — thin skin-coloured bands */}
           <mesh
             ref={lidL}
             name="EyelidL"
             position={[-eyeSep, HEAD_R * 0.14, HEAD_R * 1.0]}
             scale={[1.05, 0.06, 0.85]}
           >
-            <sphereGeometry args={[lidR, 12, 8]} />
+            <sphereGeometry args={[lidSize, 12, 8]} />
             <primitive object={materials.lid} attach="material" />
           </mesh>
           <mesh
@@ -676,7 +663,7 @@ export const LanternKoMesh = forwardRef<THREE.Group, LanternKoMeshProps>(
             position={[eyeSep, HEAD_R * 0.14, HEAD_R * 1.0]}
             scale={[1.05, 0.06, 0.85]}
           >
-            <sphereGeometry args={[lidR, 12, 8]} />
+            <sphereGeometry args={[lidSize, 12, 8]} />
             <primitive object={materials.lid} attach="material" />
           </mesh>
 
