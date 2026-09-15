@@ -5,6 +5,6 @@ import {LanternKo2D} from "./LanternKo2D";
 export type Mascot2DEngineAdapterProps={className?:string;depth?:number;yaw?:number;speed?:number;justLanded?:boolean;gazeOverride?:{x:number;y:number};};
 /** Render-only bridge. Behaviour remains owned by the existing mascot engine/store. */
 export function Mascot2DEngineAdapter({className,depth=1,yaw=0,speed=0,justLanded=false,gazeOverride={x:0,y:0}}:Mascot2DEngineAdapterProps){
- const emotions=useMascotStore(s=>s.emotions),anim=useMascotStore(s=>s.anim),layers=useMascotStore(s=>s.layers),lookBias=useMascotStore(s=>s.lookBias),expression=faceForActor(anim,emotions,layers.social!=="none");
- return <LanternKo2D expression={expression} emotions={emotions} lookBias={lookBias} gazeOverride={gazeOverride} anim={anim} yaw={yaw} speed={speed} justLanded={justLanded} depth={depth} className={className}/>;
+ const emotions=useMascotStore(s=>s.emotions),anim=useMascotStore(s=>s.anim),layers=useMascotStore(s=>s.layers),lookBias=useMascotStore(s=>s.lookBias),intention=useMascotStore(s=>s.intention),lastLandmarkType=useMascotStore(s=>s.lastLandmarkType),expression=faceForActor(anim,emotions,layers.social!=="none");
+ return <LanternKo2D expression={expression} emotions={emotions} lookBias={lookBias} gazeOverride={gazeOverride} anim={anim} yaw={yaw} speed={speed} justLanded={justLanded} depth={depth} className={className} context={{intention,lastLandmarkType}}/>;
 }
