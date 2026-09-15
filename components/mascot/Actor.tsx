@@ -4,6 +4,7 @@
  * Live page-terrain actor — physics + command execution only.
  * Sprint 5: writes authoritative runtime body state every frame.
  * Sprint 7/8: faceForActor + dev debug global.
+ * V3: passes lookBias + emotions for continuous face rig.
  */
 
 import { useFrame, useThree } from "@react-three/fiber";
@@ -109,6 +110,7 @@ export function Actor({
   const setAnim = useMascotStore((s) => s.setAnim);
   const anim = useMascotStore((s) => s.anim);
   const layers = useMascotStore((s) => s.layers);
+  const lookBias = useMascotStore((s) => s.lookBias);
   const storeTarget = useMascotStore((s) => s.target);
   const setStorePosition = useMascotStore((s) => s.setPosition);
   const { camera, size } = useThree();
@@ -496,6 +498,8 @@ export function Actor({
     <group ref={root}>
       <CharacterRenderer
         expression={expression}
+        emotions={emotions}
+        lookBias={lookBias}
         anim={anim}
         yaw={facing.current}
         speed={speedRef.current}
