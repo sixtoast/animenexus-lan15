@@ -20,6 +20,8 @@ export type LanternKo2DProps = {
   perchPose?: PerchPose;
   /** 0 disables the depth offsets, 1 is the production 2.5D amount. */
   depth?: number;
+  /** Speech activity only. Text/audio interpretation remains outside the renderer. */
+  speaking?: boolean;
 };
 
 export type LanternKo2DLayer =
