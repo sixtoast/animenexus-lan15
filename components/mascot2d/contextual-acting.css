@@ -15,25 +15,35 @@
 [data-mascot-renderer="2d"] [data-scene="guide"][data-anim="idle"] .headRig{transform:translate(var(--head-x),calc(var(--head-y) - 2px)) rotate(calc(var(--yaw) + 2deg))}
 [data-mascot-renderer="2d"] [data-scene="guide"][data-anim="idle"] .lantern b{filter:brightness(1.18)}
 
+/* A landing settles through balance -> pose -> stable instead of snapping. */
+[data-mascot-renderer="2d"] [data-pose-phase="balance"] [data-anim="idle"]{animation:mascot2d-balance-in .18s cubic-bezier(.2,.9,.3,1)!important;transform-origin:50% 92%}
+[data-mascot-renderer="2d"] [data-pose-phase="balance"] [data-anim="idle"] .armLeft{transform:rotate(55deg)!important}
+[data-mascot-renderer="2d"] [data-pose-phase="balance"] [data-anim="idle"] .armRight{transform:rotate(-55deg)!important}
+[data-mascot-renderer="2d"] [data-pose-phase="balance"] [data-anim="idle"] .lantern{animation:mascot2d-balance-tip .34s ease-out!important}
+[data-mascot-renderer="2d"] [data-pose-phase="settle"] [data-anim="idle"]{animation:mascot2d-pose-settle .38s cubic-bezier(.18,.82,.24,1)!important}
+
 /* Perch poses are chosen by LiveMascot2D from the actual landmark dimensions. */
-[data-mascot-renderer="2d"] [data-perch="sit"][data-anim="idle"] .body{transform:translate(var(--depth-body-x),calc(var(--depth-body-y) + 13px)) scaleY(.9);animation:none}
-[data-mascot-renderer="2d"] [data-perch="sit"][data-anim="idle"] .legs{transform:translateY(12px) rotate(7deg);transform-origin:50% 5%;animation:mascot2d-sit-feet 2.8s ease-in-out infinite alternate}
-[data-mascot-renderer="2d"] [data-perch="sit"][data-anim="idle"] .backCloak{transform:translate(var(--depth-back-x),calc(var(--depth-back-y) + 9px)) scaleY(.94);animation:none}
-[data-mascot-renderer="2d"] [data-perch="sit"][data-anim="idle"] .headRig{transform:translate(var(--head-x),calc(var(--head-y) + 5px)) rotate(var(--yaw))}
-[data-mascot-renderer="2d"] [data-perch="crouch"][data-anim="idle"] .body{transform:translate(var(--depth-body-x),calc(var(--depth-body-y) + 8px)) scale(1.035,.9);animation:none}
-[data-mascot-renderer="2d"] [data-perch="crouch"][data-anim="idle"] .legs{transform:scaleY(.72) translateY(15px)}
-[data-mascot-renderer="2d"] [data-perch="crouch"][data-anim="idle"] .headRig{transform:translate(var(--head-x),calc(var(--head-y) + 7px)) rotate(calc(var(--yaw) + 2deg));animation:none}
+[data-mascot-renderer="2d"] [data-perch="sit"][data-anim="idle"] .body{transform:translate(var(--depth-body-x),calc(var(--depth-body-y) + 13px)) scaleY(.9);animation:none;transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+[data-mascot-renderer="2d"] [data-perch="sit"][data-anim="idle"] .legs{transform:translateY(12px) rotate(7deg);transform-origin:50% 5%;animation:mascot2d-sit-feet 2.8s ease-in-out .42s infinite alternate;transition:transform .32s ease}
+[data-mascot-renderer="2d"] [data-perch="sit"][data-anim="idle"] .backCloak{transform:translate(var(--depth-back-x),calc(var(--depth-back-y) + 9px)) scaleY(.94);animation:none;transition:transform .36s ease}
+[data-mascot-renderer="2d"] [data-perch="sit"][data-anim="idle"] .headRig{transform:translate(var(--head-x),calc(var(--head-y) + 5px)) rotate(var(--yaw));transition:transform .3s ease}
+[data-mascot-renderer="2d"] [data-perch="crouch"][data-anim="idle"] .body{transform:translate(var(--depth-body-x),calc(var(--depth-body-y) + 8px)) scale(1.035,.9);animation:none;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+[data-mascot-renderer="2d"] [data-perch="crouch"][data-anim="idle"] .legs{transform:scaleY(.72) translateY(15px);transition:transform .28s ease}
+[data-mascot-renderer="2d"] [data-perch="crouch"][data-anim="idle"] .headRig{transform:translate(var(--head-x),calc(var(--head-y) + 7px)) rotate(calc(var(--yaw) + 2deg));animation:none;transition:transform .28s ease}
 [data-mascot-renderer="2d"] [data-perch="crouch"][data-anim="idle"] .armLeft{transform:rotate(20deg)}
 [data-mascot-renderer="2d"] [data-perch="crouch"][data-anim="idle"] .armRight{transform:rotate(-20deg)}
-[data-mascot-renderer="2d"] [data-perch="peek-left"][data-anim="idle"]{transform:translateX(-9px)}
-[data-mascot-renderer="2d"] [data-perch="peek-left"][data-anim="idle"] .body{transform:translate(calc(var(--depth-body-x) + 7px),var(--depth-body-y)) rotate(3deg);animation:none}
-[data-mascot-renderer="2d"] [data-perch="peek-left"][data-anim="idle"] .headRig{animation:mascot2d-peek-left 2.5s ease-in-out infinite}
+[data-mascot-renderer="2d"] [data-perch="peek-left"][data-anim="idle"]{transform:translateX(-9px);transition:transform .3s ease}
+[data-mascot-renderer="2d"] [data-perch="peek-left"][data-anim="idle"] .body{transform:translate(calc(var(--depth-body-x) + 7px),var(--depth-body-y)) rotate(3deg);animation:none;transition:transform .3s ease}
+[data-mascot-renderer="2d"] [data-perch="peek-left"][data-anim="idle"] .headRig{animation:mascot2d-peek-left 2.5s ease-in-out .35s infinite}
 [data-mascot-renderer="2d"] [data-perch="peek-left"][data-anim="idle"] .armRight{transform:rotate(-48deg)}
-[data-mascot-renderer="2d"] [data-perch="peek-right"][data-anim="idle"]{transform:translateX(9px)}
-[data-mascot-renderer="2d"] [data-perch="peek-right"][data-anim="idle"] .body{transform:translate(calc(var(--depth-body-x) - 7px),var(--depth-body-y)) rotate(-3deg);animation:none}
-[data-mascot-renderer="2d"] [data-perch="peek-right"][data-anim="idle"] .headRig{animation:mascot2d-peek-right 2.5s ease-in-out infinite}
+[data-mascot-renderer="2d"] [data-perch="peek-right"][data-anim="idle"]{transform:translateX(9px);transition:transform .3s ease}
+[data-mascot-renderer="2d"] [data-perch="peek-right"][data-anim="idle"] .body{transform:translate(calc(var(--depth-body-x) - 7px),var(--depth-body-y)) rotate(-3deg);animation:none;transition:transform .3s ease}
+[data-mascot-renderer="2d"] [data-perch="peek-right"][data-anim="idle"] .headRig{animation:mascot2d-peek-right 2.5s ease-in-out .35s infinite}
 [data-mascot-renderer="2d"] [data-perch="peek-right"][data-anim="idle"] .armLeft{transform:rotate(48deg)}
 
+@keyframes mascot2d-balance-in{0%{transform:scale(1.04,.92) rotate(-1deg)}55%{transform:scale(.985,1.025) rotate(1.3deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes mascot2d-balance-tip{0%{transform:translate(var(--depth-tip-x),var(--depth-tip-y)) rotate(-10deg)}65%{transform:translate(var(--depth-tip-x),calc(var(--depth-tip-y) - 2px)) rotate(7deg)}100%{transform:translate(var(--depth-tip-x),var(--depth-tip-y)) rotate(var(--idle-tip))}}
+@keyframes mascot2d-pose-settle{0%{transform:translateY(-2px) scale(1.015,.985)}65%{transform:translateY(1px) scale(.995,1.008)}100%{transform:translateY(0) scale(1)}}
 @keyframes mascot2d-card-peer{0%,100%{transform:translate(var(--head-x),var(--head-y)) rotate(calc(var(--yaw) - 2deg))}50%{transform:translate(calc(var(--head-x) + 3px),calc(var(--head-y) + 4px)) rotate(calc(var(--yaw) + 4deg))}}
 @keyframes mascot2d-card-lean{0%,100%{transform:translate(var(--depth-body-x),var(--depth-body-y)) rotate(0)}50%{transform:translate(calc(var(--depth-body-x) + 2px),calc(var(--depth-body-y) + 2px)) rotate(1.5deg)}}
 @keyframes mascot2d-card-lantern{0%,100%{transform:translate(var(--depth-tip-x),var(--depth-tip-y)) rotate(-2deg)}50%{transform:translate(calc(var(--depth-tip-x) + 4px),calc(var(--depth-tip-y) + 3px)) rotate(7deg)}}
@@ -45,4 +55,4 @@
 @keyframes mascot2d-sit-feet{from{transform:translateY(12px) rotate(5deg)}to{transform:translateY(14px) rotate(10deg)}}
 @keyframes mascot2d-peek-left{0%,100%{transform:translate(calc(var(--head-x) + 2px),var(--head-y)) rotate(calc(var(--yaw) + 2deg))}50%{transform:translate(calc(var(--head-x) + 9px),calc(var(--head-y) - 1px)) rotate(calc(var(--yaw) + 6deg))}}
 @keyframes mascot2d-peek-right{0%,100%{transform:translate(calc(var(--head-x) - 2px),var(--head-y)) rotate(calc(var(--yaw) - 2deg))}50%{transform:translate(calc(var(--head-x) - 9px),calc(var(--head-y) - 1px)) rotate(calc(var(--yaw) - 6deg))}}
-@media(prefers-reduced-motion:reduce){[data-mascot-renderer="2d"] [data-scene] .headRig,[data-mascot-renderer="2d"] [data-scene] .body,[data-mascot-renderer="2d"] [data-scene] .armRight,[data-mascot-renderer="2d"] [data-scene] .lantern,[data-mascot-renderer="2d"] [data-scene] .lantern b,[data-mascot-renderer="2d"] [data-perch] .headRig,[data-mascot-renderer="2d"] [data-perch] .body,[data-mascot-renderer="2d"] [data-perch] .legs{animation:none!important}}
+@media(prefers-reduced-motion:reduce){[data-mascot-renderer="2d"] [data-scene] .headRig,[data-mascot-renderer="2d"] [data-scene] .body,[data-mascot-renderer="2d"] [data-scene] .armRight,[data-mascot-renderer="2d"] [data-scene] .lantern,[data-mascot-renderer="2d"] [data-scene] .lantern b,[data-mascot-renderer="2d"] [data-perch] .headRig,[data-mascot-renderer="2d"] [data-perch] .body,[data-mascot-renderer="2d"] [data-perch] .legs,[data-mascot-renderer="2d"] [data-pose-phase] [data-anim]{animation:none!important;transition:none!important}}
