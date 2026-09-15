@@ -1,0 +1,11 @@
+/* Inertial secondary motion. Values come from the renderer's acceleration/turn follower rather than looping keyframes. */
+[aria-label="Lantern-ko 2.5D"] [data-layer="hair-back"]{rotate:calc(var(--physics-hair)*4.2deg);transform-origin:50% 10%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]{rotate:calc(var(--physics-hair)*2.2deg);transform-origin:50% 12%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="back-cloak"]{rotate:calc(var(--physics-cloak)*3.4deg);transform-origin:50% 8%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-left"]{rotate:calc(var(--physics-cloak)*2.5deg);transform-origin:78% 8%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-right"]{rotate:calc(var(--physics-cloak)*2.5deg);transform-origin:22% 8%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="bow"]{rotate:calc(var(--physics-bow)*5deg);transform-origin:50% 22%}
+[aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]{rotate:calc(var(--physics-lantern)*7deg + var(--idle-tip));translate:calc(var(--physics-lantern)*1.8px) calc(abs(var(--physics-lantern))*1px);transform-origin:50% 4%}
+[aria-label="Lantern-ko 2.5D"][data-anim="run"] [data-layer="hair-back"]{rotate:calc(var(--physics-hair)*5.8deg)}
+[aria-label="Lantern-ko 2.5D"][data-anim="run"] [data-layer="back-cloak"]{rotate:calc(var(--physics-cloak)*4.8deg)}
+@media(prefers-reduced-motion:reduce){[aria-label="Lantern-ko 2.5D"] [data-layer="hair-back"],[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"],[aria-label="Lantern-ko 2.5D"] [data-layer="back-cloak"],[aria-label="Lantern-ko 2.5D"] [data-layer^="cloak-front-"],[aria-label="Lantern-ko 2.5D"] [data-layer="bow"],[aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]{rotate:0deg;translate:0 0}}
