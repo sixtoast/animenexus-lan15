@@ -16,7 +16,7 @@ const STATUSES: { value: WatchStatus; label: string }[] = [
 
 type Props = { anime: Anime };
 const FAIL_MSG = "The signal didn’t hold — could not save to this browser.";
-const reactToOutcome=(ok:boolean,kind:"success"|"choice"="success")=>pushMascotReaction(ok?kind:"error",ok?.78:.88);
+const reactToOutcome=(ok:boolean,kind:"success"|"choice"="success")=>pushMascotReaction(ok?kind:"error",ok ? 0.78 : 0.88);
 
 export function AddToWatchlist({ anime }: Props) {
   const { ready, getEntry, add, remove, setStatus } = useWatchlist();
