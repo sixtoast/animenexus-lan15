@@ -1,0 +1,5 @@
+[data-mascot-reaction="success"] [aria-label="Lantern-ko 2.5D"] [data-layer="body"]{translate:0 calc(var(--reaction)*-1.8px)}
+[data-mascot-reaction="success"] [aria-label="Lantern-ko 2.5D"] [data-layer="bow"]{translate:0 calc(var(--reaction)*-1px)}
+[data-mascot-reaction="error"] [aria-label="Lantern-ko 2.5D"] [data-layer="body"]{translate:calc(var(--reaction)*-1px) calc(var(--reaction)*.8px)}
+[data-mascot-reaction="choice"] [aria-label="Lantern-ko 2.5D"] [data-layer="body"],[data-mascot-reaction="discovery"] [aria-label="Lantern-ko 2.5D"] [data-layer="body"]{translate:0 calc(var(--reaction)*-1px)}
+@media(prefers-reduced-motion:reduce){[data-mascot-reaction] [aria-label="Lantern-ko 2.5D"] [data-layer="body"],[data-mascot-reaction] [aria-label="Lantern-ko 2.5D"] [data-layer="bow"]{translate:0 0}}
