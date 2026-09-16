@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AI_PRESETS,
   defaultSettings,
@@ -13,6 +13,7 @@ import {
 import { testAIConnection } from "@/lib/ai-chat";
 import { runLanternAgent } from "@/lib/lantern-agent/run-agent";
 import { executeTool, type ToolName } from "@/lib/lantern-agent/tools";
+import { setMascotConversationState } from "@/lib/mascot/conversation-state";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { useToast } from "@/components/ToastProvider";
 import { Modal } from "@/components/ui/Modal";
@@ -37,6 +38,8 @@ export function AIPanel() {
   >([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [composerFocused, setComposerFocused] = useState(false);
+  const speechTimer = useRef<number | null>(null);
   const { showToast } = useToast();
   const { add, remove } = useWatchlist();
 
@@ -45,6 +48,15 @@ export function AIPanel() {
     setSettings(s);
     setConfigured(isAIConfigured(s));
   }, [open]);
+
+  useEffect(() => {
+    setMascotConversationState({ listening: open && composerFocused && !busy });
+  }, [open, composerFocused, busy]);
+
+  useEffect(() => () => {
+    if (speechTimer.current) window.clearTimeout(speechTimer.current);
+    setMascotConversationState({ listening: false, thinking: false, speaking: false });
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -93,6 +105,7 @@ export function AIPanel() {
   async function test() {
     writeAISettings(settings);
     setBusy(true);
+    setMascotConversationState({ listening: false, thinking: true, speaking: false });
     try {
       const reply = await testAIConnection();
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
@@ -102,6 +115,7 @@ export function AIPanel() {
       showToast(e instanceof Error ? e.message : "Test failed", "😅");
     } finally {
       setBusy(false);
+      setMascotConversationState({ thinking: false });
     }
   }
 
@@ -120,6 +134,7 @@ export function AIPanel() {
       { role: "assistant", content: "Lantern is thinking…" },
     ]);
     setBusy(true);
+    setMascotConversationState({ listening: false, thinking: true, speaking: false });
     try {
       const prior = next.slice(0, -1).map((m) => ({
         role: m.role as "user" | "assistant" | "system",
@@ -139,6 +154,12 @@ export function AIPanel() {
         setPending([]);
       }
       setMessages([...next, { role: "assistant", content: reply }]);
+      setMascotConversationState({ thinking: false, speaking: true });
+      if (speechTimer.current) window.clearTimeout(speechTimer.current);
+      speechTimer.current = window.setTimeout(
+        () => setMascotConversationState({ speaking: false }),
+        Math.min(5200, 700 + reply.length * 18),
+      );
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Chat failed", "😅");
       setMessages((m) =>
@@ -150,6 +171,7 @@ export function AIPanel() {
             ),
         ),
       );
+      setMascotConversationState({ thinking: false, speaking: false });
     } finally {
       setBusy(false);
     }
@@ -158,6 +180,7 @@ export function AIPanel() {
   async function confirmPending() {
     if (!pending.length) return;
     setBusy(true);
+    setMascotConversationState({ listening: false, thinking: true, speaking: false });
     try {
       for (const p of pending) {
         const confirmed = await executeTool(p.tool as ToolName, p.args, {
@@ -187,6 +210,7 @@ export function AIPanel() {
       setPending([]);
     } finally {
       setBusy(false);
+      setMascotConversationState({ thinking: false });
     }
   }
 
@@ -292,7 +316,6 @@ export function AIPanel() {
               <input
                 className="filter-input"
                 type="password"
-                autoComplete="off"
                 value={settings.fallbackKey || ""}
                 onChange={(e) =>
                   setSettings((s) => ({ ...s, fallbackKey: e.target.value }))
@@ -374,6 +397,8 @@ export function AIPanel() {
               className="notes-area"
               rows={2}
               value={input}
+              onFocus={() => setComposerFocused(true)}
+              onBlur={() => setComposerFocused(false)}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Message the desk…"
               onKeyDown={(e) => {
