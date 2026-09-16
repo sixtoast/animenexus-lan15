@@ -1,6 +1,8 @@
-/* Thinking is deliberately restrained: cognition reads through gaze/head posture, not busy limb animation. */
-[aria-label="Lantern-ko 2.5D"][data-thinking="true"] [data-layer="body"]{translate:0 calc(var(--think-lean)*-.65px)}
-[aria-label="Lantern-ko 2.5D"][data-thinking="true"] [data-layer="bow"]{translate:0 calc(var(--think-lean)*-.25px)}
-[aria-label="Lantern-ko 2.5D"][data-think-act="consider"] [data-layer="hair-front"]{translate:calc(var(--think-tilt)*.12px) 0}
-[aria-label="Lantern-ko 2.5D"][data-think-act="resolve"] [data-layer="hair-front"]{translate:0 calc(var(--think-nod)*.3px)}
-@media(prefers-reduced-motion:reduce){[aria-label="Lantern-ko 2.5D"] [data-layer="body"],[aria-label="Lantern-ko 2.5D"] [data-layer="bow"],[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]{translate:0 0}}
+/* Thinking is deliberately restrained: cognition reads through gaze/head posture, not busy limb animation. The adapter wrapper uses display:contents so it cannot disturb mascot layout. */
+[data-mascot-thinking]{display:contents}
+[data-mascot-thinking="true"] [aria-label="Lantern-ko 2.5D"] .headRig{rotate:var(--think-tilt);translate:0 var(--think-nod)}
+[data-mascot-thinking="true"] [aria-label="Lantern-ko 2.5D"] [data-layer="body"]{translate:0 calc(var(--think-lean)*-.65px)}
+[data-mascot-thinking="true"] [aria-label="Lantern-ko 2.5D"] [data-layer="bow"]{translate:0 calc(var(--think-lean)*-.25px)}
+[data-mascot-think-act="consider"] [aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]{translate:calc(var(--think-tilt-n)*.12px) 0}
+[data-mascot-think-act="resolve"] [aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]{translate:0 calc(var(--think-nod-n)*.3px)}
+@media(prefers-reduced-motion:reduce){[data-mascot-thinking] [aria-label="Lantern-ko 2.5D"] .headRig,[data-mascot-thinking] [aria-label="Lantern-ko 2.5D"] [data-layer="body"],[data-mascot-thinking] [aria-label="Lantern-ko 2.5D"] [data-layer="bow"],[data-mascot-thinking] [aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]{translate:0 0;rotate:0deg}}
