@@ -1,9 +1,9 @@
-/* Short transitional beats stop conversation state changes from feeling like hard switches. */
+/* Short conversational beats are allowed only when the current action leaves room for them. Explicit movement/actions keep ownership of the body. */
 [aria-label="Lantern-ko 2.5D"] [data-layer="body"],[aria-label="Lantern-ko 2.5D"] [data-layer="face"]{transition:translate 180ms ease-out,transform 180ms ease-out}
-[aria-label="Lantern-ko 2.5D"][data-conversation-phase="notice"] [data-layer="body"]{translate:0 calc(var(--conversation-notice)*-.8px)}
-[aria-label="Lantern-ko 2.5D"][data-conversation-phase="notice"] [data-layer="face"]{translate:0 calc(var(--conversation-notice)*-.45px)}
-[aria-label="Lantern-ko 2.5D"][data-conversation-phase="anticipate"] [data-layer="body"]{translate:0 calc(var(--conversation-anticipate)*.7px)}
-[aria-label="Lantern-ko 2.5D"][data-conversation-phase="anticipate"] [data-layer="face"]{translate:0 calc(var(--conversation-anticipate)*.35px)}
-[aria-label="Lantern-ko 2.5D"][data-conversation-phase="speak-in"] [data-layer="body"]{translate:0 calc(var(--conversation-speak-in)*-.65px)}
-[aria-label="Lantern-ko 2.5D"][data-conversation-phase="settle"] [data-layer="body"]{translate:0 calc(var(--conversation-settle)*.45px)}
+[aria-label="Lantern-ko 2.5D"]:is([data-anim="idle"],[data-anim="think"],[data-anim="nod"])[data-conversation-phase="notice"] [data-layer="body"]{translate:0 calc(var(--conversation-notice)*-.8px)}
+[aria-label="Lantern-ko 2.5D"]:is([data-anim="idle"],[data-anim="think"],[data-anim="nod"])[data-conversation-phase="notice"] [data-layer="face"]{translate:0 calc(var(--conversation-notice)*-.45px)}
+[aria-label="Lantern-ko 2.5D"]:is([data-anim="idle"],[data-anim="think"],[data-anim="nod"])[data-conversation-phase="anticipate"] [data-layer="body"]{translate:0 calc(var(--conversation-anticipate)*.7px)}
+[aria-label="Lantern-ko 2.5D"]:is([data-anim="idle"],[data-anim="think"],[data-anim="nod"])[data-conversation-phase="anticipate"] [data-layer="face"]{translate:0 calc(var(--conversation-anticipate)*.35px)}
+[aria-label="Lantern-ko 2.5D"]:is([data-anim="idle"],[data-anim="think"],[data-anim="nod"])[data-conversation-phase="speak-in"] [data-layer="body"]{translate:0 calc(var(--conversation-speak-in)*-.65px)}
+[aria-label="Lantern-ko 2.5D"]:is([data-anim="idle"],[data-anim="think"],[data-anim="nod"])[data-conversation-phase="settle"] [data-layer="body"]{translate:0 calc(var(--conversation-settle)*.45px)}
 @media(prefers-reduced-motion:reduce){[aria-label="Lantern-ko 2.5D"] [data-layer="body"],[aria-label="Lantern-ko 2.5D"] [data-layer="face"]{transition:none;translate:0 0}}
