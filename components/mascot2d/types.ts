@@ -24,6 +24,8 @@ export type LanternKo2DProps = {
   speaking?: boolean;
   /** User-input/listening activity. The host decides when the user is actively composing. */
   listening?: boolean;
+  /** Real assistant processing state. Rendering only, never fabricates work. */
+  thinking?: boolean;
 };
 
 export type LanternKo2DLayer =
