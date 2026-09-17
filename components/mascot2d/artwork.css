@@ -1,38 +1,21 @@
 /* Static PNG registration compositor.
-   IMPORTANT: layers.json says the source PNGs REQUIRE transforms. The previous
-   pseudo-element compositor was still positioning full 1024x1536 images inside
-   the old local body/head/lantern nodes, so the old DOM hierarchy distorted the
-   manifest coordinates. This pass deliberately flattens those semantic pivots
-   into mascot-root space and maps each sourceRect to its targetRect. Animation
-   is disabled until the static reconstruction is correct. */
-
+   Each source asset is a 1024x1536 transparent canvas. layers.json supplies a
+   sourceRect inside that canvas and the destination targetRect. The crop must be
+   scaled from SOURCE RECT -> TARGET RECT; percentages alone are not sufficient
+   because X and Y scale independently. */
 [aria-label="Lantern-ko 2.5D"]{--cw:200px;--ch:300px;overflow:visible!important}
-
-/* Remove the old CSS character artwork and old local transforms. */
-[aria-label="Lantern-ko 2.5D"] [data-layer]{background:none!important;background-image:none!important;background-color:transparent!important;border:0!important;box-shadow:none!important;filter:none!important;animation:none!important;transition:none!important}
+[aria-label="Lantern-ko 2.5D"] [data-layer]{background:none!important;background-color:transparent!important;border:0!important;box-shadow:none!important;filter:none!important;animation:none!important;transition:none!important}
 [aria-label="Lantern-ko 2.5D"] [data-layer]::before,[aria-label="Lantern-ko 2.5D"] [data-layer]::after{display:none!important}
-[aria-label="Lantern-ko 2.5D"] [data-layer="back-cloak"],[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-left"],[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-right"],[aria-label="Lantern-ko 2.5D"] [data-layer="body"]{position:static!important;transform:none!important;translate:none!important;scale:none!important;rotate:none!important}
-/* headRig has no data-layer attribute. Flatten the wrapper that directly owns hood. */
-[aria-label="Lantern-ko 2.5D"] *:has(>[data-layer="hood"]){position:static!important;transform:none!important;translate:none!important;scale:none!important;rotate:none!important}
-
-/* Each visible semantic node becomes a targetRect in the 1024x1536 manifest. */
-[aria-label="Lantern-ko 2.5D"] [data-layer="legs"],
-[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"],
-[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"],
-[aria-label="Lantern-ko 2.5D"] [data-layer="torso"],
-[aria-label="Lantern-ko 2.5D"] [data-layer="bow"],
-[aria-label="Lantern-ko 2.5D"] [data-layer="hood"],
-[aria-label="Lantern-ko 2.5D"] [data-layer="hair-back"],
-[aria-label="Lantern-ko 2.5D"] [data-layer="face"],
-[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"],
-[aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]{position:absolute!important;overflow:hidden!important;transform:none!important;translate:none!important;scale:none!important;rotate:none!important;background-repeat:no-repeat!important;transform-origin:center!important}
-
-/* Helper: background-size is full source canvas expressed relative to the crop.
-   background-position uses scaled sourceRect offsets. */
-[aria-label="Lantern-ko 2.5D"] [data-layer="torso"]{left:21.191%!important;top:40.690%!important;width:59.570%!important;height:32.878%!important;background-image:url("./body.png")!important;background-size:111.913% 197.429%!important;background-position:-3.600% -58.355%!important;z-index:3!important}
+[aria-label="Lantern-ko 2.5D"] [data-layer="back-cloak"],[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-left"],[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-right"],[aria-label="Lantern-ko 2.5D"] [data-layer="body"]{position:static!important;transform:none!important;translate:none!important;scale:none!important;rotate:none!important;background:transparent!important}
+[aria-label="Lantern-ko 2.5D"] *:has(>[data-layer="hood"]){position:static!important;transform:none!important;translate:none!important;scale:none!important;rotate:none!important;background:transparent!important;box-shadow:none!important}
+[aria-label="Lantern-ko 2.5D"] [data-layer="legs"],[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"],[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"],[aria-label="Lantern-ko 2.5D"] [data-layer="torso"],[aria-label="Lantern-ko 2.5D"] [data-layer="bow"],[aria-label="Lantern-ko 2.5D"] [data-layer="hood"],[aria-label="Lantern-ko 2.5D"] [data-layer="hair-back"],[aria-label="Lantern-ko 2.5D"] [data-layer="face"],[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"],[aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]{position:absolute!important;overflow:hidden!important;transform:none!important;translate:none!important;scale:none!important;rotate:none!important;background-repeat:no-repeat!important}
+/* Formula per layer:
+   background-size = (1024/sourceW*targetW, 1536/sourceH*targetH)
+   expressed relative to target element => 1024/sourceW and 1536/sourceH.
+   position is -sourceX/sourceW and -sourceY/sourceH in the scaled image. */
+[aria-label="Lantern-ko 2.5D"] [data-layer="torso"]{left:21.191%!important;top:40.690%!important;width:59.570%!important;height:32.878%!important;background-image:url("./body.png")!important;background-size:111.913% 197.429%!important;background-position:-6.011% -142.320%!important;z-index:3!important}
 [aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"]{left:13.672%!important;top:42.969%!important;width:28.320%!important;height:22.786%!important;background-image:url("./arm-left.png")!important;background-size:123.971% 154.839%!important;background-position:-15.738% -27.319%!important;z-index:4!important}
 [aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"]{left:61.523%!important;top:44.922%!important;width:28.516%!important;height:24.089%!important;background-image:url("./arm-right.png")!important;background-size:117.566% 142.486%!important;background-position:-8.726% -15.677%!important;z-index:5!important}
-/* legs share one old DOM node, so composite both crops into that target envelope. */
 [aria-label="Lantern-ko 2.5D"] [data-layer="legs"]{left:35.840%!important;top:69.010%!important;width:30.273%!important;height:27.995%!important;overflow:visible!important;z-index:2!important}
 [aria-label="Lantern-ko 2.5D"] [data-layer="legs"]::before,[aria-label="Lantern-ko 2.5D"] [data-layer="legs"]::after{display:block!important;content:"";position:absolute;top:0;width:44.194%;height:100%;background-repeat:no-repeat}
 [aria-label="Lantern-ko 2.5D"] [data-layer="legs"]::before{left:0;background-image:url("./leg-left.png");background-size:304.762% 120.565%;background-position:-100.298% -9.341%}
@@ -41,7 +24,6 @@
 [aria-label="Lantern-ko 2.5D"] [data-layer="hood"]{left:13.672%!important;top:6.185%!important;width:73.047%!important;height:34.505%!important;background-image:url("./hood-back.png")!important;background-size:113.400% 245.367%!important;background-position:-6.866% -16.454%!important;z-index:7!important}
 [aria-label="Lantern-ko 2.5D"] [data-layer="hair-back"]{left:18.555%!important;top:10.742%!important;width:63.477%!important;height:31.901%!important;background-image:url("./hair-back.png")!important;background-size:110.345% 222.287%!important;background-position:-6.681% -28.509%!important;z-index:8!important}
 [aria-label="Lantern-ko 2.5D"] [data-layer="face"]{left:31.543%!important;top:18.880%!important;width:41.992%!important;height:23.763%!important;background-image:url("./face-base.png")!important;background-size:159.502% 221.326%!important;background-position:-29.751% -57.637%!important;z-index:9!important}
-/* Hide procedural SVG face during registration. */
 [aria-label="Lantern-ko 2.5D"] [data-layer="face"]>*{display:none!important}
 [aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]{left:19.531%!important;top:.977%!important;width:61.035%!important;height:41.992%!important;background-image:url("./hair-front.png")!important;background-size:105.785% 156.257%!important;background-position:-3.306% -3.154%!important;z-index:13!important}
 [aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]{left:9.375%!important;top:55.208%!important;width:19.238%!important;height:22.982%!important;background-image:url("./lantern.png")!important;background-size:132.300% 111.304%!important;background-position:-16.150% -4.420%!important;z-index:14!important}
