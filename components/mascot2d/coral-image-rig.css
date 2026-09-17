@@ -1,9 +1,5 @@
 .coral-rig{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:visible;transform-origin:50% 92%}
-/* Registration pass: every source is a full 1024x1536 transparent canvas. */
-.coral-art-stack{position:absolute;inset:0;overflow:visible;transform:none!important}
-.coral-registered-layer{position:absolute!important;inset:0!important;left:0!important;top:0!important;width:100%!important;height:100%!important;max-width:none!important;object-fit:fill;object-position:0 0;display:block;margin:0!important;padding:0!important;transform:none!important;translate:none!important;scale:none!important;rotate:none!important;transform-origin:50% 50%;user-select:none;pointer-events:none}
-/* Keep the procedural face available, but do not let it affect PNG registration. */
-.coral-face-rig{position:absolute;left:33.5%;top:27.4%;width:33.5%;height:23.8%;z-index:10;transform:translate(var(--face-shift-x),var(--face-shift-y)) scaleX(var(--face-scale-x));transform-origin:50% 50%}
-/* During registration validation all per-part physics are intentionally disabled. Motion will be reintroduced around pivots only after the static stack is verified. */
-.coral-body,.coral-leg,.coral-arm,.coral-bow,.coral-hood,.coral-hair-back,.coral-face-base,.coral-hair-front,.coral-lantern{animation:none!important}
-@media(prefers-reduced-motion:reduce){.coral-rig,.coral-registered-layer{animation:none!important;transition:none!important}}
+/* layers.json explicitly says the source PNGs require transforms. Each frame below clips the sourceRect and maps it to its targetRect. */
+.coral-manifest-layer{position:absolute;overflow:hidden!important;transform:none!important;translate:none!important;scale:none!important;rotate:none!important;animation:none!important;margin:0!important;padding:0!important;box-sizing:border-box}
+.coral-manifest-layer>img{position:absolute!important;max-width:none!important;display:block!important;margin:0!important;padding:0!important;user-select:none;pointer-events:none;transform:none!important;translate:none!important;scale:none!important;rotate:none!important;animation:none!important}
+@media(prefers-reduced-motion:reduce){.coral-rig,.coral-manifest-layer,.coral-manifest-layer>img{animation:none!important;transition:none!important}}
