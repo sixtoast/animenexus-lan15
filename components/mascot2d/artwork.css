@@ -1,1 +1,95 @@
-[aria-label="Lantern-ko 2.5D"] [data-layer="back-cloak"]{background:url('/mascot2d/cloak-back.svg') center/100% 100% no-repeat!important;border:0!important;overflow:visible!important}[aria-label="Lantern-ko 2.5D"] [data-layer="hood"]{background:url('/mascot2d/hood.svg') center/100% 100% no-repeat!important;border:0!important;box-shadow:none!important}[aria-label="Lantern-ko 2.5D"] [data-layer="hair-back"],[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]{background-repeat:no-repeat!important;background-position:center!important;background-size:100% 100%!important;border:0!important}[aria-label="Lantern-ko 2.5D"] [data-layer="hair-back"]{background-image:url('/mascot2d/hair-back.svg')!important}[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]{background-image:url('/mascot2d/hair-front.svg')!important;clip-path:none!important}[aria-label="Lantern-ko 2.5D"] [data-layer="body"] .torso{background:url('/mascot2d/body.svg') center/100% 100% no-repeat!important;border:0!important;box-shadow:none!important}[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"]{background:url('/mascot2d/arm-left.svg') center/100% 100% no-repeat!important;border:0!important}[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"]{background:url('/mascot2d/arm-right.svg') center/100% 100% no-repeat!important;border:0!important}[aria-label="Lantern-ko 2.5D"] [data-layer="legs"]{background:url('/mascot2d/boots.svg') center/100% 100% no-repeat!important;border:0!important}[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-left"]{background:url('/mascot2d/cloak-front-left.svg') center/100% 100% no-repeat!important;border:0!important;clip-path:none!important}[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-right"]{background:url('/mascot2d/cloak-front-right.svg') center/100% 100% no-repeat!important;border:0!important;clip-path:none!important}[aria-label="Lantern-ko 2.5D"] [data-layer="bow"]{background:url('/mascot2d/bow.svg') center/100% 100% no-repeat!important;border:0!important}
+/* Production image artwork. Each uploaded PNG is a transparent 1024x1536 canvas.
+   We render every part against the same 200x300 reference canvas and crop it through
+   the existing semantic rig element. This preserves the mature motion/physics rig
+   while replacing the CSS/SVG-drawn character art with the high-resolution layers. */
+[aria-label="Lantern-ko 2.5D"]{--art-w:200px;--art-h:300px}
+
+[aria-label="Lantern-ko 2.5D"] [data-layer="back-cloak"]{
+  background:none!important;border:0!important;box-shadow:none!important;
+}
+
+[aria-label="Lantern-ko 2.5D"] [data-layer="hood"]{
+  background-image:url("./hood-back.png")!important;
+  background-size:var(--art-w) var(--art-h)!important;
+  background-position:-9px -26px!important;
+  background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;
+}
+
+[aria-label="Lantern-ko 2.5D"] [data-layer="hair-back"]{
+  background-image:url("./hair-back.png")!important;
+  background-size:var(--art-w) var(--art-h)!important;
+  background-position:-31px -53px!important;
+  background-repeat:no-repeat!important;border:0!important;
+}
+[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]{
+  background-image:url("./hair-front.png")!important;
+  background-size:var(--art-w) var(--art-h)!important;
+  background-position:-38px -52px!important;
+  background-repeat:no-repeat!important;border:0!important;clip-path:none!important;
+}
+
+/* Face base is image artwork; the procedural FaceRig remains above it so blinking,
+   gaze, expression morphs and lip-sync keep working. */
+[aria-label="Lantern-ko 2.5D"] [data-layer="face"]{
+  background-image:url("./face-base.png")!important;
+  background-size:var(--art-w) var(--art-h)!important;
+  background-position:-35px -62px!important;
+  background-repeat:no-repeat!important;
+  box-shadow:none!important;
+}
+
+[aria-label="Lantern-ko 2.5D"] [data-layer="body"] .torso{
+  background-image:url("./body.png")!important;
+  background-size:var(--art-w) var(--art-h)!important;
+  background-position:-60px -163px!important;
+  background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;
+}
+
+[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"]{
+  background-image:url("./arm-left.png")!important;
+  background-size:var(--art-w) var(--art-h)!important;
+  background-position:-43px -173px!important;
+  background-repeat:no-repeat!important;border:0!important;
+}
+[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"]{
+  background-image:url("./arm-right.png")!important;
+  background-size:var(--art-w) var(--art-h)!important;
+  background-position:-108px -173px!important;
+  background-repeat:no-repeat!important;border:0!important;
+}
+
+[aria-label="Lantern-ko 2.5D"] [data-layer="legs"]{
+  background-image:url("./leg-right.png"),url("./leg-left.png")!important;
+  background-size:var(--art-w) var(--art-h),var(--art-w) var(--art-h)!important;
+  background-position:-50px -225px,-50px -225px!important;
+  background-repeat:no-repeat,no-repeat!important;border:0!important;
+}
+
+[aria-label="Lantern-ko 2.5D"] [data-layer="bow"]{
+  background-image:url("./bow.png")!important;
+  background-size:var(--art-w) var(--art-h)!important;
+  background-position:-75px -151px!important;
+  background-repeat:no-repeat!important;border:0!important;
+}
+
+/* The uploaded set has no separate front-cloak canvases. Do not keep the old SVG
+   fragments: the clothing silhouette is supplied by body.png. */
+[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-left"],
+[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-right"]{
+  background:none!important;border:0!important;clip-path:none!important;
+}
+
+[aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]{
+  background-image:url("./lantern.png")!important;
+  background-size:var(--art-w) var(--art-h)!important;
+  background-position:-87px 7px!important;
+  background-repeat:no-repeat!important;border:0!important;
+}
+/* Suppress the old CSS-drawn lantern bulb/stem; physics still transforms its parent. */
+[aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]>span,
+[aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]>b,
+[aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]>i{display:none!important}
+
+@media (prefers-reduced-motion:reduce){
+  [aria-label="Lantern-ko 2.5D"] [data-layer]{transition-duration:0ms!important}
+}
