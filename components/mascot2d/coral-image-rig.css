@@ -1,17 +1,30 @@
-/* One shared 1024 x 1536 stage. Never reuse legacy data-layer selectors. */
+/* All pivots and motion values use the same 1024 x 1536 stage as the artwork. */
+[aria-label="Lantern-ko 2.5D"][data-coral-renderer="true"]{animation:none!important}
 .coral-rig{position:absolute;inset:0;display:block;width:100%;height:100%;overflow:visible;pointer-events:none}
-.coral-rig g{transform-box:view-box}
-.coral-head{transform-origin:50% 41%;transform:translate(var(--head-x,0px),var(--head-y,0px)) rotate(var(--yaw,0deg));transition:transform .18s ease-out}
-.coral-body-motion{transform-origin:50% 70%;transform:translate(var(--emotion-body-x,0px),var(--emotion-body-y,0px)) scale(var(--body-scale-x,1),var(--emotion-scale-y,1))}
-.coral-hair{transform-origin:50% 15%;transform:rotate(calc(var(--physics-hair,0)*1.4deg))}
-.coral-bow{transform-origin:50% 44%;transform:rotate(calc(var(--physics-bow,0)*3deg))}
-.coral-arm-left{transform-origin:39% 44%;transform:rotate(calc(var(--emotion-arm-left,0deg) + var(--speech-left,0)*4deg))}
-.coral-arm-right{transform-origin:65% 45%;transform:rotate(calc(var(--emotion-arm-right,0deg) + var(--speech-right,0)*4deg))}
-.coral-leg-left{transform-origin:42% 70%}
-.coral-leg-right{transform-origin:59% 70%}
-[aria-label="Lantern-ko 2.5D"][data-anim="walk"] .coral-leg,[aria-label="Lantern-ko 2.5D"][data-anim="run"] .coral-leg{animation:coral-step .45s ease-in-out infinite alternate}
-[aria-label="Lantern-ko 2.5D"][data-anim="walk"] .coral-leg-right,[aria-label="Lantern-ko 2.5D"][data-anim="run"] .coral-leg-right{animation-direction:alternate-reverse}
-[aria-label="Lantern-ko 2.5D"][data-perch="sit"] .coral-leg{transform:scaleY(.65)}
-[aria-label="Lantern-ko 2.5D"][data-perch="crouch"] .coral-leg{transform:scaleY(.8)}
-@keyframes coral-step{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
-@media(prefers-reduced-motion:reduce){.coral-rig g{animation:none!important;transition:none!important}}
+.coral-rig g,.coral-rig path,.coral-rig rect,.coral-rig ellipse{transform-box:view-box;transform-origin:0 0}
+.coral-whole{transform:translate(522px,1490px) translateY(calc(var(--pose-y,0)*1px)) rotate(calc(var(--pose-lean,0)*1deg)) scale(var(--pose-sx,1),var(--pose-sy,1)) translate(-522px,-1490px);}
+.coral-head-action{transform:translate(532px,645px) translateY(calc(var(--pose-headY,0)*1px)) rotate(calc(var(--pose-head,0)*1deg)) translate(-532px,-645px);}
+.coral-head{transform:translate(532px,645px) translate(var(--head-x,0px),var(--head-y,0px)) rotate(var(--yaw,0deg)) translate(-532px,-645px);}
+.coral-hair{transform:translate(512px,230px) rotate(calc(var(--physics-hair,0)*1.4deg)) translate(-512px,-230px);}
+.coral-bow{transform:translate(512px,676px) rotate(calc(var(--physics-bow,0)*3deg)) translate(-512px,-676px);}
+.coral-arm-left{transform:translate(399px,676px) rotate(calc(var(--pose-left,0)*1deg + var(--emotion-arm-left,0deg) + var(--speech-left,0)*4deg)) translate(-399px,-676px);}
+.coral-arm-right{transform:translate(666px,691px) rotate(calc(var(--pose-right,0)*1deg + var(--emotion-arm-right,0deg) - var(--speech-right,0)*7deg)) translate(-666px,-691px);}
+.coral-lantern{transform:translate(195px,876px) rotate(calc(var(--pose-lantern,0)*1deg + var(--physics-lantern,0)*3deg)) translate(-195px,-876px);}
+.coral-leg-left{transform:translate(430px,1075px) translateY(calc(var(--pose-legY,0)*1px)) rotate(calc(var(--pose-legL,0)*1deg)) scaleY(var(--pose-legScale,1)) translate(-430px,-1075px);}
+.coral-leg-right{transform:translate(604px,1075px) translateY(calc(var(--pose-legY,0)*1px)) rotate(calc(var(--pose-legR,0)*1deg)) scaleY(var(--pose-legScale,1)) translate(-604px,-1075px);}
+.coral-head{transition:transform .18s ease-out}
+.coral-body-motion{transform:translate(var(--emotion-body-x,0px),var(--emotion-body-y,0px))}
+.coral-features,.coral-brows{transition:transform .14s ease-out}
+.coral-eye-mask{transition:transform 120ms cubic-bezier(.2,.7,.3,1)}
+.coral-lid{transition:transform 120ms cubic-bezier(.2,.7,.3,1),opacity 80ms}
+.coral-rig[data-eyes-closed="true"] .coral-eye-mask,.coral-rig[data-eyes-closed="true"] .coral-lid{transition-duration:65ms}
+.coral-mouth-open{transition:transform 85ms ease-out,opacity 65ms}
+.coral-mouth-closed{transition:opacity 65ms}
+.coral-landing{transform-origin:522px 1490px!important}
+[data-coral-renderer="true"][data-landed="true"] .coral-landing{animation:coral-land .5s cubic-bezier(.2,.8,.2,1)}
+[data-interaction="grab"] .coral-landing{transform-origin:522px 276px!important translate(-604px,-1075px);animation:coral-dangle 1.1s ease-in-out infinite alternate}
+[data-interaction="poke"] .coral-landing{animation:coral-recoil .45s ease-out}
+@keyframes coral-land{0%{transform:scale(1)}30%{transform:scale(1.025,.95)}65%{transform:scale(.994,1.015)}100%{transform:scale(1)}}
+@keyframes coral-dangle{from{transform:rotate(-1.4deg)}to{transform:rotate(1.4deg)}}
+@keyframes coral-recoil{30%{transform:rotate(1.5deg) scale(.99,1.01)}65%{transform:rotate(-.5deg)}100%{transform:rotate(0)}}
+@media(prefers-reduced-motion:reduce){.coral-rig *{animation:none!important;transition:none!important}}
