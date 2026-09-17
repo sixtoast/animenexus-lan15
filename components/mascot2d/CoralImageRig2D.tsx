@@ -1,5 +1,4 @@
 "use client";
-import type {CSSProperties} from "react";
 import armLeft from "./arm-left.png";
 import armRight from "./arm-right.png";
 import body from "./body.png";
@@ -38,5 +37,39 @@ const LAYERS:LayerDef[]=[
  {name:"hair-front",src:hairFront.src,source:[32,31,968,983],target:[200,15,625,645],z:13},
  {name:"lantern",src:lantern.src,source:[125,61,774,1380],target:[96,848,197,353],z:14},
 ];
-function Layer({d}:{d:LayerDef}){const [sx,sy,sw,sh]=d.source,[tx,ty,tw,th]=d.target;const frame={left:`${tx/W*100}%`,top:`${ty/H*100}%`,width:`${tw/W*100}%`,height:`${th/H*100}%`,zIndex:d.z} as CSSProperties;const image={left:`${-sx/sw*100}%`,top:`${-sy/sh*100}%`,width:`${W/sw*100}%`,height:`${H/sh*100}%`} as CSSProperties;return <div className={`coral-manifest-layer ${d.className??""}`} data-layer={d.name} style={frame}><img src={d.src} alt="" draggable={false} style={image}/></div>}
-export function CoralImageRig2D(_props:Props){return <div className="coral-rig" aria-hidden="true" data-registration="manifest">{LAYERS.map(d=><Layer key={d.name} d={d}/>)}</div>}
+// Nested SVG viewBoxes crop in source pixels, avoiding CSS background-position
+// percentages (which are relative to the remaining space, not the source image).
+function Layer({d}:{d:LayerDef}) {
+ const [x,y,width,height]=d.target;
+ return <svg x={x} y={y} width={width} height={height} viewBox={d.source.join(" ")} preserveAspectRatio="none" overflow="hidden" data-coral-part={d.name}>
+  <image href={d.src} x="0" y="0" width={W} height={H}/>
+ </svg>;
+}
+const part=(name:string)=><Layer key={name} d={LAYERS.find(d=>d.name===name)!}/>;
+const clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(max,n));
+export function CoralImageRig2D({expression,blink,gazeX,gazeY,blush,turn,mouthOpen,mouthWide,mouthMood}:Props){
+ const sleepy=expression==="sleepy",sad=["sad","scared"].includes(expression),happy=["happy","excited","proud","smug","mischievous"].includes(expression);
+ const open=clamp(Math.max(mouthOpen,expression==="surprised"?.8:expression==="excited"?.35:0),0,1);
+ const eyeScale=blink?.04:sleepy?.55:expression==="annoyed"?.75:1;
+ const gx=clamp(gazeX,-6,6)*1.3+clamp(turn,-.6,.6)*8,gy=clamp(gazeY,-5,5);
+ return <svg className="coral-rig" viewBox="0 0 1024 1536" preserveAspectRatio="xMidYMax meet" aria-hidden="true" focusable="false" data-registration="source-pixels">
+  <g className="coral-body-motion">
+   <g className="coral-leg coral-leg-left">{part("leg-left")}</g>
+   <g className="coral-leg coral-leg-right">{part("leg-right")}</g>
+   <g className="coral-arm coral-arm-left">{part("arm-left")}{part("lantern")}</g>
+   <g className="coral-arm coral-arm-right">{part("arm-right")}</g>
+   {part("body")}
+   <g className="coral-bow">{part("bow")}</g>
+  </g>
+  <g className="coral-head">
+   {part("hood-back")}{part("hair-back")}{part("face-base")}
+   <g transform={`translate(${gx} ${gy})`}>
+    <g transform={`translate(0 ${sad?8:0})`}>{part("brows")}</g>
+    <g transform={`translate(0 490) scale(1 ${eyeScale}) translate(0 -490)`}>{part("eye-left")}{part("eye-right")}</g>
+    <g opacity={clamp(blush,0,1)*.3} fill="#f29785"><ellipse cx="385" cy="550" rx="33" ry="14"/><ellipse cx="650" cy="550" rx="33" ry="14"/></g>
+    {open>.08?<ellipse cx="510" cy="578" rx={12+clamp(mouthWide,0,1)*12} ry={5+open*22} fill="#763c40" stroke="#a36662" strokeWidth="3"/>:sad||mouthMood<-.4?<path d="M490 582 Q510 566 531 581" fill="none" stroke="#8c5d4d" strokeWidth="3" strokeLinecap="round"/>:<g transform={`translate(510 578) scale(${happy?1.15:1} 1) translate(-510 -578)`}>{part("mouth")}</g>}
+   </g>
+   <g className="coral-hair">{part("hair-front")}</g>
+  </g>
+ </svg>;
+}

@@ -1,5 +1,17 @@
-.coral-rig{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:visible;transform-origin:50% 92%}
-/* layers.json explicitly says the source PNGs require transforms. Each frame below clips the sourceRect and maps it to its targetRect. */
-.coral-manifest-layer{position:absolute;overflow:hidden!important;transform:none!important;translate:none!important;scale:none!important;rotate:none!important;animation:none!important;margin:0!important;padding:0!important;box-sizing:border-box}
-.coral-manifest-layer>img{position:absolute!important;max-width:none!important;display:block!important;margin:0!important;padding:0!important;user-select:none;pointer-events:none;transform:none!important;translate:none!important;scale:none!important;rotate:none!important;animation:none!important}
-@media(prefers-reduced-motion:reduce){.coral-rig,.coral-manifest-layer,.coral-manifest-layer>img{animation:none!important;transition:none!important}}
+/* One shared 1024 x 1536 stage. Never reuse legacy data-layer selectors. */
+.coral-rig{position:absolute;inset:0;display:block;width:100%;height:100%;overflow:visible;pointer-events:none}
+.coral-rig g{transform-box:view-box}
+.coral-head{transform-origin:50% 41%;transform:translate(var(--head-x,0px),var(--head-y,0px)) rotate(var(--yaw,0deg));transition:transform .18s ease-out}
+.coral-body-motion{transform-origin:50% 70%;transform:translate(var(--emotion-body-x,0px),var(--emotion-body-y,0px)) scale(var(--body-scale-x,1),var(--emotion-scale-y,1))}
+.coral-hair{transform-origin:50% 15%;transform:rotate(calc(var(--physics-hair,0)*1.4deg))}
+.coral-bow{transform-origin:50% 44%;transform:rotate(calc(var(--physics-bow,0)*3deg))}
+.coral-arm-left{transform-origin:39% 44%;transform:rotate(calc(var(--emotion-arm-left,0deg) + var(--speech-left,0)*4deg))}
+.coral-arm-right{transform-origin:65% 45%;transform:rotate(calc(var(--emotion-arm-right,0deg) + var(--speech-right,0)*4deg))}
+.coral-leg-left{transform-origin:42% 70%}
+.coral-leg-right{transform-origin:59% 70%}
+[aria-label="Lantern-ko 2.5D"][data-anim="walk"] .coral-leg,[aria-label="Lantern-ko 2.5D"][data-anim="run"] .coral-leg{animation:coral-step .45s ease-in-out infinite alternate}
+[aria-label="Lantern-ko 2.5D"][data-anim="walk"] .coral-leg-right,[aria-label="Lantern-ko 2.5D"][data-anim="run"] .coral-leg-right{animation-direction:alternate-reverse}
+[aria-label="Lantern-ko 2.5D"][data-perch="sit"] .coral-leg{transform:scaleY(.65)}
+[aria-label="Lantern-ko 2.5D"][data-perch="crouch"] .coral-leg{transform:scaleY(.8)}
+@keyframes coral-step{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
+@media(prefers-reduced-motion:reduce){.coral-rig g{animation:none!important;transition:none!important}}
