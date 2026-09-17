@@ -1,95 +1,47 @@
-/* Production image artwork. Each uploaded PNG is a transparent 1024x1536 canvas.
-   We render every part against the same 200x300 reference canvas and crop it through
-   the existing semantic rig element. This preserves the mature motion/physics rig
-   while replacing the CSS/SVG-drawn character art with the high-resolution layers. */
+/* PNG artwork compositor.
+   Every uploaded layer is a transparent 1024x1536 image authored in the SAME canvas.
+   The previous implementation incorrectly used each small rig node as a background
+   crop, which enlarged/cut the artwork and produced the broken body seen on mobile.
+
+   Instead each semantic rig node owns a full 200x300 canvas in ::before. The canvas
+   is offset back to mascot-root coordinates, so transparent pixels line up exactly
+   while the existing node still supplies the pivot/physics transform. */
 [aria-label="Lantern-ko 2.5D"]{--art-w:200px;--art-h:300px}
 
-[aria-label="Lantern-ko 2.5D"] [data-layer="back-cloak"]{
-  background:none!important;border:0!important;box-shadow:none!important;
-}
+[aria-label="Lantern-ko 2.5D"] [data-layer]{background-image:none!important;background-color:transparent!important;border:0!important;box-shadow:none!important;overflow:visible!important}
+[aria-label="Lantern-ko 2.5D"] [data-layer]::before{content:"";position:absolute;width:var(--art-w);height:var(--art-h);background-size:100% 100%;background-repeat:no-repeat;background-position:0 0;pointer-events:none}
 
-[aria-label="Lantern-ko 2.5D"] [data-layer="hood"]{
-  background-image:url("./hood-back.png")!important;
-  background-size:var(--art-w) var(--art-h)!important;
-  background-position:-9px -26px!important;
-  background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;
-}
+/* Root-space layers. Offsets are the inverse of each rig node's root position. */
+[aria-label="Lantern-ko 2.5D"] [data-layer="body"] .torso{background:none!important;border:0!important;box-shadow:none!important;overflow:visible!important}
+[aria-label="Lantern-ko 2.5D"] [data-layer="body"] .torso::before{content:"";position:absolute;left:-70px;top:-163px;width:var(--art-w);height:var(--art-h);background:url("./body.png") 0 0/100% 100% no-repeat;pointer-events:none}
 
-[aria-label="Lantern-ko 2.5D"] [data-layer="hair-back"]{
-  background-image:url("./hair-back.png")!important;
-  background-size:var(--art-w) var(--art-h)!important;
-  background-position:-31px -53px!important;
-  background-repeat:no-repeat!important;border:0!important;
-}
-[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]{
-  background-image:url("./hair-front.png")!important;
-  background-size:var(--art-w) var(--art-h)!important;
-  background-position:-38px -52px!important;
-  background-repeat:no-repeat!important;border:0!important;clip-path:none!important;
-}
+[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"]::before{left:-53px;top:-173px;background-image:url("./arm-left.png")}
+[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"]::before{left:-118px;top:-173px;background-image:url("./arm-right.png")}
 
-/* Face base is image artwork; the procedural FaceRig remains above it so blinking,
-   gaze, expression morphs and lip-sync keep working. */
-[aria-label="Lantern-ko 2.5D"] [data-layer="face"]{
-  background-image:url("./face-base.png")!important;
-  background-size:var(--art-w) var(--art-h)!important;
-  background-position:-35px -62px!important;
-  background-repeat:no-repeat!important;
-  box-shadow:none!important;
-}
+/* The existing rig has one legs pivot. Both authored leg canvases share root space. */
+[aria-label="Lantern-ko 2.5D"] [data-layer="legs"]::before{left:-60px;top:-225px;background-image:url("./leg-left.png"),url("./leg-right.png")}
 
-[aria-label="Lantern-ko 2.5D"] [data-layer="body"] .torso{
-  background-image:url("./body.png")!important;
-  background-size:var(--art-w) var(--art-h)!important;
-  background-position:-60px -163px!important;
-  background-repeat:no-repeat!important;border:0!important;box-shadow:none!important;
-}
+[aria-label="Lantern-ko 2.5D"] [data-layer="bow"]::before{left:-85px;top:-151px;background-image:url("./bow.png")}
 
-[aria-label="Lantern-ko 2.5D"] [data-layer="arm-left"]{
-  background-image:url("./arm-left.png")!important;
-  background-size:var(--art-w) var(--art-h)!important;
-  background-position:-43px -173px!important;
-  background-repeat:no-repeat!important;border:0!important;
-}
-[aria-label="Lantern-ko 2.5D"] [data-layer="arm-right"]{
-  background-image:url("./arm-right.png")!important;
-  background-size:var(--art-w) var(--art-h)!important;
-  background-position:-108px -173px!important;
-  background-repeat:no-repeat!important;border:0!important;
-}
+/* Head layers live inside headRig (root origin 18,14). */
+[aria-label="Lantern-ko 2.5D"] [data-layer="hood"]::before{left:-19px;top:-26px;background-image:url("./hood-back.png")}
+[aria-label="Lantern-ko 2.5D"] [data-layer="hair-back"]::before{left:-41px;top:-53px;background-image:url("./hair-back.png")}
+[aria-label="Lantern-ko 2.5D"] [data-layer="face"]::before{left:-45px;top:-62px;background-image:url("./face-base.png")}
+[aria-label="Lantern-ko 2.5D"] [data-layer="hair-front"]::before{left:-48px;top:-52px;background-image:url("./hair-front.png")}
 
-[aria-label="Lantern-ko 2.5D"] [data-layer="legs"]{
-  background-image:url("./leg-right.png"),url("./leg-left.png")!important;
-  background-size:var(--art-w) var(--art-h),var(--art-w) var(--art-h)!important;
-  background-position:-50px -225px,-50px -225px!important;
-  background-repeat:no-repeat,no-repeat!important;border:0!important;
-}
-
-[aria-label="Lantern-ko 2.5D"] [data-layer="bow"]{
-  background-image:url("./bow.png")!important;
-  background-size:var(--art-w) var(--art-h)!important;
-  background-position:-75px -151px!important;
-  background-repeat:no-repeat!important;border:0!important;
-}
-
-/* The uploaded set has no separate front-cloak canvases. Do not keep the old SVG
-   fragments: the clothing silhouette is supplied by body.png. */
+/* Uploaded body artwork supplies the clothing silhouette. */
+[aria-label="Lantern-ko 2.5D"] [data-layer="back-cloak"],
 [aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-left"],
-[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-right"]{
-  background:none!important;border:0!important;clip-path:none!important;
-}
+[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-right"]{background:none!important}
+[aria-label="Lantern-ko 2.5D"] [data-layer="back-cloak"]::before,
+[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-left"]::before,
+[aria-label="Lantern-ko 2.5D"] [data-layer="cloak-front-right"]::before{display:none}
 
-[aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]{
-  background-image:url("./lantern.png")!important;
-  background-size:var(--art-w) var(--art-h)!important;
-  background-position:-87px 7px!important;
-  background-repeat:no-repeat!important;border:0!important;
-}
-/* Suppress the old CSS-drawn lantern bulb/stem; physics still transforms its parent. */
+/* The supplied lantern is a full-canvas hand prop, not the old CSS tip bulb. Keep
+   its physics parent but composite the authored canvas from root coordinates. */
+[aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]::before{left:-97px;top:7px;background-image:url("./lantern.png")}
 [aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]>span,
 [aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]>b,
 [aria-label="Lantern-ko 2.5D"] [data-layer="lantern"]>i{display:none!important}
 
-@media (prefers-reduced-motion:reduce){
-  [aria-label="Lantern-ko 2.5D"] [data-layer]{transition-duration:0ms!important}
-}
+@media (prefers-reduced-motion:reduce){[aria-label="Lantern-ko 2.5D"] [data-layer]{transition-duration:0ms!important}}
