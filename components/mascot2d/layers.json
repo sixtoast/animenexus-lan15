@@ -1,0 +1,334 @@
+{
+  "name": "Lantern-ko Coral",
+  "version": 1,
+  "canvas": {
+    "width": 1024,
+    "height": 1536
+  },
+  "palette": {
+    "plum": "#16121a",
+    "plumLight": "#1f1a24",
+    "coral": "#ffb087",
+    "cream": "#faf6f1",
+    "amber": "#f0c56e",
+    "lilac": "#7a6b9a"
+  },
+  "placementStatus": "Suggested starting layout, not a tested animation rig. Source PNGs require transforms.",
+  "layers": [
+    {
+      "id": "leg-left",
+      "file": "leg-left.png",
+      "sourceRect": [
+        337,
+        119,
+        336,
+        1274
+      ],
+      "targetRect": [
+        367,
+        1060,
+        137,
+        430
+      ],
+      "pivot": [
+        430,
+        1080
+      ],
+      "parent": "body"
+    },
+    {
+      "id": "leg-right",
+      "file": "leg-right.png",
+      "sourceRect": [
+        346,
+        82,
+        336,
+        1333
+      ],
+      "targetRect": [
+        540,
+        1060,
+        137,
+        430
+      ],
+      "pivot": [
+        605,
+        1080
+      ],
+      "parent": "body"
+    },
+    {
+      "id": "arm-left",
+      "file": "arm-left.png",
+      "sourceRect": [
+        130,
+        271,
+        826,
+        992
+      ],
+      "targetRect": [
+        140,
+        660,
+        290,
+        350
+      ],
+      "pivot": [
+        392,
+        690
+      ],
+      "parent": "body"
+    },
+    {
+      "id": "arm-right",
+      "file": "arm-right.png",
+      "sourceRect": [
+        76,
+        169,
+        871,
+        1078
+      ],
+      "targetRect": [
+        630,
+        690,
+        292,
+        370
+      ],
+      "pivot": [
+        652,
+        709
+      ],
+      "parent": "body"
+    },
+    {
+      "id": "body",
+      "file": "body.png",
+      "sourceRect": [
+        54,
+        454,
+        915,
+        778
+      ],
+      "targetRect": [
+        217,
+        625,
+        610,
+        505
+      ],
+      "pivot": [
+        512,
+        650
+      ],
+      "parent": "body"
+    },
+    {
+      "id": "bow",
+      "file": "bow.png",
+      "sourceRect": [
+        210,
+        526,
+        632,
+        480
+      ],
+      "targetRect": [
+        409,
+        662,
+        201,
+        155
+      ],
+      "pivot": [
+        512,
+        687
+      ],
+      "parent": "body"
+    },
+    {
+      "id": "hood-back",
+      "file": "hood-back.png",
+      "sourceRect": [
+        62,
+        103,
+        903,
+        626
+      ],
+      "targetRect": [
+        140,
+        95,
+        748,
+        530
+      ],
+      "pivot": [
+        512,
+        620
+      ],
+      "parent": "head"
+    },
+    {
+      "id": "hair-back",
+      "file": "hair-back.png",
+      "sourceRect": [
+        62,
+        197,
+        928,
+        691
+      ],
+      "targetRect": [
+        190,
+        165,
+        650,
+        490
+      ],
+      "pivot": [
+        512,
+        275
+      ],
+      "parent": "head"
+    },
+    {
+      "id": "face-base",
+      "file": "face-base.png",
+      "sourceRect": [
+        191,
+        400,
+        642,
+        694
+      ],
+      "targetRect": [
+        323,
+        290,
+        430,
+        365
+      ],
+      "pivot": [
+        512,
+        620
+      ],
+      "parent": "head"
+    },
+    {
+      "id": "brows",
+      "file": "brows.png",
+      "sourceRect": [
+        226,
+        368,
+        571,
+        77
+      ],
+      "targetRect": [
+        350,
+        388,
+        310,
+        28
+      ],
+      "pivot": [
+        512,
+        405
+      ],
+      "parent": "head"
+    },
+    {
+      "id": "eye-left",
+      "file": "eye-left.png",
+      "sourceRect": [
+        205,
+        526,
+        627,
+        433
+      ],
+      "targetRect": [
+        344,
+        440,
+        120,
+        99
+      ],
+      "pivot": [
+        404,
+        490
+      ],
+      "parent": "head"
+    },
+    {
+      "id": "eye-right",
+      "file": "eye-right.png",
+      "sourceRect": [
+        218,
+        507,
+        689,
+        459
+      ],
+      "targetRect": [
+        554,
+        440,
+        120,
+        99
+      ],
+      "pivot": [
+        614,
+        490
+      ],
+      "parent": "head"
+    },
+    {
+      "id": "mouth",
+      "file": "mouth.png",
+      "sourceRect": [
+        442,
+        756,
+        136,
+        33
+      ],
+      "targetRect": [
+        488,
+        573,
+        43,
+        9
+      ],
+      "pivot": [
+        510,
+        578
+      ],
+      "parent": "head"
+    },
+    {
+      "id": "hair-front",
+      "file": "hair-front.png",
+      "sourceRect": [
+        32,
+        31,
+        968,
+        983
+      ],
+      "targetRect": [
+        200,
+        15,
+        625,
+        645
+      ],
+      "pivot": [
+        512,
+        200
+      ],
+      "parent": "head"
+    },
+    {
+      "id": "lantern",
+      "file": "lantern.png",
+      "sourceRect": [
+        125,
+        61,
+        774,
+        1380
+      ],
+      "targetRect": [
+        96,
+        848,
+        197,
+        353
+      ],
+      "pivot": [
+        194,
+        852
+      ],
+      "parent": "arm-left"
+    }
+  ]
+}

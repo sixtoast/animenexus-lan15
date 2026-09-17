@@ -1,0 +1,62 @@
+[
+  {
+    "id": "hood-back",
+    "prompt": "Create an actual separated PNG puppet layer from the provided Lantern-ko master. ONLY the plum cat-ear hood, including coral edging and both cat ears. No hair, face, neck, cape, body or anything else. Fill in the hood's interior behind removed head with plain plum cloth. No star badges on hood. Keep the outer hood silhouette from the source. EXACT SOURCE STYLE and palette, clean simple cel shading. Transparent RGBA background, alpha zero everywhere outside requested piece, including holes. No glow or shadow outside silhouette. Keep complete part with overlap for animation. Same 1024x1536 portrait canvas; keep original scale and coordinates where possible. Never show other mascot pieces or labels. Only one requested part."
+  },
+  {
+    "id": "hair-back",
+    "prompt": "Create an actual separated PNG puppet layer from the provided Lantern-ko master. ONLY the cream rear bob hair. Remove hood, face, front bangs, curl, body and all other parts. Reconstruct solid rear hair cap with cream fill behind where face would cover it, retaining the bob side points and tips. No hole in back hair. EXACT SOURCE STYLE and palette, clean simple cel shading. Transparent RGBA background, alpha zero everywhere outside requested piece, including holes. No glow or shadow outside silhouette. Keep complete part with overlap for animation. Same 1024x1536 portrait canvas; keep original scale and coordinates where possible. Never show other mascot pieces or labels. Only one requested part."
+  },
+  {
+    "id": "face-base",
+    "prompt": "Create an actual separated PNG puppet layer from the provided Lantern-ko master. ONLY a blank peach-skin face with both ears and a short neck. No eyes, no brows, no blush, no mouth, no nose marks, no hair or any clothing. Complete the forehead hidden under bangs. Soft rounded chibi face, with ears at cheek height, source skin tone. EXACT SOURCE STYLE and palette, clean simple cel shading. Transparent RGBA background, alpha zero everywhere outside requested piece, including holes. No glow or shadow outside silhouette. Keep complete part with overlap for animation. Same 1024x1536 portrait canvas; keep original scale and coordinates where possible. Never show other mascot pieces or labels. Only one requested part."
+  },
+  {
+    "id": "hair-front",
+    "prompt": "Create an actual separated PNG puppet layer from the provided Lantern-ko master. ONLY the cream front fringe and ahoge curl, including the three broad front bangs and tapered side locks. REMOVE back hair. Keep a fully transparent large opening under bangs for face and eyes. No face, eyes, skin, hood, body or anything else. Match source bangs shape and source ivory colour. EXACT SOURCE STYLE and palette, clean simple cel shading. Transparent RGBA background, alpha zero everywhere outside requested piece, including holes. No glow or shadow outside silhouette. Keep complete part with overlap for animation. Same 1024x1536 portrait canvas; keep original scale and coordinates where possible. Never show other mascot pieces or labels. Only one requested part."
+  },
+  {
+    "id": "body",
+    "prompt": "Create an actual separated PNG puppet layer from the provided Lantern-ko master. ONLY the outfit torso: plain cream A-line tunic together with short plum cape and coral piping and single tiny gold four-point star badge on viewer-right chest. No bow, sleeves, hands, head, hair, neck, legs, lantern or other parts. Reconstruct full tunic under removed bow and lower cape edges under arms. Plain clean outfit, no decorative patterns. EXACT SOURCE STYLE and palette, clean simple cel shading. Transparent RGBA background, alpha zero everywhere outside requested piece, including holes. No glow or shadow outside silhouette. Keep complete part with overlap for animation. Same 1024x1536 portrait canvas; keep original scale and coordinates where possible. Never show other mascot pieces or labels. Only one requested part."
+  },
+  {
+    "id": "arm-left",
+    "prompt": "Separate a single actual PNG puppet layer from this Lantern-ko source. ONLY the arm on VIEWER LEFT: complete cream wide sleeve with thin peach-coral cuff edge and muted plum inner lining, and small curled hand holding nothing. No cape attached, no lantern or handle. Paint full shoulder top under the cape, rounded closed cap for overlap. Arm slopes down towards viewer-left and the curled hand faces the camera. Exactly one arm. Exact matching source character design and cream/plum/coral palette, restrained crisp cel shading and clean thin coloured linework. No extra motifs. True transparent background with zero alpha outside the silhouette, no glow, shadow, backdrop, labels. Complete disconnected requested part only on a 1024x1536 portrait canvas. Keep source proportions; do not distort anatomy."
+  },
+  {
+    "id": "arm-right",
+    "prompt": "Separate a single actual PNG puppet layer from this Lantern-ko source. ONLY the arm on VIEWER RIGHT: complete cream wide sleeve with thin peach-coral cuff edge and muted plum inner lining, and small relaxed open hand. No cape attached. Paint full shoulder top under the cape, rounded closed cap for overlap. Arm slopes down towards viewer-right. Exactly one arm. Exact matching source character design and cream/plum/coral palette, restrained crisp cel shading and clean thin coloured linework. No extra motifs. True transparent background with zero alpha outside the silhouette, no glow, shadow, backdrop, labels. Complete disconnected requested part only on a 1024x1536 portrait canvas. Keep source proportions; do not distort anatomy."
+  },
+  {
+    "id": "leg-left",
+    "prompt": "Separate a single actual PNG puppet layer from this Lantern-ko source. ONLY the leg on VIEWER LEFT including its skin upper leg, cream sock and simple plum ankle boot with peach-coral sole and coral folded cuff lining. Full leg starts above dress hem to give overlap. Exactly one leg and one boot. No other parts, no dress hem. Keep relaxed straight front-facing leg and forward-facing shoe. Exact matching source character design and cream/plum/coral palette, restrained crisp cel shading and clean thin coloured linework. No extra motifs. True transparent background with zero alpha outside the silhouette, no glow, shadow, backdrop, labels. Complete disconnected requested part only on a 1024x1536 portrait canvas. Keep source proportions; do not distort anatomy."
+  },
+  {
+    "id": "leg-right",
+    "prompt": "Separate a single actual PNG puppet layer from this Lantern-ko source. ONLY the leg on VIEWER RIGHT including its skin upper leg, cream sock and simple plum ankle boot with peach-coral sole and coral folded cuff lining. Full leg starts above dress hem to give overlap. Exactly one leg and one boot. No other parts, no dress hem. Keep relaxed straight front-facing leg and forward-facing shoe. Exact matching source character design and cream/plum/coral palette, restrained crisp cel shading and clean thin coloured linework. No extra motifs. True transparent background with zero alpha outside the silhouette, no glow, shadow, backdrop, labels. Complete disconnected requested part only on a 1024x1536 portrait canvas. Keep source proportions; do not distort anatomy."
+  },
+  {
+    "id": "bow",
+    "prompt": "Separate a single actual PNG puppet layer from this Lantern-ko source. ONLY the SHORT peach-coral neck bow with two broad loops, two short tails and tiny amber four-point star clasp in centre. Exactly the bow from the source. No clothing or skin or anything else. Exact matching source character design and cream/plum/coral palette, restrained crisp cel shading and clean thin coloured linework. No extra motifs. True transparent background with zero alpha outside the silhouette, no glow, shadow, backdrop, labels. Complete disconnected requested part only on a 1024x1536 portrait canvas. Keep source proportions; do not distort anatomy."
+  },
+  {
+    "id": "eye-left",
+    "prompt": "Extract one separate PNG animation layer of this new Lantern-ko mascot. ONLY the single open eye on VIEWER LEFT, including white sclera, amber iris, dark pupil, white glints and plum-black lashes. Outer lashes point LEFT, inner corner is on RIGHT. No eyebrow, skin, hair, blush or other parts. Exactly one eye. Neutral forward gaze, beautiful source eye shape. Match source shapes, palette and crisp anime cel shading. True transparent alpha background, absolutely no external glow, backdrop, shadows, labels or text. Output only requested part on 1024x1536 canvas. No other features."
+  },
+  {
+    "id": "eye-right",
+    "prompt": "Extract one separate PNG animation layer of this new Lantern-ko mascot. ONLY the single open eye on VIEWER RIGHT, including white sclera, amber iris, dark pupil, white glints and plum-black lashes. Outer lashes point RIGHT, inner corner is on LEFT. No eyebrow, skin, hair, blush or other parts. Exactly one eye. Neutral forward gaze, beautiful source eye shape. Match source shapes, palette and crisp anime cel shading. True transparent alpha background, absolutely no external glow, backdrop, shadows, labels or text. Output only requested part on 1024x1536 canvas. No other features."
+  },
+  {
+    "id": "brows",
+    "prompt": "Extract one separate PNG animation layer of this new Lantern-ko mascot. ONLY the pair of subtle soft taupe curved eyebrows, two delicate gentle arcs side by side with clear transparent gap. No eyes, face, hair or other parts. Calm neutral expression. Match source shapes, palette and crisp anime cel shading. True transparent alpha background, absolutely no external glow, backdrop, shadows, labels or text. Output only requested part on 1024x1536 canvas. No other features."
+  },
+  {
+    "id": "mouth",
+    "prompt": "Extract one separate PNG animation layer of this new Lantern-ko mascot. ONLY the tiny softly smiling CLOSED mouth from the source, a delicate dark warm plum upward-curved line. No lips, face, nose, skin or other marks. Match source shapes, palette and crisp anime cel shading. True transparent alpha background, absolutely no external glow, backdrop, shadows, labels or text. Output only requested part on 1024x1536 canvas. No other features."
+  },
+  {
+    "id": "lantern",
+    "prompt": "Extract one separate PNG animation layer of this new Lantern-ko mascot. ONLY the small handheld lantern from source: plum frame, cat-ear cap with one tiny amber star, simple loop handle, peach luminous glass and tiny ivory cat spirit inside. No tassel, hand or anything else. Complete the handle under the removed fingers. Keep glow INSIDE the glass and transparent hole inside carrying loop. Rounded simple charming lantern, match source design. Match source shapes, palette and crisp anime cel shading. True transparent alpha background, absolutely no external glow, backdrop, shadows, labels or text. Output only requested part on 1024x1536 canvas. No other features."
+  }
+]
