@@ -11,6 +11,8 @@ export type LanternKo2DProps = {
   gazeOverride?: { x: number; y: number };
   anim: MascotAnim;
   yaw?: number;
+  /** Explicit sprite facing angle: -90 left, 0 front, 90 right. */
+  facingAngleDeg?: number;
   speed?: number;
   justLanded?: boolean;
   className?: string;
@@ -41,3 +43,4 @@ export type LanternKo2DLayer =
   | "hair-front"
   | "hood"
   | "lantern";
+
