@@ -20,3 +20,12 @@ advance(250);assert.equal(render(0).blink,false);
 slots.forEach(s=>s?.cleanup?.());assert.equal(timers.size,0);
 console.log('PASS: 17 animation states remain finite and bounded; walk/run differ; carrying arm stays restrained.');
 console.log('PASS: blink reopens across gaze/expression changes, sleeping/waking, repeated updates, and cleans up all timers.');
+
+for(const action of ['sit','point']){
+ const key=action==='sit'?'seat':'point';
+ assert.equal(sampleCoralMotion(action,.15)[key],0,'anticipation must finish before artwork changes');
+ assert(sampleCoralMotion(action,.6)[key]>.97,'fast action after anticipation');
+ assert(Math.abs(sampleCoralMotion(action,2)[key]-1)<.01,'settled pose');
+}
+assert.equal(sampleCoralMotion('idle',2,0,'sit').seat,1);
+console.log('PASS: sitting/pointing anticipate before revealing their authored layers, then settle.');

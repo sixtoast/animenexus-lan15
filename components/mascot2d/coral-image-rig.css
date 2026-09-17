@@ -28,3 +28,12 @@
 @keyframes coral-dangle{from{transform:rotate(-1.4deg)}to{transform:rotate(1.4deg)}}
 @keyframes coral-recoil{30%{transform:rotate(1.5deg) scale(.99,1.01)}65%{transform:rotate(-.5deg)}100%{transform:rotate(0)}}
 @media(prefers-reduced-motion:reduce){.coral-rig *{animation:none!important;transition:none!important}}
+/* Authored pose layers: reveal after the anticipation beat, never stretch standing legs into a seat. */
+.coral-standing-legs{opacity:calc(1 - var(--pose-seat,0))}
+.coral-sitting{opacity:var(--pose-seat,0)}
+.coral-body-mask{height:calc(1536px - var(--pose-seat,0)*691px)}
+.coral-rest-arm{opacity:calc(1 - var(--pose-point,0))}
+.coral-pointing{opacity:var(--pose-point,0);transform:translate(666px,760px) translateX(calc(var(--pose-pointX,0)*1px)) rotate(calc(var(--pose-pointAngle,0)*1deg)) translate(-666px,-760px)}
+.coral-front-view{opacity:calc(1 - var(--profile,0));transform:translate(522px,1490px) rotate(calc(var(--turn-lean,0)*1deg)) scaleX(calc(1 - var(--profile,0)*.18)) translate(-522px,-1490px)}
+.coral-profile-view{opacity:var(--profile,0)}
+.coral-profile-facing{transform:translate(518px,0) scaleX(var(--facing-sign,1)) translate(-518px,0)}

@@ -15,13 +15,21 @@ import brows from "./brows.png";
 import eyeLeft from "./eye-left.png";
 import eyeRight from "./eye-right.png";
 import mouth from "./mouth.png";
+import sitting from "./poses/sitting.png";
+import pointing from "./poses/pointing.png";
+import profile from "./poses/profile.png";
+import grip from "./poses/grip.png";
 import "./coral-image-rig.css";
 
 type Rect=[number,number,number,number];
-type Props={anim?:string;speed?:number;perch?:string;expression:string;blink:boolean;gazeX:number;gazeY:number;blush:number;turn:number;mouthOpen:number;mouthWide:number;mouthMood:number};
-type LayerDef={name:string;src:string;source:Rect;target:Rect;z:number;className?:string};
+type Props={facingAngleDeg?:number;anim?:string;speed?:number;perch?:string;expression:string;blink:boolean;gazeX:number;gazeY:number;blush:number;turn:number;mouthOpen:number;mouthWide:number;mouthMood:number};
+type LayerDef={name:string;src:string;source:Rect;target:Rect;z:number;canvas?:[number,number];className?:string};
 const W=1024,H=1536;
 const LAYERS:LayerDef[]=[
+ {name:"sitting",src:sitting.src,source:[178,223,898,820],target:[277,825,480,535],canvas:[1254,1254],z:3},
+ {name:"pointing",src:pointing.src,source:[34,120,1448,808],target:[630,710,380,220],canvas:[1536,1024],z:5},
+ {name:"profile",src:profile.src,source:[202,17,608,1479],target:[214,15,608,1479],z:20},
+ {name:"grip",src:grip.src,source:[106,166,872,1200],target:[80,660,360,550],z:4},
  {name:"leg-left",src:legLeft.src,source:[337,119,336,1274],target:[367,1060,137,430],z:1},
  {name:"leg-right",src:legLeft.src,source:[337,119,336,1274],target:[367,1060,137,430],z:2},
  {name:"body",src:body.src,source:[54,454,915,778],target:[217,625,610,505],z:3},
@@ -43,7 +51,7 @@ const LAYERS:LayerDef[]=[
 function Layer({d}:{d:LayerDef}) {
  const [x,y,width,height]=d.target;
  return <svg x={x} y={y} width={width} height={height} viewBox={d.source.join(" ")} preserveAspectRatio="none" overflow="hidden" data-coral-part={d.name}>
-  <image href={d.src} x="0" y="0" width={W} height={H}/>
+  <image href={d.src} x="0" y="0" width={d.canvas?.[0]??W} height={d.canvas?.[1]??H}/>
  </svg>;
 }
 const part=(name:string)=><Layer key={name} d={LAYERS.find(d=>d.name===name)!}/>;
@@ -57,26 +65,30 @@ function Eye({side,openness,id}:{side:"left"|"right";openness:number;id:string})
   <path className="coral-lid" d={`M${x+8} 523 Q${x+60} 549 ${x+110} 522 m-3 2 8 -6`} fill="none" stroke="#463039" strokeWidth="5" strokeLinecap="round" style={{opacity:openness<.99?1:0,transform:`translateY(${-openness*91}px)`}}/>
  </g>;
 }
-export function CoralImageRig2D({anim="idle",speed=0,perch="stand",expression,blink,gazeX,gazeY,blush,turn,mouthOpen,mouthWide,mouthMood}:Props){
- const rig=useCoralMotion(anim,speed,perch),id=useId().replace(/[^a-zA-Z0-9_-]/g,"");
+export function CoralImageRig2D({anim="idle",speed=0,perch="stand",facingAngleDeg,expression,blink,gazeX,gazeY,blush,turn,mouthOpen,mouthWide,mouthMood}:Props){
+ const facing=facingAngleDeg??((["walk","run"].includes(anim)&&Math.abs(turn)>.12)?Math.sign(turn)*90:0);
+ const rig=useCoralMotion(anim,speed,perch,facing),id=useId().replace(/[^a-zA-Z0-9_-]/g,"");
  const sleepy=expression==="sleepy",sad=["sad","scared"].includes(expression),happy=["happy","excited","proud","smug","mischievous"].includes(expression);
  const open=clamp(Math.max(mouthOpen,expression==="surprised"?.8:expression==="excited"?.35:0),0,1);
- const raisedArm=["wave","point","stretch","celebrate"].includes(anim);
+ const raisedArm=["wave","stretch","celebrate"].includes(anim);
  const openness=blink||anim==="sleep"?0:sleepy?.62:expression==="annoyed"?.8:1;
  // The blank face is centred at x=538; the uploaded features were centred at 510.
  const gx=28+clamp(gazeX,-6,6)*.5+clamp(turn,-.6,.6)*4,gy=clamp(gazeY,-5,5)*.4;
  return <svg ref={rig} className="coral-rig" viewBox="0 0 1024 1536" preserveAspectRatio="xMidYMax meet" aria-hidden="true" focusable="false" data-registration="source-pixels" data-eyes-closed={openness===0?"true":"false"}>
   <g className="coral-landing"><g className="coral-whole">
+  <g className="coral-front-view">
   <g className="coral-body-motion">
-   <g className="coral-leg coral-leg-left">{part("leg-left")}</g>
+   <g className="coral-standing-legs"><g className="coral-leg coral-leg-left">{part("leg-left")}</g>
    {/* Both legs share one silhouette so calf and boot proportions match exactly. */}
-   <g className="coral-leg coral-leg-right"><g transform="translate(1044 0) scale(-1 1)">{part("leg-right")}</g></g>
-   <g className="coral-arm coral-arm-left">{part("arm-left")}<g className="coral-lantern">{part("lantern")}</g></g>
-   {!raisedArm&&<g className="coral-arm coral-arm-right">{part("arm-right")}</g>}
-   {part("body")}
+   <g className="coral-leg coral-leg-right"><g transform="translate(1044 0) scale(-1 1)">{part("leg-right")}</g></g></g>
+   <g className="coral-arm coral-arm-left">{part("grip")}</g>
+   {!raisedArm&&<g className="coral-arm coral-arm-right"><g className="coral-rest-arm">{part("arm-right")}</g></g>}
+   <defs><clipPath id={`${id}-body`}><rect className="coral-body-mask" x="0" y="0" width="1024" height="1536"/></clipPath></defs>
+   <g clipPath={`url(#${id}-body)`}>{part("body")}</g>
+   <g className="coral-sitting">{part("sitting")}</g>
    <g className="coral-bow">{part("bow")}</g>
   </g>
-  <g className="coral-head-action"><g className="coral-head">
+  <g transform="translate(-20 0)"><g className="coral-head-action"><g className="coral-head">
    {part("hood-back")}{part("hair-back")}{part("face-base")}
    <g className="coral-features" style={{transform:`translate(${gx}px,${gy}px)`}}>
     <g className="coral-brows" style={{transform:`translateY(${sad?8:expression==="surprised"?-8:0}px)`}}>{part("brows")}</g>
@@ -89,7 +101,11 @@ export function CoralImageRig2D({anim="idle",speed=0,perch="stand",expression,bl
    </g>
    <g className="coral-hair">{part("hair-front")}</g>
   </g></g>
+  </g>
+  <g className="coral-pointing">{part("pointing")}</g>
   {raisedArm&&<g className="coral-body-motion"><g className="coral-arm coral-arm-right">{part("arm-right")}</g></g>}
+  </g>
+  <g className="coral-profile-view"><g className="coral-profile-facing">{part("profile")}</g></g>
   </g></g>
  </svg>;
 }
