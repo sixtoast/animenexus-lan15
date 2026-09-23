@@ -44,20 +44,21 @@ const atlas = (box: Rect): Cut => ({src:"/mascot2d/profile-parts-v2.png",box,can
 export function ProfileRig({openness,mouthOpen}: {openness:number;mouthOpen:number}) {
  const id=useId().replace(/:/g,"");
  const head={...atlas([0,25,380,495]),clip:"M0 25 H380 V300 H368 V430 L330 520 H0Z"};
- const limb=(side:"near"|"far")=><g className={`coral-side-leg coral-side-${side}`}><Sprite asset={atlas([419,645,195,365])} target={[-70,-25,96,198]} name={`${side}-thigh`}/><g className={`coral-side-shin coral-shin-${side}`}><circle cx="0" cy="2" r="26" fill="#fae1ce"/><Sprite asset={atlas([755,650,151,185])} target={[-49,-18,90,194]} name={`${side}-shin`}/><g className={`coral-side-foot coral-foot-${side}`}><Sprite asset={atlas([755,803,242,222])} target={[-40,-25,135,125]} name={`${side}-boot`}/></g></g></g>;
+ // Keep calf and boot in one drawing: the old ankle crop split the cuff on every step.
+ const limb=(side:"near"|"far")=><g className={`coral-side-leg coral-side-${side}`}><Sprite asset={atlas([419,645,195,345])} target={[-62,-25,124,225]} name={`${side}-thigh`}/><g className={`coral-side-shin coral-shin-${side}`}><Sprite asset={atlas([755,680,242,345])} target={[-53,-32,143,262]} name={`${side}-shin-boot`}/></g></g>;
  return <g className="coral-profile-view" data-direction-view="90"><g className="coral-direction-facing"><g className="coral-side-body">
-  <g opacity=".78">{limb("far")}</g>{limb("near")}
+  <g>{limb("far")}</g>{limb("near")}
   <g className="coral-side-free-arm"><Sprite asset={atlas([85,675,220,315])} target={[501,677,166,315]} name="free-arm"/></g>
-  <Sprite asset={{...atlas([367,149,371,404]),clip:"M480 149 H738 V553 H367 V365 L418 225 Z"}} target={[329,630,397,494]} name="torso-cape"/>
+  <Sprite asset={{...atlas([367,149,371,404]),clip:"M480 149 H738 V553 H367 V365 L418 225 Z"}} target={[297,630,460,494]} name="torso-cape"/>
   <g className="coral-side-carry"><Sprite asset={atlas([755,136,245,438])} target={[528,696,208,461]} name="sleeve-hand-lantern"/></g>
   <path d="M599 565 h47 l-4 101 q-19 12 -40 -5Z" fill="#f8dcc5" stroke="#bd9682" strokeWidth="2"/>
-  <g transform="translate(0 38)"><g className="coral-side-head">
+  <g transform="translate(0 38)"><g transform="translate(610 650) scale(1.25 1) translate(-610 -650)"><g className="coral-side-head">
    <Sprite asset={head} target={[241,15,506,660]} name="profile-head"/>
    <defs><clipPath id={`${id}-eye`}><rect x="612" y={523-openness*98} width="100" height={openness*98}/></clipPath></defs>
    <g clipPath={`url(#${id}-eye)`}><Sprite asset={atlas([120,1229,160,153])} target={[620,428,82,94]} name="profile-eye"/></g>
    {openness<.1&&<path d="M625 505 q29 17 66 -4" fill="none" stroke="#49333b" strokeWidth="5" strokeLinecap="round"/>}
    <path d="M630 413 q26 -11 50 -3" fill="none" stroke="#b38d77" strokeWidth="3"/>
    {mouthOpen<.08?<path d="M692 562 q9 6 18 -2" fill="none" stroke="#a76e57" strokeWidth="2.5"/>:<ellipse cx="701" cy="563" rx="7" ry={4+mouthOpen*13} fill="#763c40"/>}
-  </g></g>
+  </g></g></g>
  </g></g></g>;
 }

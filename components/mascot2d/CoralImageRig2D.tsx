@@ -70,7 +70,7 @@ function Eye({side,openness,id}:{side:"left"|"right";openness:number;id:string})
 }
 export function CoralImageRig2D({anim="idle",speed=0,perch="stand",facingAngleDeg,expression,blink,gazeX,gazeY,blush,turn,mouthOpen,mouthWide,mouthMood}:Props){
  const facing=facingAngleDeg??(["walk","run"].includes(anim)?(turn<-.05?-90:90):0);
- const rig=useCoralMotion(anim,speed,perch,facing),id=useId().replace(/[^a-zA-Z0-9_-]/g,"");
+ const {rig,view}=useCoralMotion(anim,speed,perch,facing),id=useId().replace(/[^a-zA-Z0-9_-]/g,"");
  const sleepy=expression==="sleepy",sad=["sad","scared"].includes(expression),happy=["happy","excited","proud","smug","mischievous"].includes(expression);
  const open=clamp(Math.max(mouthOpen,expression==="surprised"?.8:expression==="excited"?.35:0),0,1);
  const raisedArm=["wave","stretch","celebrate"].includes(anim);
@@ -79,7 +79,7 @@ export function CoralImageRig2D({anim="idle",speed=0,perch="stand",facingAngleDe
  const gx=28+clamp(gazeX,-6,6)*.5+clamp(turn,-.6,.6)*4,gy=clamp(gazeY,-5,5)*.4;
  return <svg ref={rig} className="coral-rig" viewBox="0 0 1024 1536" preserveAspectRatio="xMidYMax meet" aria-hidden="true" focusable="false" data-registration="source-pixels" data-eyes-closed={openness===0?"true":"false"}>
   <g className="coral-landing"><g className="coral-whole">
-  <g className="coral-front-view">
+  {view===0&&<g className="coral-front-view">
   <g className="coral-body-motion">
    <g className="coral-standing-legs"><g className="coral-leg coral-leg-left">{part("leg-left")}</g>
    {/* Both legs share one silhouette so calf and boot proportions match exactly. */}
@@ -113,7 +113,9 @@ export function CoralImageRig2D({anim="idle",speed=0,perch="stand",facingAngleDe
   <g className="coral-pointing">{part("pointing")}</g>
   {raisedArm&&<g className="coral-body-motion"><g className="coral-arm coral-arm-right">{part("arm-right")}</g></g>}
   </g>
-  <TurnRig angle={15} openness={openness} mouthOpen={open}/><TurnRig angle={30} openness={openness} mouthOpen={open}/><TurnRig angle={45} openness={openness} mouthOpen={open}/><ProfileRig openness={openness} mouthOpen={open}/>
+  }
+  {(view===15||view===30||view===45)&&<TurnRig angle={view} openness={openness} mouthOpen={open}/>}
+  {view===90&&<ProfileRig openness={openness} mouthOpen={open}/>}
   </g></g>
  </svg>;
 }

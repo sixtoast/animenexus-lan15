@@ -51,11 +51,8 @@
 }
 
 /* Discrete registered drawings avoid ghosted double faces during a turn. */
-.coral-front-view{opacity:var(--view-front,1)}
-.coral-angle-15{opacity:var(--view-15,0)}
-.coral-angle-30{opacity:var(--view-30,0)}
-.coral-angle-45{opacity:var(--view-45,0)}
-.coral-profile-view{opacity:var(--view-side,0)}
+/* Only the active view is mounted. Do not hide it before React commits the next view. */
+.coral-front-view,.coral-angle-view,.coral-profile-view{opacity:1}
 .coral-direction-facing{transform:translate(522px,0) scaleX(calc(var(--facing-sign,1)*var(--turn-squeeze,1))) translate(-522px,0)}
 .coral-direction-hair{transform:translate(530px,220px) rotate(calc(var(--side-hair,0)*.5deg)) translate(-530px,-220px)}
 .coral-side-body{transform:translateY(calc(var(--side-bob,0)*1px))}
