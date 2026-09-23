@@ -29,3 +29,33 @@ for(const action of ['sit','point']){
 }
 assert.equal(sampleCoralMotion('idle',2,0,'sit').seat,1);
 console.log('PASS: sitting/pointing anticipate before revealing their authored layers, then settle.');
+
+// Recovered artwork must remain intact and every active image must resolve.
+const crypto=require('node:crypto'),path=require('node:path');
+const dir=path.join(__dirname,'../public/mascot2d/generated');
+const archive=JSON.parse(fs.readFileSync(path.join(dir,'index.json'),'utf8'));
+assert.equal(archive.images.length,51);
+for(const entry of archive.images){const bytes=fs.readFileSync(path.join(dir,entry.file));assert.equal(bytes.length,entry.bytes);assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),entry.sha256,entry.file)}
+const source=fs.readFileSync(path.join(__dirname,'../components/mascot2d/CoralImageRig2D.tsx'),'utf8');
+for(const entry of archive.images)assert.equal(source.includes(entry.file),entry.status==='used-in-animation',entry.file);
+for(let t=0;t<10;t+=.02){const p=sampleCoralMotion('sit',t);assert(p.kickL>=0&&p.kickL<=1&&p.kickR>=0&&p.kickR<=1);assert(p.kickL*p.kickR<.00001,'legs alternate');if(t<1)assert.equal(p.kickL+p.kickR,0,'settle before kicking')}
+assert(sampleCoralMotion('sit',2.1).kickL>.99);assert(sampleCoralMotion('sit',4.3).kickR>.99);
+assert.equal(sampleCoralMotion('idle',2).kickL,0);
+assert(sampleCoralMotion('point',.2).prepare>.99);assert.equal(sampleCoralMotion('point',.2).point,0);
+console.log('PASS: 51 original image checksums, seven connected images, independent alternating kicks and pointing preparation.');
+
+const {sampleSideWalk,turnView,directionalValues}=load('directionalMotion.ts',require);
+for(let i=0;i<240;i++){
+ const gait=sampleSideWalk(i/240/1.05);
+ for(const leg of [gait.near,gait.far]){
+  assert(Number.isFinite(leg.upper)&&Number.isFinite(leg.lower));
+  assert(Math.abs(leg.upper+leg.lower+leg.ankle)<1e-9,'boot stays level');
+  if(leg.stance)assert.equal(leg.lift,0,'stance stays grounded');
+  assert(leg.lift>=0,'recovery never goes below ground');
+ }
+}
+assert.deepEqual(sampleSideWalk(0),sampleSideWalk(1/1.05),'loop seam');
+assert.equal(turnView(NaN),0);
+const still=directionalValues(90,1,'walk',0,true);
+assert.equal(still['side-bob'],0);assert.equal(still['side-arm'],0);
+console.log('PASS: directional gait joints, grounded stance, level boots, loop seam and reduced motion.');

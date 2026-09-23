@@ -15,9 +15,7 @@ import brows from "./brows.png";
 import eyeLeft from "./eye-left.png";
 import eyeRight from "./eye-right.png";
 import mouth from "./mouth.png";
-import sitting from "./poses/sitting.png";
-import pointing from "./poses/pointing.png";
-import profile from "./poses/profile.png";
+import {TurnRig,ProfileRig} from "./DirectionalRig";
 import grip from "./poses/grip.png";
 import "./coral-image-rig.css";
 
@@ -25,10 +23,15 @@ type Rect=[number,number,number,number];
 type Props={facingAngleDeg?:number;anim?:string;speed?:number;perch?:string;expression:string;blink:boolean;gazeX:number;gazeY:number;blush:number;turn:number;mouthOpen:number;mouthWide:number;mouthMood:number};
 type LayerDef={name:string;src:string;source:Rect;target:Rect;z:number;canvas?:[number,number];className?:string};
 const W=1024,H=1536;
+const generated="/mascot2d/generated/";
 const LAYERS:LayerDef[]=[
- {name:"sitting",src:sitting.src,source:[178,223,898,820],target:[277,825,480,535],canvas:[1254,1254],z:3},
- {name:"pointing",src:pointing.src,source:[34,120,1448,808],target:[630,710,380,220],canvas:[1536,1024],z:5},
- {name:"profile",src:profile.src,source:[202,17,608,1479],target:[214,15,608,1479],z:20},
+ {name:"sit-left",src:generated+"exec-56f21a7f-878e-4b40-995a-5e6614c9e9f7.png",source:[468,185,320,970],target:[386,1024,115,290],canvas:[1254,1254],z:2},
+ {name:"sit-right",src:generated+"exec-ecf4d229-f5ea-4f44-a341-dad95754ed42.png",source:[465,187,325,965],target:[543,1024,115,290],canvas:[1254,1254],z:2},
+ {name:"kick-left",src:generated+"exec-0e1cda31-34c9-4e82-9071-c4f39278cc0b.png",source:[431,75,375,1110],target:[377,1009,135,265],canvas:[1254,1254],z:2},
+ {name:"kick-right",src:generated+"exec-88a89e41-1eef-45ad-b7c7-a743d7f1392a.png",source:[450,76,374,1110],target:[533,1009,135,265],canvas:[1254,1254],z:2},
+ {name:"sitting",src:generated+"exec-43bff40e-49cb-4317-982b-fff1682ecbc6.png",source:[22,315,1210,609],target:[248,825,550,280],canvas:[1254,1254],z:3},
+ {name:"point-prepare",src:generated+"exec-50fe19a7-2dda-4e61-896c-a2c2d1f57800.png",source:[171,236,929,821],target:[630,710,295,265],canvas:[1254,1254],z:5},
+ {name:"pointing",src:generated+"exec-4a657319-86bc-476b-8915-1bc3590026c5.png",source:[53,233,1176,819],target:[630,710,405,282],canvas:[1254,1254],z:5},
  {name:"grip",src:grip.src,source:[106,166,872,1200],target:[80,660,360,550],z:4},
  {name:"leg-left",src:legLeft.src,source:[337,119,336,1274],target:[367,1060,137,430],z:1},
  {name:"leg-right",src:legLeft.src,source:[337,119,336,1274],target:[367,1060,137,430],z:2},
@@ -66,7 +69,7 @@ function Eye({side,openness,id}:{side:"left"|"right";openness:number;id:string})
  </g>;
 }
 export function CoralImageRig2D({anim="idle",speed=0,perch="stand",facingAngleDeg,expression,blink,gazeX,gazeY,blush,turn,mouthOpen,mouthWide,mouthMood}:Props){
- const facing=facingAngleDeg??((["walk","run"].includes(anim)&&Math.abs(turn)>.12)?Math.sign(turn)*90:0);
+ const facing=facingAngleDeg??(["walk","run"].includes(anim)?(turn<-.05?-90:90):0);
  const rig=useCoralMotion(anim,speed,perch,facing),id=useId().replace(/[^a-zA-Z0-9_-]/g,"");
  const sleepy=expression==="sleepy",sad=["sad","scared"].includes(expression),happy=["happy","excited","proud","smug","mischievous"].includes(expression);
  const open=clamp(Math.max(mouthOpen,expression==="surprised"?.8:expression==="excited"?.35:0),0,1);
@@ -85,7 +88,11 @@ export function CoralImageRig2D({anim="idle",speed=0,perch="stand",facingAngleDe
    {!raisedArm&&<g className="coral-arm coral-arm-right"><g className="coral-rest-arm">{part("arm-right")}</g></g>}
    <defs><clipPath id={`${id}-body`}><rect className="coral-body-mask" x="0" y="0" width="1024" height="1536"/></clipPath></defs>
    <g clipPath={`url(#${id}-body)`}>{part("body")}</g>
-   <g className="coral-sitting">{part("sitting")}</g>
+   <g className="coral-sitting">
+    <g className="coral-seated-left"><g className="coral-relaxed-left">{part("sit-left")}</g><g className="coral-kick-left">{part("kick-left")}</g></g>
+    <g className="coral-seated-right"><g className="coral-relaxed-right">{part("sit-right")}</g><g className="coral-kick-right">{part("kick-right")}</g></g>
+    {part("sitting")}
+   </g>
    <g className="coral-bow">{part("bow")}</g>
   </g>
   <g transform="translate(-20 0)"><g className="coral-head-action"><g className="coral-head">
@@ -102,10 +109,11 @@ export function CoralImageRig2D({anim="idle",speed=0,perch="stand",facingAngleDe
    <g className="coral-hair">{part("hair-front")}</g>
   </g></g>
   </g>
+  <g className="coral-point-prepare">{part("point-prepare")}</g>
   <g className="coral-pointing">{part("pointing")}</g>
   {raisedArm&&<g className="coral-body-motion"><g className="coral-arm coral-arm-right">{part("arm-right")}</g></g>}
   </g>
-  <g className="coral-profile-view"><g className="coral-profile-facing">{part("profile")}</g></g>
+  <TurnRig angle={15} openness={openness} mouthOpen={open}/><TurnRig angle={30} openness={openness} mouthOpen={open}/><TurnRig angle={45} openness={openness} mouthOpen={open}/><ProfileRig openness={openness} mouthOpen={open}/>
   </g></g>
  </svg>;
 }

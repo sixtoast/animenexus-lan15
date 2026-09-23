@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Lantern-ko animation frames</title>
+<style>body{margin:0;background:#201b25;color:#fff0e8;font:16px system-ui;text-align:center}main{max-width:680px;margin:auto;padding:24px}img{display:block;width:min(100%,384px);height:auto;margin:16px auto;background:repeating-conic-gradient(#403545 0% 25%,#483e4d 0% 50%) 50%/24px 24px;border-radius:20px}button,select{font:inherit;padding:10px;margin:5px;border-radius:8px;border:0}input{width:90%}p{color:#d7c4cd}</style>
+<main><h1>Lantern-ko</h1><p>Turn and side-view walk frame preview</p><select id="sequence" aria-label="Animation"><option value="turn-right">Turn right</option><option value="turn-left">Turn left</option><option value="walk-right">Walk right</option><option value="walk-left">Walk left</option></select><button id="play">Play</button><img id="frame" src="turn-right-00.png" width="384" height="576" alt="Lantern-ko animation frame"><input id="scrub" type="range" min="0" max="15" value="0" aria-label="Animation frame"><p id="status" aria-live="off"></p></main>
+<script>
+const sequence=document.querySelector('#sequence'),frame=document.querySelector('#frame'),scrub=document.querySelector('#scrub'),play=document.querySelector('#play'),status=document.querySelector('#status');
+let playing=false,index=0,last=0;
+const isWalk=()=>sequence.value.startsWith('walk');
+function draw(){frame.src=sequence.value+'-'+String(index).padStart(2,'0')+'.png';scrub.value=index;status.textContent=`Frame ${index+1} / ${isWalk()?24:16}`;}
+function pause(){playing=false;play.textContent='Play';}
+sequence.onchange=()=>{pause();index=0;scrub.max=isWalk()?23:15;draw();};
+scrub.oninput=()=>{pause();index=Number(scrub.value);draw();};
+play.onclick=()=>{playing=!playing;if(playing&&index===Number(scrub.max))index=0;last=performance.now();play.textContent=playing?'Pause':'Play';draw();};
+function tick(now){if(playing&&now-last>=1000/(isWalk()?25.2:24)){last=now;index++;if(index>Number(scrub.max)){if(isWalk())index=0;else{index=Number(scrub.max);pause();}}draw();}requestAnimationFrame(tick);}draw();requestAnimationFrame(tick);
+</script></html>

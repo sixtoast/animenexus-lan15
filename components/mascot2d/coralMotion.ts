@@ -1,6 +1,6 @@
 /** Pose in the shared SVG coordinate system. Seconds are local to each action. */
-export type CoralPose={y:number;lean:number;sx:number;sy:number;head:number;headY:number;left:number;right:number;legL:number;legR:number;legY:number;legScale:number;lantern:number;seat:number;point:number;pointAngle:number;pointX:number};
-export const REST_POSE:CoralPose={y:0,lean:0,sx:1,sy:1,head:0,headY:0,left:0,right:0,legL:0,legR:0,legY:0,legScale:1,lantern:0,seat:0,point:0,pointAngle:0,pointX:0};
+export type CoralPose={y:number;lean:number;sx:number;sy:number;head:number;headY:number;left:number;right:number;legL:number;legR:number;legY:number;legScale:number;lantern:number;seat:number;point:number;pointAngle:number;pointX:number;kickL:number;kickR:number;prepare:number};
+export const REST_POSE:CoralPose={y:0,lean:0,sx:1,sy:1,head:0,headY:0,left:0,right:0,legL:0,legR:0,legY:0,legScale:1,lantern:0,seat:0,point:0,pointAngle:0,pointX:0,kickL:0,kickR:0,prepare:0};
 export const CORAL_ACTIONS=["idle","walk","run","jump","land","happy","wave","think","sleep","surprised","point","sit","stretch","nod","shy","celebrate","bow"] as const;
 /** Hold a readable wind-up, accelerate sharply, then settle with a small overshoot. */
 export function anticipateThenSettle(t:number){
@@ -17,7 +17,7 @@ export function sampleCoralMotion(anim:string,t:number,speed=0,perch="stand"):Co
   case "jump":p.sy=1.018;p.sx=.992;p.legL=-7;p.legR=8;p.legScale=.95;p.right=-24;p.left=5;p.head=-2;break;
   case "land":{const k=Math.max(0,1-t/.55),bounce=s(Math.min(t/.55,1)*Math.PI*2)*k;p.sy=1-bounce*.055;p.sx=1+bounce*.025;p.headY=bounce*8;break}
   case "wave":p.right=-108+s(t*9)*11;p.head=-3;p.left=2;break;
-  case "point":{const reach=anticipateThenSettle(t);p.point=Math.max(0,Math.min(1,reach));p.pointX=(1-reach)*-35;p.pointAngle=(1-reach)*18;p.right=t<.3?Math.sin(t/.3*Math.PI)*12:0;p.head=-4*reach;p.lean=t<.3?Math.sin(t/.3*Math.PI)*2.5:-.8*reach;break}
+  case "point":{const reach=anticipateThenSettle(t);p.prepare=t<.3?ease(t/.12):1-Math.max(0,Math.min(1,reach));p.point=Math.max(0,Math.min(1,reach));p.pointX=(1-reach)*-35;p.pointAngle=(1-reach)*18;p.right=t<.3?Math.sin(t/.3*Math.PI)*12:0;p.head=-4*reach;p.lean=t<.3?Math.sin(t/.3*Math.PI)*2.5:-.8*reach;break}
   case "happy":p.head=s(t*2)*2;p.right=-12;p.y=-Math.max(0,s(t*3))*4;break;
   case "celebrate":p.right=-116+s(t*8)*9;p.left=8;p.y=-Math.max(0,s(t*6))*9;p.head=s(t*3)*2;p.lantern=s(t*6-.7)*4;break;
   case "think":p.head=5;p.headY=3;p.right=8;p.lean=-.5;break;
@@ -31,7 +31,10 @@ export function sampleCoralMotion(anim:string,t:number,speed=0,perch="stand"):Co
  }
  if(anim==="sit"||perch==="sit"){
  const settle=anticipateThenSettle(t),wind=t<.3?Math.sin(t/.3*Math.PI):0;
- p.seat=Math.max(0,Math.min(1,settle));p.y=130*settle-12*wind;p.sy=1-.018*wind;p.headY+=3*settle-4*wind;p.right=8*wind;p.legL=-5*wind;p.legR=5*wind;
+ p.seat=Math.max(0,Math.min(1,settle));
+ // Alternate authored relaxed and forward-kick legs after the sitting settle.
+ const kick=(offset:number)=>t<1?0:Math.pow(Math.max(0,s((t-1)*Math.PI*2/4.4+offset)),4);
+ p.kickL=kick(0);p.kickR=kick(Math.PI);p.y=130*settle-12*wind;p.sy=1-.018*wind;p.headY+=3*settle-4*wind;p.right=8*wind;p.legL=-5*wind;p.legR=5*wind;
  }
  if(perch==="crouch"){p.legScale=.85;p.sy*=.98;p.legL=-5;p.legR=5}
  if(perch==="peek-left")p.lean=-5;

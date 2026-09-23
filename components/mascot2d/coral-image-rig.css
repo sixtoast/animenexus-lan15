@@ -22,7 +22,7 @@
 .coral-mouth-closed{transition:opacity 65ms}
 .coral-landing{transform-origin:522px 1490px!important}
 [data-coral-renderer="true"][data-landed="true"] .coral-landing{animation:coral-land .5s cubic-bezier(.2,.8,.2,1)}
-[data-interaction="grab"] .coral-landing{transform-origin:522px 276px!important translate(-604px,-1075px);animation:coral-dangle 1.1s ease-in-out infinite alternate}
+[data-interaction="grab"] .coral-landing{transform-origin:522px 276px!important;animation:coral-dangle 1.1s ease-in-out infinite alternate}
 [data-interaction="poke"] .coral-landing{animation:coral-recoil .45s ease-out}
 @keyframes coral-land{0%{transform:scale(1)}30%{transform:scale(1.025,.95)}65%{transform:scale(.994,1.015)}100%{transform:scale(1)}}
 @keyframes coral-dangle{from{transform:rotate(-1.4deg)}to{transform:rotate(1.4deg)}}
@@ -32,8 +32,40 @@
 .coral-standing-legs{opacity:calc(1 - var(--pose-seat,0))}
 .coral-sitting{opacity:var(--pose-seat,0)}
 .coral-body-mask{height:calc(1536px - var(--pose-seat,0)*691px)}
-.coral-rest-arm{opacity:calc(1 - var(--pose-point,0))}
+.coral-rest-arm{opacity:calc(1 - var(--pose-point,0) - var(--pose-prepare,0))}
 .coral-pointing{opacity:var(--pose-point,0);transform:translate(666px,760px) translateX(calc(var(--pose-pointX,0)*1px)) rotate(calc(var(--pose-pointAngle,0)*1deg)) translate(-666px,-760px)}
-.coral-front-view{opacity:calc(1 - var(--profile,0));transform:translate(522px,1490px) rotate(calc(var(--turn-lean,0)*1deg)) scaleX(calc(1 - var(--profile,0)*.18)) translate(-522px,-1490px)}
-.coral-profile-view{opacity:var(--profile,0)}
-.coral-profile-facing{transform:translate(518px,0) scaleX(var(--facing-sign,1)) translate(-518px,0)}
+
+
+/* Each seated leg has its own pivot, relaxed drawing and foreshortened kick. */
+.coral-relaxed-left{opacity:calc(1 - var(--pose-kickL,0))}
+.coral-relaxed-right{opacity:calc(1 - var(--pose-kickR,0))}
+.coral-kick-left{opacity:var(--pose-kickL,0)}
+.coral-kick-right{opacity:var(--pose-kickR,0)}
+.coral-seated-left{transform:translate(444px,1040px) rotate(calc(var(--pose-kickL,0)*-3deg)) translate(-444px,-1040px)}
+.coral-seated-right{transform:translate(600px,1040px) rotate(calc(var(--pose-kickR,0)*3deg)) translate(-600px,-1040px)}
+.coral-point-prepare{opacity:var(--pose-prepare,0)}
+@media(prefers-reduced-motion:reduce){
+ .coral-relaxed-left,.coral-relaxed-right{opacity:1}
+ .coral-kick-left,.coral-kick-right{opacity:0}
+ .coral-seated-left,.coral-seated-right{transform:none}
+}
+
+/* Discrete registered drawings avoid ghosted double faces during a turn. */
+.coral-front-view{opacity:var(--view-front,1)}
+.coral-angle-15{opacity:var(--view-15,0)}
+.coral-angle-30{opacity:var(--view-30,0)}
+.coral-angle-45{opacity:var(--view-45,0)}
+.coral-profile-view{opacity:var(--view-side,0)}
+.coral-direction-facing{transform:translate(522px,0) scaleX(calc(var(--facing-sign,1)*var(--turn-squeeze,1))) translate(-522px,0)}
+.coral-direction-hair{transform:translate(530px,220px) rotate(calc(var(--side-hair,0)*.5deg)) translate(-530px,-220px)}
+.coral-side-body{transform:translateY(calc(var(--side-bob,0)*1px))}
+.coral-side-near{transform:translate(526px,1090px) rotate(calc(var(--near-upper,0)*1deg))}
+.coral-side-far{transform:translate(510px,1090px) rotate(calc(var(--far-upper,0)*1deg))}
+.coral-shin-near{transform:translate(0,170px) rotate(calc(var(--near-lower,0)*1deg))}
+.coral-shin-far{transform:translate(0,170px) rotate(calc(var(--far-lower,0)*1deg))}
+.coral-side-free-arm{transform:translate(551px,706px) rotate(calc(var(--side-arm,0)*1deg)) translate(-551px,-706px)}
+.coral-side-carry{transform:translate(563px,715px) rotate(calc(var(--side-carry,0)*1deg)) translate(-563px,-715px)}
+.coral-side-head{transform:translate(526px,650px) translateY(calc(var(--side-bob,0)*-.3px)) rotate(calc(var(--side-hair,0)*.25deg)) translate(-526px,-650px)}
+
+.coral-foot-near{transform:translate(0,170px) rotate(calc(var(--near-ankle,0)*1deg))}
+.coral-foot-far{transform:translate(0,170px) rotate(calc(var(--far-ankle,0)*1deg))}

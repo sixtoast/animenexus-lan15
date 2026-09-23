@@ -1,0 +1,392 @@
+{
+  "0": {
+    "src": "/mascot2d/generated/exec-05537314-9c35-4d32-918b-527f0761bd13.png",
+    "box": [
+      352,
+      397,
+      924,
+      129
+    ],
+    "canvas": [
+      1536,
+      1024
+    ]
+  },
+  "1": {
+    "src": "/mascot2d/generated/exec-0c835728-81df-4163-8672-2b156fc711f7.png",
+    "box": [
+      836,
+      500,
+      153,
+      43
+    ],
+    "canvas": [
+      1536,
+      1024
+    ]
+  },
+  "3": {
+    "src": "/mascot2d/generated/exec-16e243f9-54b9-4676-8106-6ee0852ca8a6.png",
+    "box": [
+      90,
+      242,
+      889,
+      749
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "5": {
+    "src": "/mascot2d/generated/exec-1c4db9f7-faf5-430b-9769-803fd60083ea.png",
+    "box": [
+      108,
+      554,
+      848,
+      519
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "6": {
+    "src": "/mascot2d/generated/exec-1ce8c1d5-3d31-40e2-8521-24fa6904b154.png",
+    "box": [
+      207,
+      323,
+      676,
+      778
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "7": {
+    "src": "/mascot2d/generated/exec-25406d03-091c-4bca-a004-781fcf92f0ca.png",
+    "box": [
+      163,
+      458,
+      790,
+      738
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "8": {
+    "src": "/mascot2d/generated/exec-2b07601d-9962-47ca-827f-c2d45c63e2e1.png",
+    "box": [
+      428,
+      266,
+      738,
+      567
+    ],
+    "canvas": [
+      1402,
+      1122
+    ]
+  },
+  "9": {
+    "src": "/mascot2d/generated/exec-2d476c57-7f69-40ea-bf71-6596f5aef128.png",
+    "box": [
+      98,
+      494,
+      828,
+      469
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "10": {
+    "src": "/mascot2d/generated/exec-2e2d53e0-b276-44d1-b3e6-58ebedbcb791.png",
+    "box": [
+      353,
+      191,
+      799,
+      547
+    ],
+    "canvas": [
+      1536,
+      1024
+    ]
+  },
+  "11": {
+    "src": "/mascot2d/generated/exec-3463287c-78ed-4ab0-b53a-fc36a5f58de6.png",
+    "box": [
+      104,
+      289,
+      821,
+      909
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "15": {
+    "src": "/mascot2d/generated/exec-46332422-63fa-413c-a379-7569175b4741.png",
+    "box": [
+      58,
+      197,
+      955,
+      1009
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "16": {
+    "src": "/mascot2d/generated/exec-4a17c749-c56d-475c-8147-24facfdb00a1.png",
+    "box": [
+      717,
+      482,
+      199,
+      47
+    ],
+    "canvas": [
+      1536,
+      1024
+    ]
+  },
+  "18": {
+    "src": "/mascot2d/generated/exec-4aaab22a-a22a-4e31-9cd3-c485faa43d77.png",
+    "box": [
+      176,
+      326,
+      677,
+      787
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "19": {
+    "src": "/mascot2d/generated/exec-4ab22871-93ca-4827-ad7c-bfba7dbf03e0.png",
+    "box": [
+      388,
+      187,
+      772,
+      570
+    ],
+    "canvas": [
+      1536,
+      1024
+    ]
+  },
+  "20": {
+    "src": "/mascot2d/generated/exec-4ea95e1f-0353-44f3-9cba-8a93660e5673.png",
+    "box": [
+      238,
+      599,
+      614,
+      586
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "24": {
+    "src": "/mascot2d/generated/exec-6bfad5f3-215d-4d92-be41-d77beb3194cc.png",
+    "box": [
+      326,
+      392,
+      939,
+      117
+    ],
+    "canvas": [
+      1536,
+      1024
+    ]
+  },
+  "25": {
+    "src": "/mascot2d/generated/exec-71768071-fe0b-40a9-883b-056bab5b8e1c.png",
+    "box": [
+      93,
+      187,
+      884,
+      945
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "27": {
+    "src": "/mascot2d/generated/exec-7903a081-83e0-47fd-bb98-2e7595b11dd3.png",
+    "box": [
+      156,
+      353,
+      737,
+      633
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "28": {
+    "src": "/mascot2d/generated/exec-88422943-07cc-4c12-a4b0-fa1e2ac30f93.png",
+    "box": [
+      535,
+      258,
+      598,
+      425
+    ],
+    "canvas": [
+      1536,
+      1024
+    ]
+  },
+  "30": {
+    "src": "/mascot2d/generated/exec-8d7864ee-04a6-4dd9-8f49-57cda7f4aa72.png",
+    "box": [
+      55,
+      198,
+      944,
+      771
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "33": {
+    "src": "/mascot2d/generated/exec-ae78974b-05ca-426c-be53-f7c716aa2211.png",
+    "box": [
+      688,
+      498,
+      232,
+      45
+    ],
+    "canvas": [
+      1536,
+      1024
+    ]
+  },
+  "34": {
+    "src": "/mascot2d/generated/exec-bb4aeeb5-6dd4-4ab2-a8be-ea455101124b.png",
+    "box": [
+      162,
+      421,
+      729,
+      619
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "37": {
+    "src": "/mascot2d/generated/exec-c1675dd0-6377-4807-ae51-6210ef70dec0.png",
+    "box": [
+      103,
+      282,
+      802,
+      679
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "40": {
+    "src": "/mascot2d/generated/exec-c6e28975-3c39-478f-bfa6-78fa154744cc.png",
+    "box": [
+      56,
+      265,
+      938,
+      845
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "41": {
+    "src": "/mascot2d/generated/exec-c71cedac-c3f7-413b-aeb2-eb8f6b0a80bb.png",
+    "box": [
+      399,
+      388,
+      886,
+      114
+    ],
+    "canvas": [
+      1536,
+      1024
+    ]
+  },
+  "42": {
+    "src": "/mascot2d/generated/exec-ce2bd57a-266a-4ccd-9197-00f895fd46e3.png",
+    "box": [
+      198,
+      604,
+      668,
+      425
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "43": {
+    "src": "/mascot2d/generated/exec-dcf6f1ca-1dd1-4dbb-843d-0d7554ade48f.png",
+    "box": [
+      223,
+      577,
+      659,
+      654
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "45": {
+    "src": "/mascot2d/generated/exec-e77fbecc-7f1a-400a-b672-33ddcdefab34.png",
+    "box": [
+      312,
+      200,
+      818,
+      566
+    ],
+    "canvas": [
+      1536,
+      1024
+    ]
+  },
+  "48": {
+    "src": "/mascot2d/generated/exec-f73b384d-3dbc-4887-842a-879286fbec86.png",
+    "box": [
+      39,
+      195,
+      983,
+      1000
+    ],
+    "canvas": [
+      1024,
+      1536
+    ]
+  },
+  "49": {
+    "src": "/mascot2d/generated/exec-fbc81078-8f37-44d3-a0a7-d475171d6142.png",
+    "box": [
+      646,
+      276,
+      424,
+      384
+    ],
+    "canvas": [
+      1536,
+      1024
+    ]
+  }
+}
