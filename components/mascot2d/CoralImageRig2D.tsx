@@ -1,6 +1,7 @@
 "use client";
 import {useId} from "react";
 import {useCoralMotion} from "./useCoralMotion";
+import {SkinnedLeg} from "./SkinnedLeg";
 import armLeft from "./arm-left.png";
 import armRight from "./arm-right.png";
 import body from "./body.png";
@@ -80,9 +81,9 @@ export function CoralImageRig2D({anim="idle",speed=0,perch="stand",facingAngleDe
   <g className="coral-landing"><g className="coral-whole">
   <g className="coral-front-view">
   <g className="coral-body-motion">
-   <g className="coral-standing-legs"><g className="coral-leg coral-leg-left"><g className="coral-leg-seat coral-leg-seat-left">{part("leg-left")}</g></g>
+   <g className="coral-standing-legs"><g className="coral-leg coral-leg-left"><SkinnedLeg side="left"/></g>
    {/* Both legs share one silhouette so calf and boot proportions match exactly. */}
-   <g className="coral-leg coral-leg-right"><g className="coral-leg-seat coral-leg-seat-right"><g transform="translate(1044 0) scale(-1 1)">{part("leg-right")}</g></g></g></g>
+   <g className="coral-leg coral-leg-right"><g transform="translate(1044 0) scale(-1 1)"><SkinnedLeg side="right"/></g></g></g>
    <g className="coral-arm coral-arm-left">{part("grip")}</g>
    <g className="coral-arm coral-arm-right"><g className="coral-rest-arm">{part("arm-right")}</g><g className="coral-point-arm">{part("pointing")}</g></g>
    <g className="coral-dress-settle">{part("body")}</g>
