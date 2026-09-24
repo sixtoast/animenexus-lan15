@@ -2,6 +2,7 @@
 import {useId} from "react";
 import {useCoralMotion} from "./useCoralMotion";
 import {SkinnedLeg} from "./SkinnedLeg";
+import {SeatedGarment} from "./SeatedGarment";
 import {DeformableFaceLayer} from "./DeformableFaceLayer";
 import armLeft from "./arm-left.png";
 import armRight from "./arm-right.png";
@@ -88,7 +89,7 @@ export function CoralImageRig2D({anim="idle",speed=0,perch="stand",facingAngleDe
    <g className="coral-leg coral-leg-right"><g transform="translate(1044 0) scale(-1 1)"><SkinnedLeg side="right"/></g></g></g>
    <g className="coral-arm coral-arm-left">{part("grip")}</g>
    <g className="coral-arm coral-arm-right"><g className="coral-rest-arm">{part("arm-right")}</g><g className="coral-point-arm">{part("pointing")}</g></g>
-   <g className="coral-dress-settle">{part("body")}</g>
+   <g className="coral-dress-settle"><SeatedGarment/></g>
    <g className="coral-bow">{part("bow")}</g>
   </g>
   <g transform="translate(-20 0)"><g className="coral-head-action"><g className="coral-head">

@@ -63,7 +63,10 @@
 .coral-eye-turn-left{transform:translate(404px,0) scaleX(calc(1 - max(0,var(--turn,0))*max(0,var(--turn,0))*.85)) translate(-404px,0)}
 .coral-eye-turn-right{transform:translate(614px,0) scaleX(calc(1 - min(0,var(--turn,0))*min(0,var(--turn,0))*.85)) translate(-614px,0)}
 /* One dress and one pair of legs throughout the sit: no stacked skirts or pose-image fades. */
-.coral-dress-settle{transform:translate(522px,625px) skewX(calc(var(--cloth-lag,0)*1deg)) scale(calc(1 + var(--pose-seat,0)*.12),calc(1 - var(--pose-seat,0)*.08)) translate(-522px,-625px)}
+.coral-dress-settle{transform:translate(522px,625px) skewX(calc(var(--cloth-lag,0)*1deg)) translate(-522px,-625px)}
+.coral-garment-skin{display:none}
+[data-garment-mesh][data-deformed="true"]>.coral-garment-rest{display:none}
+[data-garment-mesh][data-deformed="true"]>.coral-garment-skin{display:inline}
 .coral-point-arm{opacity:var(--pose-point,0)}
 .coral-head{transition:none}
 .coral-direction-facing{transform:translate(522px,0) scaleX(calc(var(--facing-sign,1)*var(--turn-squeeze,1))) translate(-522px,0)}

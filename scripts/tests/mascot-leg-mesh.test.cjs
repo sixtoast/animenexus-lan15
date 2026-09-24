@@ -34,3 +34,9 @@ test('DOM binding reuses nodes and skips settled mesh writes',()=>{
  let writes=0;const nodes=LEG_TRIANGLES.map(()=>({setAttribute:()=>writes++}));
  const update=bindLegMesh({querySelectorAll:()=>nodes});update(0,0,0);const first=writes;assert.equal(first,48);update(0,0,0);assert.equal(writes,first);update(1,.5,0);assert.equal(writes,96);
 });
+test('seated thighs remain visible and boots stay within the canonical stage',()=>{
+ const knee=legVertex(68.5,124,1,0);assert.ok(knee.y>50&&knee.y<70);
+ for(let seat=0;seat<=1;seat+=.05)for(let kick=-1;kick<=1;kick+=.05){
+  const foot=legVertex(68.5,430,seat,kick);assert.ok(1060+60*seat+foot.y<=1536);
+ }
+});

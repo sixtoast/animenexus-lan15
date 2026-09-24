@@ -22,8 +22,9 @@ export function legVertex(x:number,y:number,seat:number,kick:number):Point{
  // Blend at the cuff; retain the boot volume instead of stretching the entire leg.
  const foot=plus(s.ankle,along(y-THIGH_LENGTH-SHIN_LENGTH,s.foot)),footWeight=smooth((y-232)/34);
  p={y:p.y*(1-footWeight)+foot.y*footWeight,z:p.z*(1-footWeight)+foot.z*footWeight};
- const spread=-10*s.seat*Math.min(1,y/THIGH_LENGTH),width=1+p.z/1600;
- return {x:LEG_WIDTH/2+spread+(x-LEG_WIDTH/2)*width,y:p.y+p.z*.12};
+ const spread=-10*s.seat*Math.min(1,y/THIGH_LENGTH),kneeVolume=.08*s.seat*Math.exp(-Math.pow((y-THIGH_LENGTH)/38,2)),width=1+p.z/1600+kneeVolume;
+ // Slightly elevated front view exposes the thigh plane rather than burying it under the hem.
+ return {x:LEG_WIDTH/2+spread+(x-LEG_WIDTH/2)*width,y:p.y+p.z*.32};
 }
 export type Triangle=[Point,Point,Point];
 export const LEG_TRIANGLES:Triangle[]=LEG_ROWS.slice(0,-1).flatMap((y,i)=>{

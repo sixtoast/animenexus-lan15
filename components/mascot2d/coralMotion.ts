@@ -34,7 +34,7 @@ export function sampleCoralMotion(anim:string,t:number,speed=0,perch="stand",clo
  p.seat=Math.max(0,Math.min(1,settle));
  // Continuous alternating kicks after the sitting settle; artwork stays attached.
  const kick=(offset:number)=>t<1.2?0:ease((t-1.2)/.6)*s((t-1.2)*Math.PI*2/3.8+offset);
- p.kickL=kick(0);p.kickR=kick(Math.PI);p.y=90*settle-12*wind;p.sy=1-.018*wind;p.headY+=3*settle-4*wind;p.right=8*wind;p.legL=-5*wind;p.legR=5*wind;
+ p.kickL=kick(0);p.kickR=kick(Math.PI);p.y=60*settle-12*wind;p.sy=1-.018*wind;p.headY+=3*settle-4*wind;p.right=8*wind;p.legL=-5*wind;p.legR=5*wind;
  }
  if(perch==="crouch"){p.legScale=.85;p.sy*=.98;p.legL=-5;p.legR=5}
  if(perch==="peek-left")p.lean=-5;

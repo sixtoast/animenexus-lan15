@@ -4,6 +4,7 @@ import {REST_POSE,sampleCoralMotion,type CoralPose} from "./coralMotion";
 import {clampAngle,directionalValues} from "./directionalMotion";
 import {advanceSpring,channel,advanceLid,lidState,expressionTargets} from "./puppetDynamics";
 import {bindLegMesh} from "./legMesh";
+import {bindGarmentMesh} from "./garmentMesh";
 import {bindFaceMeshes} from "./faceMesh";
 import {subscribeVisualClock,refreshVisualClock} from "./visualClock";
 import {createMotionTime,advanceMotionTime} from "./motionTime";
@@ -20,6 +21,7 @@ export function useCoralMotion(anim:string,speed:number,perch:string,facingAngle
   let currentAngle=clampAngle(facingAngle);
   const pose={...REST_POSE};
   const updateLegMesh=bindLegMesh(el);
+  const updateGarmentMesh=bindGarmentMesh(el);
   const updateFaceMeshes=bindFaceMeshes(el);
   const springs={angle:channel(currentAngle),body:channel(currentAngle),hair:channel(currentAngle),hood:channel(currentAngle),cloak:channel(),brow:channel(),curve:channel(.2),mouth:channel(),width:channel(),slump:channel(),gazeX:channel(),gazeY:channel()};
   const lid=lidState();
@@ -38,6 +40,7 @@ export function useCoralMotion(anim:string,speed:number,perch:string,facingAngle
    if(reduced){target.kickL=0;target.kickR=0;if(input.current.anim==='walk'||input.current.anim==='run'){target.y=0;target.sx=1;target.sy=1;target.lean=0;target.legL=0;target.legR=0;}}
    for(const key of Object.keys(pose) as (keyof CoralPose)[]){pose[key]=reduced?target[key]:pose[key]+(target[key]-pose[key])*(1-Math.exp(-dt*15));property(`--pose-${key}`,pose[key]);}
    updateLegMesh(pose.seat,pose.kickL,pose.kickR);
+   updateGarmentMesh(pose.seat,pose.kickL,pose.kickR);
    const mesh=pose.seat>.0001?'on':'off';if(el.dataset.mesh!==mesh)el.dataset.mesh=mesh;
    for(const [key,value] of Object.entries(directionalValues(currentAngle,t,input.current.anim,input.current.speed,reduced,clock.gait)))property(`--${key}`,value);
    property('--body-turn',spring('body',currentAngle,2.2,.95)/90);
