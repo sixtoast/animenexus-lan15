@@ -91,3 +91,7 @@
 .coral-profile-eye-mask{transform:translateY(calc((1 - var(--eye-open,1))*513.2px)) scaleY(var(--eye-open,1))}
 .coral-profile-lid{opacity:clamp(0,calc((1 - var(--eye-open,1))*5),1);transform:translateY(calc(var(--eye-open,1)*-80px))}
 .coral-profile-mouth{opacity:min(1,calc(var(--face-mouth,0)*12));transform:translate(701px,563px) scaleY(calc(.08 + var(--face-mouth,0)*.92)) translate(-701px,-563px)}
+/* Paint the single original texture at rest; mesh rendering is only needed during a bend. */
+.coral-leg-skin{display:none}
+.coral-rig[data-mesh="on"] .coral-leg-skin{display:block}
+.coral-rig[data-mesh="on"] .coral-leg-rest-texture{display:none}

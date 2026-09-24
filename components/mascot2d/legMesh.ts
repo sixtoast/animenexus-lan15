@@ -39,7 +39,9 @@ export function triangleMatrix(src:Triangle,dst:Triangle):number[]{
  return [a,b,c,d,u.x-a*p.x-c*p.y,u.y-b*p.x-d*p.y];
 }
 export function sampleLegMesh(seat:number,kick:number){
- return LEG_TRIANGLES.map(src=>triangleMatrix(src,src.map(p=>legVertex(p.x,p.y,seat,kick)) as Triangle));
+ // Shared vertices are skinned once, not once for every incident triangle.
+ const rows=new Map<number,[Point,Point]>(LEG_ROWS.map(y=>[y,[legVertex(0,y,seat,kick),legVertex(LEG_WIDTH,y,seat,kick)]]));
+ return LEG_TRIANGLES.map(src=>triangleMatrix(src,src.map(p=>rows.get(p.y)![p.x===0?0:1]) as Triangle));
 }
 export function bindLegMesh(root:SVGSVGElement){
  const legs=['left','right'].map(side=>({nodes:Array.from(root.querySelectorAll<SVGGElement>(`[data-leg-mesh="${side}"] [data-leg-triangle]`)),last:''}));

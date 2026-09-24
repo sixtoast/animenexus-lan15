@@ -34,6 +34,7 @@ export function useCoralMotion(anim:string,speed:number,perch:string,facingAngle
    if(reduced){target.kickL=0;target.kickR=0;if(input.current.anim==='walk'||input.current.anim==='run'){target.y=0;target.sx=1;target.sy=1;target.lean=0;target.legL=0;target.legR=0;}}
    for(const key of Object.keys(pose) as (keyof CoralPose)[]){pose[key]=reduced?target[key]:pose[key]+(target[key]-pose[key])*(1-Math.exp(-dt*15));property(`--pose-${key}`,pose[key]);}
    updateLegMesh(pose.seat,pose.kickL,pose.kickR);
+   const mesh=pose.seat>.0001?'on':'off';if(el.dataset.mesh!==mesh)el.dataset.mesh=mesh;
    for(const [key,value] of Object.entries(directionalValues(currentAngle,t,input.current.anim,input.current.speed,reduced)))property(`--${key}`,value);
    property('--body-turn',spring('body',currentAngle,2.2,.95)/90);
    property('--hair-turn',spring('hair',currentAngle,2.1,.58)/90);
