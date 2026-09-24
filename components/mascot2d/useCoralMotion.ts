@@ -4,6 +4,7 @@ import {REST_POSE,sampleCoralMotion,type CoralPose} from "./coralMotion";
 import {clampAngle,directionalValues} from "./directionalMotion";
 import {advanceSpring,channel,advanceLid,lidState,expressionTargets} from "./puppetDynamics";
 import {bindLegMesh} from "./legMesh";
+import {bindFaceMeshes} from "./faceMesh";
 import {subscribeVisualClock,refreshVisualClock} from "./visualClock";
 import {createMotionTime,advanceMotionTime} from "./motionTime";
 type FaceInput={expression:string;blink:boolean;gazeX:number;gazeY:number;mouthOpen:number;mouthWide:number;mouthMood:number};
@@ -19,6 +20,7 @@ export function useCoralMotion(anim:string,speed:number,perch:string,facingAngle
   let currentAngle=clampAngle(facingAngle);
   const pose={...REST_POSE};
   const updateLegMesh=bindLegMesh(el);
+  const updateFaceMeshes=bindFaceMeshes(el);
   const springs={angle:channel(currentAngle),body:channel(currentAngle),hair:channel(currentAngle),hood:channel(currentAngle),cloak:channel(),brow:channel(),curve:channel(.2),mouth:channel(),width:channel(),slump:channel(),gazeX:channel(),gazeY:channel()};
   const lid=lidState();
   const written=new Map<string,string>();
@@ -49,6 +51,7 @@ export function useCoralMotion(anim:string,speed:number,perch:string,facingAngle
    for(const key of ['brow','curve','mouth','width','slump'] as const)property(`--face-${key}`,spring(key,e[key],key==='slump'?1.2:4,1));
    property('--pupil-x',spring('gazeX',Math.max(-6,Math.min(6,f.gazeX))*1.1,7,1));
    property('--pupil-y',spring('gazeY',Math.max(-5,Math.min(5,f.gazeY))*.7,7,1));
+   updateFaceMeshes(currentAngle/90,springs.gazeX.value,springs.gazeY.value,lid.value);
    property('--chest-breath',reduced?0:Math.sin(clock.breath));
    const front=Math.abs(currentAngle)<80?"on":"off",profile=Math.abs(currentAngle)>55?"on":"off";
    if(el.dataset.front!==front)el.dataset.front=front;if(el.dataset.profile!==profile)el.dataset.profile=profile;

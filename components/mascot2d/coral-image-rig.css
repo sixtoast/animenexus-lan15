@@ -84,7 +84,9 @@
 .coral-brows{transform:translateY(calc(var(--face-brow,0)*1px));transition:none}
 .coral-eye-mask{transform:translateY(calc((1 - var(--eye-open,1))*531.5px)) scaleY(var(--eye-open,1));transition:none!important}
 .coral-lid{opacity:clamp(0,calc((1 - var(--eye-open,1))*5),1);transform:translateY(calc(var(--eye-open,1)*-91px));transition:none!important}
-.coral-eye-track{transform:translate(calc(var(--pupil-x,0)*1px),calc(var(--pupil-y,0)*1px))}
+.coral-face-skin{display:none}
+[data-face-mesh][data-deformed="true"]>.coral-face-rest{display:none}
+[data-face-mesh][data-deformed="true"]>.coral-face-skin{display:inline}
 [data-reduce-motion="true"] .coral-rig *{animation:none!important;transition:none!important}
 .coral-mouth-closed{opacity:calc(1 - min(1,var(--face-mouth,0)*12));transition:none}
 .coral-mouth-curve{transform:translate(510px,578px) scale(calc(1 + var(--face-width,0)*.15),var(--face-curve,.2)) translate(-510px,-578px)}

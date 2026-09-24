@@ -2,6 +2,7 @@
 import {useId} from "react";
 import {useCoralMotion} from "./useCoralMotion";
 import {SkinnedLeg} from "./SkinnedLeg";
+import {DeformableFaceLayer} from "./DeformableFaceLayer";
 import armLeft from "./arm-left.png";
 import armRight from "./arm-right.png";
 import body from "./body.png";
@@ -54,6 +55,7 @@ const LAYERS:LayerDef[]=[
 // percentages (which are relative to the remaining space, not the source image).
 function Layer({d}:{d:LayerDef}) {
  const [x,y,width,height]=d.target;
+ if(d.name==='face-base'||d.name==='eye-left'||d.name==='eye-right')return <DeformableFaceLayer kind={d.name==='face-base'?'face':d.name} src={d.src} source={d.source} target={d.target}/>;
  return <svg x={x} y={y} width={width} height={height} viewBox={d.source.join(" ")} preserveAspectRatio="none" overflow="hidden" data-coral-part={d.name}>
   <image href={d.src} x="0" y="0" width={d.canvas?.[0]??W} height={d.canvas?.[1]??H}/>
  </svg>;
@@ -65,7 +67,7 @@ function Eye({side,id}:{side:"left"|"right";id:string}){
  const x=side==="left"?344:554;
  return <g className={`coral-eye-turn coral-eye-turn-${side}`}>
   <defs><clipPath id={id}><rect x={x-4} y="437" width="128" height="105" className="coral-eye-mask"/></clipPath></defs>
-  <g clipPath={`url(#${id})`}><g className="coral-eye-track">{part(`eye-${side}`)}</g></g>
+  <g clipPath={`url(#${id})`}>{part(`eye-${side}`)}</g>
   <path className="coral-lid" d={`M${x+8} 528 Q${x+60} 542 ${x+110} 528 m-3 2 8 -6`} fill="none" stroke="#463039" strokeWidth="5" strokeLinecap="round"/>
  </g>;
 }
