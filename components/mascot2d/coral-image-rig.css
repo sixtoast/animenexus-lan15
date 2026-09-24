@@ -13,7 +13,7 @@
 .coral-leg-left{transform:translate(430px,1075px) translateY(calc(var(--pose-legY,0)*1px)) rotate(calc(var(--pose-legL,0)*1deg)) scaleY(var(--pose-legScale,1)) translate(-430px,-1075px);}
 .coral-leg-right{transform:translate(604px,1075px) translateY(calc(var(--pose-legY,0)*1px)) rotate(calc(var(--pose-legR,0)*1deg)) scaleY(var(--pose-legScale,1)) translate(-604px,-1075px);}
 .coral-head{transition:transform .18s ease-out}
-.coral-body-motion{transform:translate(var(--emotion-body-x,0px),var(--emotion-body-y,0px))}
+.coral-body-motion{transform:translate(var(--emotion-body-x,0px),var(--emotion-body-y,0px)) translate(522px,1100px) translateY(calc(var(--face-slump,0)*6px)) skewX(calc(var(--body-turn,0)*-2deg)) scaleY(calc(1 + var(--chest-breath,0)*.003 - var(--face-slump,0)*.012)) translate(-522px,-1100px)}
 .coral-features,.coral-brows{transition:transform .14s ease-out}
 .coral-eye-mask{transition:transform 120ms cubic-bezier(.2,.7,.3,1)}
 .coral-lid{transition:transform 120ms cubic-bezier(.2,.7,.3,1),opacity 80ms}
@@ -50,19 +50,20 @@
  .coral-seated-left,.coral-seated-right{transform:none}
 }
 
-/* Discrete registered drawings avoid ghosted double faces during a turn. */
-/* Only the active view is mounted. Do not hide it before React commits the next view. */
+/* One canonical front drawing deforms continuously. Profile artwork remains a separate asset. */
 .coral-front-view{opacity:calc(1 - var(--profile-mix,0));transform:translate(522px,0) scaleX(calc(1 - var(--turn-abs,0)*.16)) translate(-522px,0)}
 .coral-profile-view{opacity:var(--profile-mix,0)}
 .coral-rig[data-front="off"] .coral-front-view{display:none}
 .coral-rig[data-profile="off"] .coral-profile-view{display:none}
 .coral-head-volume{transform:translate(532px,0) scaleX(calc(1 - var(--turn-abs,0)*.13)) translate(-532px,0)}
-.coral-face-turn{transform:translateX(calc(var(--turn,0)*140px))}
-.coral-hair-turn{transform:translate(512px,0) translateX(calc(var(--turn,0)*40px)) scaleX(calc(1 - var(--turn-abs,0)*.12)) translate(-512px,0)}
-.coral-eye-turn-left{transform:translate(404px,0) scaleX(calc(1 - max(0,var(--turn,0))*1.1)) translate(-404px,0)}
-.coral-eye-turn-right{transform:translate(614px,0) scaleX(calc(1 + min(0,var(--turn,0))*1.1)) translate(-614px,0)}
+.coral-face-turn{transform:translateX(calc(var(--turn,0)*120px))}
+.coral-hair-turn{transform:translate(512px,180px) translateX(calc(var(--hair-turn,0)*40px)) rotate(calc((var(--turn,0) - var(--hair-turn,0))*4deg)) scaleX(calc(1 - var(--turn-abs,0)*.12)) translate(-512px,-180px)}
+.coral-hood-lag{transform:translateX(calc((var(--hood-turn,0) - var(--turn,0))*18px))}
+.coral-hair-back-lag{transform:translate(520px,220px) rotate(calc((var(--turn,0) - var(--hair-turn,0))*-3deg + var(--physics-hair,0)*.7deg)) translate(-520px,-220px)}
+.coral-eye-turn-left{transform:translate(404px,0) scaleX(calc(1 - max(0,var(--turn,0))*max(0,var(--turn,0))*.85)) translate(-404px,0)}
+.coral-eye-turn-right{transform:translate(614px,0) scaleX(calc(1 - min(0,var(--turn,0))*min(0,var(--turn,0))*.85)) translate(-614px,0)}
 /* One dress and one pair of legs throughout the sit: no stacked skirts or pose-image fades. */
-.coral-dress-settle{transform:translate(522px,625px) scale(calc(1 + var(--pose-seat,0)*.12),calc(1 - var(--pose-seat,0)*.22)) translate(-522px,-625px)}
+.coral-dress-settle{transform:translate(522px,625px) skewX(calc(var(--cloth-lag,0)*1deg)) scale(calc(1 + var(--pose-seat,0)*.12),calc(1 - var(--pose-seat,0)*.22)) translate(-522px,-625px)}
 .coral-leg-seat-left{transform:translate(430px,1075px) translateY(calc(var(--pose-seat,0)*-100px)) rotate(calc(var(--pose-kickL,0)*var(--pose-seat,0)*9deg)) scaleY(calc(1 - var(--pose-seat,0)*.22 - var(--pose-kickL,0)*var(--pose-seat,0)*.1)) translate(-430px,-1075px)}
 .coral-leg-seat-right{transform:translate(604px,1075px) translateY(calc(var(--pose-seat,0)*-100px)) rotate(calc(var(--pose-kickR,0)*var(--pose-seat,0)*-9deg)) scaleY(calc(1 - var(--pose-seat,0)*.22 - var(--pose-kickR,0)*var(--pose-seat,0)*.1)) translate(-604px,-1075px)}
 .coral-point-arm{opacity:var(--pose-point,0)}
@@ -80,3 +81,15 @@
 
 .coral-foot-near{transform:translate(0,170px) rotate(calc(var(--near-ankle,0)*1deg))}
 .coral-foot-far{transform:translate(0,170px) rotate(calc(var(--far-ankle,0)*1deg))}
+
+/* Parameters are already interpolated by the single rig clock; CSS must not chase them. */
+.coral-brows{transform:translateY(calc(var(--face-brow,0)*1px));transition:none}
+.coral-eye-mask{transform:translateY(calc((1 - var(--eye-open,1))*531.5px)) scaleY(var(--eye-open,1));transition:none!important}
+.coral-lid{opacity:clamp(0,calc((1 - var(--eye-open,1))*5),1);transform:translateY(calc(var(--eye-open,1)*-91px));transition:none!important}
+.coral-eye-track{transform:translate(calc(var(--pupil-x,0)*1px),calc(var(--pupil-y,0)*1px))}
+.coral-mouth-closed{opacity:calc(1 - min(1,var(--face-mouth,0)*12));transition:none}
+.coral-mouth-curve{transform:translate(510px,578px) scale(calc(1 + var(--face-width,0)*.15),var(--face-curve,.2)) translate(-510px,-578px)}
+.coral-mouth-open{opacity:min(1,calc(var(--face-mouth,0)*12));transform:translate(510px,578px) scale(calc(.6 + var(--face-width,0)*.5),calc(.08 + var(--face-mouth,0)*.92)) translate(-510px,-578px);transition:none}
+.coral-profile-eye-mask{transform:translateY(calc((1 - var(--eye-open,1))*513.2px)) scaleY(var(--eye-open,1))}
+.coral-profile-lid{opacity:clamp(0,calc((1 - var(--eye-open,1))*5),1);transform:translateY(calc(var(--eye-open,1)*-80px))}
+.coral-profile-mouth{opacity:min(1,calc(var(--face-mouth,0)*12));transform:translate(701px,563px) scaleY(calc(.08 + var(--face-mouth,0)*.92)) translate(-701px,-563px)}

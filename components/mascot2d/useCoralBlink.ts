@@ -12,7 +12,7 @@ export function useCoralBlink(sleepiness:number,stress:number,expression:string,
   let closeTimer=0,openTimer=0,busy=false,lastBlink=0,alive=true;
   const close=(shift:boolean)=>{
    const e=latest.current;
-   if(!alive||busy||e.sleeping||performance.now()-lastBlink<900)return;
+   if(!alive||document.hidden||busy||e.sleeping||performance.now()-lastBlink<900)return;
    if(shift&&["surprised","scared"].includes(e.expression))return;
    busy=true;lastBlink=performance.now();
    const slow=e.sleepiness>.65;
@@ -23,7 +23,9 @@ export function useCoralBlink(sleepiness:number,stress:number,expression:string,
   const tick=()=>{close(false);closeTimer=window.setTimeout(tick,3200+Math.random()*2500)};
   closeTimer=window.setTimeout(tick,2800+Math.random()*1800);
   request.current=()=>close(true);
-  return()=>{alive=false;clearTimeout(closeTimer);clearTimeout(openTimer);request.current=()=>{}};
+  const visibility=()=>{clearTimeout(closeTimer);clearTimeout(openTimer);busy=false;setBlink(false);if(!document.hidden)closeTimer=window.setTimeout(tick,1800+Math.random()*1800);};
+  document.addEventListener('visibilitychange',visibility);
+  return()=>{alive=false;clearTimeout(closeTimer);clearTimeout(openTimer);request.current=()=>{};document.removeEventListener('visibilitychange',visibility)};
  },[]);
  useEffect(()=>{const p=previous.current;previous.current=gaze;if(Math.hypot(gaze.x-p.x,gaze.y-p.y)>.65)request.current()},[gaze.x,gaze.y]);
  return {blink:blink||sleeping,blinkKind};

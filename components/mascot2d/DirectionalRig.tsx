@@ -56,11 +56,12 @@ export function ProfileRig({openness,mouthOpen}: {openness:number;mouthOpen:numb
   <path d="M599 565 h47 l-4 101 q-19 12 -40 -5Z" fill="#f8dcc5" stroke="#bd9682" strokeWidth="2"/>
   <g transform="translate(0 38)"><g transform="translate(610 650) scale(1.25 1) translate(-610 -650)"><g className="coral-side-head">
    <Sprite asset={head} target={[241,15,506,660]} name="profile-head"/>
-   <defs><clipPath id={`${id}-eye`}><rect x="612" y={523-openness*98} width="100" height={openness*98}/></clipPath></defs>
+   <defs><clipPath id={`${id}-eye`}><rect className="coral-profile-eye-mask" x="612" y="425" width="100" height="98"/></clipPath></defs>
    <g clipPath={`url(#${id}-eye)`}><Sprite asset={atlas([120,1229,160,153])} target={[620,428,82,94]} name="profile-eye"/></g>
-   {openness<.1&&<path d="M625 505 q29 17 66 -4" fill="none" stroke="#49333b" strokeWidth="5" strokeLinecap="round"/>}
+   <path className="coral-profile-lid" d="M625 505 q29 17 66 -4" fill="none" stroke="#49333b" strokeWidth="5" strokeLinecap="round"/>
    <path d="M630 413 q26 -11 50 -3" fill="none" stroke="#b38d77" strokeWidth="3"/>
-   {mouthOpen<.08?<path d="M692 562 q9 6 18 -2" fill="none" stroke="#a76e57" strokeWidth="2.5"/>:<ellipse cx="701" cy="563" rx="7" ry={4+mouthOpen*13} fill="#763c40"/>}
+   <path className="coral-mouth-closed" d="M692 562 q9 6 18 -2" fill="none" stroke="#a76e57" strokeWidth="2.5"/>
+   <ellipse className="coral-profile-mouth" cx="701" cy="563" rx="7" ry="17" fill="#763c40"/>
   </g></g></g>
  </g></g></g>;
 }

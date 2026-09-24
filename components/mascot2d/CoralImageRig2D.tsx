@@ -60,23 +60,22 @@ function Layer({d}:{d:LayerDef}) {
 const part=(name:string)=><Layer key={name} d={LAYERS.find(d=>d.name===name)!}/>;
 const clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(max,n));
 // Reveal intact eye artwork with a lid mask. Never flatten the iris to blink.
-function Eye({side,openness,id}:{side:"left"|"right";openness:number;id:string}){
+function Eye({side,id}:{side:"left"|"right";id:string}){
  const x=side==="left"?344:554;
  return <g className={`coral-eye-turn coral-eye-turn-${side}`}>
-  <defs><clipPath id={id}><rect x={x-2} y="437" width="124" height="105" className="coral-eye-mask" style={{transform:`translate(0, ${542*(1-openness)}px) scaleY(${openness})`}}/></clipPath></defs>
-  <g clipPath={`url(#${id})`}>{part(`eye-${side}`)}</g>
-  <path className="coral-lid" d={`M${x+8} 523 Q${x+60} 549 ${x+110} 522 m-3 2 8 -6`} fill="none" stroke="#463039" strokeWidth="5" strokeLinecap="round" style={{opacity:openness<.99?1:0,transform:`translateY(${-openness*91}px)`}}/>
+  <defs><clipPath id={id}><rect x={x-4} y="437" width="128" height="105" className="coral-eye-mask"/></clipPath></defs>
+  <g clipPath={`url(#${id})`}><g className="coral-eye-track">{part(`eye-${side}`)}</g></g>
+  <path className="coral-lid" d={`M${x+8} 528 Q${x+60} 542 ${x+110} 528 m-3 2 8 -6`} fill="none" stroke="#463039" strokeWidth="5" strokeLinecap="round"/>
  </g>;
 }
 export function CoralImageRig2D({anim="idle",speed=0,perch="stand",facingAngleDeg,expression,blink,gazeX,gazeY,blush,turn,mouthOpen,mouthWide,mouthMood}:Props){
  const facing=(anim==="sit"||anim==="point"||perch==="sit")?0:facingAngleDeg??(["walk","run"].includes(anim)?(turn<-.05?-90:90):0);
- const {rig}=useCoralMotion(anim,speed,perch,facing),id=useId().replace(/[^a-zA-Z0-9_-]/g,"");
- const sleepy=expression==="sleepy",sad=["sad","scared"].includes(expression),happy=["happy","excited","proud","smug","mischievous"].includes(expression);
+ const {rig}=useCoralMotion(anim,speed,perch,facing,{expression,blink,gazeX,gazeY,mouthOpen,mouthWide,mouthMood}),id=useId().replace(/[^a-zA-Z0-9_-]/g,"");
+ const sleepy=expression==="sleepy";
  const open=clamp(Math.max(mouthOpen,expression==="surprised"?.8:expression==="excited"?.35:0),0,1);
- const raisedArm=["wave","stretch","celebrate"].includes(anim);
  const openness=blink||anim==="sleep"?0:sleepy?.62:expression==="annoyed"?.8:1;
  // The blank face is centred at x=538; the uploaded features were centred at 510.
- const gx=28+clamp(gazeX,-6,6)*.5+clamp(turn,-.6,.6)*4,gy=clamp(gazeY,-5,5)*.4;
+ const gx=28,gy=0;
  return <svg ref={rig} className="coral-rig" viewBox="0 0 1024 1536" preserveAspectRatio="xMidYMax meet" aria-hidden="true" focusable="false" data-registration="source-pixels" data-eyes-closed={openness===0?"true":"false"}>
   <g className="coral-landing"><g className="coral-whole">
   <g className="coral-front-view">
@@ -85,25 +84,22 @@ export function CoralImageRig2D({anim="idle",speed=0,perch="stand",facingAngleDe
    {/* Both legs share one silhouette so calf and boot proportions match exactly. */}
    <g className="coral-leg coral-leg-right"><g className="coral-leg-seat coral-leg-seat-right"><g transform="translate(1044 0) scale(-1 1)">{part("leg-right")}</g></g></g></g>
    <g className="coral-arm coral-arm-left">{part("grip")}</g>
-   {!raisedArm&&<g className="coral-arm coral-arm-right"><g className="coral-rest-arm">{part("arm-right")}</g><g className="coral-point-arm">{part("pointing")}</g></g>}
+   <g className="coral-arm coral-arm-right"><g className="coral-rest-arm">{part("arm-right")}</g><g className="coral-point-arm">{part("pointing")}</g></g>
    <g className="coral-dress-settle">{part("body")}</g>
    <g className="coral-bow">{part("bow")}</g>
   </g>
   <g transform="translate(-20 0)"><g className="coral-head-action"><g className="coral-head">
-   <g className="coral-head-volume">{part("hood-back")}{part("hair-back")}{part("face-base")}</g>
+   <g className="coral-head-volume"><g className="coral-hood-lag">{part("hood-back")}</g><g className="coral-hair-back-lag">{part("hair-back")}</g>{part("face-base")}</g>
    <g className="coral-face-turn"><g className="coral-features" style={{transform:`translate(${gx}px,${gy}px)`}}>
-    <g className="coral-brows" style={{transform:`translateY(${sad?8:expression==="surprised"?-8:0}px)`}}>{part("brows")}</g>
-    <Eye side="left" openness={openness} id={`${id}-left`}/><Eye side="right" openness={openness} id={`${id}-right`}/>
+    <g className="coral-brows">{part("brows")}</g>
+    <Eye side="left" id={`${id}-left`}/><Eye side="right" id={`${id}-right`}/>
     <g opacity={clamp(blush,0,1)*.3} fill="#f29785"><ellipse cx="385" cy="550" rx="33" ry="14"/><ellipse cx="650" cy="550" rx="33" ry="14"/></g>
-    <g className="coral-mouth-closed" style={{opacity:1-clamp(open*12,0,1)}}>
-     {sad||mouthMood<-.4?<path d="M490 582 Q510 566 531 581" fill="none" stroke="#8c5d4d" strokeWidth="3" strokeLinecap="round"/>:<g transform={`translate(510 578) scale(${happy?1.15:1} 1) translate(-510 -578)`}>{part("mouth")}</g>}
-    </g>
-    <ellipse className="coral-mouth-open" cx="510" cy="578" rx="22" ry="26" fill="#763c40" stroke="#a36662" strokeWidth="3" style={{opacity:clamp(open*12,0,1),transform:`translate(510px,578px) scale(${.6+clamp(mouthWide,0,1)*.5},${.08+open*.92}) translate(-510px,-578px)`}}/>
+    <g className="coral-mouth-closed"><path className="coral-mouth-curve" d="M490 578 Q510 590 531 578" fill="none" stroke="#8c5d4d" strokeWidth="3" strokeLinecap="round"/></g>
+    <ellipse className="coral-mouth-open" cx="510" cy="578" rx="22" ry="26" fill="#763c40" stroke="#a36662" strokeWidth="3"/>
    </g>
    </g><g className="coral-hair-turn"><g className="coral-hair">{part("hair-front")}</g></g>
   </g></g>
   </g>
-  {raisedArm&&<g className="coral-body-motion"><g className="coral-arm coral-arm-right">{part("arm-right")}</g></g>}
   </g>
   <ProfileRig openness={openness} mouthOpen={open}/>
   </g></g>
