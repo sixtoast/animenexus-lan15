@@ -24,6 +24,13 @@ const EnvironmentalReactions2D=dynamic(()=>import("@/components/mascot2d/Environ
 const MascotDebugPanel=dynamic(()=>import("./MascotDebugPanel").then(m=>m.MascotDebugPanel),{ssr:false});
 
 export function MascotHost(){
+ const route=usePathname();
+ // The lab owns its renderer. Never mount a second autonomous actor over its controls.
+ if(route==="/mascot-2d-preview")return null;
+ return <ActiveMascotHost/>;
+}
+
+function ActiveMascotHost(){
  const enabled=useMascotStore(s=>s.enabled),setEnabled=useMascotStore(s=>s.setEnabled);const {reducedMotion}=useMotion();const pathname=usePathname();
  // 2.5D is the default showcase renderer. Existing visitors keep an explicit saved choice.
  const [ready,setReady]=useState(false),[hiddenTab,setHiddenTab]=useState(false),[modalOpen,setModalOpen]=useState(false),[lowPower,setLowPower]=useState(false),[perfTier,setPerfTier]=useState<string>("balanced"),[webglError,setWebglError]=useState<string|null>(null),[dockOpen,setDockOpen]=useState(false),[audioOn,setAudioOn]=useState(false),[interactOn,setInteractOn]=useState(true),[statusMsg,setStatusMsg]=useState(""),[renderer,setRenderer]=useState<MascotRenderer>("2.5d");

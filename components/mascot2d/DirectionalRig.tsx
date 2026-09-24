@@ -4,6 +4,7 @@ import assets from "./turnAssets.json";
 import grip from "./poses/grip.png";
 import arm from "./arm-right.png";
 import leg from "./leg-left.png";
+import profileArtwork from "./poses/profile.png";
 type Rect = [number, number, number, number];
 type Cut = {src: string; box: number[]; canvas: number[]; clip?: string};
 export function Sprite({asset, target, name}: {asset: Cut; target: Rect; name: string}) {
@@ -45,7 +46,8 @@ export function ProfileRig({openness,mouthOpen}: {openness:number;mouthOpen:numb
  const id=useId().replace(/:/g,"");
  const head={...atlas([0,25,380,495]),clip:"M0 25 H380 V300 H368 V430 L330 520 H0Z"};
  // Keep calf and boot in one drawing: the old ankle crop split the cuff on every step.
- const limb=(side:"near"|"far")=><g className={`coral-side-leg coral-side-${side}`}><Sprite asset={atlas([419,645,195,345])} target={[-62,-25,124,225]} name={`${side}-thigh`}/><g className={`coral-side-shin coral-shin-${side}`}><Sprite asset={atlas([755,680,242,345])} target={[-53,-32,143,262]} name={`${side}-shin-boot`}/></g></g>;
+ // One intact silhouette from the original profile: no independent knee/cuff cut edges.
+ const limb=(side:"near"|"far")=><g className={`coral-side-leg coral-side-${side}`}><Sprite asset={{...original(profileArtwork.src,[426,1110,260,390]),clip:"M478 1110 H548 V1248 L580 1290 V1340 L686 1385 V1500 H426 V1280Z"}} target={[-65,-10,150,410]} name={`${side}-whole-leg`}/></g>;
  return <g className="coral-profile-view" data-direction-view="90"><g className="coral-direction-facing"><g className="coral-side-body">
   <g>{limb("far")}</g>{limb("near")}
   <g className="coral-side-free-arm"><Sprite asset={atlas([85,675,220,315])} target={[501,677,166,315]} name="free-arm"/></g>

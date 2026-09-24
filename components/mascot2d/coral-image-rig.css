@@ -29,7 +29,7 @@
 @keyframes coral-recoil{30%{transform:rotate(1.5deg) scale(.99,1.01)}65%{transform:rotate(-.5deg)}100%{transform:rotate(0)}}
 @media(prefers-reduced-motion:reduce){.coral-rig *{animation:none!important;transition:none!important}}
 /* Authored pose layers: reveal after the anticipation beat, never stretch standing legs into a seat. */
-.coral-standing-legs{opacity:calc(1 - var(--pose-seat,0))}
+.coral-standing-legs{opacity:1}
 .coral-sitting{opacity:var(--pose-seat,0)}
 .coral-body-mask{height:calc(1536px - var(--pose-seat,0)*691px)}
 .coral-rest-arm{opacity:calc(1 - var(--pose-point,0) - var(--pose-prepare,0))}
@@ -52,12 +52,26 @@
 
 /* Discrete registered drawings avoid ghosted double faces during a turn. */
 /* Only the active view is mounted. Do not hide it before React commits the next view. */
-.coral-front-view,.coral-angle-view,.coral-profile-view{opacity:1}
+.coral-front-view{opacity:calc(1 - var(--profile-mix,0));transform:translate(522px,0) scaleX(calc(1 - var(--turn-abs,0)*.16)) translate(-522px,0)}
+.coral-profile-view{opacity:var(--profile-mix,0)}
+.coral-rig[data-front="off"] .coral-front-view{display:none}
+.coral-rig[data-profile="off"] .coral-profile-view{display:none}
+.coral-head-volume{transform:translate(532px,0) scaleX(calc(1 - var(--turn-abs,0)*.13)) translate(-532px,0)}
+.coral-face-turn{transform:translateX(calc(var(--turn,0)*140px))}
+.coral-hair-turn{transform:translate(512px,0) translateX(calc(var(--turn,0)*40px)) scaleX(calc(1 - var(--turn-abs,0)*.12)) translate(-512px,0)}
+.coral-eye-turn-left{transform:translate(404px,0) scaleX(calc(1 - max(0,var(--turn,0))*1.1)) translate(-404px,0)}
+.coral-eye-turn-right{transform:translate(614px,0) scaleX(calc(1 + min(0,var(--turn,0))*1.1)) translate(-614px,0)}
+/* One dress and one pair of legs throughout the sit: no stacked skirts or pose-image fades. */
+.coral-dress-settle{transform:translate(522px,625px) scale(calc(1 + var(--pose-seat,0)*.12),calc(1 - var(--pose-seat,0)*.22)) translate(-522px,-625px)}
+.coral-leg-seat-left{transform:translate(430px,1075px) translateY(calc(var(--pose-seat,0)*-100px)) rotate(calc(var(--pose-kickL,0)*var(--pose-seat,0)*9deg)) scaleY(calc(1 - var(--pose-seat,0)*.22 - var(--pose-kickL,0)*var(--pose-seat,0)*.1)) translate(-430px,-1075px)}
+.coral-leg-seat-right{transform:translate(604px,1075px) translateY(calc(var(--pose-seat,0)*-100px)) rotate(calc(var(--pose-kickR,0)*var(--pose-seat,0)*-9deg)) scaleY(calc(1 - var(--pose-seat,0)*.22 - var(--pose-kickR,0)*var(--pose-seat,0)*.1)) translate(-604px,-1075px)}
+.coral-point-arm{opacity:var(--pose-point,0)}
+.coral-head{transition:none}
 .coral-direction-facing{transform:translate(522px,0) scaleX(calc(var(--facing-sign,1)*var(--turn-squeeze,1))) translate(-522px,0)}
 .coral-direction-hair{transform:translate(530px,220px) rotate(calc(var(--side-hair,0)*.5deg)) translate(-530px,-220px)}
 .coral-side-body{transform:translateY(calc(var(--side-bob,0)*1px))}
-.coral-side-near{transform:translate(526px,1090px) rotate(calc(var(--near-upper,0)*1deg))}
-.coral-side-far{transform:translate(510px,1090px) rotate(calc(var(--far-upper,0)*1deg))}
+.coral-side-near{transform:translate(526px,1090px) rotate(calc(var(--near-swing,0)*1deg))}
+.coral-side-far{transform:translate(510px,1090px) rotate(calc(var(--far-swing,0)*1deg))}
 .coral-shin-near{transform:translate(0,170px) rotate(calc(var(--near-lower,0)*1deg))}
 .coral-shin-far{transform:translate(0,170px) rotate(calc(var(--far-lower,0)*1deg))}
 .coral-side-free-arm{transform:translate(551px,706px) rotate(calc(var(--side-arm,0)*1deg)) translate(-551px,-706px)}

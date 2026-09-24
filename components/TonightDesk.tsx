@@ -36,6 +36,8 @@ function hourLabel(d = new Date()) {
 }
 
 export function TonightDesk({ candidates }: Props) {
+  const [deskLabel,setDeskLabel]=useState("Tonight");
+  useEffect(()=>{setDeskLabel(hourLabel());},[]);
   const { entries, ready } = useWatchlist();
   const sessionKey = useSessionRevision();
   const [intensity, setIntensity] = useState<IntentIntensity>("moderate");
@@ -117,7 +119,7 @@ export function TonightDesk({ candidates }: Props) {
   return (
     <section className="tonight-desk" aria-label="Tonight desk">
       <div className="home-rail-head">
-        <h2>{hourLabel()} · for you</h2>
+        <h2>{deskLabel} · for you</h2>
         <span className="home-rail-note">Session · intent · clusters</span>
       </div>
 

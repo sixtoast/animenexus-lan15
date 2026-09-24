@@ -1,17 +1,16 @@
 "use client";
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useRef} from "react";
 import {REST_POSE,sampleCoralMotion,type CoralPose} from "./coralMotion";
-import {clampAngle,directionalValues,turnView} from "./directionalMotion";
+import {clampAngle,directionalValues} from "./directionalMotion";
 
 /** One frame loop owns pose and turn channels. No per-frame React state. */
 export function useCoralMotion(anim:string,speed:number,perch:string,facingAngle=0){
- const [view,setView]=useState(()=>turnView(facingAngle));
  const rig=useRef<SVGSVGElement>(null),input=useRef({anim,speed,perch,facingAngle});input.current={anim,speed,perch,facingAngle};
  useEffect(()=>{
   const el=rig.current;if(!el)return;
   const media=window.matchMedia("(prefers-reduced-motion: reduce)");
   let raf=0,last=performance.now(),start=last,currentAnim=anim,currentPerch=perch,currentAngle=clampAngle(facingAngle);
-  const pose={...REST_POSE};let activeView=turnView(facingAngle);
+  const pose={...REST_POSE};
   const written=new Map<string,string>();
   const property=(key:string,value:number)=>{const next=String(Math.round(value*1000)/1000);if(written.get(key)!==next){written.set(key,next);el.style.setProperty(key,next);}};
   const write=(t:number,dt:number,reduced=false)=>{
@@ -24,7 +23,8 @@ export function useCoralMotion(anim:string,speed:number,perch:string,facingAngle
    if(reduced){target.kickL=0;target.kickR=0;}
    for(const key of Object.keys(pose) as (keyof CoralPose)[]){pose[key]=reduced?target[key]:pose[key]+(target[key]-pose[key])*(1-Math.exp(-dt*15));property(`--pose-${key}`,pose[key]);}
    for(const [key,value] of Object.entries(directionalValues(currentAngle,t,input.current.anim,input.current.speed,reduced)))property(`--${key}`,value);
-   const nextView=turnView(currentAngle);if(activeView!==nextView){activeView=nextView;setView(nextView);}
+   const front=Math.abs(currentAngle)<80?"on":"off",profile=Math.abs(currentAngle)>55?"on":"off";
+   if(el.dataset.front!==front)el.dataset.front=front;if(el.dataset.profile!==profile)el.dataset.profile=profile;
   };
   const frame=(now:number)=>{
    const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;
@@ -44,7 +44,7 @@ export function useCoralMotion(anim:string,speed:number,perch:string,facingAngle
   if(anim==='walk'||anim==='run'){p.y=0;p.sx=1;p.sy=1;p.lean=0;}
   for(const [k,v] of Object.entries(p))el.style.setProperty(`--pose-${k}`,String(v));
   for(const [k,v] of Object.entries(directionalValues(facingAngle,0,anim,speed,true)))el.style.setProperty(`--${k}`,String(v));
-  setView(turnView(facingAngle));
+  el.dataset.front=Math.abs(facingAngle)<80?"on":"off";el.dataset.profile=Math.abs(facingAngle)>55?"on":"off";
  },[anim,speed,perch,facingAngle]);
- return {rig,view};
+ return {rig};
 }

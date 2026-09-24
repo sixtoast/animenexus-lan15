@@ -12,7 +12,7 @@ export function sampleSideWalk(t: number, moving = true, run = false, speed = 0)
   const u = (phase + offset) % 1;
   const stance = u < .6;
   const v = stance ? u / .6 : (u - .6) / .4;
-  const x = moving ? (stance ? 90 - 180 * v : -90 + 180 * (v * v * (3 - 2 * v))) : 0;
+  const x = moving ? 80 * Math.cos(u*Math.PI*2) : 0;
   const lift = moving && !stance ? Math.sin(v * Math.PI) ** 2 * (run ? 105 : 68) : 0;
   const y = 326 - lift - bob;
   const length = 170, d = Math.min(339.5, Math.hypot(x, y));
@@ -32,6 +32,12 @@ export function directionalValues(angle: number, t: number, anim: string, speed 
   'view-front':view===0?1:0,'view-15':view===15?1:0,'view-30':view===30?1:0,'view-45':view===45?1:0,'view-side':view===90?1:0,
   'facing-sign':angle<0?-1:1,'side-bob':g.bob,'side-arm':g.arm,'side-carry':g.carry,'side-hair':g.hair,
   'near-ankle':g.near.ankle,'far-ankle':g.far.ankle,'near-upper':g.near.upper,'near-lower':g.near.lower,'far-upper':g.far.upper,'far-lower':g.far.lower,
-  'turn-squeeze':1-Math.abs(Math.abs(angle)-view)*.0015,
+  // Continuous signed projection, not five unrelated drawings at threshold angles.
+  'turn':clampAngle(angle)/90,
+  'turn-abs':Math.abs(clampAngle(angle))/90,
+  'profile-mix':Math.max(0,Math.min(1,(Math.abs(clampAngle(angle))-55)/25)),
+  'turn-squeeze':1,
+  'near-swing':reduced||!['walk','run'].includes(anim)?0:Math.sin(t*Math.PI*2*(anim==='run'?1.65:1.05))*16,
+  'far-swing':reduced||!['walk','run'].includes(anim)?0:-Math.sin(t*Math.PI*2*(anim==='run'?1.65:1.05))*16,
  };
 }
