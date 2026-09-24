@@ -4,6 +4,8 @@ import {REST_POSE,sampleCoralMotion,type CoralPose} from "./coralMotion";
 import {clampAngle,directionalValues} from "./directionalMotion";
 import {advanceSpring,channel,advanceLid,lidState,expressionTargets} from "./puppetDynamics";
 import {bindLegMesh} from "./legMesh";
+import {subscribeVisualClock,refreshVisualClock} from "./visualClock";
+import {createMotionTime,advanceMotionTime} from "./motionTime";
 type FaceInput={expression:string;blink:boolean;gazeX:number;gazeY:number;mouthOpen:number;mouthWide:number;mouthMood:number};
 const NEUTRAL:FaceInput={expression:'neutral',blink:false,gazeX:0,gazeY:0,mouthOpen:0,mouthWide:0,mouthMood:0};
 
@@ -13,8 +15,8 @@ export function useCoralMotion(anim:string,speed:number,perch:string,facingAngle
  const refresh=useRef<()=>void>(()=>{});
  useEffect(()=>{
   const el=rig.current;if(!el)return;
-  const media=window.matchMedia("(prefers-reduced-motion: reduce)");
-  let raf=0,last=performance.now(),elapsed=0,currentAnim=anim,currentPerch=perch,currentAngle=clampAngle(facingAngle);
+  const clock=createMotionTime();
+  let currentAngle=clampAngle(facingAngle);
   const pose={...REST_POSE};
   const updateLegMesh=bindLegMesh(el);
   const springs={angle:channel(currentAngle),body:channel(currentAngle),hair:channel(currentAngle),hood:channel(currentAngle),cloak:channel(),brow:channel(),curve:channel(.2),mouth:channel(),width:channel(),slump:channel(),gazeX:channel(),gazeY:channel()};
@@ -35,7 +37,7 @@ export function useCoralMotion(anim:string,speed:number,perch:string,facingAngle
    for(const key of Object.keys(pose) as (keyof CoralPose)[]){pose[key]=reduced?target[key]:pose[key]+(target[key]-pose[key])*(1-Math.exp(-dt*15));property(`--pose-${key}`,pose[key]);}
    updateLegMesh(pose.seat,pose.kickL,pose.kickR);
    const mesh=pose.seat>.0001?'on':'off';if(el.dataset.mesh!==mesh)el.dataset.mesh=mesh;
-   for(const [key,value] of Object.entries(directionalValues(currentAngle,t,input.current.anim,input.current.speed,reduced)))property(`--${key}`,value);
+   for(const [key,value] of Object.entries(directionalValues(currentAngle,t,input.current.anim,input.current.speed,reduced,clock.gait)))property(`--${key}`,value);
    property('--body-turn',spring('body',currentAngle,2.2,.95)/90);
    property('--hair-turn',spring('hair',currentAngle,2.1,.58)/90);
    property('--hood-turn',spring('hood',currentAngle,2.6,.9)/90);
@@ -47,20 +49,17 @@ export function useCoralMotion(anim:string,speed:number,perch:string,facingAngle
    for(const key of ['brow','curve','mouth','width','slump'] as const)property(`--face-${key}`,spring(key,e[key],key==='slump'?1.2:4,1));
    property('--pupil-x',spring('gazeX',Math.max(-6,Math.min(6,f.gazeX))*1.1,7,1));
    property('--pupil-y',spring('gazeY',Math.max(-5,Math.min(5,f.gazeY))*.7,7,1));
-   property('--chest-breath',reduced?0:Math.sin(t*Math.PI*2/(input.current.anim==='sleep'?5.2:4.2)));
+   property('--chest-breath',reduced?0:Math.sin(clock.breath));
    const front=Math.abs(currentAngle)<80?"on":"off",profile=Math.abs(currentAngle)>55?"on":"off";
    if(el.dataset.front!==front)el.dataset.front=front;if(el.dataset.profile!==profile)el.dataset.profile=profile;
   };
-  const frame=(now:number)=>{
-   const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;
-   if(currentAnim!==input.current.anim||currentPerch!==input.current.perch){currentAnim=input.current.anim;currentPerch=input.current.perch;elapsed=0;}
-   elapsed+=dt;write(elapsed,dt);raf=requestAnimationFrame(frame);
+  const frame=(_now:number,dt:number,reduced:boolean)=>{
+   advanceMotionTime(clock,input.current.anim,input.current.perch,input.current.speed,dt);
+   write(clock.elapsed,dt,reduced);
   };
-  const sync=()=>{cancelAnimationFrame(raf);if(document.hidden)return;if(media.matches)write(0,0,true);else{last=performance.now();raf=requestAnimationFrame(frame);}};
-  refresh.current=()=>{if(media.matches)write(0,0,true);};
-  const visibility=()=>{if(document.hidden)cancelAnimationFrame(raf);else sync();};
-  media.addEventListener('change',sync);document.addEventListener('visibilitychange',visibility);sync();
-  return()=>{refresh.current=()=>{};cancelAnimationFrame(raf);media.removeEventListener('change',sync);document.removeEventListener('visibilitychange',visibility);};
+  refresh.current=refreshVisualClock;
+  const unsubscribe=subscribeVisualClock(frame,60,true);
+  return()=>{refresh.current=()=>{};unsubscribe();};
  // Current props live in input; the one loop is intentionally mounted once.
  // eslint-disable-next-line react-hooks/exhaustive-deps
  },[]);

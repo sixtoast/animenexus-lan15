@@ -6,6 +6,23 @@ const ts=require('typescript');
 function load(name){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('components/mascot2d/'+name+'.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{exports});return exports;}
 const {directionalValues}=load('directionalMotion');
 const {sampleCoralMotion}=load('coralMotion');
+const {createMotionTime,advanceMotionTime}=load('motionTime');
+test('action changes preserve breathing and integrated gait phase',()=>{
+ const c=createMotionTime();for(let i=0;i<40;i++)advanceMotionTime(c,'walk','stand',.5,1/60);
+ const breath=c.breath,gait=c.gait;
+ advanceMotionTime(c,'point','stand',0,1/60);
+ assert.ok(c.breath>breath&&c.breath-breath<.03);assert.equal(c.gait,gait);assert.equal(c.elapsed,1/60);
+ advanceMotionTime(c,'run','stand',1,1/60);
+ assert.ok(Math.abs(c.gait-(gait+1.65*1.16/60)%1)<1e-10);
+});
+test('leg and arm swing stay in phase at all speeds, and stop in reduced motion',()=>{
+ for(const speed of [0,.2,1])for(const anim of ['walk','run'])for(let t=0;t<4;t+=.07){
+  const v=directionalValues(90,t,anim,speed);
+  assert.ok(Math.abs(v['near-swing']/16-v['side-arm']/14)<1e-10);
+  assert.equal(v['far-swing'],-v['near-swing']);
+  const still=directionalValues(90,t,anim,speed,true);assert.equal(still['near-swing'],0);assert.equal(still['side-bob'],0);
+ }
+});
 test('15, 30 and 45 degrees have distinct continuous projections',()=>{
  const a=[15,30,45].map(n=>directionalValues(n,0,'idle'));
  assert.ok(a[0].turn<a[1].turn&&a[1].turn<a[2].turn);

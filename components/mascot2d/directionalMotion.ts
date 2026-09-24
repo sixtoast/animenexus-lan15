@@ -4,8 +4,8 @@ export function turnView(angle: number) {
  const a = Math.abs(clampAngle(angle));
  return a < 7.5 ? 0 : a < 22.5 ? 15 : a < 37.5 ? 30 : a < 67.5 ? 45 : 90;
 }
-export function sampleSideWalk(t: number, moving = true, run = false, speed = 0) {
- const cycle = t * (run ? 1.65 : 1.05) * (1 + Math.max(0, Math.min(1, speed)) * .16);
+export function sampleSideWalk(t: number, moving = true, run = false, speed = 0, gaitPhase?:number) {
+ const cycle = gaitPhase ?? t * (run ? 1.65 : 1.05) * (1 + Math.max(0, Math.min(1, speed)) * .16);
  const phase = ((cycle % 1) + 1) % 1;
  const bob = moving ? -8 * Math.sin(phase * Math.PI * 4) : 0;
  function leg(offset: number) {
@@ -22,12 +22,12 @@ export function sampleSideWalk(t: number, moving = true, run = false, speed = 0)
   const lower = -Math.atan2(x - kx, y - ky) * 180 / Math.PI - upper;
   return { upper, lower, ankle: -(upper + lower), x, lift, stance };
  }
- return { near: leg(0), far: leg(.5), bob, arm: moving ? Math.sin(phase * Math.PI * 2) * 14 : 0,
+ return { near: leg(0), far: leg(.5), bob, swing:moving?Math.sin(phase*Math.PI*2)*16:0, arm: moving ? Math.sin(phase * Math.PI * 2) * 14 : 0,
   carry: moving ? Math.sin(phase * Math.PI * 2 - .35) * 3.5 : 0,
   hair: moving ? Math.sin(phase * Math.PI * 2 - .65) * 1.5 : 0 };
 }
-export function directionalValues(angle: number, t: number, anim: string, speed = 0, reduced = false) {
- const view=turnView(angle), g=sampleSideWalk(t,!reduced&&(anim==='walk'||anim==='run'),anim==='run',speed);
+export function directionalValues(angle: number, t: number, anim: string, speed = 0, reduced = false,gaitPhase?:number) {
+ const view=turnView(angle), g=sampleSideWalk(t,!reduced&&(anim==='walk'||anim==='run'),anim==='run',speed,gaitPhase);
  return {
   'view-front':view===0?1:0,'view-15':view===15?1:0,'view-30':view===30?1:0,'view-45':view===45?1:0,'view-side':view===90?1:0,
   'facing-sign':angle<0?-1:1,'side-bob':g.bob,'side-arm':g.arm,'side-carry':g.carry,'side-hair':g.hair,
@@ -37,7 +37,7 @@ export function directionalValues(angle: number, t: number, anim: string, speed 
   'turn-abs':Math.abs(clampAngle(angle))/90,
   'profile-mix':Math.max(0,Math.min(1,(Math.abs(clampAngle(angle))-55)/25)),
   'turn-squeeze':1,
-  'near-swing':reduced||!['walk','run'].includes(anim)?0:Math.sin(t*Math.PI*2*(anim==='run'?1.65:1.05))*16,
-  'far-swing':reduced||!['walk','run'].includes(anim)?0:-Math.sin(t*Math.PI*2*(anim==='run'?1.65:1.05))*16,
+  'near-swing':g.swing,
+  'far-swing':-g.swing,
  };
 }
