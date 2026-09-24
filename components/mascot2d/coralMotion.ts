@@ -9,11 +9,11 @@ export function anticipateThenSettle(t:number){
  if(u<1)return 1-Math.pow(2,-8*u);
  return 1+Math.sin((t-.58)*15)*Math.exp(-(t-.58)*9)*.055;
 }
-export function sampleCoralMotion(anim:string,t:number,speed=0,perch="stand"):CoralPose{
- const p={...REST_POSE},s=Math.sin,breathe=s(t*Math.PI*2/4.2),ease=(v:number)=>{v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)};
- p.headY=-breathe*2;p.sy=1+breathe*.0025;p.lantern=s(t*1.7)*1.1;
+export function sampleCoralMotion(anim:string,t:number,speed=0,perch="stand",clocks?:{ambient:number;breath:number;gait:number}):CoralPose{
+ const p={...REST_POSE},s=Math.sin,breathe=s(clocks?.breath??t*Math.PI*2/4.2),ease=(v:number)=>{v=Math.max(0,Math.min(1,v));return v*v*(3-2*v)};
+ p.headY=-breathe*2;p.sy=1+breathe*.0025;p.lantern=s((clocks?.ambient??t)*1.7)*1.1;
  switch(anim){
-  case "walk":case "run":{const run=anim==="run",phase=t*Math.PI*2*(run?2.7:1.65)*(1+Math.min(1,speed)*.18),stride=run?9:5;p.legL=s(phase)*stride;p.legR=-p.legL;p.right=s(phase)*stride*.7;p.left=-s(phase)*2;p.y=-Math.abs(s(phase))*(run?11:4);p.lean=run?-1.2:0;p.head=s(phase)*.35;p.lantern=s(phase-.7)*(run?5:2.5);break}
+  case "walk":case "run":{const run=anim==="run",phase=clocks?clocks.gait*Math.PI*2:t*Math.PI*2*(run?1.65:1.05)*(1+Math.min(1,speed)*.16),stride=run?9:5;p.legL=s(phase)*stride;p.legR=-p.legL;p.right=s(phase)*stride*.7;p.left=-s(phase)*2;p.y=-Math.abs(s(phase))*(run?11:4);p.lean=run?-1.2:0;p.head=s(phase)*.35;p.lantern=s(phase-.7)*(run?5:2.5);break}
   case "jump":{const wind=1-ease(t/.16),launch=ease((t-.1)/.18);p.sy=1-.05*wind+.018*launch;p.sx=1+.035*wind-.008*launch;p.legL=-7*launch;p.legR=8*launch;p.legScale=1-.05*launch;p.right=-24*launch;p.left=5*launch;p.head=-2*launch;break;}
   case "land":{const k=Math.max(0,1-t/.55),bounce=s(Math.min(t/.55,1)*Math.PI*2)*k;p.sy=1-bounce*.055;p.sx=1+bounce*.025;p.headY=bounce*8;break}
   case "wave":p.right=-108+s(t*9)*11;p.head=-3;p.left=2;break;
@@ -21,7 +21,7 @@ export function sampleCoralMotion(anim:string,t:number,speed=0,perch="stand"):Co
   case "happy":p.head=s(t*2)*2;p.right=-12;p.y=-Math.max(0,s(t*3))*4;break;
   case "celebrate":{const a=ease(t/.5);p.right=(-116+s(t*8)*9)*a;p.left=8*a;p.y=-Math.max(0,s(t*6))*9*a;p.head=s(t*3)*2*a;p.lantern=s(t*6-.7)*4*a;break;}
   case "think":p.head=5;p.headY=3;p.right=8;p.lean=-.5;break;
-  case "sleep":p.head=7;p.headY=8;p.sy=1+s(t*1.4)*.004;p.right=5;p.left=-2;break;
+  case "sleep":p.head=7;p.headY=8;p.sy=1+s(clocks?.breath??t*1.4)*.004;p.right=5;p.left=-2;break;
   case "surprised":{const head=ease(t/.12),shoulder=ease((t-.07)/.16),settle=1-.35*ease((t-.35)/.55);p.headY=-7*head*settle;p.right=-22*shoulder*settle;p.left=5*shoulder*settle;p.sy=1+.012*shoulder*settle;p.y=-3*shoulder*settle;break;}
   case "stretch":{const a=ease(t/.6);p.right=-140*a;p.left=10*a;p.head=-4*a;p.sy=1+.012*a;break}
   case "nod":p.headY=(1-Math.cos(Math.min(t,1.4)*Math.PI*2/.7))*4;p.head=p.headY*.25;break;

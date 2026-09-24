@@ -33,7 +33,7 @@ export function useCoralMotion(anim:string,speed:number,perch:string,facingAngle
     return advanceSpring(s,target,dt,frequency,damping);
    };
    currentAngle=clampAngle(spring('angle',targetAngle,3.2,.78));
-   const target=sampleCoralMotion(input.current.anim,reduced?2:t,input.current.speed,input.current.perch);
+   const target=sampleCoralMotion(input.current.anim,reduced?2:t,input.current.speed,input.current.perch,reduced?{ambient:0,breath:0,gait:0}:clock);
    if(Math.abs(currentAngle)>=67.5&&(input.current.anim==='walk'||input.current.anim==='run')){target.y=0;target.lean=0;target.sx=1;target.sy=1;}
    if(reduced){target.kickL=0;target.kickR=0;if(input.current.anim==='walk'||input.current.anim==='run'){target.y=0;target.sx=1;target.sy=1;target.lean=0;target.legL=0;target.legR=0;}}
    for(const key of Object.keys(pose) as (keyof CoralPose)[]){pose[key]=reduced?target[key]:pose[key]+(target[key]-pose[key])*(1-Math.exp(-dt*15));property(`--pose-${key}`,pose[key]);}

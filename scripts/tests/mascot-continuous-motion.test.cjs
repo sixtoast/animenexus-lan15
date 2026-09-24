@@ -7,6 +7,13 @@ function load(name){const exports={};vm.runInNewContext(ts.transpileModule(fs.re
 const {directionalValues}=load('directionalMotion');
 const {sampleCoralMotion}=load('coralMotion');
 const {createMotionTime,advanceMotionTime}=load('motionTime');
+test('pose breathing and front gait use the same persistent clocks as the renderer',()=>{
+ const clocks={ambient:5,breath:1.2,gait:.25};
+ const a=sampleCoralMotion('idle',5,0,'stand',clocks),b=sampleCoralMotion('idle',0,0,'stand',clocks);
+ assert.equal(a.headY,b.headY);assert.equal(a.sy,b.sy);assert.equal(a.lantern,b.lantern);
+ const walk=sampleCoralMotion('walk',0,1,'stand',clocks),side=directionalValues(90,0,'walk',1,false,clocks.gait);
+ assert.ok(Math.abs(walk.legL/5-side['near-swing']/16)<1e-12);
+});
 test('action changes preserve breathing and integrated gait phase',()=>{
  const c=createMotionTime();for(let i=0;i<40;i++)advanceMotionTime(c,'walk','stand',.5,1/60);
  const breath=c.breath,gait=c.gait;
