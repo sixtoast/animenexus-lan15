@@ -220,13 +220,9 @@ export default function RootLayout({
                           </span>
                           <span>
                             Data via{" "}
-                            <a
-                              href="https://anilist.co"
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              AniList
-                            </a>
+                            <a href="https://anilist.co" target="_blank" rel="noreferrer">AniList</a>
+                            {" "}·{" "}
+                            <a href="https://animeschedule.net" target="_blank" rel="noreferrer">AnimeSchedule</a>
                           </span>
                         </div>
                       </footer>
