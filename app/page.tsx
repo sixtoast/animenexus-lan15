@@ -6,6 +6,7 @@ import { AvailableNowStrip } from "@/components/AvailableNowStrip";
 import { HomePrimaryMoment } from "@/components/HomePrimaryMoment";
 import { QuoteBanner } from "@/components/QuoteBanner";
 import { NexusWorlds } from "@/components/NexusWorlds";
+import { NexusArchive } from "@/components/NexusArchive";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
 import { SessionQuietNote } from "@/components/SessionQuietNote";
 import { generateCandidatePool, poolToAnimeList } from "@/lib/recommend-candidates";
@@ -130,7 +131,20 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <div className="nexus-index-cut" aria-hidden><span>THE INDEX</span><strong>BEYOND<br />THE OBVIOUS.</strong></div>
+      <div
+        className="nexus-index-cut"
+        style={feature[0]?.image ? { backgroundImage: `linear-gradient(90deg, rgba(7,8,11,.94), rgba(7,8,11,.58) 45%, rgba(7,8,11,.86)), url("${feature[0].image}")` } : undefined}
+      >
+        <span>THE INDEX</span>
+        <strong>BEYOND<br />THE OBVIOUS.</strong>
+        {feature[0] ? (
+          <Link href={`/anime/${feature[0].id}`} className="nexus-index-cut-link">
+            <span>Continue with</span>
+            <strong>{feature[0].title}</strong>
+            <i>Open title ↗</i>
+          </Link>
+        ) : null}
+      </div>
 
       <section className="container nexus-rails">
         <DiscoveryShelves candidates={items} />
@@ -148,7 +162,7 @@ export default async function HomePage() {
           <div className="state-box error"><h3>Couldn’t reach the catalogue</h3><p>{error}</p></div>
         ) : (
           <div data-mascot-landmark="card" data-mascot-id="trending-grid" data-mascot-priority="5">
-            <AnimeGrid items={items.slice(0, 18)} trackBehaviour shelf="home_trending" source="candidate_pool" />
+            <NexusArchive items={items} />
           </div>
         )}
         <p className="nexus-catalog-foot">{items.length} signals loaded · {poolVersion} · <Link href="/browse">Open the complete archive ↗</Link></p>
