@@ -62,8 +62,8 @@ function relevance(media: any, entries: ListEntry[]) {
   for (const entry of entries) {
     const genres = String(entry.genres || "").toLowerCase();
     const studios = String(entry.studios || "").toLowerCase();
-    for (const genre of media.genres || []) {
-      const name = String(genre?.name || genre).toLowerCase();
+    for (const genre of String(media.genre || "").split(/[,·]/)) {
+      const name = String(genre).trim().toLowerCase();
       if (name && genres.includes(name)) {
         score += 3;
         if (!reasons.includes(name)) reasons.push(name);
