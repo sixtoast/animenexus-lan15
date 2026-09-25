@@ -93,7 +93,7 @@
 
 .nexus-scene-divider i {
   transform-origin: left center;
-  transform: scaleX(calc(.35 + (1 - min(1, abs(var(--scene-progress,0)))) * .65));
+  transform: scaleX(.72);
   transition: transform .9s var(--nx-ease-soft);
 }
 
@@ -191,7 +191,7 @@
 }
 
 .nexus-index-card:hover .nexus-index-art img {
-  transform: scale(1.045) translate3d(calc(var(--glare-x,50%) - 50% * .02), calc(var(--glare-y,50%) - 50% * .02),0);
+  transform: scale(1.045);
   filter: saturate(1.06) contrast(1.03);
 }
 
