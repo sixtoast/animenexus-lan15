@@ -96,6 +96,7 @@ export function AccountClient() {
       const params = new URLSearchParams(window.location.search);
       const mal = params.get("mal");
       const anilist = params.get("anilist");
+      const animeschedule = params.get("animeschedule");
 
       if (anilist === "connected") {
         const user = params.get("user") || "";
@@ -136,12 +137,11 @@ export function AccountClient() {
         );
         window.history.replaceState({}, "", "/account");
       }
-    } catch {
-      /* */
-    }
-      const animeschedule = params.get("animeschedule");
+
       if (animeschedule === "connected") {
-        setSyncMsg("AnimeSchedule connected. Your private AnimeSchedule data is now available to AnimeNexus.");
+        setSyncMsg(
+          "AnimeSchedule connected. Your private AnimeSchedule data is now available to AnimeNexus.",
+        );
         playCue("success");
         void refreshAnimeScheduleOauth();
         window.history.replaceState({}, "", "/account");
@@ -149,7 +149,10 @@ export function AccountClient() {
         setMalErr("AnimeSchedule authorization was denied.");
         window.history.replaceState({}, "", "/account");
       } else if (animeschedule === "error" || animeschedule === "not_configured") {
-        setMalErr(params.get("reason") || "AnimeSchedule OAuth failed or is not configured on the server.");
+        setMalErr(
+          params.get("reason") ||
+            "AnimeSchedule OAuth failed or is not configured on the server.",
+        );
         window.history.replaceState({}, "", "/account");
       }
     } catch {
