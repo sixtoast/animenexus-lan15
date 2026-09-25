@@ -126,16 +126,31 @@ export async function exchangeAnimeScheduleCode(opts: {
 }): Promise<AnimeScheduleTokenResponse> {
   const body = new URLSearchParams({
     grant_type: "authorization_code",
-    client_id: opts.clientId.trim(),
     code: opts.code.trim(),
     redirect_uri: opts.redirectUri.trim(),
     code_verifier: opts.codeVerifier,
   });
-  if (opts.clientSecret) body.set("client_secret", opts.clientSecret.trim());
+
+  // AnimeSchedule's reference OAuth client uses oauth2's BasicClient,
+  // which authenticates confidential clients with HTTP Basic at the token
+  // endpoint rather than putting client_secret in the form body.
+  const headers: Record<string, string> = {
+    "Content-Type": "application/x-www-form-urlencoded",
+    Accept: "application/json",
+  };
+  if (opts.clientSecret) {
+    const credentials = Buffer.from(
+      `${opts.clientId.trim()}:${opts.clientSecret.trim()}`,
+      "utf8",
+    ).toString("base64");
+    headers.Authorization = `Basic ${credentials}`;
+  } else {
+    body.set("client_id", opts.clientId.trim());
+  }
 
   const res = await fetch(TOKEN_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+    headers,
     body,
     cache: "no-store",
   });
