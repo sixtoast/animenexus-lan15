@@ -81,7 +81,7 @@ async function sha256Base64Url(value: string): Promise<string> {
   const bytes = new Uint8Array(digest);
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/g, "");
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
 export async function buildAnimeScheduleAuthorizeUrl(opts: {
