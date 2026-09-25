@@ -6,7 +6,7 @@ AnimeNexus uses AnimeSchedule.net API v3 OAuth 2.0 Authorization Code + PKCE. An
 
 Production:
 ```
-https://animenexus-lan15-9xcleax81-sixtoast1.vercel.app/api/auth/animeschedule/callback
+https://animenexus-lan15.vercel.app/api/animeschedule/callback
 ```
 
 Local development:
@@ -14,14 +14,14 @@ Local development:
 http://localhost:3000/api/auth/animeschedule/callback
 ```
 
-Register the exact production callback in your AnimeSchedule application settings.
+Register the exact production callback in your AnimeSchedule application settings. Do not register a deployment-specific Vercel preview URL.
 
 ## Vercel environment variables
 
 ```
 ANIMESCHEDULE_CLIENT_ID=...
 ANIMESCHEDULE_CLIENT_SECRET=...          # only if your AnimeSchedule application provides one
-ANIMESCHEDULE_REDIRECT_URI=https://animenexus-lan15-9xcleax81-sixtoast1.vercel.app/api/auth/animeschedule/callback
+ANIMESCHEDULE_REDIRECT_URI=http://localhost:3000/api/animeschedule/callback # development/preview only
 ANIMESCHEDULE_SCOPE=...                   # optional; use the scopes configured/required by your AnimeSchedule application
 NEXT_PUBLIC_SITE_URL=https://YOUR-DOMAIN
 ```
@@ -34,6 +34,7 @@ Do not commit the client secret.
 |---|---|
 | GET /api/animeschedule/auth | Starts OAuth with state + PKCE |
 | GET /api/animeschedule/callback | Validates state, exchanges code, stores httpOnly tokens |
+| GET /api/auth/animeschedule/callback | Compatibility alias for older callback paths |
 | GET /api/animeschedule/status | Checks the connection and resolves the connected AnimeSchedule username |
 | DELETE /api/animeschedule/status | Revokes the access token when possible and clears local token cookies |
 
