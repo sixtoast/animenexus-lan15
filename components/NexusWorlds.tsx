@@ -8,7 +8,7 @@ type Props = { candidates: Anime[] };
 
 export function NexusWorlds({ candidates }: Props) {
   const worlds = candidates.slice(7, 14);
-  const [active, setActive] = useState<string | null>(null);
+  const [active, setActive] = useState<string | number | null>(null);
   if (!worlds.length) return null;
 
   return (
@@ -37,7 +37,7 @@ export function NexusWorlds({ candidates }: Props) {
         <Link
           key={anime.id}
           href={`/anime/${anime.id}`}
-          className={`nexus-world-node nexus-world-node--${index + 1}${active === anime.id ? " is-active" : ""}`}
+          className={`nexus-world-node nexus-world-node--${index + 1}${String(active) === String(anime.id) ? " is-active" : ""}`}
           onMouseEnter={() => setActive(anime.id)}
           onFocus={() => setActive(anime.id)}
           onBlur={() => setActive(null)}
