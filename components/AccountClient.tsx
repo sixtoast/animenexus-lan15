@@ -583,6 +583,9 @@ export function AccountClient() {
               Connected to AnimeSchedule as <strong>{animeScheduleOauth.username || "AnimeSchedule user"}</strong>
               {animeScheduleOauth.userId != null ? ` · user ${animeScheduleOauth.userId}` : ""}
             </p>
+            <a href="/schedule" className="btn btn-accent btn-sm">
+              Open my schedule →
+            </a>
             <a
               href="https://animeschedule.net"
               target="_blank"
