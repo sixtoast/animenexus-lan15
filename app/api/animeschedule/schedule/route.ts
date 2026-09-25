@@ -47,14 +47,14 @@ function titleVariants(media: any) {
     media.titleRomaji,
     media.titleNative,
     ...(Array.isArray(media.synonyms) ? media.synonyms : []),
-  ].filter((x): x is string => typeof x === "string" && x.trim()).map(normalise);
+  ].filter((x): x is string => typeof x === "string" && x.trim().length > 0).map(normalise);
 }
 
 function entryVariants(entry: ListEntry) {
   return [
     entry.preferredTitle,
     entry.route?.replace(/[-_]/g, " "),
-  ].filter((x): x is string => typeof x === "string" && x.trim()).map(normalise);
+  ].filter((x): x is string => typeof x === "string" && x.trim().length > 0).map(normalise);
 }
 
 function titleMatch(media: any, entry: ListEntry) {
@@ -184,7 +184,7 @@ export async function GET(req: Request) {
         listEpisodes: Number(matches?.episodes || row.media.episodes || 0),
         listScore: matches?.manualScore ?? null,
         status: row.media.status,
-        genres: row.media.genres,
+        genres: row.media.genre,
         studios: row.media.studios,
         duration: row.media.duration,
       };

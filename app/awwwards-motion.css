@@ -1,0 +1,245 @@
+/* AnimeNexus Awwwards motion pass
+ * Direction: tactile, cinematic, playful. Motion is progressive enhancement.
+ * Inspiration references: immersive WebGL/playable work such as TOOOTEGRAM,
+ * plus Awwwards' animation, transitions, unusual navigation and storytelling patterns.
+ */
+
+:root {
+  --nx-mx: 50vw;
+  --nx-my: 35vh;
+  --nx-motion-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --nx-motion-spring: cubic-bezier(0.2, 0.95, 0.25, 1.15);
+}
+
+@media (pointer: fine) {
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      radial-gradient(
+        420px circle at var(--nx-mx) var(--nx-my),
+        rgba(240, 160, 144, 0.075),
+        transparent 62%
+      ),
+      radial-gradient(
+        700px circle at calc(var(--nx-mx) + 12vw) calc(var(--nx-my) + 10vh),
+        rgba(255, 215, 170, 0.028),
+        transparent 70%
+      );
+    mix-blend-mode: screen;
+    opacity: 0.8;
+    transition: opacity 400ms ease;
+  }
+
+  .anime-card {
+    --tilt-x: 0deg;
+    --tilt-y: 0deg;
+    transform-style: preserve-3d;
+    perspective: 900px;
+  }
+
+  .anime-card:hover {
+    transform:
+      translateY(calc(-3px - var(--anime-energy, 0.4) * 2px))
+      rotateX(var(--tilt-x))
+      rotateY(var(--tilt-y))
+      scale(1.014) !important;
+  }
+
+  .anime-card:hover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    background:
+      linear-gradient(
+        115deg,
+        transparent 18%,
+        rgba(255,255,255,0.13) 47%,
+        transparent 62%
+      );
+    transform: translateX(calc(var(--ptr-nx) * 10%));
+    opacity: 0.7;
+    mix-blend-mode: screen;
+  }
+
+  .anime-card:hover .card-body {
+    transform: translateZ(7px);
+  }
+
+  .anime-card .card-body {
+    transition: transform 360ms var(--nx-motion-ease);
+  }
+}
+
+/* Cinematic reveal system */
+[data-motion-reveal="ready"] {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0) scale(0.985);
+  filter: blur(7px);
+  transition:
+    opacity 700ms var(--nx-motion-ease),
+    transform 900ms var(--nx-motion-ease),
+    filter 700ms var(--nx-motion-ease);
+  transition-delay: calc(var(--motion-index, 0) * 42ms);
+}
+
+[data-motion-reveal="shown"] {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.anime-card[data-motion-reveal="ready"] {
+  transform:
+    translate3d(0, 34px, 0)
+    scale(0.97)
+    rotateX(2deg);
+}
+
+.anime-card[data-motion-reveal="shown"] {
+  transform: none;
+}
+
+@media (pointer: fine) {
+  .anime-card[data-motion-reveal="shown"]:hover {
+    transform:
+      translateY(calc(-3px - var(--anime-energy, 0.4) * 2px))
+      rotateX(var(--tilt-x))
+      rotateY(var(--tilt-y))
+      scale(1.014) !important;
+  }
+}
+
+/* Hero gets a living light field instead of a static header. */
+.hero {
+  isolation: isolate;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: min(62vw, 720px);
+  height: min(62vw, 720px);
+  left: 28%;
+  top: -22%;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      from 180deg,
+      transparent,
+      rgba(240,160,144,0.075),
+      transparent 35%,
+      rgba(255,215,170,0.055),
+      transparent 65%
+    );
+  filter: blur(32px);
+  opacity: 0.75;
+  animation: nxHeroOrbit 18s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes nxHeroOrbit {
+  to {
+    transform: rotate(360deg) scale(1.06);
+  }
+}
+
+/* Navigation gets a travelling highlight rather than a flat underline. */
+.nav-links a::after {
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform 360ms var(--nx-motion-spring);
+}
+
+.nav-links a:hover::after,
+.nav-links a.active::after {
+  transform: scaleX(1);
+}
+
+/* Buttons feel physical without becoming bouncy everywhere. */
+.btn,
+.feed-tab,
+.mood-chip,
+.filter-chip,
+.nav-dock-item {
+  will-change: transform;
+}
+
+.btn:hover,
+.feed-tab:hover,
+.mood-chip:hover,
+.filter-chip:hover {
+  transition-timing-function: var(--nx-motion-spring);
+}
+
+/* Route-level room choreography. */
+.app-shell {
+  transform-origin: 50% 0;
+}
+
+@supports (animation-timeline: view()) {
+  .anime-grid .anime-card {
+    animation: nxCardDepth linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 22%;
+  }
+
+  @keyframes nxCardDepth {
+    from {
+      opacity: 0.45;
+      transform: translateY(30px) scale(0.96);
+      filter: saturate(0.75) blur(2px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: saturate(1) blur(0);
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  body::before {
+    display: none;
+  }
+
+  .hero::before {
+    width: 110vw;
+    height: 110vw;
+    left: -5%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  .hero::before {
+    display: none;
+  }
+
+  [data-motion-reveal="ready"],
+  [data-motion-reveal="shown"] {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+}
+
+html[data-reduce-motion="true"] body::before,
+html[data-reduce-motion="true"] .hero::before {
+  display: none;
+}
+
+html[data-reduce-motion="true"] [data-motion-reveal="ready"],
+html[data-reduce-motion="true"] [data-motion-reveal="shown"] {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  transition: none;
+}

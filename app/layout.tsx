@@ -35,6 +35,7 @@ import { NexusRouteBeacon } from "@/components/NexusRouteBeacon";
 import { MascotHost } from "@/components/mascot/MascotHost";
 import { MascotErrorBoundary } from "@/components/mascot/MascotErrorBoundary";
 import { ErrorReportingBoot } from "@/components/ErrorReportingBoot";
+import { AwwwardsMotion } from "@/components/AwwwardsMotion";
 import "./tokens.css";
 import "./globals.css";
 import "./button.css";
@@ -103,6 +104,7 @@ import "./nexus-icon-optical.css";
 import "./rive.css";
 import "./tool-identity.css";
 import "./restraint.css";
+import "./awwwards-motion.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus \u2014 Lantern",
@@ -181,6 +183,7 @@ export default function RootLayout({
                     <SessionProvider>
                       <DeskCloudAutoSync />
                       <ErrorReportingBoot />
+                      <AwwwardsMotion />
                       <SkipToContent />
                       <LanternMemoryBoot />
                       <Suspense fallback={null}>

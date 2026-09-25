@@ -266,6 +266,84 @@ export async function fetchAnimeScheduleViewer(accessToken: string): Promise<Ani
   };
 }
 
+
+export type AnimeScheduleListEntry = {
+  route: string;
+  listStatus?: string;
+  episodesSeen?: number;
+  episodes?: number;
+  manualScore?: number;
+  preferredTitle?: string;
+  latestEpisode?: number;
+  latestEpisodeDate?: string;
+  genres?: string;
+  studios?: string;
+  status?: string;
+  [key: string]: unknown;
+};
+
+export type AnimeScheduleListResponse = {
+  userID?: string | number;
+  userId?: string | number;
+  username?: string;
+  listAnime?: Record<string, AnimeScheduleListEntry> | AnimeScheduleListEntry[];
+  [key: string]: unknown;
+};
+
+export async function fetchAnimeScheduleList(
+  accessToken: string,
+  opts: { limit?: number; offset?: number } = {},
+): Promise<AnimeScheduleListResponse | null> {
+  const params = new URLSearchParams({
+    limit: String(Math.min(Math.max(Number(opts.limit || 200), 1), 200)),
+    offset: String(Math.max(Number(opts.offset || 0), 0)),
+  });
+  const res = await fetch(`${API_BASE}/animelists/oauth?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  return (await res.json()) as AnimeScheduleListResponse;
+}
+
+export async function updateAnimeScheduleListEntry(
+  accessToken: string,
+  route: string,
+  updates: { episodesSeen?: number; listStatus?: string; manualScore?: number },
+): Promise<AnimeScheduleListEntry | null> {
+  const safeRoute = route.trim();
+  if (!safeRoute) return null;
+
+  // AnimeSchedule requires the current Etag when updating a list entry.
+  const current = await fetch(`${API_BASE}/animelists/oauth/${encodeURIComponent(safeRoute)}`, {
+    headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
+    cache: "no-store",
+  });
+  if (!current.ok) return null;
+
+  const etag = current.headers.get("etag") || current.headers.get("Etag");
+  if (!etag) return null;
+
+  const body: Record<string, unknown> = {};
+  if (updates.episodesSeen !== undefined) body.episodesSeen = Math.max(0, Math.floor(updates.episodesSeen));
+  if (updates.listStatus !== undefined) body.listStatus = updates.listStatus;
+  if (updates.manualScore !== undefined) body.manualScore = updates.manualScore;
+
+  const res = await fetch(`${API_BASE}/animelists/oauth/${encodeURIComponent(safeRoute)}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Etag: etag,
+    },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  return (await res.json()) as AnimeScheduleListEntry;
+}
+
 export async function revokeAnimeScheduleAccessToken(accessToken: string): Promise<void> {
   const body = new URLSearchParams({ token: accessToken, client_id: animeScheduleClientId() });
   const secret = animeScheduleClientSecret();
