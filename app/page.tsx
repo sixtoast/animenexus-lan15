@@ -63,6 +63,9 @@ export default async function HomePage() {
           {hero ? (
             <Link href={`/anime/${hero.id}`} className="nexus-opening-subject" aria-label={`Open featured title ${hero.title}`}>
               <div className="nexus-opening-subject-image">
+                <div className="nexus-opening-subject-backplate" aria-hidden />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img className="nexus-opening-subject-echo" src={hero.image} alt="" aria-hidden />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={hero.image} alt="" />
               </div>
