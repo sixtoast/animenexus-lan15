@@ -305,7 +305,7 @@ export async function updateAnimeScheduleListEntry(
     action?: string;
   },
 ): Promise<Record<string, any> | null> {
-  const cleanRoute = route.trim().replace(/^\\/+/, "");
+  const cleanRoute = route.trim().replace(/^\/+/, "");
   if (!cleanRoute) return null;
 
   // AnimeSchedule requires a current Etag for list-entry updates.
