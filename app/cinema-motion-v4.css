@@ -1,0 +1,395 @@
+/* AnimeNexus motion direction IV — continuous, restrained, performance-first. Lantern-ko intentionally excluded. */
+:root {
+  --nx-ease: cubic-bezier(.2,.72,.18,1);
+  --nx-ease-soft: cubic-bezier(.16,1,.3,1);
+}
+
+.nexus-home {
+  --nx-pointer-x: 50%;
+  --nx-pointer-y: 50%;
+  position: relative;
+  isolation: isolate;
+}
+
+.nexus-home::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 80;
+  opacity: .28;
+  background:
+    radial-gradient(520px 360px at var(--cursor-x,50%) var(--cursor-y,50%), rgba(242,179,95,.055), transparent 68%),
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size: auto, 100% 5px;
+  mix-blend-mode: screen;
+  transition: opacity .8s ease;
+}
+
+.nexus-opening {
+  --scene-shift: calc(var(--scene-progress, 0) * -22px);
+  overflow: clip;
+}
+
+.nexus-opening-bg {
+  transform: scale(var(--cinema-scroll-scale,1.04)) translate3d(0,var(--cinema-scroll-y,0px),0);
+  transition: transform .16s linear;
+  will-change: transform;
+}
+
+.nexus-opening-wash {
+  transition: opacity .6s ease;
+}
+
+.nexus-opening-copy {
+  opacity: 1;
+  transform: translate3d(0, calc(var(--scene-progress,0) * 16px), 0);
+  transition: transform 1.1s var(--nx-ease-soft);
+  will-change: transform;
+}
+
+.nexus-opening-subject {
+  transform: translate3d(var(--subject-x,0px),var(--cinema-subject-y,0px),0) rotate(calc(var(--scene-progress,0) * -.7deg));
+  transition: transform 1.1s var(--nx-ease-soft);
+  will-change: transform;
+}
+
+.nexus-opening-subject-image {
+  transform: translateZ(0);
+  transition: transform 1.2s var(--nx-ease-soft), filter 1.2s ease;
+}
+
+.nexus-opening-subject:hover .nexus-opening-subject-image {
+  transform: scale(1.018) translate3d(0,-5px,0);
+  filter: brightness(1.04) saturate(1.04);
+}
+
+.nexus-opening-subject-echo {
+  opacity: .13;
+  filter: blur(24px) saturate(.5);
+  transform: scale(1.08);
+  transition: opacity .8s ease, transform 1.2s var(--nx-ease-soft);
+}
+
+.nexus-opening-subject:hover .nexus-opening-subject-echo {
+  opacity: .2;
+  transform: scale(1.13);
+}
+
+.nexus-opening-scroll i {
+  transform-origin: top;
+  animation: nx-scroll-pulse 2.1s var(--nx-ease-soft) infinite;
+}
+
+@keyframes nx-scroll-pulse {
+  0%,100% { transform: scaleY(.55); opacity:.35; }
+  45% { transform: scaleY(1); opacity:1; }
+}
+
+.nexus-scene-divider {
+  position: relative;
+  overflow: hidden;
+}
+
+.nexus-scene-divider i {
+  transform-origin: left center;
+  transform: scaleX(calc(.35 + (1 - min(1, abs(var(--scene-progress,0)))) * .65));
+  transition: transform .9s var(--nx-ease-soft);
+}
+
+.nexus-intent-band,
+.nexus-primary-band,
+.nexus-worlds-section,
+.nexus-index,
+.nexus-rails,
+.nexus-catalog {
+  position: relative;
+}
+
+.nexus-intent-layout,
+.nexus-primary-band > *,
+.nexus-worlds-heading,
+.nexus-world-map,
+.nexus-feature-field,
+.nexus-rails,
+.nexus-catalog-foot,
+.nexus-quote {
+  transition: transform 1s var(--nx-ease-soft), opacity 1s ease;
+}
+
+.nexus-intent-layout {
+  transform: translate3d(0, calc(var(--scene-progress,0) * 12px),0);
+}
+
+.nexus-worlds-heading {
+  transform: translate3d(calc(var(--scene-progress,0) * 10px),0,0);
+}
+
+.nexus-world-map {
+  transform: translate3d(0, calc(var(--scene-progress,0) * -10px),0);
+}
+
+.nexus-feature-field {
+  perspective: 1400px;
+}
+
+.nexus-index-card {
+  --card-lift: 0px;
+  --card-scale: 1;
+  --card-rotate: 0deg;
+  transform:
+    translate3d(0,var(--card-lift),0)
+    rotateX(var(--tilt-x,0deg))
+    rotateY(var(--tilt-y,0deg))
+    rotateZ(var(--card-rotate));
+  transform-style: preserve-3d;
+  transition:
+    transform .75s var(--nx-ease),
+    filter .75s ease;
+  will-change: transform;
+}
+
+.nexus-index-card:hover {
+  --card-lift: -12px;
+  --card-scale: 1.012;
+  transform:
+    translate3d(0,var(--card-lift),0)
+    scale(var(--card-scale))
+    rotateX(var(--tilt-x,0deg))
+    rotateY(var(--tilt-y,0deg));
+  z-index: 3;
+}
+
+.nexus-index-art {
+  position: relative;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.nexus-index-art::after,
+.nexus-archive-item::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .0;
+  background:
+    radial-gradient(280px 220px at var(--glare-x,50%) var(--glare-y,50%), rgba(255,255,255,.18), transparent 55%),
+    linear-gradient(115deg, transparent 35%, rgba(255,255,255,.08) 49%, transparent 62%);
+  mix-blend-mode: screen;
+  transition: opacity .5s ease;
+}
+
+.nexus-index-card:hover .nexus-index-art::after,
+.nexus-archive-item:hover::after {
+  opacity: .8;
+}
+
+.nexus-index-art img {
+  transform: scale(1.001) translateZ(0);
+  transition: transform 1s var(--nx-ease), filter 1s ease;
+}
+
+.nexus-index-card:hover .nexus-index-art img {
+  transform: scale(1.045) translate3d(calc(var(--glare-x,50%) - 50% * .02), calc(var(--glare-y,50%) - 50% * .02),0);
+  filter: saturate(1.06) contrast(1.03);
+}
+
+.nexus-index-meta {
+  transition: transform .65s var(--nx-ease-soft), opacity .5s ease;
+}
+
+.nexus-index-card:hover .nexus-index-meta {
+  transform: translate3d(4px,-2px,0);
+}
+
+.nexus-index-cut {
+  --cut-focus: var(--cinema-cut-focus,0);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center calc(50% + (var(--cut-focus) * -18px));
+  transition: background-position .35s linear, filter .8s ease;
+}
+
+.nexus-index-cut::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(255,255,255,.025), transparent 30%, transparent 70%, rgba(255,255,255,.018));
+  opacity: calc(.25 + var(--cut-focus) * .35);
+}
+
+.nexus-index-cut-link {
+  transform: translate3d(var(--mag-x,0px),var(--mag-y,0px),0);
+  transition: transform .65s var(--nx-ease), color .4s ease;
+  will-change: transform;
+}
+
+.nexus-button,
+.nexus-section-heading > a {
+  transform: translate3d(var(--mag-x,0px),var(--mag-y,0px),0);
+  transition:
+    transform .6s var(--nx-ease),
+    background-color .4s ease,
+    border-color .4s ease,
+    color .4s ease;
+  will-change: transform;
+}
+
+.nexus-button:active,
+.nexus-section-heading > a:active,
+.nexus-index-cut-link:active {
+  transform: translate3d(var(--mag-x,0px),calc(var(--mag-y,0px) + 2px),0) scale(.985);
+}
+
+.nexus-button--solid::after {
+  content: "↗";
+  display: inline-block;
+  margin-left: 7px;
+  transition: transform .55s var(--nx-ease);
+}
+
+.nexus-button--solid:hover::after {
+  transform: translate3d(4px,-4px,0);
+}
+
+.nexus-rails {
+  transform: translate3d(0,calc(var(--scene-progress,0) * 8px),0);
+}
+
+.nexus-rails .home-rail {
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+  mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+}
+
+.nexus-rails .home-rail-card {
+  scroll-snap-align: start;
+  transition: transform .65s var(--nx-ease), opacity .65s ease;
+}
+
+.nexus-rails .home-rail-card:hover {
+  transform: translateY(-8px);
+}
+
+.nexus-rails .home-rail-card img {
+  transform: translateZ(0);
+}
+
+.nexus-rails .home-rail-card:hover img {
+  transform: scale(1.035);
+}
+
+.nexus-archive {
+  perspective: 1400px;
+}
+
+.nexus-archive-item {
+  position: relative;
+  transform:
+    translate3d(0,var(--archive-lift,0px),0)
+    rotateX(var(--tilt-x,0deg))
+    rotateY(var(--tilt-y,0deg));
+  transform-style: preserve-3d;
+  transition: transform .7s var(--nx-ease), opacity .6s ease;
+  will-change: transform;
+}
+
+.nexus-archive-item:hover {
+  --archive-lift: -7px;
+  z-index: 2;
+}
+
+.nexus-archive-item img {
+  transition: transform .9s var(--nx-ease), filter .7s ease;
+}
+
+.nexus-archive-item:hover img {
+  transform: scale(1.025);
+  filter: saturate(1.05) contrast(1.02);
+}
+
+.nexus-catalog-foot {
+  transform: translate3d(0,calc(var(--scene-progress,0) * 7px),0);
+}
+
+.nexus-quote {
+  transform: translate3d(0,calc(var(--scene-progress,0) * -8px),0);
+}
+
+.cinema-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.cinema-word > span {
+  display: inline-block;
+  transform: translate3d(0,115%,0);
+  opacity: 0;
+  transition:
+    transform .9s var(--nx-ease-soft),
+    opacity .7s ease;
+  transition-delay: calc(var(--word-index,0) * 45ms);
+}
+
+.is-visible .cinema-word > span {
+  transform: translate3d(0,0,0);
+  opacity: 1;
+}
+
+.cinema-route-curtain {
+  backdrop-filter: blur(16px);
+}
+
+@media (max-width: 760px) {
+  .nexus-home::before { opacity: .14; }
+  .nexus-opening-copy,
+  .nexus-opening-subject,
+  .nexus-intent-layout,
+  .nexus-worlds-heading,
+  .nexus-world-map,
+  .nexus-rails,
+  .nexus-catalog-foot,
+  .nexus-quote {
+    transform: none;
+  }
+  .nexus-index-card,
+  .nexus-archive-item {
+    transform: none;
+  }
+  .nexus-rails .home-rail {
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nexus-home::before { display: none; }
+  .nexus-opening-bg,
+  .nexus-opening-copy,
+  .nexus-opening-subject,
+  .nexus-opening-subject-image,
+  .nexus-index-card,
+  .nexus-archive-item,
+  .nexus-intent-layout,
+  .nexus-worlds-heading,
+  .nexus-world-map,
+  .nexus-index-cut,
+  .nexus-rails,
+  .nexus-catalog-foot,
+  .nexus-quote,
+  .nexus-button,
+  .nexus-section-heading > a,
+  .nexus-index-cut-link {
+    transform: none !important;
+    transition: none !important;
+  }
+  .cinema-word > span {
+    transform: none !important;
+    opacity: 1 !important;
+    transition: none !important;
+  }
+}
