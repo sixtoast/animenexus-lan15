@@ -29,7 +29,16 @@ function normalise(value: string) {
     .replace(/[’'`]/g, "")
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
-    .replace(/\\s+/g, " ");
+    .replace(/\s+/g, " ");
+}
+
+function extractEntries(value: unknown): Record<string, ListEntry> {
+  if (!value || typeof value !== "object") return {};
+  const raw = (value as any).listAnime ?? {};
+  if (Array.isArray(raw)) {
+    return Object.fromEntries(raw.filter((x: any) => x?.route).map((x: ListEntry) => [x.route, x]));
+  }
+  return raw && typeof raw === "object" ? raw as Record<string, ListEntry> : {};
 }
 
 function titleVariants(media: any) {
@@ -120,39 +129,6 @@ function dateInZone(epochSeconds: number, timeZone: string) {
   }).formatToParts(new Date(epochSeconds * 1000));
   const get = (type: string) => parts.find((p) => p.type === type)?.value || "";
   return `${get("year")}-${get("month")}-${get("day")}`;
-}
-
-function titleMatch(media: any, entry: ListEntry) {
-  const titles = [
-    media.title, media.titleRomaji, media.titleNative,
-    entry.preferredTitle, entry.route.replace(/-/g, " "),
-  ].filter(Boolean).map(normalise);
-  const listTitle = normalise(entry.preferredTitle || entry.route);
-  return titles.some((title) => title === listTitle);
-}
-
-function relevance(media: any, entries: ListEntry[]) {
-  let score = 0;
-  const reasons: string[] = [];
-  for (const entry of entries) {
-    const genres = String(entry.genres || "").toLowerCase();
-    const studios = String(entry.studios || "").toLowerCase();
-    for (const genre of String(media.genre || "").split(/[,·]/)) {
-      const name = String(genre).trim().toLowerCase();
-      if (name && genres.includes(name)) {
-        score += 3;
-        if (!reasons.includes(name)) reasons.push(name);
-      }
-    }
-    for (const studio of media.studios || []) {
-      const name = String(studio?.name || studio).toLowerCase();
-      if (name && studios.includes(name)) {
-        score += 2;
-        if (!reasons.includes(name)) reasons.push(name);
-      }
-    }
-  }
-  return { score, reason: reasons.slice(0, 2).join(" · ") || "New on your radar" };
 }
 
 export async function GET(req: Request) {
