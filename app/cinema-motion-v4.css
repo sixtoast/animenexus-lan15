@@ -393,3 +393,320 @@
     transition: none !important;
   }
 }
+
+
+/* HOME MASTERPASS — composition layer
+   The motion system stays separate; this layer gives the opening a stronger visual grammar. */
+.nexus-opening {
+  isolation: isolate;
+  overflow: clip;
+}
+.nexus-opening::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: .48;
+  background:
+    linear-gradient(90deg, transparent 0 7.5%, rgba(244,239,231,.055) 7.55%, transparent 7.65%),
+    linear-gradient(90deg, transparent 0 72%, rgba(244,239,231,.045) 72.05%, transparent 72.15%),
+    linear-gradient(0deg, transparent 0 78%, rgba(244,239,231,.045) 78.05%, transparent 78.15%);
+  mask-image: linear-gradient(180deg, #000, transparent 82%);
+}
+.nexus-opening-inner {
+  min-height: min(930px,100svh);
+  position: relative;
+  z-index: 2;
+}
+.nexus-opening-top {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  display: grid !important;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding-top: clamp(88px, 10vh, 124px);
+  padding-bottom: 0 !important;
+  font-size: .57rem !important;
+  letter-spacing: .17em !important;
+  color: rgba(244,239,231,.48) !important;
+  text-transform: uppercase;
+}
+.nexus-opening-top span:nth-child(2) {
+  color: rgba(244,239,231,.78);
+}
+.nexus-opening-top span:last-child {
+  text-align: right;
+}
+.nexus-opening-copy {
+  position: relative;
+  z-index: 4;
+  width: min(720px, 58vw);
+  padding-top: clamp(80px, 12vh, 145px);
+}
+.nexus-opening-copy::before {
+  content: "01";
+  position: absolute;
+  left: -2px;
+  top: clamp(42px, 7vh, 78px);
+  font-family: var(--cinema-sans);
+  font-size: .58rem;
+  letter-spacing: .18em;
+  color: var(--cinema-gold);
+}
+.nexus-opening-copy h1 {
+  text-wrap: balance;
+  max-width: 8.5ch !important;
+  text-shadow: 0 16px 55px rgba(0,0,0,.28);
+}
+.nexus-opening-kicker {
+  display: inline-flex;
+}
+.nexus-opening-lead {
+  max-width: 470px !important;
+}
+.nexus-opening-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.nexus-opening-subject {
+  z-index: 4;
+}
+.nexus-opening-subject-image {
+  position: relative;
+}
+.nexus-opening-subject-image::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border: 1px solid rgba(242,179,95,.18);
+  pointer-events: none;
+  clip-path: polygon(0 0,100% 0,100% 17%,calc(100% - 12px) 17%,calc(100% - 12px) 83%,100% 83%,100% 100%,0 100%);
+}
+.nexus-opening-subject-info {
+  position: relative;
+}
+.nexus-opening-subject-info::before {
+  content: "SIGNAL / 01";
+  display: block;
+  margin-bottom: 8px;
+  font-size: .55rem;
+  letter-spacing: .16em;
+  color: var(--cinema-gold);
+}
+.nexus-opening-rail {
+  position: absolute;
+  z-index: 5;
+  top: 22%;
+  right: clamp(16px, 3.8vw, 62px);
+  height: 42%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 13px;
+  color: rgba(244,239,231,.38);
+  pointer-events: none;
+}
+.nexus-opening-rail-label,
+.nexus-opening-rail-count {
+  writing-mode: vertical-rl;
+  text-transform: uppercase;
+  letter-spacing: .18em;
+  font-size: .53rem;
+}
+.nexus-opening-rail i {
+  width: 1px;
+  flex: 1;
+  min-height: 90px;
+  background: linear-gradient(180deg, transparent, rgba(242,179,95,.72), transparent);
+}
+.nexus-opening-signal {
+  position: absolute;
+  z-index: 5;
+  left: clamp(18px, 4vw, 64px);
+  bottom: clamp(34px, 6vh, 70px);
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid rgba(244,239,231,.13);
+  width: min(610px, 47vw);
+  color: rgba(244,239,231,.38);
+  font-size: .53rem;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+.nexus-opening-signal b {
+  color: #8fdaaa;
+  font-weight: 600;
+}
+.nexus-opening-scroll {
+  z-index: 6;
+}
+.nexus-opening-scroll span {
+  letter-spacing: .16em !important;
+  text-transform: uppercase;
+  font-size: .55rem !important;
+}
+.nexus-opening-scroll i {
+  box-shadow: 0 0 18px rgba(242,179,95,.25);
+}
+.nexus-scene-divider {
+  position: relative;
+  overflow: hidden;
+}
+.nexus-scene-divider::after {
+  content: "ANIMENEXUS / LANTERN";
+  position: absolute;
+  right: clamp(18px,4vw,64px);
+  bottom: 8px;
+  font-size: .47rem;
+  letter-spacing: .2em;
+  color: rgba(244,239,231,.18);
+}
+.nexus-intent-band,
+.nexus-primary-band,
+.nexus-worlds-section,
+.nexus-catalog {
+  position: relative;
+}
+.nexus-band-label,
+.nexus-section-heading > div > span,
+.nexus-worlds-heading > div > span {
+  position: relative;
+}
+.nexus-band-label::after,
+.nexus-section-heading > div > span::after,
+.nexus-worlds-heading > div > span::after {
+  content: "";
+  display: inline-block;
+  width: 34px;
+  height: 1px;
+  margin-left: 10px;
+  vertical-align: middle;
+  background: currentColor;
+  opacity: .45;
+}
+.nexus-intent-layout {
+  border-top: 1px solid rgba(244,239,231,.1);
+  padding-top: clamp(30px,5vw,58px);
+}
+.nexus-primary-band {
+  padding-block: clamp(30px,5vw,74px);
+}
+.nexus-worlds-section {
+  padding-block: clamp(30px,6vw,88px);
+}
+.nexus-world-map {
+  min-height: min(760px, 72vw);
+}
+.nexus-index {
+  position: relative;
+}
+.nexus-index::before {
+  content: "INDEX / 05";
+  position: absolute;
+  top: 38px;
+  left: clamp(18px,4vw,64px);
+  font-size: .52rem;
+  letter-spacing: .18em;
+  color: rgba(244,239,231,.24);
+}
+.nexus-feature-field {
+  position: relative;
+}
+.nexus-index-art {
+  overflow: hidden;
+  background: #0b0b0e;
+}
+.nexus-index-art::after,
+.nexus-archive-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 48%, rgba(7,8,11,.78));
+  opacity: .72;
+}
+.nexus-index-meta,
+.nexus-archive-caption {
+  position: relative;
+  z-index: 2;
+}
+.nexus-index-card:nth-child(odd) {
+  transform-origin: 48% 55%;
+}
+.nexus-index-card:nth-child(even) {
+  transform-origin: 54% 45%;
+}
+.nexus-index-cut {
+  position: relative;
+  overflow: hidden;
+}
+.nexus-index-cut::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 0 11%, rgba(242,179,95,.18) 11.05%, transparent 11.12%),
+    linear-gradient(90deg, transparent 0 88%, rgba(244,239,231,.12) 88.05%, transparent 88.12%);
+  mix-blend-mode: screen;
+}
+.nexus-catalog {
+  padding-top: clamp(30px,5vw,76px);
+}
+.nexus-catalog-foot {
+  border-top: 1px solid rgba(244,239,231,.1);
+  padding-top: 16px;
+}
+@media (max-width: 900px) {
+  .nexus-opening-copy {
+    width: min(690px, 72vw);
+    padding-top: 90px;
+  }
+  .nexus-opening-rail {
+    right: 14px;
+    opacity: .7;
+  }
+  .nexus-opening-signal {
+    width: min(600px, 62vw);
+  }
+}
+@media (max-width: 760px) {
+  .nexus-opening-top {
+    grid-template-columns: 1fr auto;
+  }
+  .nexus-opening-top span:nth-child(2) {
+    display: none;
+  }
+  .nexus-opening-copy {
+    width: 100%;
+    padding-top: 70px;
+  }
+  .nexus-opening-copy h1 {
+    max-width: 7ch !important;
+    font-size: clamp(4rem, 18vw, 6.4rem) !important;
+  }
+  .nexus-opening-rail {
+    display: none;
+  }
+  .nexus-opening-signal {
+    left: 18px;
+    bottom: 32px;
+    width: calc(100% - 36px);
+    gap: 10px 16px;
+  }
+  .nexus-opening-signal span:last-child {
+    display: none;
+  }
+  .nexus-opening-scroll {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nexus-opening::before { opacity: .24; }
+}
