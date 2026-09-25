@@ -16,6 +16,7 @@ import "./home-dash.css";
 import "./home-v2.css";
 import "./tonight-desk.css";
 import "./cold-start.css";
+import "./cinema-motion-v4.css";
 import "./desk-notes.css";
 import "./tonight-intent.css";
 
@@ -76,6 +77,16 @@ export default async function HomePage() {
               </div>
             </Link>
           ) : null}
+          <div className="nexus-opening-rail" aria-hidden>
+            <span className="nexus-opening-rail-label">DISCOVERY FIELD</span>
+            <i />
+            <span className="nexus-opening-rail-count">01 — 06</span>
+          </div>
+          <div className="nexus-opening-signal" aria-label="Discovery status">
+            <span><b>LIVE</b> / CATALOGUE</span>
+            <span>{items.length || 0} SIGNALS IN FIELD</span>
+            <span>PERSONAL MODE · ON</span>
+          </div>
           <div className="nexus-opening-scroll" aria-hidden><span>Scroll to explore</span><i /></div>
         </div>
       </section>
