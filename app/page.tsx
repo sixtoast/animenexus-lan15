@@ -21,7 +21,6 @@ import "./tonight-desk.css";
 import "./cold-start.css";
 import "./desk-notes.css";
 import "./tonight-intent.css";
-import "./cinema-ui.css";
 
 export const dynamic = "force-dynamic";
 
