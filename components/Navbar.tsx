@@ -31,6 +31,7 @@ const PRIMARY = [
 const MORE = [
   { href: "/browse", label: "Full catalog", poetic: "Filters" },
   { href: "/airing", label: "Airing", poetic: "On air" },
+  { href: "/schedule", label: "Schedule", poetic: "Broadcast" },
   { href: "/daily", label: "Daily", poetic: "Ritual" },
   { href: "/mood", label: "Moods", poetic: "Intent" },
   { href: "/journey", label: "Journey", poetic: "Archive" },
