@@ -278,3 +278,17 @@ html[data-theme="light"] body{background:#eee7dd;color:#1b1713}html[data-theme="
   .nexus-rails{padding-top:70px}
 }
 @media(prefers-reduced-motion:reduce){.nexus-opening-bg{animation:none}}
+
+/* Index legibility: title belongs to the artwork, not below the fold. */
+.nexus-index-overlay{position:absolute;left:18px;right:18px;bottom:16px;z-index:2;display:grid;gap:5px;pointer-events:none;text-shadow:0 3px 20px rgba(0,0,0,.75)}
+.nexus-index-overlay strong{font-family:var(--cinema-display);font-size:clamp(1.25rem,2.2vw,2.25rem);font-weight:500;line-height:.92;letter-spacing:-.02em}
+.nexus-index-overlay small{font-size:.5rem;letter-spacing:.13em;text-transform:uppercase;color:rgba(244,239,231,.62)}
+.nexus-index-meta{padding-top:7px}
+@media(max-width:700px){
+  .nexus-index-overlay{left:12px;right:12px;bottom:11px}
+  .nexus-index-overlay strong{font-size:1.05rem}
+  .nexus-index-meta{display:none}
+}
+.nexus-opening-subject-info{max-width:min(340px,24vw)}
+.nexus-opening-subject-info strong{display:block;line-height:1.02;text-wrap:balance}
+@media(max-width:700px){.nexus-opening-subject-info{max-width:155px}.nexus-opening-subject-info strong{font-size:.9rem}}
