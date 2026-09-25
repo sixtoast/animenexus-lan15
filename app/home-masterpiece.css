@@ -89,14 +89,14 @@
   grid-row:2;
   align-self:center;
   justify-self:end;
-  width:min(27vw,390px);
-  max-height:calc(100svh - 210px);
+  width:min(20vw,280px);
+  max-height:calc(100svh - 250px);
   transform:translate3d(calc(var(--scene-progress,0)*12px),var(--cinema-subject-y,0),0) rotate(3deg)!important;
 }
 .nexus-opening-subject-image{
   aspect-ratio:2/3;
   width:100%;
-  max-height:58svh;
+  max-height:46svh;
   overflow:hidden!important;
   box-shadow:0 45px 120px rgba(0,0,0,.68);
 }
@@ -339,8 +339,8 @@
 .nexus-catalog-foot{font-size:.58rem!important;text-transform:uppercase;letter-spacing:.12em;color:rgba(245,240,232,.3)!important}
 .nexus-quote{padding-block:100px 160px}
 @media(max-width:900px){
-  .nexus-opening-subject{width:min(30vw,340px);max-height:calc(100svh - 190px)}
-  .nexus-opening-subject-image{max-height:52svh}
+  .nexus-opening-subject{width:min(24vw,300px);max-height:calc(100svh - 220px)}
+  .nexus-opening-subject-image{max-height:48svh}
 
   .nexus-opening-inner{grid-template-columns:1fr 280px;column-gap:28px}
   .nexus-opening-copy h1{font-size:clamp(4.4rem,12vw,7rem)!important}
