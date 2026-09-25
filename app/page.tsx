@@ -90,7 +90,7 @@ export default async function HomePage() {
 
       <div className="nexus-scene-divider nexus-scene-divider--desk" aria-hidden><span>03</span><i /></div>
 
-      <section className="container nexus-primary-band">
+      <section className="container nexus-primary-band" data-field-count={items.length}>
         <div className="nexus-band-label">03 / PERSONAL SIGNAL</div>
         <HomePrimaryMoment candidates={items} />
       </section>
