@@ -25,10 +25,7 @@ export function cleanEnv(value: string | undefined): string {
 }
 
 export function isAnimeScheduleOAuthConfigured(): boolean {
-  return Boolean(
-    cleanEnv(process.env.ANIMESCHEDULE_CLIENT_ID) &&
-      cleanEnv(process.env.ANIMESCHEDULE_REDIRECT_URI),
-  );
+  return Boolean(cleanEnv(process.env.ANIMESCHEDULE_CLIENT_ID) && animeScheduleRedirectUri());
 }
 
 export function animeScheduleClientId(): string {
@@ -40,7 +37,15 @@ export function animeScheduleClientSecret(): string | undefined {
   return value || undefined;
 }
 
+const PRODUCTION_CALLBACK_PATH = "/api/animeschedule/callback";
+
 export function animeScheduleRedirectUri(): string {
+  if (process.env.VERCEL_ENV === "production") {
+    const site = cleanEnv(process.env.NEXT_PUBLIC_SITE_URL);
+    const base = site || "https://animenexus-lan15.vercel.app";
+    return new URL(PRODUCTION_CALLBACK_PATH, base).toString();
+  }
+
   return (
     cleanEnv(process.env.ANIMESCHEDULE_REDIRECT_URI) ||
     "http://localhost:3000/api/animeschedule/callback"
@@ -121,16 +126,31 @@ export async function exchangeAnimeScheduleCode(opts: {
 }): Promise<AnimeScheduleTokenResponse> {
   const body = new URLSearchParams({
     grant_type: "authorization_code",
-    client_id: opts.clientId.trim(),
     code: opts.code.trim(),
     redirect_uri: opts.redirectUri.trim(),
     code_verifier: opts.codeVerifier,
   });
-  if (opts.clientSecret) body.set("client_secret", opts.clientSecret.trim());
+
+  // AnimeSchedule's reference OAuth client uses oauth2's BasicClient,
+  // which authenticates confidential clients with HTTP Basic at the token
+  // endpoint rather than putting client_secret in the form body.
+  const headers: Record<string, string> = {
+    "Content-Type": "application/x-www-form-urlencoded",
+    Accept: "application/json",
+  };
+  if (opts.clientSecret) {
+    const credentials = Buffer.from(
+      `${opts.clientId.trim()}:${opts.clientSecret.trim()}`,
+      "utf8",
+    ).toString("base64");
+    headers.Authorization = `Basic ${credentials}`;
+  } else {
+    body.set("client_id", opts.clientId.trim());
+  }
 
   const res = await fetch(TOKEN_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+    headers,
     body,
     cache: "no-store",
   });
