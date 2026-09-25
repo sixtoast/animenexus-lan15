@@ -44,6 +44,12 @@ export function AccountClient() {
     username: string | null;
   } | null>(null);
   const [alOauthConfigured, setAlOauthConfigured] = useState(false);
+  const [animeScheduleOauth, setAnimeScheduleOauth] = useState<{
+    configured: boolean;
+    connected: boolean;
+    username: string | null;
+    userId: string | number | null;
+  } | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
 
   const refreshMalOauth = useCallback(async () => {
@@ -62,9 +68,25 @@ export function AccountClient() {
     setPendingCount(readMalSyncQueue().length);
   }, []);
 
+  const refreshAnimeScheduleOauth = useCallback(async () => {
+    try {
+      const res = await fetch("/api/animeschedule/status");
+      const j = await res.json();
+      setAnimeScheduleOauth({
+        configured: Boolean(j.configured),
+        connected: Boolean(j.connected),
+        username: j.username || null,
+        userId: j.userId ?? null,
+      });
+    } catch {
+      setAnimeScheduleOauth({ configured: false, connected: false, username: null, userId: null });
+    }
+  }, []);
+
   useEffect(() => {
     if (!ready) return;
     void refreshMalOauth();
+    void refreshAnimeScheduleOauth();
     void fetch("/api/anilist/status")
       .then((r) => r.json())
       .then((j) => setAlOauthConfigured(Boolean(j.configured)))
@@ -117,7 +139,23 @@ export function AccountClient() {
     } catch {
       /* */
     }
-  }, [ready, refreshMalOauth, applyOAuthSession]);
+      const animeschedule = params.get("animeschedule");
+      if (animeschedule === "connected") {
+        setSyncMsg("AnimeSchedule connected. Your private AnimeSchedule data is now available to AnimeNexus.");
+        playCue("success");
+        void refreshAnimeScheduleOauth();
+        window.history.replaceState({}, "", "/account");
+      } else if (animeschedule === "denied") {
+        setMalErr("AnimeSchedule authorization was denied.");
+        window.history.replaceState({}, "", "/account");
+      } else if (animeschedule === "error" || animeschedule === "not_configured") {
+        setMalErr(params.get("reason") || "AnimeSchedule OAuth failed or is not configured on the server.");
+        window.history.replaceState({}, "", "/account");
+      }
+    } catch {
+      /* */
+    }
+  }, [ready, refreshMalOauth, refreshAnimeScheduleOauth, applyOAuthSession]);
 
   if (!ready) {
     return (
@@ -521,6 +559,54 @@ export function AccountClient() {
             </p>
             <a href="/api/mal/auth" className="btn btn-accent btn-sm">
               Connect MyAnimeList
+            </a>
+          </div>
+        )}
+      </section>
+
+      <hr style={{ margin: "28px 0", borderColor: "var(--color-border)" }} />
+
+      <section aria-labelledby="animeschedule-oauth-heading">
+        <h2 id="animeschedule-oauth-heading" className="nx-kicker">
+          AnimeSchedule OAuth
+        </h2>
+        {!animeScheduleOauth?.configured ? (
+          <p className="account-note">
+            Set <code>ANIMESCHEDULE_CLIENT_ID</code> and <code>ANIMESCHEDULE_REDIRECT_URI</code> on the server to enable the connection.
+          </p>
+        ) : animeScheduleOauth.connected ? (
+          <div className="account-actions" style={{ flexWrap: "wrap", gap: 8 }}>
+            <p className="account-note" style={{ width: "100%" }}>
+              Connected to AnimeSchedule as <strong>{animeScheduleOauth.username || "AnimeSchedule user"}</strong>
+              {animeScheduleOauth.userId != null ? ` · user ${animeScheduleOauth.userId}` : ""}
+            </p>
+            <a
+              href="https://animeschedule.net"
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-outline btn-sm"
+            >
+              Open AnimeSchedule ↗
+            </a>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={async () => {
+                await fetch("/api/animeschedule/status", { method: "DELETE" });
+                await refreshAnimeScheduleOauth();
+                playCue("filter_select");
+              }}
+            >
+              Disconnect AnimeSchedule
+            </button>
+          </div>
+        ) : (
+          <div className="account-actions">
+            <p className="account-note" style={{ width: "100%" }}>
+              Connect AnimeSchedule to let AnimeNexus access the private AnimeSchedule data you explicitly authorise.
+            </p>
+            <a href="/api/animeschedule/auth" className="btn btn-accent btn-sm">
+              Connect AnimeSchedule
             </a>
           </div>
         )}
