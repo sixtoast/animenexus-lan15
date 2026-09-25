@@ -430,3 +430,17 @@ body.cinema-cursor-focus .nexus-index-card:hover,.nexus-cursor-focus .nexus-arch
   .cinema-reveal,.nexus-opening-bg,.nexus-opening-subject-image,.nexus-index-card,.nexus-archive-item{transition:none!important;transform:none!important;filter:none!important}
   .nexus-opening-scroll i,.nexus-world-map.has-active .nexus-world-orbit--one,.nexus-world-map.has-active .nexus-world-orbit--two{animation:none!important}
 }
+
+
+/* Motion rhythm — editorial stagger instead of one-frame reveals. */
+.nexus-feature-field .cinema-reveal:nth-child(1){transition-delay:.02s}
+.nexus-feature-field .cinema-reveal:nth-child(2){transition-delay:.08s}
+.nexus-feature-field .cinema-reveal:nth-child(3){transition-delay:.14s}
+.nexus-feature-field .cinema-reveal:nth-child(4){transition-delay:.20s}
+.nexus-feature-field .cinema-reveal:nth-child(5){transition-delay:.26s}
+.nexus-feature-field .cinema-reveal:nth-child(6){transition-delay:.32s}
+.nexus-archive-wall .nexus-archive-item:nth-child(3n+1){transition-delay:.02s}
+.nexus-archive-wall .nexus-archive-item:nth-child(3n+2){transition-delay:.07s}
+.nexus-archive-wall .nexus-archive-item:nth-child(3n){transition-delay:.12s}
+.nexus-opening-subject-info strong{display:block;overflow:hidden;clip-path:inset(0 0 0 0)}
+.nexus-opening-subject:hover .nexus-opening-subject-info strong{letter-spacing:.008em}
