@@ -102,7 +102,8 @@ import "./nexus-icon.css";
 import "./nexus-icon-optical.css";
 import "./rive.css";
 import "./tool-identity.css";
-import "./restraint.css";\nimport "./cinema-ui.css";
+import "./restraint.css";
+import "./cinema-ui.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus \u2014 Lantern",
