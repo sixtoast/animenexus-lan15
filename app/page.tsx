@@ -9,6 +9,7 @@ import { NexusWorlds } from "@/components/NexusWorlds";
 import { NexusArchive } from "@/components/NexusArchive";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
 import { SessionQuietNote } from "@/components/SessionQuietNote";
+import { CinemaMotion } from "@/components/CinemaMotion";
 import { generateCandidatePool, poolToAnimeList } from "@/lib/recommend-candidates";
 import "./mood-home.css";
 import "./home-dash.css";
@@ -38,6 +39,7 @@ export default async function HomePage() {
 
   return (
     <main className="nexus-home">
+      <CinemaMotion />
       <section className="nexus-opening" data-mascot-landmark="hero" data-mascot-id="home-hero" data-mascot-priority="2">
         {hero?.image ? <div className="nexus-opening-bg" aria-hidden style={{ backgroundImage: `url("${hero.image}")` }} /> : null}
         <div className="nexus-opening-wash" aria-hidden />
