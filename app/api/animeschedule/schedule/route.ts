@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { fetchAiringSchedule } from "@/lib/anilist-discover";
 import {
   fetchAnimeScheduleList,
   getAnimeScheduleAccessToken,
@@ -8,136 +9,147 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const API = "https://animeschedule.net/api/v3";
-const IMAGE_BASE = "https://img.animeschedule.net/production/assets/public/img/";
-
-type TimetableAnime = {
-  title?: string; route: string; romaji?: string; english?: string; native?: string;
-  episodeDate?: string; episodeNumber?: number; subtractedEpisodeNumber?: number;
-  episodes?: number; lengthMin?: number; imageVersionRoute?: string;
-  delayedText?: string; delayedFrom?: string; delayedUntil?: string;
-  status?: string; airingStatus?: string; airType?: string;
-  streams?: unknown[];
+type ListEntry = {
+  route: string;
+  listStatus?: string;
+  episodesSeen?: number;
+  episodes?: number;
+  manualScore?: number;
+  preferredTitle?: string;
+  latestEpisode?: number;
+  latestEpisodeDate?: string;
+  genres?: string;
+  studios?: string;
+  status?: string;
 };
 
-function arrayFrom<T>(value: unknown): T[] {
-  if (Array.isArray(value)) return value as T[];
-  if (value && typeof value === "object") {
-    const o = value as Record<string, unknown>;
-    for (const key of ["timetable", "data", "anime", "items"]) {
-      if (Array.isArray(o[key])) return o[key] as T[];
+function normalise(value: string) {
+  return value.toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function extractEntries(value: unknown): Record<string, ListEntry> {
+  if (!value || typeof value !== "object") return {};
+  const raw = (value as any).listAnime ?? {};
+  if (Array.isArray(raw)) {
+    return Object.fromEntries(raw.map((x: ListEntry) => [x.route, x]));
+  }
+  return raw && typeof raw === "object" ? raw as Record<string, ListEntry> : {};
+}
+
+function dateInZone(epochSeconds: number, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(new Date(epochSeconds * 1000));
+  const get = (type: string) => parts.find((p) => p.type === type)?.value || "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+function titleMatch(media: any, entry: ListEntry) {
+  const titles = [
+    media.title, media.titleRomaji, media.titleNative,
+    entry.preferredTitle, entry.route.replace(/-/g, " "),
+  ].filter(Boolean).map(normalise);
+  const listTitle = normalise(entry.preferredTitle || entry.route);
+  return titles.some((title) => title === listTitle);
+}
+
+function relevance(media: any, entries: ListEntry[]) {
+  let score = 0;
+  const reasons: string[] = [];
+  for (const entry of entries) {
+    const genres = String(entry.genres || "").toLowerCase();
+    const studios = String(entry.studios || "").toLowerCase();
+    for (const genre of media.genres || []) {
+      const name = String(genre?.name || genre).toLowerCase();
+      if (name && genres.includes(name)) {
+        score += 3;
+        if (!reasons.includes(name)) reasons.push(name);
+      }
+    }
+    for (const studio of media.studios || []) {
+      const name = String(studio?.name || studio).toLowerCase();
+      if (name && studios.includes(name)) {
+        score += 2;
+        if (!reasons.includes(name)) reasons.push(name);
+      }
     }
   }
-  return [];
-}
-
-function listEntries(value: unknown): Record<string, any> {
-  if (!value || typeof value !== "object") return {};
-  const raw = (value as any).listAnime ?? value;
-  if (Array.isArray(raw)) return Object.fromEntries(raw.map((x: any) => [x.route, x]));
-  return raw && typeof raw === "object" ? raw : {};
-}
-
-async function fetchTimetable(tz: string) {
-  const url = new URL(`${API}/timetables/all`);
-  url.searchParams.set("tz", tz);
-  const res = await fetch(url, {
-    headers: { Accept: "application/json" },
-    next: { revalidate: 300 },
-  });
-  if (!res.ok) throw new Error(`AnimeSchedule timetable failed: ${res.status}`);
-  return arrayFrom<TimetableAnime>(await res.json());
-}
-
-async function fetchAnime(route: string) {
-  const res = await fetch(`${API}/anime/${encodeURIComponent(route)}`, {
-    headers: { Accept: "application/json" },
-    next: { revalidate: 3600 },
-  });
-  if (!res.ok) return null;
-  return (await res.json()) as any;
+  return { score, reason: reasons.slice(0, 2).join(" · ") || "New on your radar" };
 }
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const tz = searchParams.get("tz") || "Africa/Johannesburg";
-  const connected = isAnimeScheduleOAuthConfigured() && Boolean(await getAnimeScheduleAccessToken());
-  const accessToken = connected ? await getAnimeScheduleAccessToken() : null;
 
   try {
-    const timetable = await fetchTimetable(tz);
-    let entries: Record<string, any> = {};
+    const schedule = await fetchAiringSchedule(24 * 7);
+    let entries: Record<string, ListEntry> = {};
     let username: string | null = null;
+    let connected = false;
 
-    if (accessToken) {
-      const list = await fetchAnimeScheduleList(accessToken, { limit: 200 });
-      if (list) {
-        entries = listEntries(list);
-        username = list.username || null;
+    if (isAnimeScheduleOAuthConfigured()) {
+      const token = await getAnimeScheduleAccessToken();
+      if (token) {
+        const list = await fetchAnimeScheduleList(token, { limit: 200 });
+        if (list) {
+          entries = extractEntries(list);
+          username = list.username || null;
+          connected = true;
+        }
       }
     }
 
-    const now = new Date();
-    const today = new Intl.DateTimeFormat("en-CA", {
-      timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
-    }).format(now);
-
-    const items = timetable.map((item) => {
-      const list = entries[item.route] ?? null;
-      const date = item.episodeDate ? item.episodeDate.slice(0, 10) : null;
+    const today = dateInZone(Math.floor(Date.now() / 1000), tz);
+    const listValues = Object.values(entries);
+    const items = schedule.map((row) => {
+      const matches = listValues.find((entry) => titleMatch(row.media, entry));
+      const date = dateInZone(row.airingAt, tz);
       return {
-        ...item,
-        image: item.imageVersionRoute ? IMAGE_BASE + item.imageVersionRoute : null,
+        route: matches?.route || String(row.media.id),
+        title: row.media.title,
+        titleRomaji: row.media.titleRomaji,
+        titleNative: row.media.titleNative,
+        image: row.media.image,
+        episodeDate: new Date(row.airingAt * 1000).toISOString(),
+        episodeNumber: row.episode,
         date,
         isToday: date === today,
-        inList: Boolean(list),
-        listStatus: list?.listStatus ?? null,
-        episodesSeen: Number(list?.episodesSeen ?? 0),
-        listEpisodes: Number(list?.episodes ?? item.episodes ?? 0),
-        latestEpisode: Number(list?.latestEpisode ?? item.episodeNumber ?? 0),
-        listScore: list?.manualScore ?? null,
-        preferredTitle: list?.preferredTitle ?? null,
+        inList: Boolean(matches),
+        listStatus: matches?.listStatus || null,
+        episodesSeen: Number(matches?.episodesSeen || 0),
+        listEpisodes: Number(matches?.episodes || row.media.episodes || 0),
+        listScore: matches?.manualScore ?? null,
+        status: row.media.status,
+        genres: row.media.genres,
+        studios: row.media.studios,
+        duration: row.media.duration,
       };
     });
 
-    const watching = Object.values(entries).filter((x: any) => x.listStatus === "watching");
+    const watching = listValues.filter((x) => x.listStatus === "watching");
     const catchUp = watching
-      .map((x: any) => ({
+      .map((x) => ({
         route: x.route,
         title: x.preferredTitle || x.route,
         episodesSeen: Number(x.episodesSeen || 0),
         latestEpisode: Number(x.latestEpisode || 0),
         gap: Math.max(0, Number(x.latestEpisode || 0) - Number(x.episodesSeen || 0)),
-        image: x.imageVersionRoute ? IMAGE_BASE + x.imageVersionRoute : null,
         status: x.status || "Ongoing",
       }))
       .filter((x) => x.gap > 0)
       .sort((a, b) => b.gap - a.gap)
       .slice(0, 20);
 
-    const newItems = items.filter((x) => !x.inList).slice(0, 12);
-    const candidates = newItems.slice(0, 8);
-    const profiles = await Promise.all(candidates.map(async (x) => {
-      const a = await fetchAnime(x.route);
-      return a ? {
-        route: x.route, title: a.title || x.title, image: x.image,
-        genres: Array.isArray(a.genres) ? a.genres.map((g: any) => g.name).filter(Boolean) : [],
-        studios: Array.isArray(a.studios) ? a.studios.map((g: any) => g.name).filter(Boolean) : [],
-        score: a.stats?.averageScore ?? 0,
-        status: a.status,
-      } : null;
-    }));
-
-    const watchedProfiles = Object.values(entries).filter((x: any) => x.listStatus === "watching" || x.listStatus === "completed");
-    const likedTokens = new Set<string>();
-    for (const x of watchedProfiles) {
-      for (const token of String(x.genres || "").split(/(?=[A-Z])/)) if (token.length > 2) likedTokens.add(token.toLowerCase());
-      for (const token of String(x.studios || "").split(/(?=[A-Z])/)) if (token.length > 2) likedTokens.add(token.toLowerCase());
-    }
-    const recommendations = profiles.filter(Boolean).map((x: any) => ({
-      ...x,
-      reason: x.genres.find((g: string) => likedTokens.has(g.toLowerCase())) || x.studios.find((s: string) => likedTokens.has(s.toLowerCase())) || "New on your radar",
-    })).sort((a: any, b: any) => Number(b.score) - Number(a.score)).slice(0, 6);
+    const watched = listValues.filter((x) => ["watching", "completed"].includes(x.listStatus || ""));
+    const recommendations = connected
+      ? items.filter((x) => !x.inList)
+        .map((x) => ({ ...x, ...relevance(x, watched) }))
+        .sort((a, b) => b.score - a.score || String(a.episodeDate).localeCompare(String(b.episodeDate)))
+        .slice(0, 6)
+      : [];
 
     return NextResponse.json({
       connected, username, timezone: tz, today,
@@ -151,7 +163,7 @@ export async function GET(req: Request) {
   } catch (error) {
     return NextResponse.json({
       error: error instanceof Error ? error.message : "Schedule unavailable",
-      connected,
+      connected: false,
     }, { status: 502 });
   }
 }
