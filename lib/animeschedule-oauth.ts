@@ -198,15 +198,26 @@ export async function clearAnimeScheduleTokenCookies(): Promise<void> {
 async function refreshAnimeScheduleToken(refreshToken: string): Promise<AnimeScheduleTokenResponse> {
   const body = new URLSearchParams({
     grant_type: "refresh_token",
-    client_id: animeScheduleClientId(),
     refresh_token: refreshToken,
   });
+  const headers: Record<string, string> = {
+    "Content-Type": "application/x-www-form-urlencoded",
+    Accept: "application/json",
+  };
   const secret = animeScheduleClientSecret();
-  if (secret) body.set("client_secret", secret);
+  if (secret) {
+    const credentials = Buffer.from(
+      `${animeScheduleClientId().trim()}:${secret.trim()}`,
+      "utf8",
+    ).toString("base64");
+    headers.Authorization = `Basic ${credentials}`;
+  } else {
+    body.set("client_id", animeScheduleClientId());
+  }
 
   const res = await fetch(TOKEN_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+    headers,
     body,
     cache: "no-store",
   });
