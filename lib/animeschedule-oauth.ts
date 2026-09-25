@@ -266,6 +266,80 @@ export async function fetchAnimeScheduleViewer(accessToken: string): Promise<Ani
   };
 }
 
+export type AnimeScheduleListResponse = {
+  userID?: string | number;
+  userId?: string | number;
+  username?: string;
+  listAnime?: Record<string, any> | any[];
+  customLists?: any[];
+};
+
+export async function fetchAnimeScheduleList(
+  accessToken: string,
+  opts: { limit?: number; offset?: number } = {},
+): Promise<AnimeScheduleListResponse | null> {
+  const params = new URLSearchParams();
+  params.set("limit", String(Math.min(200, Math.max(1, opts.limit ?? 200))));
+  if (opts.offset != null) params.set("offset", String(Math.max(0, opts.offset)));
+
+  const res = await fetch(`${API_BASE}/animelists/oauth?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  return (await res.json()) as AnimeScheduleListResponse;
+}
+
+export async function updateAnimeScheduleListEntry(
+  accessToken: string,
+  route: string,
+  patch: {
+    listStatus?: string;
+    episodesSeen?: number;
+    manualScore?: number;
+    useAutoScores?: boolean;
+    autoScores?: unknown;
+    startDate?: string;
+    endDate?: string;
+    note?: string;
+    action?: string;
+  },
+): Promise<Record<string, any> | null> {
+  const cleanRoute = route.trim().replace(/^\\/+/, "");
+  if (!cleanRoute) return null;
+
+  // AnimeSchedule requires a current Etag for list-entry updates.
+  const current = await fetch(`${API_BASE}/animelists/oauth/${encodeURIComponent(cleanRoute)}`, {
+    headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
+    cache: "no-store",
+  });
+  if (!current.ok) return null;
+
+  const etag = current.headers.get("etag");
+  if (!etag) return null;
+
+  const res = await fetch(`${API_BASE}/animelists/oauth/${encodeURIComponent(cleanRoute)}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      Etag: etag,
+    },
+    body: JSON.stringify(patch),
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+
+  const text = await res.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text) as Record<string, any>;
+  } catch {
+    return {};
+  }
+}
+
 export async function revokeAnimeScheduleAccessToken(accessToken: string): Promise<void> {
   const body = new URLSearchParams({ token: accessToken, client_id: animeScheduleClientId() });
   const secret = animeScheduleClientSecret();
