@@ -16,6 +16,7 @@ import "./home-dash.css";
 import "./home-v2.css";
 import "./tonight-desk.css";
 import "./cold-start.css";
+import "./cinema-motion-v4.css";
 import "./desk-notes.css";
 import "./tonight-intent.css";
 
