@@ -155,7 +155,7 @@ export default async function AnimeDetailPage({ params }: Props) {
       (themes.inserts && themes.inserts.length > 0));
 
   return (
-    <main>
+    <main className="cinema-detail-page">
       <MemoryVisit
         id={anime.id}
         title={anime.title}
