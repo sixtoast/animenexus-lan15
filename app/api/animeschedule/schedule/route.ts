@@ -184,7 +184,7 @@ export async function GET(req: Request) {
         listEpisodes: Number(matches?.episodes || row.media.episodes || 0),
         listScore: matches?.manualScore ?? null,
         status: row.media.status,
-        genres: row.media.genres,
+        genres: row.media.genre,
         studios: row.media.studios,
         duration: row.media.duration,
       };
