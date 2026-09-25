@@ -54,7 +54,7 @@ function entryVariants(entry: ListEntry) {
   return [
     entry.preferredTitle,
     entry.route?.replace(/[-_]/g, " "),
-  ].filter((x): x is string => typeof x === "string" && x.trim()).map(normalise);
+  ].filter((x): x is string => typeof x === "string" && x.trim().length > 0).map(normalise);
 }
 
 function titleMatch(media: any, entry: ListEntry) {
