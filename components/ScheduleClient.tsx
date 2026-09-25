@@ -175,7 +175,7 @@ export default function ScheduleClient() {
                     </div>
                     {item.inList && <div className="progress-line"><span style={{ width: `${Math.min(100, (Number(item.episodesSeen || 0) / Math.max(1, Number(item.episodeNumber || 1))) * 100)}%` }} /></div>}
                   </div>
-                  {item.inList && hasAired && Number(item.episodeNumber || 0) > Number(item.episodesSeen || 0) && (
+                  {item.inList && hasAired && hasAired && Number(item.episodeNumber || 0) > Number(item.episodesSeen || 0) && (
                     <button className="btn btn-outline btn-sm schedule-watch" onClick={() => void markWatched(item)} disabled={busy === item.route}>
                       {busy === item.route ? "Saving…" : "Mark watched"}
                     </button>
