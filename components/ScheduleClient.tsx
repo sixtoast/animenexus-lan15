@@ -160,7 +160,7 @@ export default function ScheduleClient() {
             <div className="schedule-day-head"><h2>{date === data.today ? "Today" : new Date(date + "T12:00:00").toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}</h2><span>{group.length} releases</span></div>
             <div className="schedule-list">
               {group.map((item) => {
-                const watched = Number(item.episodesSeen || 0) >= Number(item.episodeNumber || 0);
+                const watched = Number(item.episodesSeen || 0) >= Number(item.episodeNumber || 0);\n                const hasAired = Boolean(item.episodeDate && new Date(item.episodeDate).getTime() <= Date.now());
                 return <article className={`schedule-card ${item.inList ? "is-mine" : ""}`} key={item.route + item.episodeDate}>
                   {item.image && <img src={item.image} alt="" />}
                   <div className="schedule-card-main">
@@ -174,7 +174,7 @@ export default function ScheduleClient() {
                     </div>
                     {item.inList && <div className="progress-line"><span style={{ width: `${Math.min(100, (Number(item.episodesSeen || 0) / Math.max(1, Number(item.episodeNumber || 1))) * 100)}%` }} /></div>}
                   </div>
-                  {item.inList && Number(item.episodeNumber || 0) > Number(item.episodesSeen || 0) && (
+                  {item.inList && hasAired && Number(item.episodeNumber || 0) > Number(item.episodesSeen || 0) && (
                     <button className="btn btn-outline btn-sm schedule-watch" onClick={() => void markWatched(item)} disabled={busy === item.route}>
                       {busy === item.route ? "Saving…" : "Mark watched"}
                     </button>
