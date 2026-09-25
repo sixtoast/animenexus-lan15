@@ -488,7 +488,7 @@ body.cinema-cursor-focus .nexus-index-card:hover,.nexus-cursor-focus .nexus-arch
 .nexus-archive-caption{transform:translate3d(0,8px,12px)}
 .nexus-archive-item:hover .nexus-archive-caption{transform:translate3d(4px,0,12px)}
 
-.nexus-index-cut{transform:translate3d(0,calc(var(--scene-progress,0) * 18px),0) scale(calc(1 + abs(var(--scene-progress,0)) * .01));will-change:transform,background-position}
+.nexus-index-cut{transform:translate3d(0,calc(var(--scene-progress,0) * 18px),0) scale(1);will-change:transform,background-position}
 .nexus-index-cut:after{opacity:calc(.55 + var(--cinema-cut-focus,0) * .45)}
 .nexus-index-cut-link:after{content:"";position:absolute;left:28px;right:0;bottom:0;height:1px;background:var(--cinema-gold);transform:scaleX(0);transform-origin:right;transition:transform .65s cubic-bezier(.2,.75,.2,1)}
 .nexus-index-cut-link:hover:after{transform:scaleX(1);transform-origin:left}
