@@ -2,13 +2,18 @@
 
 import { useEffect } from "react";
 
+const INTERNAL = /^\//;
+
 export function CinemaMotion() {
   useEffect(() => {
     const root = document.documentElement;
+    const body = document.body;
+    const reducedQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
     root.classList.add("cinema-motion-ready");
 
-    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = () => reducedQuery.matches;
 
     const revealTargets = Array.from(
       document.querySelectorAll<HTMLElement>(
@@ -25,7 +30,7 @@ export function CinemaMotion() {
           }
         });
       },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+      { threshold: 0.08, rootMargin: "0px 0px -10% 0px" }
     );
 
     revealTargets.forEach((element) => {
@@ -33,26 +38,51 @@ export function CinemaMotion() {
       revealObserver.observe(element);
     });
 
+    const splitHeadings = Array.from(
+      document.querySelectorAll<HTMLElement>(".nexus-section-heading h2, .nexus-worlds-heading h2")
+    );
+
+    splitHeadings.forEach((heading) => {
+      if (heading.dataset.motionSplit === "true") return;
+      const text = heading.textContent?.trim();
+      if (!text) return;
+      heading.dataset.motionSplit = "true";
+      heading.innerHTML = text
+        .split(/\s+/)
+        .map((word, index) => `<span class="cinema-word" style="--word-index:${index}"><span>${word}</span></span>`)
+        .join(" ");
+    });
+
     const opening = document.querySelector<HTMLElement>(".nexus-opening");
     const openingBg = document.querySelector<HTMLElement>(".nexus-opening-bg");
     const openingSubject = document.querySelector<HTMLElement>(".nexus-opening-subject-image");
     const indexCut = document.querySelector<HTMLElement>(".nexus-index-cut");
+    const scenes = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        ".nexus-opening, .nexus-intent-band, .nexus-primary-band, .nexus-worlds-section, .nexus-index, .nexus-rails, .nexus-catalog"
+      )
+    );
 
     let raf = 0;
-    let pointerX = 0;
-    let pointerY = 0;
-    let scrollY = window.scrollY;
+    let cursorRaf = 0;
+    let pointerX = window.innerWidth / 2;
+    let pointerY = window.innerHeight / 2;
+    let lastScroll = window.scrollY;
+    let scrollVelocity = 0;
 
     const updateMotion = () => {
       raf = 0;
-      scrollY = window.scrollY;
+      const y = window.scrollY;
+      scrollVelocity += (y - lastScroll - scrollVelocity) * 0.16;
+      lastScroll = y;
 
-      if (!reduced) {
+      if (!reduced()) {
         if (opening && openingBg) {
-          const progress = Math.min(scrollY / Math.max(opening.offsetHeight, 1), 1);
-          openingBg.style.setProperty("--cinema-scroll-y", `${progress * 70}px`);
-          openingBg.style.setProperty("--cinema-scroll-scale", `${1.04 + progress * 0.055}`);
+          const progress = Math.min(y / Math.max(opening.offsetHeight, 1), 1);
+          openingBg.style.setProperty("--cinema-scroll-y", `${progress * 90}px`);
+          openingBg.style.setProperty("--cinema-scroll-scale", `${1.045 + progress * 0.075}`);
           opening.style.setProperty("--cinema-opening-progress", String(progress));
+          opening.style.setProperty("--cinema-scroll-velocity", String(Math.max(-18, Math.min(18, scrollVelocity))));
         }
 
         if (openingSubject) {
@@ -60,14 +90,30 @@ export function CinemaMotion() {
           if (rect.bottom > 0 && rect.top < window.innerHeight) {
             const centre = rect.top + rect.height / 2;
             const drift = (centre - window.innerHeight / 2) / window.innerHeight;
-            openingSubject.style.setProperty("--cinema-subject-y", `${drift * -12}px`);
+            openingSubject.style.setProperty("--cinema-subject-y", `${drift * -15}px`);
           }
         }
 
+        scenes.forEach((scene) => {
+          const rect = scene.getBoundingClientRect();
+          const centre = rect.top + rect.height / 2;
+          const distance = (centre - window.innerHeight / 2) / Math.max(window.innerHeight, rect.height);
+          const progress = Math.max(-1, Math.min(1, distance));
+          scene.style.setProperty("--scene-progress", progress.toFixed(3));
+          scene.style.setProperty("--scene-energy", Math.min(1, Math.abs(progress)).toFixed(3));
+        });
+
         if (indexCut) {
           const rect = indexCut.getBoundingClientRect();
-          const visible = Math.min(1, Math.max(0, 1 - Math.abs(rect.top + rect.height / 2 - window.innerHeight / 2) / (window.innerHeight + rect.height)));
-          indexCut.style.setProperty("--cinema-cut-focus", String(visible));
+          const focus = Math.min(
+            1,
+            Math.max(
+              0,
+              1 - Math.abs(rect.top + rect.height / 2 - window.innerHeight / 2) /
+                (window.innerHeight + rect.height)
+            )
+          );
+          indexCut.style.setProperty("--cinema-cut-focus", String(focus));
         }
       }
     };
@@ -79,47 +125,39 @@ export function CinemaMotion() {
     window.addEventListener("scroll", onScroll, { passive: true });
     updateMotion();
 
-    let cursor: HTMLDivElement | null = null;
-    let cursorRaf = 0;
-
-    const magnetic = finePointer && !reduced
-      ? Array.from(document.querySelectorAll<HTMLElement>(".nexus-button, .nexus-index-cut-link, .nexus-section-heading > a"))
-      : [];
-
     const cleanups: Array<() => void> = [];
 
-    if (finePointer && !reduced) {
-      cursor = document.createElement("div");
-      cursor.className = "cinema-cursor";
-      cursor.setAttribute("aria-hidden", "true");
-      document.body.appendChild(cursor);
-
-      const moveCursor = (event: PointerEvent) => {
+    if (finePointer && !reduced()) {
+      const movePointer = (event: PointerEvent) => {
         pointerX = event.clientX;
         pointerY = event.clientY;
+        root.style.setProperty("--cursor-x", `${pointerX}px`);
+        root.style.setProperty("--cursor-y", `${pointerY}px`);
+
         if (!cursorRaf) {
           cursorRaf = window.requestAnimationFrame(() => {
             cursorRaf = 0;
-            if (!cursor) return;
-            cursor.style.transform = `translate3d(${pointerX}px, ${pointerY}px, 0)`;
+            const target = (event.target as Element | null)?.closest<HTMLElement>(
+              ".nexus-index-card, .nexus-archive-item, .nexus-world-node, .nexus-opening-subject, .nexus-button, .nexus-index-cut-link"
+            );
+            body.classList.toggle("cinema-cursor-focus", Boolean(target));
           });
         }
-
-        const target = (event.target as Element | null)?.closest<HTMLElement>(
-          ".nexus-index-card, .nexus-archive-item, .nexus-world-node, .nexus-opening-subject"
-        );
-        document.body.classList.toggle("cinema-cursor-focus", Boolean(target));
       };
 
-      window.addEventListener("pointermove", moveCursor, { passive: true });
-      cleanups.push(() => window.removeEventListener("pointermove", moveCursor));
+      window.addEventListener("pointermove", movePointer, { passive: true });
+      cleanups.push(() => window.removeEventListener("pointermove", movePointer));
+
+      const magnetic = Array.from(
+        document.querySelectorAll<HTMLElement>(".nexus-button, .nexus-index-cut-link, .nexus-section-heading > a")
+      );
 
       magnetic.forEach((element) => {
         const onMove = (event: PointerEvent) => {
           const rect = element.getBoundingClientRect();
-          const x = (event.clientX - (rect.left + rect.width / 2)) / rect.width;
-          const y = (event.clientY - (rect.top + rect.height / 2)) / rect.height;
-          element.style.setProperty("--mag-x", `${x * 12}px`);
+          const x = (event.clientX - (rect.left + rect.width / 2)) / Math.max(rect.width, 1);
+          const y = (event.clientY - (rect.top + rect.height / 2)) / Math.max(rect.height, 1);
+          element.style.setProperty("--mag-x", `${x * 13}px`);
           element.style.setProperty("--mag-y", `${y * 9}px`);
         };
         const reset = () => {
@@ -141,10 +179,12 @@ export function CinemaMotion() {
       tiltTargets.forEach((element) => {
         const onMove = (event: PointerEvent) => {
           const rect = element.getBoundingClientRect();
-          const x = (event.clientX - rect.left) / rect.width - 0.5;
-          const y = (event.clientY - rect.top) / rect.height - 0.5;
-          element.style.setProperty("--tilt-x", `${y * -2.8}deg`);
-          element.style.setProperty("--tilt-y", `${x * 3.5}deg`);
+          const x = (event.clientX - rect.left) / Math.max(rect.width, 1) - 0.5;
+          const y = (event.clientY - rect.top) / Math.max(rect.height, 1) - 0.5;
+          element.style.setProperty("--tilt-x", `${y * -3.2}deg`);
+          element.style.setProperty("--tilt-y", `${x * 4.2}deg`);
+          element.style.setProperty("--glare-x", `${(x + 0.5) * 100}%`);
+          element.style.setProperty("--glare-y", `${(y + 0.5) * 100}%`);
         };
         const reset = () => {
           element.style.setProperty("--tilt-x", "0deg");
@@ -156,6 +196,48 @@ export function CinemaMotion() {
           element.removeEventListener("pointermove", onMove);
           element.removeEventListener("pointerleave", reset);
         });
+      });
+
+      const internalLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href^="/"]'));
+      const curtain = document.createElement("div");
+      curtain.className = "cinema-route-curtain";
+      curtain.setAttribute("aria-hidden", "true");
+      curtain.innerHTML = '<span class="cinema-route-curtain-mark">ANIMENEXUS</span><i></i>';
+      body.appendChild(curtain);
+
+      const navigate = (href: string) => {
+        curtain.classList.add("is-leaving");
+        window.setTimeout(() => {
+          window.location.assign(href);
+        }, 420);
+      };
+
+      internalLinks.forEach((link) => {
+        const onClick = (event: MouseEvent) => {
+          if (
+            event.defaultPrevented ||
+            event.button !== 0 ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey ||
+            link.target === "_blank"
+          ) return;
+
+          const url = new URL(link.href, window.location.href);
+          if (url.origin !== window.location.origin || url.pathname === window.location.pathname && url.hash) return;
+
+          event.preventDefault();
+          navigate(url.pathname + url.search + url.hash);
+        };
+        link.addEventListener("click", onClick);
+        cleanups.push(() => link.removeEventListener("click", onClick));
+      });
+
+      const hideCurtain = window.setTimeout(() => curtain.classList.add("is-ready"), 40);
+      cleanups.push(() => {
+        window.clearTimeout(hideCurtain);
+        curtain.remove();
       });
     }
 
@@ -169,9 +251,10 @@ export function CinemaMotion() {
       if (raf) window.cancelAnimationFrame(raf);
       if (cursorRaf) window.cancelAnimationFrame(cursorRaf);
       cleanups.forEach((cleanup) => cleanup());
-      cursor?.remove();
-      document.body.classList.remove("cinema-cursor-focus");
       root.classList.remove("cinema-motion-ready");
+      root.style.removeProperty("--cursor-x");
+      root.style.removeProperty("--cursor-y");
+      body.classList.remove("cinema-cursor-focus");
     };
   }, []);
 
