@@ -6,12 +6,12 @@ AnimeNexus uses AnimeSchedule.net API v3 OAuth 2.0 Authorization Code + PKCE. An
 
 Production:
 ```
-https://YOUR-DOMAIN/api/animeschedule/callback
+https://animenexus-lan15-9xcleax81-sixtoast1.vercel.app/api/auth/animeschedule/callback
 ```
 
 Local development:
 ```
-http://localhost:3000/api/animeschedule/callback
+http://localhost:3000/api/auth/animeschedule/callback
 ```
 
 Register the exact production callback in your AnimeSchedule application settings.
@@ -21,7 +21,7 @@ Register the exact production callback in your AnimeSchedule application setting
 ```
 ANIMESCHEDULE_CLIENT_ID=...
 ANIMESCHEDULE_CLIENT_SECRET=...          # only if your AnimeSchedule application provides one
-ANIMESCHEDULE_REDIRECT_URI=https://YOUR-DOMAIN/api/animeschedule/callback
+ANIMESCHEDULE_REDIRECT_URI=https://animenexus-lan15-9xcleax81-sixtoast1.vercel.app/api/auth/animeschedule/callback
 ANIMESCHEDULE_SCOPE=...                   # optional; use the scopes configured/required by your AnimeSchedule application
 NEXT_PUBLIC_SITE_URL=https://YOUR-DOMAIN
 ```
