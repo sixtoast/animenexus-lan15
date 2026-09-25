@@ -25,10 +25,7 @@ export function cleanEnv(value: string | undefined): string {
 }
 
 export function isAnimeScheduleOAuthConfigured(): boolean {
-  return Boolean(
-    cleanEnv(process.env.ANIMESCHEDULE_CLIENT_ID) &&
-      cleanEnv(process.env.ANIMESCHEDULE_REDIRECT_URI),
-  );
+  return Boolean(cleanEnv(process.env.ANIMESCHEDULE_CLIENT_ID) && animeScheduleRedirectUri());
 }
 
 export function animeScheduleClientId(): string {
@@ -40,7 +37,15 @@ export function animeScheduleClientSecret(): string | undefined {
   return value || undefined;
 }
 
+const PRODUCTION_CALLBACK_PATH = "/api/animeschedule/callback";
+
 export function animeScheduleRedirectUri(): string {
+  if (process.env.VERCEL_ENV === "production") {
+    const site = cleanEnv(process.env.NEXT_PUBLIC_SITE_URL);
+    const base = site || "https://animenexus-lan15.vercel.app";
+    return new URL(PRODUCTION_CALLBACK_PATH, base).toString();
+  }
+
   return (
     cleanEnv(process.env.ANIMESCHEDULE_REDIRECT_URI) ||
     "http://localhost:3000/api/animeschedule/callback"
