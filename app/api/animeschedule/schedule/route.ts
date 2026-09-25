@@ -47,7 +47,7 @@ function titleVariants(media: any) {
     media.titleRomaji,
     media.titleNative,
     ...(Array.isArray(media.synonyms) ? media.synonyms : []),
-  ].filter((x): x is string => typeof x === "string" && x.trim()).map(normalise);
+  ].filter((x): x is string => typeof x === "string" && x.trim().length > 0).map(normalise);
 }
 
 function entryVariants(entry: ListEntry) {
