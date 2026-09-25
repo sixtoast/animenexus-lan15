@@ -5,6 +5,7 @@ import { DiscoveryShelves } from "@/components/DiscoveryShelves";
 import { AvailableNowStrip } from "@/components/AvailableNowStrip";
 import { HomePrimaryMoment } from "@/components/HomePrimaryMoment";
 import { QuoteBanner } from "@/components/QuoteBanner";
+import { NexusWorlds } from "@/components/NexusWorlds";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
 import { SessionQuietNote } from "@/components/SessionQuietNote";
 import { generateCandidatePool, poolToAnimeList } from "@/lib/recommend-candidates";
@@ -73,6 +74,8 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <div className="nexus-scene-divider nexus-scene-divider--signal" aria-hidden><span>02</span><i /></div>
+
       <section className="container nexus-intent-band">
         <div className="nexus-band-label">02 / YOUR FREQUENCY</div>
         <div className="nexus-intent-layout">
@@ -84,15 +87,32 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <div className="nexus-scene-divider nexus-scene-divider--desk" aria-hidden><span>03</span><i /></div>
+
       <section className="container nexus-primary-band">
         <div className="nexus-band-label">03 / PERSONAL SIGNAL</div>
         <HomePrimaryMoment candidates={items} />
       </section>
 
+      <div className="nexus-scene-divider nexus-scene-divider--worlds" aria-hidden><span>04</span><i /></div>
+
+      <section className="container nexus-worlds-section">
+        <div className="nexus-worlds-heading">
+          <div>
+            <span>04 / WORLDS NEARBY</span>
+            <h2>You are closer<br /><em>than you think.</em></h2>
+          </div>
+          <p>Not a genre list. A field of adjacent stories, surfaced from the same catalogue you are already exploring.</p>
+        </div>
+        <NexusWorlds candidates={items} />
+      </section>
+
+      <div className="nexus-scene-divider nexus-scene-divider--index" aria-hidden><span>05</span><i /></div>
+
       <section className="nexus-index">
         <div className="container">
           <div className="nexus-section-heading">
-            <div><span>04 / THE INDEX</span><h2>Worth a closer look.</h2></div>
+            <div><span>05 / THE INDEX</span><h2>Worth a closer look.</h2></div>
             <Link href="/browse">View full archive ↗</Link>
           </div>
           <div className="nexus-feature-field">
@@ -110,14 +130,18 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <div className="nexus-index-cut" aria-hidden><span>THE INDEX</span><strong>BEYOND<br />THE OBVIOUS.</strong></div>
+
       <section className="container nexus-rails">
         <DiscoveryShelves candidates={items} />
         <AvailableNowStrip candidates={items} />
       </section>
 
+      <div className="nexus-scene-divider nexus-scene-divider--archive" aria-hidden><span>06</span><i /></div>
+
       <section className="container nexus-catalog">
         <div className="nexus-section-heading">
-          <div><span>05 / THE CATALOGUE</span><h2>Keep looking.</h2></div>
+          <div><span>06 / THE CATALOGUE</span><h2>Keep looking.</h2></div>
           <ViewModeToggle />
         </div>
         {error ? (
