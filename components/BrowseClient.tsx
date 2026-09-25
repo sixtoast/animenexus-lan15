@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { AnimeImage } from "@/components/AnimeImage";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimeGrid } from "@/components/AnimeGrid";
@@ -464,6 +466,34 @@ export function BrowseClient({
         </details>
       </div>
 
+      {displayItems.length > 0 ? (
+        <article className="cinema-browse-feature">
+          <Link href={`/anime/${displayItems[0].id}`} className="cinema-browse-feature-art" aria-label={`Open ${displayItems[0].title}`}>
+            <AnimeImage
+              src={displayItems[0].image}
+              title={displayItems[0].title}
+              width={520}
+              height={780}
+              priority
+              sizes="(max-width: 700px) 88vw, 42vw"
+            />
+          </Link>
+          <div className="cinema-browse-feature-copy">
+            <p className="cinema-eyebrow">Featured from the archive</p>
+            <h2><Link href={`/anime/${displayItems[0].id}`}>{displayItems[0].title}</Link></h2>
+            <p className="cinema-browse-feature-meta">
+              {displayItems[0].format} · {displayItems[0].status}
+              {displayItems[0].year ? ` · ${displayItems[0].year}` : ""}
+              {displayItems[0].score > 0 ? ` · ★ ${displayItems[0].score.toFixed(1)}` : ""}
+            </p>
+            <p className="cinema-browse-feature-desc">
+              {displayItems[0].description?.replace(/<[^>]*>/g, "").slice(0, 260) || "Open the title dossier and explore the full record."}
+            </p>
+            <Link className="btn btn-accent btn-sm" href={`/anime/${displayItems[0].id}`}>Open dossier</Link>
+          </div>
+        </article>
+      ) : null}
+
       <div className="section-head">
         <h2>
           <span className="accent">📡</span> {title}
@@ -508,7 +538,7 @@ export function BrowseClient({
         </div>
       ) : (
         <>
-          <AnimeGrid items={displayItems} trackBehaviour />
+          <div className="cinema-browse-grid"><AnimeGrid items={displayItems.slice(1)} trackBehaviour /></div>
           {hasNext ? (
             <div style={{ textAlign: "center", marginTop: 28 }}>
               <button
