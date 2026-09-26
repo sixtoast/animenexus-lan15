@@ -901,14 +901,14 @@
 }
 .nexus-home .nexus-index-card{
   transform:
-    translate3d(var(--nexus-pointer-drift-x) * .025,var(--proximity-lift),0)
+    translate3d(calc(var(--nexus-pointer-drift-x) * .025),var(--proximity-lift),0)
     rotateX(var(--tilt-x,0deg))
     rotateY(var(--tilt-y,0deg))
     rotateZ(var(--card-rotate,0deg));
 }
 .nexus-home .nexus-archive-item{
   transform:
-    translate3d(var(--nexus-pointer-drift-x) * .012,var(--archive-lift,0px),0)
+    translate3d(calc(var(--nexus-pointer-drift-x) * .012),var(--archive-lift,0px),0)
     rotateX(var(--tilt-x,0deg))
     rotateY(var(--tilt-y,0deg));
 }
