@@ -60,7 +60,13 @@ export function HomePersonalizedProvider({ children, initial, limit = 180 }: { c
         if (Object.keys(patch).length) writeIntentSession(patch);
       }
     }
-    setIntelligenceRevision((value) => value + 1);
+    const refreshRanking =
+      signal.type === "filter" ||
+      (signal.type === "focus" &&
+        (signal.target === "recommendations" || signal.target === "mood"));
+    if (refreshRanking) {
+      setIntelligenceRevision((value) => value + 1);
+    }
   }), []);
 
   useEffect(() => {
