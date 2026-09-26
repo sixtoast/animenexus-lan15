@@ -1200,3 +1200,134 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
   transform-origin:50% 50%!important;
   will-change:transform!important;
 }
+
+
+/* SITE-WIDE TACTILE LAYER — subtle enough for utility pages, visible enough to feel alive.
+   No mascot selectors are included. */
+.btn,
+.nav-link,
+.nav-dock-item,
+.feed-tab,
+.segmented button,
+.view-mode-toggle button,
+.filter-chip,
+.site-footer a {
+  transition:
+    transform .45s cubic-bezier(.2,.72,.18,1),
+    color .3s ease,
+    border-color .3s ease,
+    background-color .3s ease,
+    opacity .3s ease;
+}
+
+.btn:hover,
+.feed-tab:hover,
+.segmented button:hover,
+.view-mode-toggle button:hover,
+.filter-chip:hover {
+  transform: translateY(-2px);
+}
+
+.btn:active,
+.nav-dock-item:active,
+.feed-tab:active,
+.segmented button:active,
+.view-mode-toggle button:active {
+  transform: translateY(1px) scale(.985);
+}
+
+.nav-desktop .nav-link {
+  position: relative;
+}
+
+.nav-desktop .nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: -9px;
+  height: 1px;
+  background: var(--cinema-gold);
+  transition: right .55s cubic-bezier(.2,.72,.18,1);
+}
+
+.nav-desktop .nav-link:hover::after,
+.nav-desktop .nav-link.active::after {
+  right: 0;
+}
+
+.anime-card,
+.feature-card,
+.recommend-card,
+.catchup-card,
+.schedule-card,
+.tool-card {
+  transition:
+    transform .55s cubic-bezier(.2,.72,.18,1),
+    border-color .35s ease,
+    box-shadow .55s ease,
+    filter .55s ease;
+}
+
+.anime-card:hover,
+.feature-card:hover,
+.recommend-card:hover,
+.catchup-card:hover,
+.schedule-card:hover,
+.tool-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(242,179,95,.28);
+  box-shadow: 0 22px 60px rgba(0,0,0,.22);
+}
+
+.anime-card img,
+.feature-card img,
+.recommend-card img,
+.catchup-card img,
+.schedule-card img {
+  transition: transform .75s cubic-bezier(.2,.72,.18,1), filter .6s ease;
+}
+
+.anime-card:hover img,
+.feature-card:hover img,
+.recommend-card:hover img,
+.catchup-card:hover img,
+.schedule-card:hover img {
+  transform: scale(1.025);
+  filter: saturate(1.04) contrast(1.02);
+}
+
+.site-footer a {
+  text-decoration-color: rgba(242,179,95,.28);
+  text-underline-offset: 4px;
+}
+
+.site-footer a:hover {
+  color: var(--cinema-gold);
+  text-decoration-color: currentColor;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .nav-link,
+  .nav-dock-item,
+  .feed-tab,
+  .segmented button,
+  .view-mode-toggle button,
+  .filter-chip,
+  .site-footer a,
+  .anime-card,
+  .feature-card,
+  .recommend-card,
+  .catchup-card,
+  .schedule-card,
+  .tool-card,
+  .anime-card img,
+  .feature-card img,
+  .recommend-card img,
+  .catchup-card img,
+  .schedule-card img {
+    transition: none !important;
+    transform: none !important;
+  }
+}
