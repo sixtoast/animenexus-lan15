@@ -211,7 +211,9 @@ export function NexusWorlds({ candidates }: Props) {
       const dt = Math.min(48, Math.max(8, now - previousNow));
       previousNow = now;
 
-      if (!dragRef.current.active && Math.abs(angularVelocity) > 0.0008) {
+      if (dragRef.current.active) {
+        orbitPhase = Number(field.dataset.orbitDrag || orbitPhase);
+      } else if (Math.abs(angularVelocity) > 0.0008) {
         orbitPhase += angularVelocity * (dt / 1000);
         angularVelocity *= Math.pow(0.035, dt / 1000);
         field.dataset.orbitInertia = angularVelocity.toFixed(4);
