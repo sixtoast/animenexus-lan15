@@ -477,7 +477,6 @@ export function NexusWorlds({ candidates }: Props) {
             style={{
               "--node-x": position.x,
               "--node-y": position.y,
-              viewTransitionName: getAnimeViewTransitionName(anime.id),
             } as CSSProperties}
             onMouseEnter={() => { setActive(index); setArmed(index); fieldRef.current?.setAttribute("data-lock-target", String(index)); }}
             onFocus={() => { setActive(index); setArmed(index); fieldRef.current?.setAttribute("data-lock-target", String(index)); }}
@@ -511,7 +510,10 @@ export function NexusWorlds({ candidates }: Props) {
           >
             <span className="nexus-world-node-motion">
               <span className="nexus-world-node-orbit-motion">
-              <span className="nexus-world-node-art">
+              <span
+                className="nexus-world-node-art"
+                style={{ viewTransitionName: getAnimeViewTransitionName(anime.id) } as CSSProperties}
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={anime.image} alt="" loading="lazy" />
                 <b>{String(index + 1).padStart(2, "0")}</b>
