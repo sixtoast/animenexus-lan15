@@ -55,6 +55,7 @@ export function NexusWorlds({ candidates }: Props) {
   const [armed, setArmed] = useState<number | null>(null);
   const [secret, setSecret] = useState(false);
   const [entered, setEntered] = useState(false);
+  const [travelling, setTravelling] = useState<number | null>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
   const dragRef = useRef({ active: false, startX: 0, startRotation: 0 });
@@ -403,7 +404,7 @@ export function NexusWorlds({ candidates }: Props) {
   return (
     <div
       ref={fieldRef}
-      className={"nexus-world-map" + (entered ? " is-entered" : "") + (active !== null ? " has-active" : "") + (secret ? " has-secret" : "") + (commandLabel ? " is-ai-directed" : "")}
+      className={"nexus-world-map" + (entered ? " is-entered" : "") + (active !== null ? " has-active" : "") + (secret ? " has-secret" : "") + (commandLabel ? " is-ai-directed" : "") + (travelling !== null ? " is-travelling" : "")}
     >
       <div className="nexus-world-grid" aria-hidden />
       <div className="nexus-world-scanline" aria-hidden />
@@ -469,7 +470,7 @@ export function NexusWorlds({ candidates }: Props) {
           <Link
             key={anime.id}
             href={"/anime/" + anime.id}
-            className={"nexus-world-node nexus-world-node--" + (index + 1) + (isActive ? " is-active" : "") + (isArmed ? " is-armed" : "")}
+            className={"nexus-world-node nexus-world-node--" + (index + 1) + (isActive ? " is-active" : "") + (isArmed ? " is-armed" : "") + (travelling === index ? " is-travelling-origin" : "")}
             style={{ "--node-x": position.x, "--node-y": position.y } as React.CSSProperties}
             onMouseEnter={() => { setActive(index); setArmed(index); fieldRef.current?.setAttribute("data-lock-target", String(index)); }}
             onFocus={() => { setActive(index); setArmed(index); fieldRef.current?.setAttribute("data-lock-target", String(index)); }}
@@ -483,6 +484,12 @@ export function NexusWorlds({ candidates }: Props) {
                 return;
               }
               event.preventDefault();
+              setTravelling(index);
+              fieldRef.current?.setAttribute("data-motion-lock", String(index));
+              window.setTimeout(() => {
+                setTravelling(null);
+                fieldRef.current?.removeAttribute("data-motion-lock");
+              }, 1100);
               withViewTransition(
                 () => router.push("/anime/" + anime.id),
                 {
