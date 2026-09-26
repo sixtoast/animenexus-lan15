@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
 import type { Anime } from "@/lib/types";
@@ -29,6 +29,8 @@ export function DetailCoverMaterial({
   const [artworkRole, setArtworkRole] = useState("key-art");
   const [artworkTransition, setArtworkTransition] = useState(false);
   const [previousCover, setPreviousCover] = useState<string | null>(null);
+  const coverRef = useRef(cover);
+  coverRef.current = cover;
 
   useEffect(() => {
     const key = `${COVER_KEY_PREFIX}${anime.id}`;
@@ -46,7 +48,7 @@ export function DetailCoverMaterial({
     const onArtworkSelected = (event: Event) => {
       const detail = (event as CustomEvent<{ animeId?: number; url?: string | null; role?: string }>).detail;
       if (detail?.animeId === anime.id) {
-        setPreviousCover(cover);
+        setPreviousCover(coverRef.current);
         setArtworkTransition(true);
         window.setTimeout(() => {
           setArtworkTransition(false);
@@ -67,7 +69,7 @@ export function DetailCoverMaterial({
       document.documentElement.style.removeProperty("--detail-artwork-image");
       document.documentElement.style.removeProperty("--detail-artwork-accent");
     };
-  }, [anime.id, anime.image, cover]);
+  }, [anime.id, anime.image]);
 
   const vars = materialCssVars(materialFromAnimeEntity({ ...anime, image: cover }));
   const vt = viewTransitionName ?? getAnimeViewTransitionName(anime.id);
