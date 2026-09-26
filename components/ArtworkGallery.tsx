@@ -94,6 +94,9 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
       const asset = stored ? assets.find((item) => item.url === stored) : null;
       setSelectedRole(asset ? assetRole(asset) : "key-art");
       setSelectedImage(stored);
+      window.dispatchEvent(new CustomEvent(COVER_EVENT, {
+        detail: { animeId, url: stored, role: asset ? assetRole(asset) : "key-art" },
+      }));
     } catch {
       setSelectedCover(null);
     }
