@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { Anime } from "@/lib/types";
 import { getAnimeObjectId, withViewTransition } from "@/lib/view-transition";
+import { playInteractionSound } from "@/lib/sound-engine";
 import { useHomePersonalizedPool } from "@/lib/use-home-personalized-pool";
 import { claimNexusCommand, getLastNexusCommand, onNexusSignal, readNexusFieldState, type NexusFieldMode } from "@/lib/nexus-intelligence";
 
