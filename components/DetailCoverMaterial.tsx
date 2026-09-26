@@ -27,6 +27,7 @@ export function DetailCoverMaterial({
 }) {
   const [cover, setCover] = useState(anime.image);
   const [artworkRole, setArtworkRole] = useState("key-art");
+  const [artworkTransition, setArtworkTransition] = useState(false);
 
   useEffect(() => {
     const key = `${COVER_KEY_PREFIX}${anime.id}`;
@@ -44,6 +45,8 @@ export function DetailCoverMaterial({
     const onArtworkSelected = (event: Event) => {
       const detail = (event as CustomEvent<{ animeId?: number; url?: string | null; role?: string }>).detail;
       if (detail?.animeId === anime.id) {
+        setArtworkTransition(true);
+        window.setTimeout(() => setArtworkTransition(false), 720);
         setCover(detail.url || anime.image);
         const role = detail.role || "key-art";
         setArtworkRole(role);
@@ -66,14 +69,13 @@ export function DetailCoverMaterial({
 
   return (
     <div
-      className={`detail-cover-material artwork-role--${artworkRole}`}
+      className={`detail-cover-material artwork-role--${artworkRole}${artworkTransition ? " is-artwork-transitioning" : ""}`}
       data-artwork-role={artworkRole}
       data-anime-object-id={getAnimeObjectId(anime.id)}
       style={{
         ...vars,
         "--artwork-role": artworkRole,
       } as CSSProperties}
-      data-artwork-role={artworkRole}
     >
       <AnimeImage
         className="detail-cover"
