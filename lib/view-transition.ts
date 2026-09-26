@@ -123,5 +123,6 @@ export function withViewTransition(update: () => void, scene: MotionScene = {}):
     transition.finished.finally(clearMotionScene);
   } catch {
     update();
+    window.setTimeout(clearMotionScene, 80);
   }
 }
