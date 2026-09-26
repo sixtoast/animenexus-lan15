@@ -149,5 +149,6 @@ export default async function HomePage() {
       <section className="container nexus-quote"><QuoteBanner /></section>
       <SessionQuietNote />
     </main>
+    </HomePersonalizationProvider>
   );
 }
