@@ -1,0 +1,15 @@
+.cinema-detail-page{--detail-pointer-x:50%;--detail-pointer-y:30%;--detail-pointer-dx:0px;--detail-pointer-dy:0px;position:relative;isolation:isolate;overflow:clip;background:radial-gradient(65vw 48vw at var(--detail-pointer-x) var(--detail-pointer-y),rgba(242,179,95,.06),transparent 64%)}
+.cinema-detail-page .detail-banner{transform:translate3d(var(--detail-pointer-dx),var(--detail-pointer-dy),0) scale(1.025);transform-origin:center top;transition:transform 1.2s cubic-bezier(.22,1,.36,1)}
+.cinema-detail-page .detail-wrap{position:relative}
+.cinema-detail-page .detail-wrap:before{content:"DOSSIER";position:absolute;right:0;top:28px;color:rgba(244,239,231,.18);font-size:.55rem;letter-spacing:.24em}
+.cinema-detail-page .detail-cover-material{transition:transform .7s cubic-bezier(.22,1,.36,1);transform:translate3d(calc(var(--detail-pointer-dx)*.35),calc(var(--detail-pointer-dy)*.35),0)}
+.cinema-detail-page .detail-cover-material:hover{transform:translate3d(var(--detail-pointer-dx),var(--detail-pointer-dy),0) rotateY(-2deg) rotateX(1deg)}
+.cinema-detail-page .detail-info h1{text-wrap:balance}
+.cinema-detail-page .detail-meta{position:relative}
+.cinema-detail-page .detail-meta:before{content:"";width:34px;height:1px;background:var(--cinema-gold,#f2b35f);margin-right:2px;align-self:center}
+.cinema-detail-page .detail-section{position:relative;transition:opacity .7s ease,transform .7s cubic-bezier(.22,1,.36,1);opacity:.62;transform:translateY(12px)}
+.cinema-detail-page .detail-section.is-detail-active{opacity:1;transform:none}
+.cinema-detail-page .detail-section:before{content:"";position:absolute;left:0;top:-1px;width:clamp(36px,8vw,110px);height:1px;background:linear-gradient(90deg,rgba(242,179,95,.75),transparent);transform:scaleX(.5);transform-origin:left;transition:transform .8s cubic-bezier(.22,1,.36,1)}
+.cinema-detail-page .detail-section.is-detail-active:before{transform:scaleX(1)}
+@media(max-width:760px){.cinema-detail-page .detail-wrap:before{display:none}.cinema-detail-page .detail-cover-material{transform:none}.cinema-detail-page .detail-cover-material:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){.cinema-detail-page .detail-banner,.cinema-detail-page .detail-cover-material,.cinema-detail-page .detail-section{transform:none!important;transition:none!important}.cinema-detail-page .detail-section{opacity:1}}
