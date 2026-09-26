@@ -136,7 +136,12 @@ export function NexusWorlds({ candidates }: Props) {
     const travelDuration = mobile ? 1500 : 1750;
     const orbitDuration = mobile ? 30000 : 36000;
     const delayStep = mobile ? 70 : 90;
+
     let raf = 0;
+    let previousNow = performance.now();
+    let orbitPhase = 0;
+    let angularVelocity = 0;
+    let lastDragTime = 0;
     const started = performance.now();
 
     const geometry = nodes.map((node, index) => {
@@ -153,6 +158,8 @@ export function NexusWorlds({ candidates }: Props) {
 
     const radiusX = Math.min(...geometry.map(g => g.maxX), rect.width * (mobile ? 0.44 : 0.46));
     const radiusY = Math.min(...geometry.map(g => g.maxY), rect.height * (mobile ? 0.36 : 0.40));
+    const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
     geometry.forEach(({ node }) => {
       const motion = node.querySelector<HTMLElement>(".nexus-world-node-motion");
@@ -165,31 +172,74 @@ export function NexusWorlds({ candidates }: Props) {
       orbit.style.transform = "translate3d(0,0,0) scale(1) rotateZ(0deg)";
     });
 
-    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+    const onDragMove = (event: PointerEvent) => {
+      if (!dragRef.current.active) return;
+      const now = performance.now();
+      const current = Number(field.dataset.orbitDrag || "0");
+      const next = dragRef.current.startRotation + (event.clientX - dragRef.current.startX) * 0.004;
+      const dt = Math.max(8, now - (lastDragTime || now - 16));
+      angularVelocity = clamp(((next - current) / dt) * 1000, -1.6, 1.6);
+      field.dataset.orbitDrag = next.toFixed(4);
+      lastDragTime = now;
+    };
+
+    const onDragStart = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      const current = Number(field.dataset.orbitDrag || "0");
+      dragRef.current = { active: true, startX: event.clientX, startRotation: current };
+      lastDragTime = performance.now();
+      angularVelocity = 0;
+      field.setPointerCapture?.(event.pointerId);
+      field.classList.add("is-dragging");
+    };
+
+    const onDragEnd = (event: PointerEvent) => {
+      if (!dragRef.current.active) return;
+      dragRef.current.active = false;
+      field.releasePointerCapture?.(event.pointerId);
+      field.classList.remove("is-dragging");
+      angularVelocity = clamp(angularVelocity, -1.25, 1.25);
+    };
+
+    field.addEventListener("pointermove", onDragMove);
+    field.addEventListener("pointerdown", onDragStart);
+    field.addEventListener("pointerup", onDragEnd);
+    field.addEventListener("pointercancel", onDragEnd);
 
     const tick = (now: number) => {
       const elapsed = now - started;
+      const dt = Math.min(48, Math.max(8, now - previousNow));
+      previousNow = now;
+
+      if (!dragRef.current.active && Math.abs(angularVelocity) > 0.0008) {
+        orbitPhase += angularVelocity * (dt / 1000);
+        angularVelocity *= Math.pow(0.035, dt / 1000);
+        field.dataset.orbitInertia = angularVelocity.toFixed(4);
+      }
+
+      const pointer = pointerRef.current;
+      const pointerX = pointer.active ? pointer.x : 0;
+      const pointerY = pointer.active ? pointer.y : 0;
+      const lockTarget = Number(field.dataset.lockTarget ?? "-1");
 
       geometry.forEach(({ node, index, baseX, baseY, lineX, lineY, phase }) => {
         const orbit = node.querySelector<HTMLElement>(".nexus-world-node-orbit-motion");
         if (!orbit) return;
 
         const local = Math.max(0, elapsed - index * delayStep);
-        const pointer = pointerRef.current;
-        const pointerX = pointer.active ? pointer.x : 0;
-        const pointerY = pointer.active ? pointer.y : 0;
         let x = lineX - baseX;
         let y = lineY - baseY;
         let rotation = index % 2 === 0 ? -28 : 28;
         let rotateX = 0;
         let rotateY = 0;
         let scale = 0.82;
-        let depth = 0.5;
+        let attraction = 0;
+        let repulsion = 0;
 
         if (local >= lineupDuration) {
           const travelT = Math.min(1, (local - lineupDuration) / travelDuration);
           const p = ease(travelT);
-          const angle = phase;
+          const angle = phase + orbitPhase;
           const targetX = centreX + Math.cos(angle) * radiusX - baseX;
           const targetY = centreY + Math.sin(angle) * radiusY - baseY;
           x = lineX - baseX + (targetX - (lineX - baseX)) * p;
@@ -199,27 +249,62 @@ export function NexusWorlds({ candidates }: Props) {
 
           if (travelT >= 1) {
             const orbitT = (local - lineupDuration - travelDuration) / orbitDuration;
-            const dragRotation = eventRotation(fieldRef.current);
-            const a = phase + orbitT * Math.PI * 2 + dragRotation;
+            const a = phase + orbitT * Math.PI * 2 + orbitPhase;
             const dynamicRadiusX = radiusX * (1 - Math.abs(pointerX) * 0.035);
             const dynamicRadiusY = radiusY * (1 - Math.abs(pointerY) * 0.025);
             const fieldCentreX = centreX + pointerX * 18;
             const fieldCentreY = centreY + pointerY * 12;
-            x = fieldCentreX + Math.cos(a) * dynamicRadiusX - baseX;
-            y = fieldCentreY + Math.sin(a) * dynamicRadiusY - baseY;
-            depth = (Math.sin(a) + 1) / 2;
-            scale = 0.90 + depth * 0.12;
+            const orbitalX = fieldCentreX + Math.cos(a) * dynamicRadiusX;
+            const orbitalY = fieldCentreY + Math.sin(a) * dynamicRadiusY;
+            x = orbitalX - baseX;
+            y = orbitalY - baseY;
+
+            // The pointer creates a soft magnetic field around each signal.
+            const pointerNX = pointerX * 0.5 + 0.5;
+            const pointerNY = pointerY * 0.5 + 0.5;
+            const dx = pointerNX - orbitalX / rect.width;
+            const dy = pointerNY - orbitalY / rect.height;
+            const distance = Math.hypot(dx, dy);
+
+            if (pointer.active && distance < 0.30) {
+              attraction = (1 - distance / 0.30) * (mobile ? 16 : 24);
+              x += dx * attraction;
+              y += dy * attraction;
+            }
+            if (pointer.active && distance < 0.12) {
+              repulsion = (1 - distance / 0.12) * (mobile ? 12 : 18);
+              const nx = distance > 0.001 ? dx / distance : Math.cos(a);
+              const ny = distance > 0.001 ? dy / distance : Math.sin(a);
+              x -= nx * repulsion;
+              y -= ny * repulsion;
+            }
+
+            if (lockTarget === index) {
+              const lockPulse = 0.5 + 0.5 * Math.sin(now * 0.005);
+              x += pointerX * 5 * lockPulse;
+              y += pointerY * 4 * lockPulse;
+              scale += 0.045 + lockPulse * 0.025;
+              rotateY += pointerX * 3;
+              rotateX -= pointerY * 2;
+            }
+
+            const depth = (Math.sin(a) + 1) / 2;
+            scale = Math.min(1.18, 0.90 + depth * 0.12 + attraction / (mobile ? 700 : 900));
             rotation = Math.cos(a) * 2.2;
-            rotateY = Math.sin(a) * 7 + pointerX * 2.5;
-            rotateX = -Math.cos(a) * 4 + pointerY * -2.2;
+            rotateY += Math.sin(a) * 7 + pointerX * 2.5;
+            rotateX += -Math.cos(a) * 4 + pointerY * -2.2;
             node.style.setProperty("--orbit-depth", depth.toFixed(3));
             node.style.setProperty("--orbit-angle", a.toFixed(3));
+            node.style.setProperty("--orbit-attraction", attraction.toFixed(2));
+            node.style.setProperty("--orbit-repulsion", repulsion.toFixed(2));
           }
         }
 
-        orbit.style.transform = `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) perspective(900px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)}) rotateZ(${rotation.toFixed(2)}deg)`;
+        orbit.style.transform =
+          `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) perspective(900px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)}) rotateZ(${rotation.toFixed(2)}deg)`;
+
         if (local >= lineupDuration + travelDuration) {
-          const a = phase + ((local - lineupDuration - travelDuration) / orbitDuration) * Math.PI * 2;
+          const a = phase + ((local - lineupDuration - travelDuration) / orbitDuration) * Math.PI * 2 + orbitPhase;
           node.style.zIndex = String(20 + Math.round(((Math.sin(a) + 1) / 2) * 20));
         } else {
           node.style.zIndex = String(30 + index);
@@ -233,13 +318,20 @@ export function NexusWorlds({ candidates }: Props) {
       geometry.forEach(({ node, baseX, baseY, phase }) => {
         const orbit = node.querySelector<HTMLElement>(".nexus-world-node-orbit-motion");
         if (!orbit) return;
-        orbit.style.transform = `translate3d(${(centreX + Math.cos(phase) * radiusX - baseX).toFixed(2)}px,${(centreY + Math.sin(phase) * radiusY - baseY).toFixed(2)}px,0) scale(1) rotateZ(0deg)`;
+        orbit.style.transform =
+          `translate3d(${(centreX + Math.cos(phase) * radiusX - baseX).toFixed(2)}px,${(centreY + Math.sin(phase) * radiusY - baseY).toFixed(2)}px,0) scale(1)`;
       });
-      return;
+    } else {
+      raf = window.requestAnimationFrame(tick);
     }
 
-    raf = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(raf);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      field.removeEventListener("pointermove", onDragMove);
+      field.removeEventListener("pointerdown", onDragStart);
+      field.removeEventListener("pointerup", onDragEnd);
+      field.removeEventListener("pointercancel", onDragEnd);
+    };
   }, [entered, worlds.length]);
 
   if (!worlds.length) return null;
@@ -335,9 +427,9 @@ export function NexusWorlds({ candidates }: Props) {
             href={"/anime/" + anime.id}
             className={"nexus-world-node nexus-world-node--" + (index + 1) + (isActive ? " is-active" : "") + (isArmed ? " is-armed" : "")}
             style={{ "--node-x": position.x, "--node-y": position.y } as React.CSSProperties}
-            onMouseEnter={() => { setActive(index); setArmed(index); }}
-            onFocus={() => { setActive(index); setArmed(index); }}
-            onBlur={() => { setArmed(null); }}
+            onMouseEnter={() => { setActive(index); setArmed(index); fieldRef.current?.setAttribute("data-lock-target", String(index)); }}
+            onFocus={() => { setActive(index); setArmed(index); fieldRef.current?.setAttribute("data-lock-target", String(index)); }}
+            onBlur={() => { setArmed(null); fieldRef.current?.setAttribute("data-lock-target", "-1"); }}
             onClick={(event) => {
               if (armed !== index) {
                 event.preventDefault();
