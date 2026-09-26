@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchAncestryGraph, fetchRelationsOnly } from "@/lib/anilist-detail";
+import { buildNexusGraph } from "@/lib/nexus-graph";
 
 export async function GET(req: NextRequest) {
   const id = parseInt(req.nextUrl.searchParams.get("id") || "", 10);
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
         hopRecLimit: 5,
         maxNodes: 36,
       });
-      return NextResponse.json(graph);
+      return NextResponse.json(buildNexusGraph(id, graph.nodes, graph.edges));
     }
     const data = await fetchRelationsOnly(id);
     return NextResponse.json({ data });
