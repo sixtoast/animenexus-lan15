@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import type { Anime } from "@/lib/types";
 import { getAnimeObjectId, withViewTransition } from "@/lib/view-transition";
 import { useHomePersonalizedPool } from "@/lib/use-home-personalized-pool";
@@ -220,6 +221,7 @@ export function NexusWorlds({ candidates }: Props) {
     field.addEventListener("pointercancel", onDragEnd);
 
     const tick = (now: number) => {
+      if (motionAbort.current) return;
       const elapsed = now - started;
       const dt = Math.min(48, Math.max(8, now - previousNow));
       previousNow = now;
@@ -349,6 +351,7 @@ export function NexusWorlds({ candidates }: Props) {
     }
 
     return () => {
+      safeCancel();
       window.cancelAnimationFrame(raf);
       field.removeEventListener("pointermove", onDragMove);
       field.removeEventListener("pointerleave", onPointerLeave);
@@ -471,7 +474,7 @@ export function NexusWorlds({ candidates }: Props) {
             key={anime.id}
             href={"/anime/" + anime.id}
             className={"nexus-world-node nexus-world-node--" + (index + 1) + (isActive ? " is-active" : "") + (isArmed ? " is-armed" : "") + (travelling === index ? " is-travelling-origin" : "")}
-            style={{ "--node-x": position.x, "--node-y": position.y } as React.CSSProperties}
+            style={{ "--node-x": position.x, "--node-y": position.y } as CSSProperties}
             onMouseEnter={() => { setActive(index); setArmed(index); fieldRef.current?.setAttribute("data-lock-target", String(index)); }}
             onFocus={() => { setActive(index); setArmed(index); fieldRef.current?.setAttribute("data-lock-target", String(index)); }}
             onBlur={() => { setArmed(null); fieldRef.current?.setAttribute("data-lock-target", "-1"); }}
