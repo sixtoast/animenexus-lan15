@@ -123,7 +123,7 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
       </div>
 
       {open ? (
-        <div id="artwork-gallery-content" className="artwork-gallery__content">
+        <div id="artwork-gallery-content" className="artwork-gallery__content" data-selected-role={selectedRole}>
           {selectedCover ? (
             <div className="artwork-gallery__selection">
               <span>{selectedRole === "alternate-art" ? "Alternate key visual is shaping this title's atmosphere." : "Custom key art selected for this device."}</span>
@@ -188,8 +188,9 @@ function ArtworkGrid({
         const isSelected = selectedCover === asset.url;
 
         return (
-          <div key={`${asset.url}-${index}`} className={`artwork-gallery__item${isSelected ? " is-selected" : ""}`}>
+          <div key={`${asset.url}-${index}`} className={`artwork-gallery__item${isSelected ? " is-selected" : ""}`} data-role={role}>
             <a href={asset.url} target="_blank" rel="noreferrer" className="artwork-gallery__link" aria-label={`Open artwork, ${label}`}>
+            <span className="artwork-gallery__role">{role.replace("-", " ")}</span>
             <span className="artwork-gallery__media">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={preview} alt="" loading="lazy" />
