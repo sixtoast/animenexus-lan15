@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { onNexusSignal } from "@/lib/nexus-intelligence";
 
 type RouteMode = "home" | "browse" | "anime" | "franchise" | "watchlist" | "tools" | "other";
 
@@ -23,6 +24,7 @@ export function NexusNavigationField() {
   const pathname = usePathname() || "/";
   const [mode, setMode] = useState<RouteMode>(() => modeFor(pathname));
   const [travelling, setTravelling] = useState(false);
+  const [focusTarget, setFocusTarget] = useState<string | null>(null);
   const previous = useRef(pathname);
 
   useEffect(() => {
@@ -34,11 +36,25 @@ export function NexusNavigationField() {
     return () => window.clearTimeout(t);
   }, [pathname]);
 
+  useEffect(() => onNexusSignal((signal) => {
+    if (signal.type !== "focus") return;
+    setFocusTarget(signal.target);
+    const aliases: Record<string, string> = {
+      discovery: "discovery", recommendations: "recommendations", mood: "mood",
+      "watch-order": "watch-order", franchise: "franchise", artwork: "artwork", watchlist: "watchlist",
+    };
+    const id = aliases[signal.target];
+    const target = id ? document.getElementById(id) : null;
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    const t = window.setTimeout(() => setFocusTarget(null), 900);
+    return () => window.clearTimeout(t);
+  }), []);
+
   const modeIndex = ["home","browse","anime","franchise","watchlist","tools","other"].indexOf(mode);
 
   return (
     <div
-      className={"nexus-navigation-field nexus-navigation-field--" + mode + (travelling ? " is-travelling" : "")}
+      className={"nexus-navigation-field nexus-navigation-field--" + mode + (travelling ? " is-travelling" : "") + (focusTarget ? " is-intelligence-focused" : "")}
       aria-hidden="true"
       style={{ "--nexus-mode-index": modeIndex } as React.CSSProperties}
     >
