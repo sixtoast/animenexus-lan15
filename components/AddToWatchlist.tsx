@@ -5,6 +5,7 @@ import { useWatchlist } from "@/components/WatchlistProvider";
 import { useToast } from "@/components/ToastProvider";
 import { Button } from "@/components/ui/Button";
 import { pushMascotReaction } from "@/lib/mascot/reaction-state";
+import { playInteractionSound } from "@/lib/sound-engine";
 
 const STATUSES: { value: WatchStatus; label: string }[] = [
   { value: "planning", label: "Planning" },
@@ -16,7 +17,7 @@ const STATUSES: { value: WatchStatus; label: string }[] = [
 
 type Props = { anime: Anime };
 const FAIL_MSG = "The signal didn’t hold — could not save to this browser.";
-const reactToOutcome=(ok:boolean,kind:"success"|"choice"="success")=>pushMascotReaction(ok?kind:"error",ok ? 0.78 : 0.88);
+const reactToOutcome=(ok:boolean,kind:"success"|"choice"="success")=>{pushMascotReaction(ok?kind:"error",ok ? 0.78 : 0.88);if(ok)playInteractionSound("watchlist");};
 
 export function AddToWatchlist({ anime }: Props) {
   const { ready, getEntry, add, remove, setStatus } = useWatchlist();
