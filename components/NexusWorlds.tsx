@@ -61,6 +61,10 @@ export function NexusWorlds({ candidates }: Props) {
   const [aiPulse, setAiPulse] = useState(0);
   const [aiPulsing, setAiPulsing] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
+  const worldsRef = useRef(worlds);
+  const fieldModeRef = useRef(fieldMode);
+  worldsRef.current = worlds;
+  fieldModeRef.current = fieldMode;
   const pointerRef = useRef({ x: 0, y: 0, active: false });
   const dragRef = useRef({ active: false, startX: 0, startRotation: 0 });
 
@@ -174,13 +178,15 @@ export function NexusWorlds({ candidates }: Props) {
 
     const radiusX = Math.min(...geometry.map(g => g.maxX), rect.width * (mobile ? 0.44 : 0.46));
     const radiusY = Math.min(...geometry.map(g => g.maxY), rect.height * (mobile ? 0.36 : 0.40));
-    // The canonical pool is already ranked. Translate that ordering into
-    // physical proximity so AI re-ranking is visible without introducing a
-    // second recommendation algorithm.
-    const rankWeights = worlds.map((_, index) => {
-      const t = worlds.length <= 1 ? 0 : index / (worlds.length - 1);
-      return 1 - t * (fieldMode === "recommendations" || fieldMode === "mood" ? 0.24 : 0.08);
-    });
+    // The canonical pool is already ranked. Read the current order on every
+    // frame so an AI re-rank changes orbital proximity without restarting the
+    // cinematic entrance or snapping the field back to lineup.
+    const getRankWeight = (index: number) => {
+      const currentWorlds = worldsRef.current;
+      const currentMode = fieldModeRef.current;
+      const t = currentWorlds.length <= 1 ? 0 : index / (currentWorlds.length - 1);
+      return 1 - t * (currentMode === "recommendations" || currentMode === "mood" ? 0.24 : 0.08);
+    };
     const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
     const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
@@ -309,7 +315,7 @@ export function NexusWorlds({ candidates }: Props) {
           if (travelT >= 1) {
             const orbitT = (local - lineupDuration - travelDuration) / orbitDuration;
             const a = phase + orbitT * Math.PI * 2 + orbitPhase;
-            const rankWeight = rankWeights[index] ?? 1;
+            const rankWeight = getRankWeight(index);
             const dynamicRadiusX = radiusX * rankWeight * (1 - Math.abs(pointerX) * 0.035);
             const dynamicRadiusY = radiusY * rankWeight * (1 - Math.abs(pointerY) * 0.025);
             const fieldCentreX = centreX + pointerX * 18;
@@ -395,7 +401,7 @@ export function NexusWorlds({ candidates }: Props) {
       field.removeEventListener("pointerup", onDragEnd);
       field.removeEventListener("pointercancel", onDragEnd);
     };
-  }, [entered, worlds.length, fieldMode, worlds.map((anime) => anime.id).join("|")]);
+  }, [entered, worlds.length]);
 
   useEffect(() => {
     const field = fieldRef.current;
