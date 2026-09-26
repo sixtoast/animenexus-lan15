@@ -8,6 +8,8 @@
  * - Reduced motion / missing API → immediate update, no mid-state lock
  */
 
+import { playTransitionSound } from "./sound-engine";
+
 export function prefersReducedMotion(): boolean {
   if (typeof document === "undefined") return true;
   if (document.documentElement.getAttribute("data-reduce-motion") === "true") {
@@ -111,9 +113,9 @@ export function withViewTransition(update: () => void, scene: MotionScene = {}):
   // spatial travel, then a restrained arrival cue.
   if (!prefersReducedMotion()) {
     if (scene.origin === "card" || scene.origin === "field") {
-      playInteractionSound("navigation", { gain: 0.55 });
+      playTransitionSound("navigation", "depart");
     } else if (scene.origin === "watchlist") {
-      playInteractionSound("navigation", { gain: 0.42 });
+      playTransitionSound("navigation", "depart");
     }
   }
   if (!canViewTransition()) {
@@ -131,7 +133,14 @@ export function withViewTransition(update: () => void, scene: MotionScene = {}):
     });
     transition.finished.then(() => {
       if (scene.route === "anime-detail" && !prefersReducedMotion()) {
-        playInteractionSound("discovery", { gain: 0.58 });
+        playTransitionSound(
+          scene.origin === "watchlist"
+            ? "watchlist"
+            : scene.origin === "node"
+              ? "franchise"
+              : "discovery",
+          "arrive",
+        );
       }
     }).catch(() => undefined).finally(clearMotionScene);
   } catch {
