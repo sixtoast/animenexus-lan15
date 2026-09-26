@@ -234,7 +234,6 @@ export function FranchisePathPanel({
   }, [centerId, centerTitle, centerYear, centerFormat, relations]);
 
   const plan = remotePlan || fallbackPlan;
-  const graphNodes = remotePlan?.graph?.nodes || [];
   const graphEdges = remotePlan?.graph?.edges || [];
 
   const constellation = useMemo(
