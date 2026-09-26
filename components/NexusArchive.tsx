@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useHomePersonalization } from "@/components/HomePersonalization";
+import { useHomePersonalizedPool } from "@/lib/use-home-personalized-pool";
 import type { Anime } from "@/lib/types";
 
 type Props = { items: Anime[] };
@@ -27,7 +27,13 @@ function Wall({ items, offset = 0 }: { items: Anime[]; offset?: number }) {
 }
 
 export function NexusArchive({ items }: Props) {
-  const { items: personalised, currentSeason, previousSeason, upcoming, archive } = useHomePersonalization();
+  const { pool: personalised } = useHomePersonalizedPool(items, 180);
+  const currentYear = new Date().getFullYear();
+  const currentSeason = personalised.filter((a) => Number(a.seasonYear || a.year) === currentYear || (a.status === "RELEASING" && Number(a.year) === currentYear));
+  const previousSeason = personalised.filter((a) => Number(a.seasonYear || a.year) === currentYear - 1);
+  const upcoming = personalised.filter((a) => a.status === "NOT_YET_RELEASED" || Number(a.seasonYear || a.year) > currentYear);
+  const usedIds = new Set([...currentSeason, ...previousSeason, ...upcoming].map((a) => a.id));
+  const archive = personalised.filter((a) => !usedIds.has(a.id));
   const source = personalised.length ? personalised : items;
   if (!source.length) return null;
 
