@@ -61,51 +61,63 @@ export function NexusWorlds({ candidates }: Props) {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const fieldRect = field.getBoundingClientRect();
     const mobile = window.matchMedia("(max-width: 700px)").matches;
-    const spacing = mobile ? 58 : 104;
-    const lineupY = fieldRect.height * (mobile ? 0.47 : 0.49);
+    const spacing = mobile ? 52 : 108;
+    const lineupY = fieldRect.height * (mobile ? 0.44 : 0.48);
     const centreX = fieldRect.left + fieldRect.width / 2;
     const centreY = fieldRect.top + fieldRect.height / 2;
+    const timers: number[] = [];
+    const animations: Animation[] = [];
 
     nodes.forEach((node, index) => {
       const rect = node.getBoundingClientRect();
       const nodeCX = rect.left + rect.width / 2;
       const nodeCY = rect.top + rect.height / 2;
-      const lineupCX = fieldRect.left + fieldRect.width / 2 + (index - (nodes.length - 1) / 2) * spacing;
-      node.style.setProperty("--line-dx", (lineupCX - nodeCX) + "px");
-      node.style.setProperty("--line-dy", (fieldRect.top + lineupY - nodeCY) + "px");
-      node.style.setProperty("--spin-turns", index % 2 === 0 ? "2" : "-2");
+      const lineupCX = centreX + (index - (nodes.length - 1) / 2) * spacing;
 
-      if (reduceMotion) return;
+      node.style.setProperty("--line-dx", lineupCX - nodeCX + "px");
+      node.style.setProperty("--line-dy", fieldRect.top + lineupY - nodeCY + "px");
+      node.style.setProperty("--spin-turns", index % 2 === 0 ? "1.75" : "-1.75");
+      node.style.setProperty("--entry-delay", index * (mobile ? 75 : 95) + "ms");
+
+      const orbit = node.querySelector<HTMLElement>(".nexus-world-node-orbit-motion");
+      if (!orbit || reduceMotion) return;
 
       const dx = nodeCX - centreX;
       const dy = nodeCY - centreY;
-      const radius = Math.hypot(dx, dy);
+      const radius = Math.max(Math.hypot(dx, dy), mobile ? 112 : 150);
       const startAngle = Math.atan2(dy, dx);
-      const orbitRadius = Math.max(radius, 90);
-      const orbitFrames = Array.from({ length: 13 }, (_, frame) => {
-        const angle = startAngle + (Math.PI * 2 * frame) / 12;
-        const x = Math.cos(angle) * orbitRadius - dx;
-        const y = Math.sin(angle) * orbitRadius - dy;
-        const tangent = Math.cos(angle) * 3.5;
+      const ellipseY = mobile ? 0.72 : 0.64;
+
+      const orbitFrames = Array.from({ length: 25 }, (_, frame) => {
+        const progress = frame / 24;
+        const angle = startAngle + progress * Math.PI * 2;
+        const x = Math.cos(angle) * radius - dx;
+        const y = Math.sin(angle) * radius * ellipseY - dy;
+        const depth = (Math.sin(angle) + 1) / 2;
+        const scale = 0.91 + depth * 0.16;
+        const tilt = Math.cos(angle) * 2.8;
         return {
-          offset: frame / 12,
-          transform: "translate3d(" + x + "px, " + y + "px, 0) rotateZ(" + tangent + "deg)",
+          offset: progress,
+          transform: "translate3d(" + x + "px," + y + "px,0) scale(" + scale.toFixed(3) + ") rotateZ(" + tilt.toFixed(2) + "deg)",
         };
       });
 
-      const orbit = node.querySelector<HTMLElement>(".nexus-world-node-motion");
-      if (orbit) {
-        window.setTimeout(() => {
-          orbit.animate(orbitFrames, {
-            duration: 22000 + index * 900,
-            iterations: Infinity,
-            easing: "linear",
-          });
-        }, 2400 + index * 70);
-      }
+      const timer = window.setTimeout(() => {
+        const animation = orbit.animate(orbitFrames, {
+          duration: 26000 + index * 1100,
+          iterations: Infinity,
+          easing: "linear",
+        });
+        animations.push(animation);
+      }, 3400 + index * 100);
+      timers.push(timer);
     });
-  }, [entered, worlds.length]);
 
+    return () => {
+      timers.forEach(window.clearTimeout);
+      animations.forEach((animation) => animation.cancel());
+    };
+  }, [entered, worlds.length]);
   if (!worlds.length) return null;
 
   const activeAnime = active === null ? null : worlds[active];
