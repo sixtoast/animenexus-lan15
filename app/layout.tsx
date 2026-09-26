@@ -32,6 +32,7 @@ import { FirstVisitHost } from "@/components/FirstVisitHost";
 import { EnvironmentController } from "@/components/EnvironmentController";
 import { CinematographyController } from "@/components/CinematographyController";
 import { NexusRouteBeacon } from "@/components/NexusRouteBeacon";
+import { NexusNavigationField } from "@/components/NexusNavigationField";
 import { MascotHost } from "@/components/mascot/MascotHost";
 import { MascotErrorBoundary } from "@/components/mascot/MascotErrorBoundary";
 import { ErrorReportingBoot } from "@/components/ErrorReportingBoot";
@@ -104,6 +105,7 @@ import "./rive.css";
 import "./tool-identity.css";
 import "./restraint.css";
 import "./cinema-ui.css";
+import "./nexus-navigation-field.css";
 
 export const metadata: Metadata = {
   title: "AnimeNexus \u2014 Lantern",
@@ -188,6 +190,7 @@ export default function RootLayout({
                         <SessionUrlHydrate />
                       </Suspense>
                       <NexusRouteBeacon />
+                      <NexusNavigationField />
                       <EnvironmentController />
                       <CinematographyController />
                       <ScrollProgress />
