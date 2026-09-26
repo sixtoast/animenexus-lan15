@@ -268,7 +268,15 @@ export function WatchlistClient() {
                             return;
                           }
                           ev.preventDefault();
-                          withViewTransition(() => router.push(href));
+                          withViewTransition(
+                            () => router.push(href),
+                            {
+                              route: "anime-detail",
+                              origin: "watchlist",
+                              destination: "hero",
+                              objectId: getAnimeObjectId(e.id),
+                            },
+                          );
                         }}
                       >
                         <AnimeImage
