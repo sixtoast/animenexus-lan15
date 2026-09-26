@@ -139,6 +139,8 @@ export function NexusWorlds({ candidates }: Props) {
     const started = performance.now();
     let arrivalCuePlayed = false;
 
+    let motionAbort = false;
+
     const geometry = nodes.map((node, index) => {
       const w = node.offsetWidth;
       const h = node.offsetHeight;
@@ -223,7 +225,7 @@ export function NexusWorlds({ candidates }: Props) {
     field.addEventListener("pointercancel", onDragEnd);
 
     const tick = (now: number) => {
-      if (motionAbort.current) return;
+      if (motionAbort) return;
       const elapsed = now - started;
       const dt = Math.min(48, Math.max(8, now - previousNow));
       previousNow = now;
@@ -357,7 +359,7 @@ export function NexusWorlds({ candidates }: Props) {
     }
 
     return () => {
-      safeCancel();
+      motionAbort = true;
       window.cancelAnimationFrame(raf);
       field.removeEventListener("pointermove", onDragMove);
       field.removeEventListener("pointerleave", onPointerLeave);
