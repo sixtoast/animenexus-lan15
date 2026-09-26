@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { AnimeGrid } from "@/components/AnimeGrid";
 import { TonightIntentPanel } from "@/components/TonightIntentPanel";
 import { DiscoveryShelves } from "@/components/DiscoveryShelves";
 import { AvailableNowStrip } from "@/components/AvailableNowStrip";
@@ -11,6 +10,8 @@ import { ViewModeToggle } from "@/components/ViewModeToggle";
 import { SessionQuietNote } from "@/components/SessionQuietNote";
 import { CinemaMotion } from "@/components/CinemaMotion";
 import { HomeInteractionLayer } from "@/components/HomeInteractionLayer";
+import { HomeFeaturedSignal } from "@/components/HomeFeaturedSignal";
+import { HomePersonalizedIndex, HomeBeyondObvious } from "@/components/HomePersonalizedIndex";
 import { generateCandidatePool, poolToAnimeList } from "@/lib/recommend-candidates";
 import "./mood-home.css";
 import "./home-dash.css";
@@ -38,7 +39,6 @@ export default async function HomePage() {
   }
 
   const hero = items[0];
-  const feature = items.slice(1, 7);
 
   return (
     <main className="nexus-home">
@@ -58,28 +58,11 @@ export default async function HomePage() {
             <h1>Stories<br /><em>without</em><br />the noise.</h1>
             <p className="nexus-opening-lead">A living anime archive shaped by your taste, your watchlist and the feeling you are looking for next.</p>
             <div className="nexus-opening-actions">
-              <Link href={hero ? `/anime/${hero.id}` : "/browse"} className="nexus-button nexus-button--solid">
-                Enter the story <span>↗</span>
-              </Link>
+              <Link href="/browse" className="nexus-button nexus-button--solid">Explore your field <span>↗</span></Link>
               <Link href="/browse" className="nexus-button">Browse the archive</Link>
             </div>
           </div>
-          {hero ? (
-            <Link href={`/anime/${hero.id}`} className="nexus-opening-subject" aria-label={`Open featured title ${hero.title}`}>
-              <div className="nexus-opening-subject-image">
-                <div className="nexus-opening-subject-backplate" aria-hidden />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="nexus-opening-subject-echo" src={hero.image} alt="" aria-hidden />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={hero.image} alt="" />
-              </div>
-              <div className="nexus-opening-subject-info">
-                <span>FEATURED SIGNAL</span>
-                <strong>{hero.title}</strong>
-                <small>{hero.year || "—"} · {hero.format || "SERIES"} · ★ {hero.score > 0 ? hero.score.toFixed(1) : "—"}</small>
-              </div>
-            </Link>
-          ) : null}
+          <HomeFeaturedSignal candidates={items} />
           <div className="nexus-opening-rail" aria-hidden>
             <span className="nexus-opening-rail-label">DISCOVERY FIELD</span>
             <i />
@@ -122,7 +105,7 @@ export default async function HomePage() {
             <span>04 / WORLDS NEARBY</span>
             <h2>You are closer<br /><em>than you think.</em></h2>
           </div>
-          <p>Not a genre list. A field of adjacent stories, surfaced from the same catalogue you are already exploring.</p>
+          <p>Surprise-me discoveries pulled into the field, then arranged around the stories closest to your taste.</p>
         </div>
         <NexusWorlds candidates={items} />
       </section>
@@ -135,35 +118,11 @@ export default async function HomePage() {
             <div><span>05 / THE INDEX</span><h2>Worth a closer look.</h2></div>
             <Link href="/browse">View full archive ↗</Link>
           </div>
-          <div className="nexus-feature-field">
-            {feature.map((a, i) => (
-              <Link key={a.id} href={`/anime/${a.id}`} className={`nexus-index-card nexus-index-card--${i + 1}`}>
-                <div className="nexus-index-art">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={a.image} alt="" loading={i < 3 ? "eager" : "lazy"} />
-                  <span>{String(i + 1).padStart(2, "0")}</span>
-                </div>
-                <div className="nexus-index-meta"><strong>{a.title}</strong><small>{a.year || "—"} · ★ {a.score > 0 ? a.score.toFixed(1) : "—"}</small></div>
-              </Link>
-            ))}
-          </div>
+          <HomePersonalizedIndex candidates={items} />
         </div>
       </section>
 
-      <div
-        className="nexus-index-cut"
-        style={feature[0]?.image ? { backgroundImage: `linear-gradient(90deg, rgba(7,8,11,.94), rgba(7,8,11,.58) 45%, rgba(7,8,11,.86)), url("${feature[0].image}")` } : undefined}
-      >
-        <span>THE INDEX</span>
-        <strong>BEYOND<br />THE OBVIOUS.</strong>
-        {feature[0] ? (
-          <Link href={`/anime/${feature[0].id}`} className="nexus-index-cut-link">
-            <span>Continue with</span>
-            <strong>{feature[0].title}</strong>
-            <i>Open title ↗</i>
-          </Link>
-        ) : null}
-      </div>
+      <HomeBeyondObvious candidates={items} />
 
       <section className="container nexus-rails">
         <DiscoveryShelves candidates={items} />
