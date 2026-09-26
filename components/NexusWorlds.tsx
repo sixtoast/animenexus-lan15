@@ -68,6 +68,13 @@ export function NexusWorlds({ candidates }: Props) {
     const timers: number[] = [];
     const animations: Animation[] = [];
 
+    // One shared orbital system. Every card gets the same ellipse and angular
+    // velocity, with only its phase offset changing. This keeps the formation
+    // visually unified instead of giving each card its own orbit.
+    const radiusX = Math.min(fieldRect.width * (mobile ? 0.34 : 0.34), mobile ? 150 : 430);
+    const radiusY = Math.min(fieldRect.height * (mobile ? 0.28 : 0.30), mobile ? 165 : 245);
+    const orbitDuration = mobile ? 30000 : 36000;
+
     nodes.forEach((node, index) => {
       const rect = node.getBoundingClientRect();
       const nodeCX = rect.left + rect.width / 2;
@@ -80,37 +87,85 @@ export function NexusWorlds({ candidates }: Props) {
       node.style.setProperty("--entry-delay", index * (mobile ? 75 : 95) + "ms");
 
       const orbit = node.querySelector<HTMLElement>(".nexus-world-node-orbit-motion");
-      if (!orbit || reduceMotion) return;
+      if (!orbit) return;
 
-      const dx = nodeCX - centreX;
-      const dy = nodeCY - centreY;
-      const radius = Math.max(Math.hypot(dx, dy), mobile ? 112 : 150);
-      const startAngle = Math.atan2(dy, dx);
-      const ellipseY = mobile ? 0.72 : 0.64;
+      orbit.getAnimations().forEach((animation) => animation.cancel());
+      orbit.style.transform = "translate3d(0,0,0)";
 
-      const orbitFrames = Array.from({ length: 25 }, (_, frame) => {
-        const progress = frame / 24;
-        const angle = startAngle + progress * Math.PI * 2;
-        const x = Math.cos(angle) * radius - dx;
-        const y = Math.sin(angle) * radius * ellipseY - dy;
-        const depth = (Math.sin(angle) + 1) / 2;
-        const scale = 0.91 + depth * 0.16;
-        const tilt = Math.cos(angle) * 2.8;
-        return {
-          offset: progress,
-          transform: "translate3d(" + x + "px," + y + "px,0) scale(" + scale.toFixed(3) + ") rotateZ(" + tilt.toFixed(2) + "deg)",
-        };
-      });
+      if (reduceMotion) return;
 
-      const timer = window.setTimeout(() => {
-        const animation = orbit.animate(orbitFrames, {
-          duration: 26000 + index * 1100,
-          iterations: Infinity,
-          easing: "linear",
-        });
-        animations.push(animation);
-      }, 3400 + index * 100);
-      timers.push(timer);
+      const phase = (index / nodes.length) * Math.PI * 2;
+      const targetX = Math.cos(phase) * radiusX;
+      const targetY = Math.sin(phase) * radiusY;
+      const targetDepth = (Math.sin(phase) + 1) / 2;
+      const targetScale = 0.92 + targetDepth * 0.14;
+
+      // The card first travels from the completed lineup into its assigned
+      // orbital slot. The card itself never disappears or gets replaced.
+      const travelTimer = window.setTimeout(() => {
+        const travel = orbit.animate(
+          [
+            { transform: "translate3d(0,0,0) scale(1) rotateZ(0deg)" },
+            {
+              transform:
+                "translate3d(" +
+                targetX.toFixed(2) +
+                "px," +
+                targetY.toFixed(2) +
+                "px,0) scale(" +
+                targetScale.toFixed(3) +
+                ") rotateZ(" +
+                (Math.cos(phase) * 2.2).toFixed(2) +
+                "deg)",
+            },
+          ],
+          {
+            duration: 1250,
+            easing: "cubic-bezier(.16,.78,.16,1)",
+            fill: "forwards",
+          },
+        );
+
+        animations.push(travel);
+
+        travel.finished
+          .then(() => {
+            // All cards now use the exact same orbit duration. Their phase
+            // offsets keep them evenly distributed around one shared field.
+            const orbitFrames = Array.from({ length: 49 }, (_, frame) => {
+              const progress = frame / 48;
+              const angle = phase + progress * Math.PI * 2;
+              const x = Math.cos(angle) * radiusX;
+              const y = Math.sin(angle) * radiusY;
+              const depth = (Math.sin(angle) + 1) / 2;
+              const scale = 0.92 + depth * 0.14;
+              const tilt = Math.cos(angle) * 2.2;
+              return {
+                offset: progress,
+                transform:
+                  "translate3d(" +
+                  x.toFixed(2) +
+                  "px," +
+                  y.toFixed(2) +
+                  "px,0) scale(" +
+                  scale.toFixed(3) +
+                  ") rotateZ(" +
+                  tilt.toFixed(2) +
+                  "deg)",
+              };
+            });
+
+            const orbital = orbit.animate(orbitFrames, {
+              duration: orbitDuration,
+              iterations: Infinity,
+              easing: "linear",
+            });
+            animations.push(orbital);
+          })
+          .catch(() => {});
+      }, 2550 + index * (mobile ? 75 : 95));
+
+      timers.push(travelTimer);
     });
 
     return () => {
