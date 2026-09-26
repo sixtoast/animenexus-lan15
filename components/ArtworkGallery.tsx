@@ -10,20 +10,33 @@ type Props = {
 };
 
 type ArtworkGroup = {
-  id: string;
+  id: NonNullable<ArtworkAsset["role"]>;
   label: string;
   description: string;
   types: ArtworkAsset["type"][];
 };
 
 const GROUPS: ArtworkGroup[] = [
-  { id: "alternate", label: "Alternate covers & key visuals", description: "Poster variants and alternate promotional artwork.", types: ["alternate", "poster"] },
-  { id: "world", label: "World & promotional", description: "Backgrounds, banners and wide-format artwork.", types: ["background", "banner"] },
-  { id: "characters", label: "Character & clear art", description: "Character renders, transparent art and cut-out assets.", types: ["clearart"] },
-  { id: "stills", label: "Scene stills", description: "Frames and screenshots from the series.", types: ["still"] },
-  { id: "identity", label: "Logos & identity", description: "Series logos and branding assets.", types: ["logo"] },
-  { id: "other", label: "Other artwork", description: "Artwork that does not fit the supported categories above.", types: ["other"] },
+  { id: "key-art", label: "KEY ART", description: "Primary visual identity for the title.", types: ["poster"] },
+  { id: "alternate-art", label: "ALTERNATE ART", description: "Alternate covers and key visuals.", types: ["alternate"] },
+  { id: "character-art", label: "CHARACTER ART", description: "Character renders and clear art.", types: ["clearart"] },
+  { id: "background-art", label: "BACKGROUND ART", description: "Wide environments, banners and atmospheric imagery.", types: ["background", "banner"] },
+  { id: "stills", label: "STILLS", description: "Scene frames and screenshots.", types: ["still"] },
+  { id: "logos", label: "LOGOS", description: "Series marks and identity assets.", types: ["logo"] },
+  { id: "promotional", label: "PROMOTIONAL", description: "Campaign and promotional visuals.", types: [] },
+  { id: "other", label: "OTHER", description: "Assets without a more specific visual role.", types: ["other"] },
 ];
+
+function assetRole(asset: ArtworkAsset): NonNullable<ArtworkAsset["role"]> {
+  if (asset.role) return asset.role;
+  if (asset.type === "poster") return "key-art";
+  if (asset.type === "alternate") return "alternate-art";
+  if (asset.type === "clearart") return "character-art";
+  if (asset.type === "background" || asset.type === "banner") return "background-art";
+  if (asset.type === "still") return "stills";
+  if (asset.type === "logo") return "logos";
+  return "other";
+}
 
 function sortAssets(items: ArtworkAsset[]) {
   return [...items].sort((a, b) => {
@@ -74,7 +87,7 @@ export function ArtworkGallery({ assets, animeId, sourceNote }: Props) {
   const groups = useMemo(
     () => GROUPS.map((group) => ({
       ...group,
-      items: sortAssets(assets.filter((asset) => group.types.includes(asset.type))),
+      items: sortAssets(assets.filter((asset) => assetRole(asset) === group.id)),
     })).filter((group) => group.items.length > 0),
     [assets],
   );
@@ -160,7 +173,8 @@ function ArtworkGrid({
         const label = asset.language || asset.type;
         const dimensions = asset.width && asset.height ? `${asset.width} × ${asset.height}` : null;
 
-        const canSelect = asset.type === "alternate" || asset.type === "poster";
+        const role = assetRole(asset);
+        const canSelect = role === "key-art" || role === "alternate-art";
         const isSelected = selectedCover === asset.url;
 
         return (
@@ -183,7 +197,7 @@ function ArtworkGrid({
                 onClick={() => onChooseCover(asset.url)}
                 aria-pressed={isSelected}
               >
-                {isSelected ? "✓ Using as cover" : "Use as cover"}
+                {isSelected ? "✓ Use this atmosphere" : "Use this artwork"}
               </button>
             ) : null}
           </div>
