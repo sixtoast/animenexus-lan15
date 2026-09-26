@@ -162,11 +162,10 @@ function reducedAudio(): boolean {
 // A short, non-notification travel texture. It is intentionally procedural so it
 // does not add an asset/download to the transition path.
 export function playSpatialTravel(positionX: number, intensity = 0.35): void {
-  if (reducedAudio() || typeof window === "undefined") return;
+  if (reducedAudio() || !prefs.enabled || !unlocked) return;
+  if (!ensureGraph() || !ctx) return;
+
   try {
-    const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
     const now = ctx.currentTime;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -182,13 +181,17 @@ export function playSpatialTravel(positionX: number, intensity = 0.35): void {
     filter.frequency.exponentialRampToValueAtTime(320, now + 0.24);
     pan.pan.setValueAtTime(x * 0.72, now);
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(Math.max(0.008, intensity * 0.028), now + 0.025);
+    gain.gain.exponentialRampToValueAtTime(
+      Math.max(0.008, intensity * 0.028),
+      now + 0.025,
+    );
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
 
-    osc.connect(filter).connect(gain).connect(pan).connect(ctx.destination);
+    const cat = categoryGain.get("navigation");
+    if (!cat) return;
+    osc.connect(filter).connect(gain).connect(pan).connect(cat);
     osc.start(now);
     osc.stop(now + 0.25);
-    window.setTimeout(() => void ctx.close(), 420);
   } catch {
     // Audio is enhancement only; never allow it to affect interaction.
   }
