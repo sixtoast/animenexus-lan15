@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { AnimeRelation, GraphNode } from "@/lib/types";
 import { AncestrySpace2D } from "@/components/AncestrySpace2D";
+import { getAnimeObjectId, withViewTransition } from "@/lib/view-transition";
 
 type Props = {
   centerTitle: string;
@@ -70,13 +72,45 @@ function PosterCard({
   if (current || !href) {
     return <div className={"ab-card" + (current ? " ab-current" : "")}>{body}</div>;
   }
+  return <AncestryLink href={href} title={title} objectId={href.split("/").pop() || ""}>{body}</AncestryLink>;
+}
+
+
+function AncestryLink({
+  href,
+  title,
+  objectId,
+  children,
+}: {
+  href: string;
+  title: string;
+  objectId: string;
+  children: React.ReactNode;
+}) {
+  const router = useRouter();
   return (
-    <Link href={href} className="ab-card">
-      {body}
+    <Link
+      href={href}
+      className="ab-card"
+      data-motion-origin="node"
+      onClick={(event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+        event.preventDefault();
+        withViewTransition(
+          () => router.push(href),
+          {
+            route: "franchise",
+            origin: "node",
+            destination: "graph",
+            objectId: getAnimeObjectId(objectId),
+          },
+        );
+      }}
+    >
+      {children}
     </Link>
   );
 }
-
 export function AncestryGraph({
   centerTitle,
   centerId,
