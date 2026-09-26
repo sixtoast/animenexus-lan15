@@ -179,6 +179,8 @@ export function NexusWorlds({ candidates }: Props) {
 
     const onDragStart = (event: PointerEvent) => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
+      const target = event.target instanceof Element ? event.target : null;
+      if (target?.closest("a,button,input,textarea,select")) return;
       const current = Number(field.dataset.orbitDrag || "0");
       dragRef.current = { active: true, startX: event.clientX, startRotation: current };
       lastDragTime = performance.now();
