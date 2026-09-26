@@ -88,3 +88,25 @@ a.anime-card{text-decoration:none;color:inherit}
 .artwork-gallery__item.is-selected .artwork-gallery__choose{color:var(--color-accent);background:rgba(240,160,144,.075)}
 @media(max-width:560px){.artwork-gallery__selection{align-items:flex-start;flex-direction:column}}
 @media(prefers-reduced-motion:reduce){.artwork-gallery__choose{transition:none}}
+
+
+/* Anime Universe: one continuous spatial layer over the detail experience. */
+.anime-universe-nav{position:sticky;top:0;z-index:30;margin:8px 0 18px;padding:8px 0;background:linear-gradient(180deg,var(--color-bg,#090909) 55%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.anime-universe-nav__inner{display:flex;align-items:center;gap:14px;max-width:100%;min-width:0;padding:7px 10px;border:1px solid var(--color-border);border-radius:999px;background:rgba(10,10,10,.72);box-shadow:0 14px 40px rgba(0,0,0,.18)}
+.anime-universe-nav__brand{font-size:.62rem;letter-spacing:.16em;font-weight:700;color:var(--color-accent);padding-left:4px;flex:none}
+.anime-universe-nav__track{display:flex;align-items:center;gap:3px;overflow-x:auto;scrollbar-width:none;min-width:0;flex:1}
+.anime-universe-nav__track::-webkit-scrollbar{display:none}
+.anime-universe-nav button{display:flex;align-items:center;gap:7px;flex:none;border:0;background:transparent;color:var(--color-text-muted);padding:7px 10px;border-radius:999px;font:600 .68rem/1 inherit;cursor:pointer;transition:background .3s ease,color .3s ease,transform .3s ease}
+.anime-universe-nav button span{font-size:.55rem;opacity:.45;letter-spacing:.08em}
+.anime-universe-nav button:hover{color:var(--color-text);background:rgba(255,255,255,.045);transform:translateY(-1px)}
+.anime-universe-nav button.is-active{color:var(--color-text);background:rgba(240,160,144,.11);box-shadow:inset 0 0 0 1px rgba(240,160,144,.18)}
+.anime-universe-nav button.is-active span{color:var(--color-accent);opacity:1}
+.universe-space{position:relative;scroll-margin-top:82px}
+.universe-space__eyebrow{display:block;margin-bottom:7px;font-size:.58rem;letter-spacing:.18em;font-weight:700;color:var(--color-accent);opacity:.72}
+.universe-space--cluster{scroll-margin-top:82px;border-top:1px solid transparent}
+.universe-space--cluster>*{position:relative}
+.universe-space--cluster:before{content:"";display:block;height:1px;background:linear-gradient(90deg,rgba(240,160,144,.18),transparent 70%);margin:22px 0 0}
+.universe-space--watch{scroll-margin-top:82px}
+.universe-space--watch .detail-section{border-top:0}
+@media(max-width:700px){.anime-universe-nav{margin-inline:-2px}.anime-universe-nav__inner{border-radius:16px;padding:6px}.anime-universe-nav__brand{display:none}.anime-universe-nav button{padding:7px 9px}.anime-universe-nav button span{display:none}.universe-space{scroll-margin-top:76px}}
+@media(prefers-reduced-motion:reduce){.anime-universe-nav button{transition:none}}
