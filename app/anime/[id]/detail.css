@@ -126,3 +126,43 @@ a.anime-card{text-decoration:none;color:inherit}
 .cinema-detail-page:has(.universe-space.is-universe-visible){background-image:radial-gradient(circle at 50% 30%,var(--universe-glow),transparent 42%)}
 @media(max-width:700px){.anime-universe-nav__progress{bottom:0}.universe-space{scroll-margin-top:78px}.universe-space:after{inset:0 -4vw}}
 @media(prefers-reduced-motion:reduce){.universe-space,.universe-space:after{transition:none}.universe-space:not(.is-universe-visible){opacity:1;transform:none}}
+
+/* Universe navigation + cinematic section transitions. */
+.anime-universe-nav{position:sticky;top:0;z-index:30;margin:8px 0 22px;padding:8px 0;background:linear-gradient(180deg,var(--color-bg,#090909) 52%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.anime-universe-nav__inner{position:relative;display:flex;align-items:center;gap:12px;min-width:0;padding:7px 9px;border:1px solid var(--color-border);border-radius:999px;background:color-mix(in srgb,var(--color-bg,#090909) 82%,transparent);box-shadow:0 16px 42px rgba(0,0,0,.22)}
+.anime-universe-nav__progress{position:absolute;left:8px;right:8px;bottom:5px;height:1px;transform-origin:left center;background:var(--color-accent);opacity:.7;transition:transform .15s linear}
+.anime-universe-nav__orbit{width:28px;height:28px;flex:none;border:1px solid rgba(240,160,144,.24);border-radius:50%;position:relative;animation:universe-orbit 5s linear infinite}
+.anime-universe-nav__orbit:before{content:"";position:absolute;inset:5px;border:1px dashed rgba(240,160,144,.22);border-radius:50%}
+.anime-universe-nav__orbit-dot{position:absolute;width:5px;height:5px;left:50%;top:-2px;margin-left:-2.5px;border-radius:50%;background:var(--color-accent);box-shadow:0 0 12px rgba(240,160,144,.65)}
+.anime-universe-nav__brand{font-size:.6rem;letter-spacing:.18em;font-weight:750;color:var(--color-accent);flex:none}
+.anime-universe-nav__track{display:flex;align-items:center;gap:3px;overflow-x:auto;scrollbar-width:none;min-width:0;flex:1}
+.anime-universe-nav__track::-webkit-scrollbar{display:none}
+.anime-universe-nav button{display:flex;align-items:center;gap:7px;flex:none;border:0;background:transparent;color:var(--color-text-muted);padding:7px 10px;border-radius:999px;font:600 .67rem/1 inherit;cursor:pointer;transition:background .35s ease,color .35s ease,transform .35s cubic-bezier(.2,.8,.2,1)}
+.anime-universe-nav button span{font-size:.52rem;opacity:.42;letter-spacing:.08em}
+.anime-universe-nav button:hover{color:var(--color-text);background:rgba(255,255,255,.045);transform:translateY(-1px)}
+.anime-universe-nav button.is-active{color:var(--color-text);background:rgba(240,160,144,.1);box-shadow:inset 0 0 0 1px rgba(240,160,144,.17)}
+.anime-universe-nav button.is-active span{color:var(--color-accent);opacity:1}
+.anime-universe-nav__state{font-size:.55rem;letter-spacing:.1em;color:var(--color-text-muted);opacity:.55;flex:none;padding-right:4px}
+.universe-space{position:relative;scroll-margin-top:84px;isolation:isolate}
+.universe-space:before{content:"";position:absolute;z-index:-1;inset:-30px -10vw;background:radial-gradient(ellipse at 50% 10%,rgba(240,160,144,.035),transparent 55%);pointer-events:none;opacity:.55}
+.universe-space__eyebrow{display:block;margin-bottom:7px;font-size:.58rem;letter-spacing:.18em;font-weight:700;color:var(--color-accent);opacity:.72}
+.universe-space--cluster{scroll-margin-top:84px;border-top:1px solid transparent}
+.universe-space--cluster:before{content:"";display:block;height:1px;background:linear-gradient(90deg,rgba(240,160,144,.18),transparent 70%);margin:22px 0 0}
+.universe-space--watch{scroll-margin-top:84px}
+@keyframes universe-orbit{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:no-preference){
+  .universe-space{animation:universe-space-enter linear both;animation-timeline:view();animation-range:entry 0% cover 28%}
+}
+@keyframes universe-space-enter{from{opacity:.5;transform:translateY(24px) scale(.985)}to{opacity:1;transform:none}}
+@media(max-width:700px){
+ .anime-universe-nav{margin-inline:-2px}
+ .anime-universe-nav__inner{border-radius:16px;padding:6px}
+ .anime-universe-nav__brand,.anime-universe-nav__state{display:none}
+ .anime-universe-nav button{padding:7px 9px}
+ .anime-universe-nav__orbit{width:24px;height:24px}
+ .universe-space{scroll-margin-top:76px}
+}
+@media(prefers-reduced-motion:reduce){
+ .anime-universe-nav__orbit{animation:none}
+ .anime-universe-nav button{transition:none}
+}
