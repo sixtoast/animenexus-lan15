@@ -339,7 +339,7 @@ html[data-theme="light"] body{background:#eee7dd;color:#1b1713}html[data-theme="
 .nexus-archive-art img{width:100%;height:100%;display:block;object-fit:cover;filter:saturate(.68) contrast(1.02);transition:transform .8s cubic-bezier(.2,.75,.2,1),filter .7s ease}
 .nexus-archive-item:hover .nexus-archive-art img{transform:scale(1.06);filter:saturate(1)}
 .nexus-archive-art>span{position:absolute;left:10px;top:9px;z-index:2;color:rgba(244,239,231,.58);font-size:.5rem;letter-spacing:.15em}
-.nexus-archive-caption{position:absolute;left:12px;right:12px;bottom:11px;z-index:6;display:grid;gap:4px;transform:translateY(4px);transition:transform .45s ease;pointer-events:none}
+.nexus-archive-caption{position:absolute;left:12px;right:12px;bottom:24px;z-index:6;display:grid;gap:4px;transform:none;transition:transform .45s ease;pointer-events:none}
 .nexus-archive-item:hover .nexus-archive-caption{transform:none}
 .nexus-archive-caption strong{display:block;font-family:var(--cinema-display);font-size:clamp(1rem,1.7vw,1.7rem);font-weight:500;line-height:.92;color:var(--cinema-paper)!important;text-shadow:0 3px 18px rgba(0,0,0,.95)}
 .nexus-archive-caption small{font-size:.48rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(244,239,231,.62)!important;text-shadow:0 2px 12px rgba(0,0,0,.9)}
