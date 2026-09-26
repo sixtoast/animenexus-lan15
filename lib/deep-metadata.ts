@@ -97,7 +97,7 @@ export type EpisodeStructure = {
 
 export type ArtworkAsset = {
   url: string;
-  type: "poster" | "background" | "logo" | "clearart" | "banner" | "other";
+  type: "poster" | "background" | "logo" | "clearart" | "banner" | "alternate" | "still" | "other";
   language?: string;
   width?: number;
   height?: number;
