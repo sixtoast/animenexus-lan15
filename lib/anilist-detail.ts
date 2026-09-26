@@ -461,12 +461,10 @@ export async function fetchAncestryGraph(
     label?: string,
   ) => {
     if (from === to) return;
-    const a = Math.min(from, to);
-    const b = Math.max(from, to);
-    const k = `${kind}:${a}-${b}`;
+    const k = `${kind}:${from}>${to}:${label || ""}`;
     if (edgeKey.has(k)) return;
     edgeKey.add(k);
-    edges.push({ from, to, kind, label });
+    edges.push({ from, to, kind, label, sources: ["anilist"], confidence: kind === "official" ? 1 : 0.45 });
   };
 
   const addNode = (
@@ -487,13 +485,10 @@ export async function fetchAncestryGraph(
       addEdge(rootId, r.id, "official", r.relationType);
     }
   }
-  for (const r of root.recommendations) {
-    if (addNode(r, 0, "recommended")) {
-      addEdge(rootId, r.id, "recommended", "RECOMMENDED");
-    }
-  }
-
-  // Expand the official franchise graph breadth-first. The previous implementation
+  // Expand official relationships first. Recommendations live in a separate
+  // layer so a recommended title can never steal an official node's identity.
+  // This also lets an official relationship discovered later upgrade a node.
+  // Expand the official franchise graph breadth-first.
   // only expanded recommendation nodes, which made "watch order" effectively one hop.
   const visited = new Set<number>([rootId]);
   const queue: { id: number; depth: number }[] = root.relations.map((r) => ({
