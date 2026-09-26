@@ -142,9 +142,17 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
       return;
     }
     e.preventDefault();
-    withViewTransition(() => {
-      router.push(href);
-    });
+    withViewTransition(
+      () => {
+        router.push(href);
+      },
+      {
+        route: "anime-detail",
+        origin: "card",
+        destination: "hero",
+        objectId: getAnimeObjectId(anime.id),
+      },
+    );
   }
 
   return (
@@ -156,6 +164,7 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
       aria-label={ariaState ? `${anime.title}. ${ariaState}` : anime.title}
       data-on-list={entry ? "true" : "false"}
       data-anime-object-id={getAnimeObjectId(anime.id)}
+      data-motion-origin="card"
       data-status={
         status || (recent ? "recent" : recommended ? "recommended" : "default")
       }
