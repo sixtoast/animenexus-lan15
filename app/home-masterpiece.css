@@ -469,3 +469,95 @@
     z-index:6!important;
   }
 }
+
+
+/* MOBILE DISCOVERY FIELD — turn the orbital map into a tighter constellation. */
+@media (max-width:700px){
+  .nexus-worlds-section{
+    padding-bottom:72px!important;
+  }
+  .nexus-worlds-heading{
+    gap:22px!important;
+    margin-bottom:28px!important;
+  }
+  .nexus-worlds-heading h2{
+    font-size:clamp(3.5rem,16vw,5.4rem)!important;
+    line-height:.8!important;
+  }
+  .nexus-worlds-heading p{
+    max-width:310px!important;
+    font-size:.82rem!important;
+    line-height:1.55!important;
+  }
+  .nexus-world-map{
+    height:590px!important;
+    min-height:0!important;
+    margin-inline:-18px!important;
+    border-inline:0!important;
+    overflow:hidden!important;
+  }
+  .nexus-world-core{
+    width:154px!important;
+    padding:22px!important;
+    box-shadow:0 0 65px rgba(242,179,95,.07)!important;
+  }
+  .nexus-world-core strong{
+    font-size:2rem!important;
+    line-height:.72!important;
+    margin:10px 0!important;
+  }
+  .nexus-world-node{
+    gap:6px!important;
+  }
+  .nexus-world-node-art{
+    width:50px!important;
+    height:72px!important;
+  }
+  .nexus-world-node-copy{
+    max-width:88px!important;
+  }
+  .nexus-world-node-copy strong{
+    font-size:.86rem!important;
+    line-height:.94!important;
+  }
+  .nexus-world-node-copy small,
+  .nexus-world-node-copy i{
+    font-size:.4rem!important;
+    letter-spacing:.09em!important;
+  }
+  .nexus-world-node:before{
+    width:25px!important;
+  }
+  .nexus-world-node--1{left:3%!important;top:9%!important}
+  .nexus-world-node--2{right:3%!important;top:18%!important}
+  .nexus-world-node--3{left:1%!important;top:42%!important}
+  .nexus-world-node--4{right:1%!important;top:51%!important}
+  .nexus-world-node--5{left:5%!important;bottom:8%!important}
+  .nexus-world-node--6{right:5%!important;bottom:7%!important}
+  .nexus-world-node--7{top:2%!important}
+  .nexus-world-node--7 .nexus-world-node-copy{display:none!important}
+
+  .nexus-index{
+    padding-block:82px 100px!important;
+  }
+  .nexus-index .nexus-section-heading{
+    margin-bottom:34px!important;
+  }
+  .nexus-index .nexus-section-heading h2{
+    font-size:clamp(3.45rem,15.5vw,5.2rem)!important;
+  }
+  .nexus-feature-field{
+    gap:34px 12px!important;
+  }
+  .nexus-index-card:nth-child(even){
+    margin-top:40px!important;
+  }
+  .nexus-index-meta strong{
+    font-size:.82rem!important;
+    line-height:1.05!important;
+  }
+  .nexus-index-cut{
+    min-height:430px!important;
+    margin-block:72px 88px!important;
+  }
+}
