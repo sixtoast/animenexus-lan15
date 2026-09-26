@@ -292,3 +292,15 @@ body:has(.detail-cover-material.artwork-role--promotional) {
     transition:none;
   }
 }
+
+
+/* Full-page artwork-role atmosphere grammar. The artwork remains the source;
+   the page changes its material language around it. */
+.detail-wrap:has(.detail-cover-material){transition:background .8s ease}
+.detail-wrap:has(.artwork-role--alternate-art) .anime-universe-nav__inner{box-shadow:0 16px 42px rgba(0,0,0,.24),0 0 40px rgba(240,160,144,.035)}
+.detail-wrap:has(.artwork-role--character-art) .universe-space__eyebrow{letter-spacing:.22em}
+.detail-wrap:has(.artwork-role--background-art) .universe-space:before{opacity:.9;transform:scale(1.04)}
+.detail-wrap:has(.artwork-role--stills) .universe-space{filter:saturate(.9)}
+.detail-wrap:has(.artwork-role--logos) .anime-universe-nav__inner{background:color-mix(in srgb,var(--color-bg,#090909) 90%,transparent)}
+.detail-wrap:has(.artwork-role--promotional) .anime-universe-nav button.is-active{box-shadow:inset 0 0 0 1px rgba(240,160,144,.24),0 0 24px rgba(240,160,144,.06)}
+@media(prefers-reduced-motion:reduce){.detail-wrap:has(.artwork-role--background-art) .universe-space:before{transform:none}}
