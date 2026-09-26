@@ -919,13 +919,13 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
     nexus-world-float 18s ease-in-out 1.65s infinite;
   animation-delay:var(--entry-delay),calc(var(--entry-delay) + 1.55s);
 }
-.nexus-world-node--1{--entry-x:-44vw;--entry-y:-8px;--entry-rotate:-34deg;--entry-delay:0ms;--float-y:-7px;--float-x:-3px}
-.nexus-world-node--2{--entry-x:-29vw;--entry-y:5px;--entry-rotate:28deg;--entry-delay:90ms;--float-y:5px;--float-x:4px}
-.nexus-world-node--3{--entry-x:-15vw;--entry-y:-4px;--entry-rotate:-24deg;--entry-delay:180ms;--float-y:4px;--float-x:-5px}
-.nexus-world-node--4{--entry-x:0vw;--entry-y:7px;--entry-rotate:22deg;--entry-delay:270ms;--float-y:-5px;--float-x:3px}
-.nexus-world-node--5{--entry-x:15vw;--entry-y:-5px;--entry-rotate:-20deg;--entry-delay:360ms;--float-y:6px;--float-x:-4px}
-.nexus-world-node--6{--entry-x:29vw;--entry-y:4px;--entry-rotate:25deg;--entry-delay:450ms;--float-y:-4px;--float-x:5px}
-.nexus-world-node--7{--entry-x:44vw;--entry-y:-7px;--entry-rotate:-30deg;--entry-delay:540ms;--float-y:4px;--float-x:-2px}
+.nexus-world-node--1{--entry-x:-44vw;--entry-y:-8px;--entry-rotate:-34deg;--entry-delay:0ms;--float-y:-7px;--float-x:-3px;--final-x:0}
+.nexus-world-node--2{--entry-x:-29vw;--entry-y:5px;--entry-rotate:28deg;--entry-delay:90ms;--float-y:5px;--float-x:4px;--final-x:0}
+.nexus-world-node--3{--entry-x:-15vw;--entry-y:-4px;--entry-rotate:-24deg;--entry-delay:180ms;--float-y:4px;--float-x:-5px;--final-x:0}
+.nexus-world-node--4{--entry-x:0vw;--entry-y:7px;--entry-rotate:22deg;--entry-delay:270ms;--float-y:-5px;--float-x:3px;--final-x:0}
+.nexus-world-node--5{--entry-x:15vw;--entry-y:-5px;--entry-rotate:-20deg;--entry-delay:360ms;--float-y:6px;--float-x:-4px;--final-x:0}
+.nexus-world-node--6{--entry-x:29vw;--entry-y:4px;--entry-rotate:25deg;--entry-delay:450ms;--float-y:-4px;--float-x:5px;--final-x:0}
+.nexus-world-node--7{--entry-x:44vw;--entry-y:-7px;--entry-rotate:-30deg;--entry-delay:540ms;--float-y:4px;--float-x:-2px;--final-x:-50%}
 @keyframes nexus-world-arrive{
   0%{
     opacity:0;
@@ -942,15 +942,15 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
   }
   100%{
     opacity:1;
-    transform:translate3d(0,0,0) rotateY(0) rotateZ(0) scale(1);
+    transform:translate3d(var(--final-x),0,0) rotateY(0) rotateZ(0) scale(1);
     filter:none;
   }
 }
 @keyframes nexus-world-float{
-  0%,100%{transform:translate3d(0,0,0) rotateZ(0deg)}
-  25%{transform:translate3d(var(--float-x),var(--float-y),0) rotateZ(-.7deg)}
-  50%{transform:translate3d(calc(var(--float-x) * -1),calc(var(--float-y) * .55),0) rotateZ(.5deg)}
-  75%{transform:translate3d(calc(var(--float-x) * .45),calc(var(--float-y) * -1),0) rotateZ(-.35deg)}
+  0%,100%{transform:translate3d(var(--final-x),0,0) rotateZ(0deg)}
+  25%{transform:translate3d(calc(var(--float-x) + var(--final-x)),var(--float-y),0) rotateZ(-.7deg)}
+  50%{transform:translate3d(calc((var(--float-x) * -1) + var(--final-x)),calc(var(--float-y) * .55),0) rotateZ(.5deg)}
+  75%{transform:translate3d(calc((var(--float-x) * .45) + var(--final-x)),calc(var(--float-y) * -1),0) rotateZ(-.35deg)}
 }
 .nexus-world-map.is-entered .nexus-world-node-art{
   animation:nexus-world-art-breathe 7s ease-in-out calc(var(--entry-delay) + 2s) infinite;
@@ -980,13 +980,13 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
       nexus-world-float 20s ease-in-out 1.4s infinite;
     animation-delay:var(--entry-delay),calc(var(--entry-delay) + 1.25s);
   }
-  .nexus-world-node--1{--entry-x:-76vw;--entry-y:0;--entry-rotate:-25deg}
-  .nexus-world-node--2{--entry-x:-51vw;--entry-y:4px;--entry-rotate:23deg}
-  .nexus-world-node--3{--entry-x:-26vw;--entry-y:-3px;--entry-rotate:-20deg}
-  .nexus-world-node--4{--entry-x:0vw;--entry-y:4px;--entry-rotate:18deg}
-  .nexus-world-node--5{--entry-x:26vw;--entry-y:-3px;--entry-rotate:-18deg}
-  .nexus-world-node--6{--entry-x:51vw;--entry-y:4px;--entry-rotate:22deg}
-  .nexus-world-node--7{--entry-x:76vw;--entry-y:-2px;--entry-rotate:-24deg}
+  .nexus-world-node--1{--entry-x:-76vw;--entry-y:0;--entry-rotate:-25deg;--final-x:0}
+  .nexus-world-node--2{--entry-x:-51vw;--entry-y:4px;--entry-rotate:23deg;--final-x:0}
+  .nexus-world-node--3{--entry-x:-26vw;--entry-y:-3px;--entry-rotate:-20deg;--final-x:0}
+  .nexus-world-node--4{--entry-x:0vw;--entry-y:4px;--entry-rotate:18deg;--final-x:0}
+  .nexus-world-node--5{--entry-x:26vw;--entry-y:-3px;--entry-rotate:-18deg;--final-x:0}
+  .nexus-world-node--6{--entry-x:51vw;--entry-y:4px;--entry-rotate:22deg;--final-x:0}
+  .nexus-world-node--7{--entry-x:76vw;--entry-y:-2px;--entry-rotate:-24deg;--final-x:-50%}
 }
 @keyframes nexus-world-arrive-mobile{
   0%{
