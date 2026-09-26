@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-
-const INTERNAL = /^\//;
+import { useRouter } from "next/navigation";
 
 export function CinemaMotion() {
+  const router = useRouter();
+
   useEffect(() => {
     const root = document.documentElement;
     const body = document.body;
@@ -205,10 +206,13 @@ export function CinemaMotion() {
       curtain.innerHTML = '<span class="cinema-route-curtain-mark">ANIMENEXUS</span><i></i>';
       body.appendChild(curtain);
 
-      const navigate = (href: string) => {
+      let navigating = false;
+    const navigate = (href: string) => {
+        if (navigating) return;
+        navigating = true;
         curtain.classList.add("is-leaving");
         window.setTimeout(() => {
-          window.location.assign(href);
+          router.push(href);
         }, 420);
       };
 
@@ -256,7 +260,7 @@ export function CinemaMotion() {
       root.style.removeProperty("--cursor-y");
       body.classList.remove("cinema-cursor-focus");
     };
-  }, []);
+  }, [router]);
 
   return null;
 }

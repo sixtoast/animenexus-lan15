@@ -1,0 +1,3 @@
+Deployment trigger for feat/cinema-ui-redesign.
+Current source commit: e9a0e628caa28757f608800a6c1d58a19859984b.
+Build fix: JSX provider lives in lib/use-home-personalized-pool.tsx (not .ts).
