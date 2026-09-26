@@ -313,10 +313,24 @@ export function AIPanel() {
           }
           const status =
             p.args.status === "watching" ? "watching" : "planning";
-          add(anime, status);
+          if (add(anime, status)) {
+            sendNexusSignal({
+              type: "focus",
+              target: "watchlist",
+              source: "ai",
+              payload: { label: `Watchlist updated · ${anime.title}` },
+            });
+          }
           showToast(`Added “${anime.title}”`, "✦");
         } else if (p.tool === "removeFromWatchlist") {
-          remove(Number(p.args.animeId));
+          if (remove(Number(p.args.animeId))) {
+            sendNexusSignal({
+              type: "focus",
+              target: "watchlist",
+              source: "ai",
+              payload: { label: "Watchlist updated · title removed" },
+            });
+          }
           showToast("Removed from watchlist", "✦");
         }
       }
