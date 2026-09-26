@@ -59,6 +59,7 @@ export function NexusWorlds({ candidates }: Props) {
   const [entered, setEntered] = useState(false);
   const [travelling, setTravelling] = useState<number | null>(null);
   const [aiPulse, setAiPulse] = useState(0);
+  const [aiPulsing, setAiPulsing] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
   const dragRef = useRef({ active: false, startX: 0, startRotation: 0 });
@@ -93,6 +94,8 @@ export function NexusWorlds({ candidates }: Props) {
       if (label) setCommandLabel(label);
       if (signal.type === "filter" || signal.type === "focus" || signal.type === "travel") {
         setAiPulse((value) => value + 1);
+        setAiPulsing(false);
+        window.requestAnimationFrame(() => setAiPulsing(true));
       }
       // AI commands are intentionally quiet unless they materially reconfigure
       // the field. A single resonance marks the change; ordinary pointer/scroll
@@ -118,6 +121,12 @@ export function NexusWorlds({ candidates }: Props) {
     observer.observe(field);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!aiPulsing) return;
+    const timer = window.setTimeout(() => setAiPulsing(false), 900);
+    return () => window.clearTimeout(timer);
+  }, [aiPulse, aiPulsing]);
 
   useEffect(() => {
     if (!entered) return;
@@ -425,7 +434,7 @@ export function NexusWorlds({ candidates }: Props) {
   return (
     <div
       ref={fieldRef}
-      className={"nexus-world-map nexus-world-map--" + fieldMode + (entered ? " is-entered" : "") + (active !== null ? " has-active" : "") + (secret ? " has-secret" : "") + (commandLabel ? " is-ai-directed" : "") + (travelling !== null ? " is-travelling" : "") + (aiPulse ? " is-ai-pulsing" : "")}
+      className={"nexus-world-map nexus-world-map--" + fieldMode + (entered ? " is-entered" : "") + (active !== null ? " has-active" : "") + (secret ? " has-secret" : "") + (commandLabel ? " is-ai-directed" : "") + (travelling !== null ? " is-travelling" : "") + (aiPulsing ? " is-ai-pulsing" : "")}
       data-ai-pulse={aiPulse}
     >
       <div className="nexus-world-grid" aria-hidden />
