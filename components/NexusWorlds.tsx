@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Anime } from "@/lib/types";
 
 type Props = { candidates: Anime[] };
@@ -34,6 +34,21 @@ export function NexusWorlds({ candidates }: Props) {
   const [active, setActive] = useState<number | null>(null);
   const [armed, setArmed] = useState<number | null>(null);
   const [secret, setSecret] = useState(false);
+  const [entered, setEntered] = useState(false);
+  const fieldRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const field = fieldRef.current;
+    if (!field) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setEntered(true);
+        observer.disconnect();
+      }
+    }, { threshold: 0.18 });
+    observer.observe(field);
+    return () => observer.disconnect();
+  }, []);
 
   if (!worlds.length) return null;
 
@@ -48,7 +63,7 @@ export function NexusWorlds({ candidates }: Props) {
 
   return (
     <div
-      className={"nexus-world-map" + (active !== null ? " has-active" : "") + (secret ? " has-secret" : "")}
+      ref={fieldRef}\n      className={"nexus-world-map" + (entered ? " is-entered" : "") + (active !== null ? " has-active" : "") + (secret ? " has-secret" : "")}
       onMouseMove={(event) => {
         const rect = event.currentTarget.getBoundingClientRect();
         event.currentTarget.style.setProperty("--world-x", ((event.clientX - rect.left) / rect.width - 0.5) * 7 + "px");
