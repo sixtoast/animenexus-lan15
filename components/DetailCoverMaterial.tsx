@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import type { Anime } from "@/lib/types";
 import { AnimeImage } from "@/components/AnimeImage";
 import {
@@ -33,7 +35,13 @@ export function DetailCoverMaterial({
 
     const onArtworkSelected = (event: Event) => {
       const detail = (event as CustomEvent<{ animeId?: number; url?: string | null }>).detail;
-      if (detail?.animeId === anime.id) setCover(detail.url || anime.image);
+      if (detail?.animeId === anime.id) {
+        setCover(detail.url || anime.image);
+        document.documentElement.style.setProperty(
+          "--detail-artwork-accent",
+          detail.url ? "1" : "0",
+        );
+      }
     };
     window.addEventListener(COVER_EVENT, onArtworkSelected);
     return () => window.removeEventListener(COVER_EVENT, onArtworkSelected);
