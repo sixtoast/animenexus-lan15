@@ -27,13 +27,14 @@ function Wall({ items, offset = 0 }: { items: Anime[]; offset?: number }) {
 }
 
 export function NexusArchive({ items }: Props) {
-  const { items: personalised, currentSeason, upcoming, archive } = useHomePersonalization();
+  const { items: personalised, currentSeason, previousSeason, upcoming, archive } = useHomePersonalization();
   const source = personalised.length ? personalised : items;
   if (!source.length) return null;
 
   const current = currentSeason.length ? currentSeason : source.filter((a) => a.status === "RELEASING").slice(0, 12);
   const next = upcoming.length ? upcoming : source.filter((a) => a.status === "NOT_YET_RELEASED").slice(0, 12);
-  const older = archive.length ? archive : source.filter((a) => !current.includes(a) && !next.includes(a)).slice(0, 18);
+  const previous = previousSeason.length ? previousSeason : source.filter((a) => Number(a.seasonYear || a.year) === new Date().getFullYear() - 1).slice(0, 12);
+  const older = archive.length ? archive : source.filter((a) => !current.includes(a) && !previous.includes(a) && !next.includes(a)).slice(0, 18);
 
   return (
     <div className="nexus-archive-seasons">
@@ -41,6 +42,12 @@ export function NexusArchive({ items }: Props) {
         <section className="nexus-archive-season">
           <div className="nexus-archive-season-head"><span>NOW / CURRENT SIGNALS</span><small>Releasing and active in the present cycle</small></div>
           <Wall items={current} />
+        </section>
+      ) : null}
+      {previous.length ? (
+        <section className="nexus-archive-season">
+          <div className="nexus-archive-season-head"><span>PREVIOUS / LAST SEASON</span><small>Recent releases from the preceding cycle</small></div>
+          <Wall items={previous} offset={2} />
         </section>
       ) : null}
       {next.length ? (
