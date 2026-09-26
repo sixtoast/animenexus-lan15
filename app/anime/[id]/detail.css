@@ -110,3 +110,19 @@ a.anime-card{text-decoration:none;color:inherit}
 .universe-space--watch .detail-section{border-top:0}
 @media(max-width:700px){.anime-universe-nav{margin-inline:-2px}.anime-universe-nav__inner{border-radius:16px;padding:6px}.anime-universe-nav__brand{display:none}.anime-universe-nav button{padding:7px 9px}.anime-universe-nav button span{display:none}.universe-space{scroll-margin-top:76px}}
 @media(prefers-reduced-motion:reduce){.anime-universe-nav button{transition:none}}
+
+
+/* Universe traversal: sections read as places in one world, not stacked cards. */
+.anime-universe-nav{isolation:isolate;overflow:hidden}
+.anime-universe-nav__progress{position:absolute;left:0;right:0;bottom:2px;height:1px;transform-origin:left center;background:var(--color-accent);opacity:.55;z-index:2;will-change:transform}
+.universe-space{--universe-offset:0px;scroll-margin-top:90px;transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+.universe-space:not(.is-universe-visible){opacity:.72;transform:translateY(8px)}
+.universe-space.is-universe-visible{opacity:1;transform:translateY(0)}
+.universe-space:after{content:"";position:absolute;inset:0 -8vw;pointer-events:none;opacity:0;transition:opacity .8s ease;background:radial-gradient(ellipse at 50% 18%,rgba(240,160,144,.035),transparent 58%)}
+.universe-space.is-universe-visible:after{opacity:1}
+.universe-space--cluster{padding-top:6px}
+.universe-space--cluster:before{opacity:.7}
+.cinema-detail-page{--universe-glow:rgba(240,160,144,.025)}
+.cinema-detail-page:has(.universe-space.is-universe-visible){background-image:radial-gradient(circle at 50% 30%,var(--universe-glow),transparent 42%)}
+@media(max-width:700px){.anime-universe-nav__progress{bottom:0}.universe-space{scroll-margin-top:78px}.universe-space:after{inset:0 -4vw}}
+@media(prefers-reduced-motion:reduce){.universe-space,.universe-space:after{transition:none}.universe-space:not(.is-universe-visible){opacity:1;transform:none}}
