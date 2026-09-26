@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { AnimeRelation } from "@/lib/types";
 import { mergeRelations } from "@/lib/relation-merge";
@@ -26,8 +26,23 @@ export function FranchisePathPanel({
   relations,
 }: Props) {
   const [pathId, setPathId] = useState<FranchisePath["id"]>("main_story");
+  const [remotePlan, setRemotePlan] = useState<ReturnType<typeof resolveFranchise> | null>(null);
+  const [remoteLoading, setRemoteLoading] = useState(true);
 
-  const plan = useMemo(() => {
+  useEffect(() => {
+    let cancelled = false;
+    setRemoteLoading(true);
+    fetch(`/api/watch-order?id=${centerId}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!cancelled && data?.paths) setRemotePlan(data);
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setRemoteLoading(false); });
+    return () => { cancelled = true; };
+  }, [centerId]);
+
+  const fallbackPlan = useMemo(() => {
     if (!relations.length) return null;
     const merged = mergeRelations(
       relations.map((r) => ({
@@ -61,6 +76,8 @@ export function FranchisePathPanel({
     });
   }, [centerId, centerTitle, centerYear, centerFormat, relations]);
 
+  const plan = remotePlan || fallbackPlan;
+
   if (!plan || plan.relationCount < 1) return null;
 
   const active =
@@ -74,7 +91,7 @@ export function FranchisePathPanel({
     <section className="franchise-path" aria-label="Franchise watch paths">
       <div className="home-rail-head" style={{ marginBottom: 10 }}>
         <h2 style={{ fontSize: "1.05rem", margin: 0 }}>Watch order</h2>
-        <span className="home-rail-note">Evidence from relations · soft</span>
+        <span className="home-rail-note">{remoteLoading ? "Building franchise graph…" : "Evidence from provider relations"}</span>
       </div>
       <p className="tools-hint" style={{ marginBottom: 10 }}>
         {franchiseSummaryLine(plan)}
