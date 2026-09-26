@@ -28,6 +28,7 @@ export function DetailCoverMaterial({
   const [cover, setCover] = useState(anime.image);
   const [artworkRole, setArtworkRole] = useState("key-art");
   const [artworkTransition, setArtworkTransition] = useState(false);
+  const [previousCover, setPreviousCover] = useState<string | null>(null);
 
   useEffect(() => {
     const key = `${COVER_KEY_PREFIX}${anime.id}`;
@@ -45,8 +46,12 @@ export function DetailCoverMaterial({
     const onArtworkSelected = (event: Event) => {
       const detail = (event as CustomEvent<{ animeId?: number; url?: string | null; role?: string }>).detail;
       if (detail?.animeId === anime.id) {
+        setPreviousCover(cover);
         setArtworkTransition(true);
-        window.setTimeout(() => setArtworkTransition(false), 720);
+        window.setTimeout(() => {
+          setArtworkTransition(false);
+          setPreviousCover(null);
+        }, 760);
         setCover(detail.url || anime.image);
         const role = detail.role || "key-art";
         setArtworkRole(role);
@@ -62,7 +67,7 @@ export function DetailCoverMaterial({
       document.documentElement.style.removeProperty("--detail-artwork-image");
       document.documentElement.style.removeProperty("--detail-artwork-accent");
     };
-  }, [anime.id, anime.image]);
+  }, [anime.id, anime.image, cover]);
 
   const vars = materialCssVars(materialFromAnimeEntity({ ...anime, image: cover }));
   const vt = viewTransitionName ?? getAnimeViewTransitionName(anime.id);
@@ -75,8 +80,10 @@ export function DetailCoverMaterial({
       style={{
         ...vars,
         "--artwork-role": artworkRole,
+        "--artwork-previous-image": previousCover ? `url("${previousCover}")` : "none",
       } as CSSProperties}
     >
+      {previousCover ? <span className="detail-cover-material__previous" aria-hidden="true" /> : null}
       <AnimeImage
         className="detail-cover"
         src={cover}
