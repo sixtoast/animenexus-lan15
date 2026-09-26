@@ -38,7 +38,7 @@ export function HomePersonalizedProvider({ children, initial, limit = 180 }: { c
   // existing session controls, then bump this revision so the canonical
   // recommendation pipeline reruns with those controls.
   useEffect(() => onNexusSignal((signal) => {
-    if (signal.source !== "ai" || !claimNexusCommand(signal.id)) return;
+    if (signal.source !== "ai" || !claimNexusCommand(signal.id, "recommendations")) return;
     if (signal.type === "filter") {
       const slug = signal.payload.experienceSlug;
       if (typeof slug === "string" && slug.trim()) {
