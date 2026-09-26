@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
 
 import type { Anime } from "@/lib/types";
 import { AnimeImage } from "@/components/AnimeImage";
@@ -28,19 +29,21 @@ export function DetailCoverMaterial({
   useEffect(() => {
     const key = `${COVER_KEY_PREFIX}${anime.id}`;
     try {
-      setCover(window.localStorage.getItem(key) || anime.image);
+      const stored = window.localStorage.getItem(key);
+      setCover(stored || anime.image);
+      document.documentElement.style.setProperty("--detail-artwork-image", `url("${stored || anime.image}")`);
     } catch {
       setCover(anime.image);
     }
 
     const onArtworkSelected = (event: Event) => {
-      const detail = (event as CustomEvent<{ animeId?: number; url?: string | null }>).detail;
+      const detail = (event as CustomEvent<{ animeId?: number; url?: string | null; role?: string }>).detail;
       if (detail?.animeId === anime.id) {
         setCover(detail.url || anime.image);
-        document.documentElement.style.setProperty(
-          "--detail-artwork-accent",
-          detail.url ? "1" : "0",
-        );
+        const role = detail.role || "key-art";
+        document.documentElement.style.setProperty("--detail-artwork-role", role);
+        document.documentElement.style.setProperty("--detail-artwork-image", `url("${detail.url || anime.image}")`);
+        document.documentElement.style.setProperty("--detail-artwork-accent", detail.url ? "1" : "0");
       }
     };
     window.addEventListener(COVER_EVENT, onArtworkSelected);
@@ -54,7 +57,7 @@ export function DetailCoverMaterial({
     <div
       className="detail-cover-material"
       data-anime-object-id={getAnimeObjectId(anime.id)}
-      style={vars as React.CSSProperties}
+      style={vars as CSSProperties}
     >
       <AnimeImage
         className="detail-cover"
