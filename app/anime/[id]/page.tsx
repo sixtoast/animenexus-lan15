@@ -44,6 +44,7 @@ import { QuickOutcomeControls } from "@/components/QuickOutcomeControls";
 import { YourMatchPanel } from "@/components/YourMatchPanel";
 import { formatAirTime } from "@/lib/radar-schedule";
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -180,7 +181,7 @@ export default async function AnimeDetailPage({ params }: Props) {
         <div className="detail-banner detail-banner-empty" />
       )}
 
-      <div className="container detail-wrap">
+      <div className="container detail-wrap" data-artwork-atmosphere="catalog" style={{ "--detail-artwork-image": `url(${anime.image})` } as CSSProperties}>
         <Link href="/browse" className="detail-back">
           ← Back to browse
         </Link>
@@ -312,6 +313,8 @@ export default async function AnimeDetailPage({ params }: Props) {
             <ArtworkGallery
               assets={galleryAssets}
               animeId={anime.id}
+              bannerImage={anime.bannerImage}
+              animeImage={anime.image}
               sourceNote="AniList · Kitsu · Jikan · Shikimori · Fanart.tv (when available)"
             />
           </DetailDeferred>
