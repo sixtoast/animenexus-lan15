@@ -340,7 +340,6 @@ export default async function AnimeDetailPage({ params }: Props) {
           </section>
         ) : null}
 
-        <div id="characters" className="universe-space universe-space--cluster">
         <EpisodeList
           episodes={jikan.episodes}
           sourceNote={
@@ -349,8 +348,6 @@ export default async function AnimeDetailPage({ params }: Props) {
               : undefined
           }
         />
-
-        </div>
 
         <div id="franchise" className="universe-space universe-space--cluster">
         <DetailRelatedClient
@@ -526,7 +523,8 @@ export default async function AnimeDetailPage({ params }: Props) {
         </DetailDeferred>
 
         {anime.characters && anime.characters.length > 0 ? (
-          <section className="detail-section">
+          <section id="characters" className="detail-section universe-space">
+            <span className="universe-space__eyebrow">03 · CHARACTERS</span>
             <h2>Characters</h2>
             <div className="char-grid">
               {anime.characters.map((c) => (
@@ -547,7 +545,8 @@ export default async function AnimeDetailPage({ params }: Props) {
             </div>
           </section>
         ) : showJikanChars ? (
-          <section className="detail-section">
+          <section id="characters" className="detail-section universe-space">
+            <span className="universe-space__eyebrow">03 · CHARACTERS</span>
             <h2>Characters</h2>
             <p className="tools-hint" style={{ marginBottom: 10 }}>
               Source: Jikan / MAL (AniList characters unavailable)
