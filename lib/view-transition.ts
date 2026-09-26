@@ -107,6 +107,15 @@ export function markViewTransitionRoute(): void {
  */
 export function withViewTransition(update: () => void, scene: MotionScene = {}): void {
   markMotionScene(scene);
+  // Motion and sound share the same scene grammar: tactile departure,
+  // spatial travel, then a restrained arrival cue.
+  if (!prefersReducedMotion()) {
+    if (scene.origin === "card" || scene.origin === "field") {
+      playInteractionSound("navigation", { gain: 0.55 });
+    } else if (scene.origin === "watchlist") {
+      playInteractionSound("navigation", { gain: 0.42 });
+    }
+  }
   if (!canViewTransition()) {
     update();
     window.setTimeout(clearMotionScene, 80);
@@ -120,7 +129,11 @@ export function withViewTransition(update: () => void, scene: MotionScene = {}):
     const transition = doc.startViewTransition(() => {
       update();
     });
-    transition.finished.finally(clearMotionScene);
+    transition.finished.then(() => {
+      if (scene.route === "anime-detail" && !prefersReducedMotion()) {
+        playInteractionSound("discovery", { gain: 0.58 });
+      }
+    }).catch(() => undefined).finally(clearMotionScene);
   } catch {
     update();
     window.setTimeout(clearMotionScene, 80);
