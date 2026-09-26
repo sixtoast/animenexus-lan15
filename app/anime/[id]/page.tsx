@@ -10,7 +10,7 @@ import { getAnimeExperience } from "@/lib/anime-experience";
 import { fetchAnimeById } from "@/lib/anilist";
 import { buildExternalLinks } from "@/lib/external-links";
 import { enrichDeepFromAniDb } from "@/lib/providers/anidb";
-import { enrichArtworkFromFanart } from "@/lib/providers/fanart";
+import { enrichArtwork } from "@/lib/providers/artwork";
 import { buildCreativeDna, fullCreditLines } from "@/lib/creative-dna";
 import { buildViewingContext } from "@/lib/viewing-context";
 import { resolveMangaSourcesFromRelations } from "@/lib/manga-adapter";
@@ -87,7 +87,7 @@ export default async function AnimeDetailPage({ params }: Props) {
   const { anime, themes, jikan, nextEpisode, layers, identity } = exp;
 
   const deep = await enrichDeepFromAniDb(identity).catch(() => null);
-  const fanart = await enrichArtworkFromFanart(identity).catch(() => null);
+  const artwork = await enrichArtwork(identity, anime).catch(() => null);
 
   const relations = anime.relations || [];
   const mangaSources = await resolveMangaSourcesFromRelations(relations).catch(
@@ -288,14 +288,14 @@ export default async function AnimeDetailPage({ params }: Props) {
 
         <CreativeConnectionsPanel dna={dnaSlots} currentId={anime.id} />
 
-        {fanart?.assets?.length ? (
+        {artwork?.assets?.length ? (
           <DetailDeferred
             title="Artwork gallery"
             note="Fan art & key visuals — expand on demand."
           >
             <ArtworkGallery
-              assets={fanart.assets}
-              sourceNote="fanart.tv (TVDB)"
+              assets={artwork.assets}
+              sourceNote="AniList + Kitsu + Jikan/MAL"
             />
           </DetailDeferred>
         ) : null}
