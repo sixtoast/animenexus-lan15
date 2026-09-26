@@ -64,11 +64,11 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
 
   function chooseCover(url: string) {
     try {
+      const asset = assets.find((item) => item.url === url);
+      const role = asset ? assetRole(asset) : "alternate-art";
       window.localStorage.setItem(coverKey, url);
       window.localStorage.setItem(`${ROLE_KEY_PREFIX}${animeId}`, role);
       setSelectedCover(url);
-      const asset = assets.find((item) => item.url === url);
-      const role = asset ? assetRole(asset) : "alternate-art";
       setSelectedRole(role);
       setSelectedImage(url);
       window.dispatchEvent(new CustomEvent(COVER_EVENT, { detail: { animeId, url, role } }));
