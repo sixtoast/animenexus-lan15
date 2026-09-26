@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Anime } from "@/lib/types";
 import { useHomePersonalizedPool } from "@/lib/use-home-personalized-pool";
-import { getLastNexusCommand, onNexusSignal } from "@/lib/nexus-intelligence";
+import { claimNexusCommand, getLastNexusCommand, onNexusSignal, readNexusFieldState, type NexusFieldMode } from "@/lib/nexus-intelligence";
 
 type Props = { candidates: Anime[] };
 
@@ -38,73 +38,63 @@ function eventRotation(field: HTMLDivElement | null) {
 }
 
 export function NexusWorlds({ candidates }: Props) {
-  const { surprise, ready, entries } = useHomePersonalizedPool(candidates, 140);
-  // Discovery Field deliberately consumes the same ranked Surprise Me stream.
-  const worlds = (surprise.length ? surprise : candidates).slice(0, 7);
+  const { pool, surprise, ready, entries } = useHomePersonalizedPool(candidates, 140);
+  const initialFieldState = typeof window !== "undefined" ? readNexusFieldState() : null;
+  const [fieldMode, setFieldMode] = useState<NexusFieldMode>(
+    initialFieldState?.mode ?? "discovery",
+  );
+  const [commandLabel, setCommandLabel] = useState<string | null>(
+    initialFieldState?.label ?? null,
+  );
+  // Recommendations and mood use the canonical ranked pool. Discovery keeps
+  // the existing Surprise Me stream rather than introducing a second ranker.
+  const worlds = (
+    fieldMode === "recommendations" || fieldMode === "mood"
+      ? (pool.length ? pool : candidates)
+      : (surprise.length ? surprise : candidates)
+  ).slice(0, 7);
   const [active, setActive] = useState<number | null>(null);
   const [armed, setArmed] = useState<number | null>(null);
   const [secret, setSecret] = useState(false);
   const [entered, setEntered] = useState(false);
-  const [intelligence, setIntelligence] = useState<string | null>(null);
-  const [intelligenceCommand, setIntelligenceCommand] = useState<string | null>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
   const dragRef = useRef({ active: false, startX: 0, startRotation: 0 });
+  const lastCommandId = useRef<string | null>(initialFieldState?.commandId ?? null);
 
   useEffect(() => {
-    const field = fieldRef.current;
-    if (!field) return;
-
-    const setPointer = (clientX: number, clientY: number) => {
-      const rect = field.getBoundingClientRect();
-      const x = ((clientX - rect.left) / rect.width - 0.5) * 2;
-      const y = ((clientY - rect.top) / rect.height - 0.5) * 2;
-      pointerRef.current = { x, y, active: true };
-      if (dragRef.current.active) {
-        const delta = clientX - dragRef.current.startX;
-        field.dataset.orbitDrag = (dragRef.current.startRotation + delta * 0.004).toFixed(4);
+    const apply = (signal: ReturnType<typeof getLastNexusCommand>) => {
+      if (!signal || signal.source !== "ai" || !claimNexusCommand(signal.id, "field")) return;
+      lastCommandId.current = signal.id;
+      const mode = signal.type === "focus"
+        ? signal.target
+        : signal.payload.mode;
+      const valid: NexusFieldMode[] = [
+        "discovery", "recommendations", "mood", "watchlist",
+        "franchise", "artwork", "watch-order",
+      ];
+      if (typeof mode === "string" && valid.includes(mode as NexusFieldMode)) {
+        setFieldMode(mode as NexusFieldMode);
       }
-      field.style.setProperty("--world-pointer-x", x.toFixed(3));
-      field.style.setProperty("--world-pointer-y", y.toFixed(3));
+      const label =
+        signal.type === "filter" && typeof signal.payload.label === "string"
+          ? signal.payload.label
+          : signal.type === "focus"
+            ? ({
+                discovery: "Discovery field focused",
+                recommendations: "Recommendation field focused",
+                mood: "Mood field focused",
+                watchlist: "Watchlist constellation focused",
+                franchise: "Franchise space focused",
+                artwork: "Artwork space focused",
+                "watch-order": "Watch order space focused",
+              } as Record<NexusFieldMode, string>)[signal.target];
+            : null;
+      if (label) setCommandLabel(label);
     };
 
-    const onPointerMove = (event: PointerEvent) => {
-      if (event.pointerType === "mouse" || event.pointerType === "pen") {
-        setPointer(event.clientX, event.clientY);
-      }
-    };
-    const onPointerLeave = () => {
-      pointerRef.current.active = false;
-      field.style.setProperty("--world-pointer-x", "0");
-      field.style.setProperty("--world-pointer-y", "0");
-    };
-    const onPointerDown = (event: PointerEvent) => {
-      if (event.pointerType === "mouse" && event.button !== 0) return;
-      const current = Number(field.dataset.orbitDrag || "0");
-      dragRef.current = { active: true, startX: event.clientX, startRotation: current };
-      field.setPointerCapture?.(event.pointerId);
-      field.classList.add("is-dragging");
-    };
-    const onPointerUp = (event: PointerEvent) => {
-      if (!dragRef.current.active) return;
-      dragRef.current.active = false;
-      field.releasePointerCapture?.(event.pointerId);
-      field.classList.remove("is-dragging");
-    };
-
-    field.addEventListener("pointermove", onPointerMove);
-    field.addEventListener("pointerleave", onPointerLeave);
-    field.addEventListener("pointerdown", onPointerDown);
-    field.addEventListener("pointerup", onPointerUp);
-    field.addEventListener("pointercancel", onPointerUp);
-
-    return () => {
-      field.removeEventListener("pointermove", onPointerMove);
-      field.removeEventListener("pointerleave", onPointerLeave);
-      field.removeEventListener("pointerdown", onPointerDown);
-      field.removeEventListener("pointerup", onPointerUp);
-      field.removeEventListener("pointercancel", onPointerUp);
-    };
+    apply(getLastNexusCommand());
+    return onNexusSignal(apply);
   }, []);
 
   useEffect(() => {
@@ -373,6 +363,7 @@ export function NexusWorlds({ candidates }: Props) {
   if (!worlds.length) return null;
 
   const activeAnime = active === null ? null : worlds[active];
+  const visibleCommand = commandLabel ?? intelligence;
   const signalDNA = activeAnime ? [activeAnime.genre, ...activeAnime.tags].filter(Boolean).slice(0, 3).join(" · ") : "";
   const activeRelated = active === null
     ? []
@@ -384,7 +375,7 @@ export function NexusWorlds({ candidates }: Props) {
   return (
     <div
       ref={fieldRef}
-      className={"nexus-world-map" + (entered ? " is-entered" : "") + (active !== null ? " has-active" : "") + (secret ? " has-secret" : "")}
+      className={"nexus-world-map" + (entered ? " is-entered" : "") + (active !== null ? " has-active" : "") + (secret ? " has-secret" : "") + (commandLabel ? " is-ai-directed" : "")}
       onMouseMove={(event) => {
         const rect = event.currentTarget.getBoundingClientRect();
         event.currentTarget.style.setProperty("--world-x", ((event.clientX - rect.left) / rect.width - 0.5) * 7 + "px");
@@ -413,18 +404,22 @@ export function NexusWorlds({ candidates }: Props) {
         })}
       </svg>
 
-      {intelligence ? <div className="nexus-world-intelligence" aria-live="polite"><span>INTELLIGENCE</span><strong>{intelligence}</strong></div> : null}
+      {visibleCommand ? <div className="nexus-world-intelligence" aria-live="polite"><span>INTELLIGENCE</span><strong>{visibleCommand}</strong></div> : null}
       {intelligence ? <div className="nexus-world-command-receipt" aria-live="polite"><i /> <span>{intelligence}</span><b>{intelligenceCommand ? "SYNCED" : "READY"}</b></div> : null}
       <div className="nexus-world-core">
         <div className="nexus-world-core-ring" aria-hidden />
         <span>DISCOVERY FIELD · {String(worlds.length).padStart(2, "0")}</span>
-        <strong>{secret ? <>Stray<br /><em>signal.</em></> : <>Worlds<br /><em>nearby.</em></>}</strong>
+        <strong>{secret ? <>Stray<br /><em>signal.</em></> : fieldMode === "mood" ? <>Mood<br /><em>aligned.</em></> : fieldMode === "recommendations" ? <>Picks<br /><em>re-ranked.</em></> : <>Worlds<br /><em>nearby.</em></>}</strong>
         <small>
           {activeAnime
             ? "Signal locked. Follow the thread."
             : secret
               ? "An unindexed route appeared inside the field."
-              : "Adjacent titles detected around your current taste vector."}
+              : fieldMode === "mood"
+              ? "The field is using your active viewing intent."
+              : fieldMode === "recommendations"
+                ? "The field is showing the canonical ranked recommendation stream."
+                : "Adjacent titles detected around your current taste vector."}
         </small>
         <div className="nexus-world-core-status"><i /> {activeAnime ? "TRACKING" : secret ? "UNMAPPED" : "SCANNING"}</div>
         {activeAnime ? <span className="nexus-world-core-active">{activeAnime.title}</span> : null}
