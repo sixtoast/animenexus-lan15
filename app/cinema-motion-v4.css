@@ -1180,3 +1180,16 @@ html[data-motion-route="anime-detail"][data-motion-origin="watchlist"] .nexus-na
 .nexus-world-map.is-ai-pulsing .nexus-world-node.is-ai-reweighted .nexus-world-node-orbit-motion {
   filter: drop-shadow(0 0 10px color-mix(in srgb, currentColor 18%, transparent));
 }
+
+
+/* Live AI re-ranking: preserve orbital continuity while the canonical order
+   changes underneath it. The motion loop supplies the actual radius values. */
+.nexus-world-map.is-ai-pulsing .nexus-world-node.is-ai-reweighted {
+  will-change: transform, filter;
+}
+.nexus-world-map.is-ai-pulsing .nexus-world-node:nth-child(2) { --ai-rank-lag: 0ms; }
+.nexus-world-map.is-ai-pulsing .nexus-world-node:nth-child(3) { --ai-rank-lag: 35ms; }
+.nexus-world-map.is-ai-pulsing .nexus-world-node:nth-child(4) { --ai-rank-lag: 70ms; }
+.nexus-world-map.is-ai-pulsing .nexus-world-node:nth-child(5) { --ai-rank-lag: 105ms; }
+.nexus-world-map.is-ai-pulsing .nexus-world-node:nth-child(6) { --ai-rank-lag: 140ms; }
+.nexus-world-map.is-ai-pulsing .nexus-world-node:nth-child(7) { --ai-rank-lag: 175ms; }
