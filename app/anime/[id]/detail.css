@@ -166,3 +166,17 @@ a.anime-card{text-decoration:none;color:inherit}
  .anime-universe-nav__orbit{animation:none}
  .anime-universe-nav button{transition:none}
 }
+
+/* Artwork has a semantic role: selecting it changes the detail atmosphere, not only the cover. */
+.detail-wrap{--detail-atmosphere-opacity:.18;--detail-atmosphere-blur:52px;--detail-atmosphere-scale:1.04}
+.detail-wrap:before{content:"";position:absolute;z-index:-1;left:-10vw;right:-10vw;top:0;height:min(72vh,760px);pointer-events:none;background-image:linear-gradient(180deg,rgba(8,8,8,.18),rgba(8,8,8,.94)),var(--detail-artwork-image);background-position:center top;background-size:cover;filter:blur(var(--detail-atmosphere-blur)) saturate(.82);opacity:var(--detail-atmosphere-opacity);transform:scale(var(--detail-atmosphere-scale));transform-origin:top center;transition:background-image .8s ease,opacity .8s ease,filter .8s ease,transform 1.2s cubic-bezier(.2,.72,.18,1)}
+.detail-wrap[data-artwork-atmosphere="alternate"]{--detail-atmosphere-opacity:.27;--detail-atmosphere-blur:42px;--detail-atmosphere-scale:1.07}
+.detail-wrap[data-artwork-atmosphere="key-art"]{--detail-atmosphere-opacity:.2}
+.artwork-gallery__item[data-role="key-art"] .artwork-gallery__media{aspect-ratio:4/5}
+.artwork-gallery__item[data-role="alternate-art"] .artwork-gallery__media{aspect-ratio:4/5}
+.artwork-gallery__item[data-role="background-art"] .artwork-gallery__media{aspect-ratio:16/8}
+.artwork-gallery__item[data-role="stills"] .artwork-gallery__media{aspect-ratio:16/9}
+.artwork-gallery__item[data-role="logos"] .artwork-gallery__media{aspect-ratio:16/9;background:rgba(255,255,255,.035)}
+.artwork-gallery__item[data-role="character-art"] .artwork-gallery__media{aspect-ratio:1/1}
+.artwork-gallery__role{display:inline-flex;align-items:center;gap:5px;margin:8px 9px 0;padding:3px 7px;border:1px solid var(--color-border);border-radius:999px;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent)}
+@media(prefers-reduced-motion:reduce){.detail-wrap:before{transition:none}}
