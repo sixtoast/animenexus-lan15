@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Anime } from "@/lib/types";
+import { useHomePersonalizedPool } from "@/lib/use-home-personalized-pool";
 
 type Props = { candidates: Anime[] };
 
@@ -30,7 +31,10 @@ function sharedDNA(current: Anime, other: Anime) {
 }
 
 export function NexusWorlds({ candidates }: Props) {
-  const worlds = candidates.slice(7, 14);
+  const { pool, ready, entries } = useHomePersonalizedPool(candidates, 120);
+  // The field intentionally uses the same personalised candidate stream as Surprise Me.
+  // Featured/index consume the first signals; Discovery receives the adjacent surprise set.
+  const worlds = pool.slice(8, 15);
   const [active, setActive] = useState<number | null>(null);
   const [armed, setArmed] = useState<number | null>(null);
   const [secret, setSecret] = useState(false);
@@ -228,7 +232,7 @@ export function NexusWorlds({ candidates }: Props) {
         </div>
       ) : null}
 
-      <div className="nexus-world-field-note nexus-world-field-note--tl">TASTE VECTOR / LOCAL</div>
+      <div className="nexus-world-field-note nexus-world-field-note--tl">{ready && entries.length >= 2 ? "SURPRISE FIELD / PERSONAL" : "SURPRISE FIELD / DISCOVERY"}</div>
       <button
         type="button"
         className="nexus-world-field-note nexus-world-field-note--br nexus-world-secret-trigger"
