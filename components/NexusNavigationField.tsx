@@ -20,6 +20,16 @@ const labels: Record<RouteMode,string> = {
   watchlist:"YOUR CONSTELLATION", tools:"DESK", other:"NEXUS",
 };
 
+const focusLabels: Record<string, string> = {
+  discovery: "DISCOVERY",
+  recommendations: "RECOMMENDATIONS",
+  mood: "MOOD",
+  watchlist: "YOUR CONSTELLATION",
+  franchise: "FRANCHISE",
+  artwork: "ARTWORK",
+  "watch-order": "WATCH ORDER",
+};
+
 export function NexusNavigationField() {
   const pathname = usePathname() || "/";
   const [mode, setMode] = useState<RouteMode>(() => modeFor(pathname));
@@ -65,7 +75,7 @@ export function NexusNavigationField() {
         {Array.from({ length: 8 }, (_, i) => <i key={i} style={{ "--i": i } as React.CSSProperties} />)}
       </div>
       <div className="nexus-navigation-field__core">
-        <span>{signal}</span>
+        <span>{focusTarget ? focusLabels[focusTarget] || focusTarget.toUpperCase() : labels[mode]}</span>
         <b />
       </div>
       <div className="nexus-navigation-field__route">{String(modeIndex + 1).padStart(2,"0")} · NEXUS</div>
