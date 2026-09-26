@@ -165,6 +165,8 @@ export function NexusWorlds({ candidates }: Props) {
       pointerRef.current = { x: pointerX, y: pointerY, active: true };
       field.style.setProperty("--world-pointer-x", pointerX.toFixed(3));
       field.style.setProperty("--world-pointer-y", pointerY.toFixed(3));
+      field.style.setProperty("--world-x", (pointerX * 3.5).toFixed(2) + "px");
+      field.style.setProperty("--world-y", (pointerY * 3.5).toFixed(2) + "px");
       if (!dragRef.current.active) return;
       const now = performance.now();
       const current = Number(field.dataset.orbitDrag || "0");
