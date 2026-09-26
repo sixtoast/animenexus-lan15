@@ -124,6 +124,8 @@ export function NexusWorlds({ candidates }: Props) {
     const lineupDuration = mobile ? 1050 : 1200;
     const travelDuration = mobile ? 1500 : 1750;
     const orbitDuration = mobile ? 30000 : 36000;
+    const travelLift = mobile ? 18 : 30;
+    const travelArc = mobile ? 0.055 : 0.075;
     const delayStep = mobile ? 70 : 90;
 
     let raf = 0;
@@ -254,8 +256,16 @@ export function NexusWorlds({ candidates }: Props) {
           const angle = phase + orbitPhase;
           const targetX = centreX + Math.cos(angle) * radiusX - baseX;
           const targetY = centreY + Math.sin(angle) * radiusY - baseY;
-          x = lineX - baseX + (targetX - (lineX - baseX)) * p;
-          y = lineY - baseY + (targetY - (lineY - baseY)) * p;
+          const startX = lineX - baseX;
+          const startY = lineY - baseY;
+          const travelX = startX + (targetX - startX) * p;
+          const travelY = startY + (targetY - startY) * p;
+          // A single spatial arc gives every card the same physical journey:
+          // lineup -> lift/arc -> orbital destination. The sign only varies the
+          // side of the arc, never the destination geometry.
+          const arc = Math.sin(Math.PI * p) * travelArc * rect.height * (index % 2 === 0 ? -1 : 1);
+          x = travelX;
+          y = travelY - Math.sin(Math.PI * p) * travelLift + arc;
           rotation = (index % 2 === 0 ? -1 : 1) * (28 * (1 - p) + Math.cos(angle) * 2.2 * p);
           scale = 0.82 + 0.10 * p;
 
