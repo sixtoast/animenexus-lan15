@@ -20,9 +20,11 @@ import {
   resonanceFromGenres,
   interactionWeight,
 } from "@/lib/resonance";
-import { rankRecommendations } from "@/lib/recommend-rank";
+import { rankRecommendationsV3 } from "@/lib/intelligence/recommendation/ranker-v3";
 import { fetchByGenres } from "@/lib/anilist-discover";
 import type { Anime, WatchlistEntry } from "@/lib/types";
+import { readIntentSession, readAiIntentOverlay } from "@/lib/intent-session";
+import { getExperienceIntent } from "@/lib/viewing-intent";
 
 export type ToolName =
   | "searchAnime"
@@ -83,9 +85,15 @@ export const TOOL_SPECS: ToolSpec[] = [
   },
   {
     name: "getRecommendations",
-    description: "Suggest anime ranked by resonance vs the user's shelf.",
+    description: "Suggest anime using the canonical recommendation ranker and the active viewing intent.",
     requiresConfirmation: false,
     parameters: { genres: "optional comma-separated genres" },
+  },
+  {
+    name: "getViewingIntent",
+    description: "Read the current session viewing intent and AI mood overlay.",
+    requiresConfirmation: false,
+    parameters: {},
   },
   {
     name: "getCompletionQueue",
@@ -247,6 +255,28 @@ export async function executeTool(
           },
         };
       }
+      case "getViewingIntent": {
+        const session = readIntentSession();
+        const overlay = readAiIntentOverlay();
+        const experience = session.slug ? getExperienceIntent(session.slug) : undefined;
+        return {
+          ok: true,
+          tool: name,
+          data: {
+            session,
+            experience: experience
+              ? { slug: experience.slug, label: experience.label, blurb: experience.blurb }
+              : null,
+            overlay: overlay
+              ? {
+                  freeText: overlay.freeText.slice(0, 280),
+                  structured: overlay.structured,
+                  at: overlay.at,
+                }
+              : null,
+          },
+        };
+      }
       case "getRecommendations": {
         const entries = readWatchlist();
         const genresArg = String(args.genres || "")
@@ -271,7 +301,11 @@ export async function executeTool(
           sort: ["SCORE_DESC", "POPULARITY_DESC"],
           excludeIds: entries.map((e) => e.id),
         });
-        const ranked = rankRecommendations(page.data, entries).slice(0, 6);
+        const session = readIntentSession();
+        const ranked = rankRecommendationsV3(page.data, entries, {
+          experienceSlug: session.slug || undefined,
+          excludeIds: new Set(entries.map((e) => e.id)),
+        }).slice(0, 6);
         return {
           ok: true,
           tool: name,
