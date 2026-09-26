@@ -2,14 +2,14 @@
 .cinema-browse-page:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.4;background:repeating-linear-gradient(90deg,transparent 0 11.9vw,rgba(244,239,231,.018) 12vw,transparent 12.1vw);mask-image:linear-gradient(#000,transparent 82%)}
 .browse-observatory-header{min-height:min(78svh,760px);display:grid;align-items:end;position:relative;padding:clamp(130px,19vh,210px) 0 clamp(70px,9vw,120px);overflow:hidden}
 .browse-observatory-header:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at var(--browse-pointer-x,50%) var(--browse-pointer-y,35%),rgba(242,179,95,.14),transparent 14rem),linear-gradient(180deg,rgba(8,9,12,.1),#08090c 92%)}
-.browse-observatory-header:after{content:"";position:absolute;left:4vw;right:4vw;bottom:38px;height:1px;background:linear-gradient(90deg,transparent,rgba(242,179,95,.7),rgba(244,239,231,.15),transparent);transform:scaleX(calc(.55 + var(--browse-scroll,0)*.45));transform-origin:left}
+.browse-observatory-header:after{content:"";position:absolute;left:4vw;right:4vw;bottom:38px;height:1px;background:linear-gradient(90deg,transparent,rgba(242,179,95,.7),rgba(244,239,231,.15),transparent);transform:scaleX(var(--browse-scroll-line,.55));transform-origin:left}
 .browse-observatory-index{display:flex;justify-content:space-between;gap:24px;margin-bottom:clamp(38px,8vh,90px);color:rgba(244,239,231,.38);font-size:.61rem;letter-spacing:.18em;text-transform:uppercase}
 .browse-observatory-index strong{color:var(--browse-gold);font-weight:500}
 .browse-observatory-kicker{color:var(--browse-gold);text-transform:uppercase;letter-spacing:.22em;font-size:.62rem;margin-bottom:18px}
 .browse-observatory-header h1{max-width:1050px;margin:0;font-family:var(--cinema-display);font-weight:500;font-size:clamp(4.2rem,11.5vw,11rem);line-height:.78;letter-spacing:-.065em}
 .browse-observatory-header h1 em{color:rgba(244,239,231,.48);font-weight:400}
 .browse-observatory-lead{max-width:580px;margin:30px 0 0;color:rgba(244,239,231,.52);font-size:clamp(.95rem,1.4vw,1.12rem);line-height:1.7}
-.browse-orbit-marker{position:absolute;right:clamp(24px,7vw,110px);top:45%;width:110px;aspect-ratio:1;border:1px solid rgba(242,179,95,.26);border-radius:50%;box-shadow:0 0 70px rgba(242,179,95,.06);transform:translate3d(var(--browse-pointer-dx,0px),var(--browse-pointer-dy,0px),0) rotate(calc(var(--browse-scroll,0)*24deg))}
+.browse-orbit-marker{position:absolute;right:clamp(24px,7vw,110px);top:45%;width:110px;aspect-ratio:1;border:1px solid rgba(242,179,95,.26);border-radius:50%;box-shadow:0 0 70px rgba(242,179,95,.06);transform:translate3d(var(--browse-pointer-dx,0px),var(--browse-pointer-dy,0px),0) rotate(var(--browse-scroll-angle,0deg))}
 .browse-orbit-marker:before,.browse-orbit-marker:after{content:"";position:absolute;inset:15%;border:1px solid rgba(244,239,231,.09);border-radius:50%}
 .browse-orbit-marker:after{inset:47%;background:var(--browse-gold);border:0;box-shadow:0 0 25px rgba(242,179,95,.7)}
 .browse-orbit-label{position:absolute;top:50%;right:calc(100% + 14px);transform:translateY(-50%);white-space:nowrap;color:rgba(244,239,231,.3);font-size:.56rem;letter-spacing:.15em;text-transform:uppercase}
@@ -27,7 +27,7 @@
 .cinema-browse-page .filter-search:focus{border-color:rgba(242,179,95,.55);box-shadow:0 0 0 1px rgba(242,179,95,.16),0 18px 70px rgba(0,0,0,.2)}
 .cinema-browse-page .search-row .btn,.cinema-browse-page .filter-actions .btn{border-radius:0}
 .cinema-browse-page .filter-input{border-radius:0;background:rgba(255,255,255,.025)}
-.cinema-browse-page .cinema-browse-feature{position:relative;margin-top:54px;transform:translate3d(0,calc(var(--browse-scroll-velocity,0)*-1.1px),0)}
+.cinema-browse-page .cinema-browse-feature{position:relative;margin-top:54px;transform:translate3d(0,calc(var(--browse-scroll-velocity,0) * -1px),0)}
 .cinema-browse-page .cinema-browse-feature:before{content:"PRIMARY SIGNAL";position:absolute;top:-26px;right:0;color:rgba(244,239,231,.25);font-size:.52rem;letter-spacing:.18em}
 .cinema-browse-page .cinema-browse-feature-art{position:relative;box-shadow:0 40px 110px rgba(0,0,0,.45)}
 .cinema-browse-page .cinema-browse-feature-art:after{content:"";position:absolute;inset:0;background:radial-gradient(circle at var(--browse-pointer-x,50%) var(--browse-pointer-y,50%),rgba(242,179,95,.12),transparent 30%),linear-gradient(180deg,transparent 58%,rgba(0,0,0,.32));mix-blend-mode:screen;pointer-events:none}
