@@ -17,6 +17,7 @@ type Props = {
   centerTitle: string;
   centerYear?: number | string;
   centerFormat?: string;
+  centerImage?: string;
   relations: AnimeRelation[];
 };
 
@@ -177,6 +178,7 @@ export function FranchisePathPanel({
   centerTitle,
   centerYear,
   centerFormat,
+  centerImage,
   relations,
 }: Props) {
   const router = useRouter();
@@ -237,7 +239,9 @@ export function FranchisePathPanel({
   const graphEdges = remotePlan?.graph?.edges || [];
 
   const constellation = useMemo(
-    () => (plan ? layoutNodes(plan, centerId) : []),
+    () => (plan ? layoutNodes(plan, centerId) : []).map((node) =>
+      node.id === centerId && centerImage ? { ...node, image: centerImage } : node,
+    ),
     [plan, centerId],
   );
 
