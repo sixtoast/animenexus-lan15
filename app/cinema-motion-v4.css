@@ -969,3 +969,127 @@
     transform:none!important;
   }
 }
+
+
+/* V — tactile cinema surface: the interface has a shared physical material. */
+.nexus-home{
+  --nexus-scroll-velocity:0;
+  --nexus-pointer-x:50%;
+  --nexus-pointer-y:50%;
+}
+.nexus-home .nexus-index-card,
+.nexus-home .nexus-archive-item,
+.nexus-home .home-rail-card,
+.nexus-home .nexus-catalog-card{
+  --tilt-x:0deg;
+  --tilt-y:0deg;
+  --mag-x:0px;
+  --mag-y:0px;
+  transform:
+    translate3d(var(--mag-x),var(--mag-y),0)
+    translate3d(0,calc(var(--nexus-scroll-velocity) * -.18px),0)
+    rotateX(var(--tilt-x))
+    rotateY(var(--tilt-y));
+  transform-style:preserve-3d;
+  will-change:transform;
+  transition:
+    transform .6s var(--nx-ease-soft),
+    filter .6s ease,
+    opacity .5s ease;
+}
+.nexus-home .nexus-index-card:hover,
+.nexus-home .nexus-archive-item:hover,
+.nexus-home .home-rail-card:hover,
+.nexus-home .nexus-catalog-card:hover{
+  transition-duration:.16s;
+}
+.nexus-home .nexus-index-card::after,
+.nexus-home .nexus-archive-item::after,
+.nexus-home .home-rail-card::after,
+.nexus-home .nexus-catalog-card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:0;
+  background:
+    radial-gradient(
+      180px 130px at calc(50% + var(--mag-x) * 2.5) calc(50% + var(--mag-y) * 2.5),
+      rgba(242,179,95,.14),
+      transparent 72%
+    );
+  mix-blend-mode:screen;
+  transition:opacity .25s ease;
+}
+.nexus-home .nexus-index-card:hover::after,
+.nexus-home .nexus-archive-item:hover::after,
+.nexus-home .home-rail-card:hover::after,
+.nexus-home .nexus-catalog-card:hover::after{
+  opacity:1;
+}
+.nexus-home .is-scene-active{
+  --scene-focus:1;
+}
+.nexus-home .is-scene-active > *{
+  filter:saturate(calc(.82 + var(--scene-focus) * .18));
+}
+.nexus-home .nexus-worlds-section.is-scene-active .nexus-world-core-ring{
+  animation:nexus-core-breath 3.8s var(--nx-ease-soft) infinite;
+}
+@keyframes nexus-core-breath{
+  0%,100%{transform:scale(.985);opacity:.72}
+  50%{transform:scale(1.035);opacity:1}
+}
+.nexus-home .home-rail.is-dragging{
+  cursor:grabbing;
+  scroll-behavior:auto;
+}
+.nexus-home .home-rail.is-dragging .home-rail-card{
+  filter:saturate(.92) brightness(.94);
+}
+.nexus-home .nexus-opening::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:3;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0 49.8%,
+      rgba(242,179,95,.075) 50%,
+      transparent 50.2%
+    ),
+    radial-gradient(
+      700px 400px at var(--nexus-pointer-x) var(--nexus-pointer-y),
+      transparent 0 54%,
+      rgba(7,8,11,.16) 78%,
+      rgba(7,8,11,.42) 100%
+    );
+  opacity:.5;
+  mix-blend-mode:screen;
+  transition:opacity .8s ease;
+}
+.nexus-home .nexus-opening.is-scene-active::after{
+  opacity:.72;
+}
+@media(max-width:760px){
+  .nexus-home .nexus-index-card,
+  .nexus-home .nexus-archive-item,
+  .nexus-home .home-rail-card,
+  .nexus-home .nexus-catalog-card{
+    transform:translate3d(0,calc(var(--nexus-scroll-velocity) * -.08px),0);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .nexus-home .nexus-index-card,
+  .nexus-home .nexus-archive-item,
+  .nexus-home .home-rail-card,
+  .nexus-home .nexus-catalog-card{
+    transform:none!important;
+    transition:none!important;
+  }
+  .nexus-home .nexus-worlds-section.is-scene-active .nexus-world-core-ring{
+    animation:none!important;
+  }
+}
