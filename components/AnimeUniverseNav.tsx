@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { claimNexusCommand, onNexusSignal } from "@/lib/nexus-intelligence";
 
 export const UNIVERSE_SPACES = ["story","identity","characters","creators","artwork","soundtrack","franchise","watch","personal"] as const;
 
@@ -61,6 +62,23 @@ export function AnimeUniverseNav() {
     setActive(id);
     target.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+
+  useEffect(() => {
+    return onNexusSignal((signal) => {
+      if (signal.source !== "ai" || !claimNexusCommand(signal.id, "universe-nav") || signal.type !== "focus") {
+        return;
+      }
+      const target =
+        signal.target === "artwork"
+          ? "artwork"
+          : signal.target === "franchise"
+            ? "franchise"
+            : signal.target === "watch-order"
+              ? "watch"
+              : null;
+      if (target) jump(target);
+    });
+  }, []);
 
   return (
     <nav className="anime-universe-nav" aria-label="Anime universe">
