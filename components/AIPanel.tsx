@@ -208,7 +208,7 @@ export function AIPanel() {
       const result = await runLanternAgent(v, prior);
       let reply = result.reply;
       const lower = v.toLowerCase();
-      const moodRequest = /\\b(mood|tonight|feel|feeling|quiet|calm|dark|depress|melanchol|sad|hype|intense|chill|relax|comfort|cry|romance|scary|spooky)\\b/.test(lower);
+      const moodRequest = /\b(mood|tonight|feel|feeling|quiet|calm|dark|depress|melanchol|sad|hype|intense|chill|relax|comfort|cry|romance|scary|spooky)\b/.test(lower);
       let appliedIntent = false;
 
       if (moodRequest) {
