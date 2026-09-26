@@ -30,6 +30,12 @@ function sharedDNA(current: Anime, other: Anime) {
   return shared.length ? shared.join(" · ") : other.genre || "ADJACENT WORLD";
 }
 
+function eventRotation(field: HTMLDivElement | null) {
+  if (!field) return 0;
+  const pointer = field.dataset.orbitDrag;
+  return pointer ? Number(pointer) : 0;
+}
+
 export function NexusWorlds({ candidates }: Props) {
   const { surprise, ready, entries } = useHomePersonalizedPool(candidates, 140);
   // Discovery Field deliberately consumes the same ranked Surprise Me stream.
@@ -39,6 +45,60 @@ export function NexusWorlds({ candidates }: Props) {
   const [secret, setSecret] = useState(false);
   const [entered, setEntered] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
+  const pointerRef = useRef({ x: 0, y: 0, active: false });
+  const dragRef = useRef({ active: false, startX: 0, startRotation: 0 });
+
+  useEffect(() => {
+    const field = fieldRef.current;
+    if (!field) return;
+
+    const setPointer = (clientX: number, clientY: number) => {
+      const rect = field.getBoundingClientRect();
+      const x = ((clientX - rect.left) / rect.width - 0.5) * 2;
+      const y = ((clientY - rect.top) / rect.height - 0.5) * 2;
+      pointerRef.current = { x, y, active: true };
+      field.style.setProperty("--world-pointer-x", x.toFixed(3));
+      field.style.setProperty("--world-pointer-y", y.toFixed(3));
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" || event.pointerType === "pen") {
+        setPointer(event.clientX, event.clientY);
+      }
+    };
+    const onPointerLeave = () => {
+      pointerRef.current.active = false;
+      field.style.setProperty("--world-pointer-x", "0");
+      field.style.setProperty("--world-pointer-y", "0");
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      const current = Number(field.dataset.orbitRotation || "0");
+      dragRef.current = { active: true, startX: event.clientX, startRotation: current };
+      field.setPointerCapture?.(event.pointerId);
+      field.classList.add("is-dragging");
+    };
+    const onPointerUp = (event: PointerEvent) => {
+      if (!dragRef.current.active) return;
+      dragRef.current.active = false;
+      field.releasePointerCapture?.(event.pointerId);
+      field.classList.remove("is-dragging");
+    };
+
+    field.addEventListener("pointermove", onPointerMove);
+    field.addEventListener("pointerleave", onPointerLeave);
+    field.addEventListener("pointerdown", onPointerDown);
+    field.addEventListener("pointerup", onPointerUp);
+    field.addEventListener("pointercancel", onPointerUp);
+
+    return () => {
+      field.removeEventListener("pointermove", onPointerMove);
+      field.removeEventListener("pointerleave", onPointerLeave);
+      field.removeEventListener("pointerdown", onPointerDown);
+      field.removeEventListener("pointerup", onPointerUp);
+      field.removeEventListener("pointercancel", onPointerUp);
+    };
+  }, []);
 
   useEffect(() => {
     const field = fieldRef.current;
@@ -111,9 +171,14 @@ export function NexusWorlds({ candidates }: Props) {
         if (!orbit) return;
 
         const local = Math.max(0, elapsed - index * delayStep);
+        const pointer = pointerRef.current;
+        const pointerX = pointer.active ? pointer.x : 0;
+        const pointerY = pointer.active ? pointer.y : 0;
         let x = lineX - baseX;
         let y = lineY - baseY;
         let rotation = index % 2 === 0 ? -28 : 28;
+        let rotateX = 0;
+        let rotateY = 0;
         let scale = 0.82;
         let depth = 0.5;
 
@@ -130,16 +195,27 @@ export function NexusWorlds({ candidates }: Props) {
 
           if (travelT >= 1) {
             const orbitT = (local - lineupDuration - travelDuration) / orbitDuration;
-            const a = phase + orbitT * Math.PI * 2;
-            x = centreX + Math.cos(a) * radiusX - baseX;
-            y = centreY + Math.sin(a) * radiusY - baseY;
+            const dragRotation = dragRef.current.active
+              ? (eventRotation(fieldRef.current) - 0)
+              : 0;
+            const a = phase + orbitT * Math.PI * 2 + dragRotation;
+            const dynamicRadiusX = radiusX * (1 - Math.abs(pointerX) * 0.035);
+            const dynamicRadiusY = radiusY * (1 - Math.abs(pointerY) * 0.025);
+            const fieldCentreX = centreX + pointerX * 18;
+            const fieldCentreY = centreY + pointerY * 12;
+            x = fieldCentreX + Math.cos(a) * dynamicRadiusX - baseX;
+            y = fieldCentreY + Math.sin(a) * dynamicRadiusY - baseY;
             depth = (Math.sin(a) + 1) / 2;
             scale = 0.90 + depth * 0.12;
             rotation = Math.cos(a) * 2.2;
+            rotateY = Math.sin(a) * 7 + pointerX * 2.5;
+            rotateX = -Math.cos(a) * 4 + pointerY * -2.2;
+            node.style.setProperty("--orbit-depth", depth.toFixed(3));
+            node.style.setProperty("--orbit-angle", a.toFixed(3));
           }
         }
 
-        orbit.style.transform = `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) scale(${scale.toFixed(3)}) rotateZ(${rotation.toFixed(2)}deg)`;
+        orbit.style.transform = `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) perspective(900px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)}) rotateZ(${rotation.toFixed(2)}deg)`;
         if (local >= lineupDuration + travelDuration) {
           const a = phase + ((local - lineupDuration - travelDuration) / orbitDuration) * Math.PI * 2;
           node.style.zIndex = String(20 + Math.round(((Math.sin(a) + 1) / 2) * 20));
@@ -182,11 +258,17 @@ export function NexusWorlds({ candidates }: Props) {
       onMouseMove={(event) => {
         const rect = event.currentTarget.getBoundingClientRect();
         event.currentTarget.style.setProperty("--world-x", ((event.clientX - rect.left) / rect.width - 0.5) * 7 + "px");
-        event.currentTarget.style.setProperty("--world-y", ((event.clientY - rect.top) / rect.height - 0.5) * 7 + "px");
+        const px = (event.clientX - rect.left) / rect.width - 0.5;
+        const py = (event.clientY - rect.top) / rect.height - 0.5;
+        event.currentTarget.style.setProperty("--world-y", py * 7 + "px");
+        event.currentTarget.style.setProperty("--world-pointer-x", (px * 2).toFixed(3));
+        event.currentTarget.style.setProperty("--world-pointer-y", (py * 2).toFixed(3));
       }}
       onMouseLeave={(event) => {
         event.currentTarget.style.setProperty("--world-x", "0px");
         event.currentTarget.style.setProperty("--world-y", "0px");
+        event.currentTarget.style.setProperty("--world-pointer-x", "0");
+        event.currentTarget.style.setProperty("--world-pointer-y", "0");
         setActive(null);
         setArmed(null);
       }}
