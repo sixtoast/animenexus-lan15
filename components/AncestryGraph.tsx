@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { AnimeRelation, GraphNode } from "@/lib/types";
@@ -85,7 +86,7 @@ function AncestryLink({
   href: string;
   title: string;
   objectId: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const router = useRouter();
   return (
