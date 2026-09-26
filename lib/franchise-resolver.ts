@@ -196,3 +196,130 @@ export function franchiseSummaryLine(plan: FranchisePlan): string {
   const hedge = main.uncertain ? " (approximate)" : "";
   return `Main path${hedge}: ${titles}${more}`;
 }
+
+
+/** Graph-aware franchise resolver. */
+export function resolveFranchiseGraph(opts: {
+  center: FranchiseNode;
+  nodes: import("./types").GraphNode[];
+  edges: import("./types").GraphEdge[];
+  sources?: string[];
+}): FranchisePlan {
+  const { center, nodes, edges, sources = [] } = opts;
+  const map = new Map(nodes.map((n) => [n.id, {
+    id: n.id,
+    title: n.title,
+    year: n.year == null ? undefined : Number(n.year),
+    format: n.format,
+    relationFromCenter: n.relationType,
+  } as FranchiseNode]));
+  const official = edges.filter((e) => e.kind === "official");
+  const all = dedupeNodes([center, ...[...map.values()].filter((n) => n.id !== center.id)]);
+  const release = [...all].sort(byRelease);
+  const mainIds = new Set<number>([center.id!]);
+  const queue = [center.id!];
+
+  while (queue.length) {
+    const current = queue.shift()!;
+    for (const e of official) {
+      if (e.from !== current && e.to !== current) continue;
+      const type = normalizeRelationType(e.label || "OTHER");
+      if (!["SEQUEL", "PREQUEL", "PARENT", "FULL_STORY"].includes(type)) continue;
+      const next = e.from === current ? e.to : e.from;
+      if (map.has(next) && !mainIds.has(next)) {
+        mainIds.add(next);
+        queue.push(next);
+      }
+    }
+  }
+
+  const mainNodes = all.filter((n) => n.id != null && mainIds.has(n.id));
+  const main = orderByConstraints(mainNodes, official);
+  const story = orderByConstraints(all, official);
+  const incomplete = main.length !== mainNodes.length || main.length <= 1;
+  const chronologyUncertain = story.length !== all.length || hasCycle(all, official);
+
+  return {
+    center,
+    relationCount: Math.max(0, all.length - 1),
+    sources: [...new Set(sources)],
+    paths: [
+      {
+        id: "release",
+        label: "Release order",
+        nodes: release,
+        uncertain: release.filter((n) => n.year != null).length < 2,
+        note: release.filter((n) => n.year != null).length < 2
+          ? "Some release years are missing, so placement is approximate."
+          : "Sorted by known release year.",
+      },
+      {
+        id: "chronological",
+        label: "Story order",
+        nodes: story,
+        uncertain: chronologyUncertain,
+        note: chronologyUncertain
+          ? "Provider relations do not establish a complete story chronology."
+          : "Uses explicit prequel/sequel/parent constraints; release dates break ties.",
+      },
+      {
+        id: "main_story",
+        label: "Main story",
+        nodes: main,
+        uncertain: incomplete,
+        note: incomplete
+          ? "The main-line relation graph is incomplete or ambiguous."
+          : "Connected main-line works; side stories and alternatives excluded.",
+      },
+      {
+        id: "completion",
+        label: "Full franchise",
+        nodes: release,
+        uncertain: release.length <= 1,
+        note: "Includes all connected official works currently known.",
+      },
+    ],
+  };
+}
+
+function byRelease(a: FranchiseNode, b: FranchiseNode) {
+  return (a.year ?? 9999) - (b.year ?? 9999) || a.title.localeCompare(b.title);
+}
+
+function orderByConstraints(nodes: FranchiseNode[], edges: import("./types").GraphEdge[]) {
+  const ids = new Set(nodes.map((n) => n.id!));
+  const out = new Map<number, Set<number>>();
+  const indegree = new Map<number, number>(nodes.map((n) => [n.id!, 0]));
+  const addEdge = (a: number, b: number) => {
+    if (a === b || !ids.has(a) || !ids.has(b)) return;
+    if (!out.has(a)) out.set(a, new Set());
+    if (out.get(a)!.has(b)) return;
+    out.get(a)!.add(b);
+    indegree.set(b, (indegree.get(b) || 0) + 1);
+  };
+  for (const e of edges) {
+    const t = normalizeRelationType(e.label || "OTHER");
+    if (t === "SEQUEL" || t === "FULL_STORY") addEdge(e.from, e.to);
+    else if (t === "PREQUEL" || t === "PARENT") addEdge(e.to, e.from);
+  }
+  const ready = nodes.filter((n) => indegree.get(n.id!) === 0).sort(byRelease);
+  const result: FranchiseNode[] = [];
+  while (ready.length) {
+    const n = ready.shift()!;
+    result.push(n);
+    for (const next of out.get(n.id!) || []) {
+      const d = (indegree.get(next) || 0) - 1;
+      indegree.set(next, d);
+      if (d === 0) {
+        ready.push(nodes.find((x) => x.id === next)!);
+        ready.sort(byRelease);
+      }
+    }
+  }
+  return result.length === nodes.length ? result : [...nodes].sort(byRelease);
+}
+
+function hasCycle(nodes: FranchiseNode[], edges: import("./types").GraphEdge[]) {
+  const ordered = orderByConstraints(nodes, edges);
+  return ordered.length !== nodes.length;
+}
