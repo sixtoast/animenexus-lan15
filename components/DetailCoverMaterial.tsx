@@ -16,6 +16,7 @@ import {
 
 const COVER_KEY_PREFIX = "animenexus:artwork-cover:";
 const COVER_EVENT = "animenexus:artwork-selected";
+const ROLE_KEY_PREFIX = "animenexus:artwork-role:";
 
 export function DetailCoverMaterial({
   anime,
@@ -25,6 +26,7 @@ export function DetailCoverMaterial({
   viewTransitionName?: string;
 }) {
   const [cover, setCover] = useState(anime.image);
+  const [role, setRole] = useState("key-art");
   const [artworkRole, setArtworkRole] = useState("key-art");
 
   useEffect(() => {
@@ -65,7 +67,8 @@ export function DetailCoverMaterial({
 
   return (
     <div
-      className="detail-cover-material"
+      className={`detail-cover-material artwork-role--${role}`}
+      data-artwork-role={role}
       data-anime-object-id={getAnimeObjectId(anime.id)}
       style={{
         ...vars,
