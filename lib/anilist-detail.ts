@@ -493,39 +493,62 @@ export async function fetchAncestryGraph(
     }
   }
 
-  const hop0Recs = root.recommendations.slice(0, hopRecLimit);
-  const expansions = await Promise.all(
-    hop0Recs.map(async (rec) => {
-      try {
-        const links = await fetchMediaLinks(rec.id);
-        return { parentId: rec.id, links };
-      } catch {
-        return {
-          parentId: rec.id,
-          links: { relations: [], recommendations: [] },
-        };
-      }
-    }),
-  );
+  // Expand the official franchise graph breadth-first. The previous implementation
+  // only expanded recommendation nodes, which made "watch order" effectively one hop.
+  const visited = new Set<number>([rootId]);
+  const queue: { id: number; depth: number }[] = root.relations.map((r) => ({
+    id: r.id,
+    depth: 1,
+  }));
 
-  for (const { parentId, links } of expansions) {
-    for (const r of links.relations.slice(0, 2)) {
-      if (r.id === rootId) continue;
-      if (!nodeMap.has(r.id)) {
-        if (!addNode({ ...r, relationType: r.relationType }, 1, "official"))
-          continue;
-      }
-      addEdge(parentId, r.id, "official", r.relationType);
+  while (queue.length && nodeMap.size < maxNodes) {
+    const { id: currentId, depth } = queue.shift()!;
+    if (visited.has(currentId)) continue;
+    visited.add(currentId);
+
+    let links: { relations: AnimeRelation[]; recommendations: AnimeRelation[] };
+    try {
+      links = await fetchMediaLinks(currentId);
+    } catch {
+      continue;
     }
-    for (const r of links.recommendations.slice(0, hopRecLimit)) {
-      if (r.id === rootId) continue;
-      const isNew = !nodeMap.has(r.id);
-      if (isNew) {
-        if (!addNode({ ...r, relationType: "RECOMMENDED" }, 1, "recommended")) {
-          continue;
-        }
+
+    for (const r of links.relations) {
+      if (r.id === rootId) {
+        addEdge(currentId, r.id, "official", r.relationType);
+        continue;
       }
-      addEdge(parentId, r.id, "recommended", "RECOMMENDED");
+      if (!nodeMap.has(r.id)) {
+        if (!addNode({ ...r }, depth, "official")) continue;
+      }
+      addEdge(currentId, r.id, "official", r.relationType);
+      if (depth < 5 && !visited.has(r.id)) queue.push({ id: r.id, depth: depth + 1 });
+      if (nodeMap.size >= maxNodes) break;
+    }
+  }
+
+  // Recommendations are intentionally kept shallow and separate from the
+  // franchise path so they can never silently become watch-order entries.
+  if (hopRecLimit > 0) {
+    const hop0Recs = root.recommendations.slice(0, hopRecLimit);
+    const expansions = await Promise.all(
+      hop0Recs.map(async (rec) => {
+        try {
+          const links = await fetchMediaLinks(rec.id);
+          return { parentId: rec.id, links };
+        } catch {
+          return { parentId: rec.id, links: { relations: [], recommendations: [] } };
+        }
+      }),
+    );
+    for (const { parentId, links } of expansions) {
+      const rec = root.recommendations.find((x) => x.id === parentId);
+      if (rec && !nodeMap.has(parentId)) addNode(rec, 0, "recommended");
+      for (const r of links.recommendations.slice(0, hopRecLimit)) {
+        if (r.id === rootId) continue;
+        if (!nodeMap.has(r.id)) addNode({ ...r, relationType: "RECOMMENDED" }, 1, "recommended");
+        addEdge(parentId, r.id, "recommended", "RECOMMENDED");
+      }
     }
   }
 
