@@ -36,3 +36,6 @@ Open http://localhost:3000
 ## Deploy
 
 Vercel · Node `>=18.18` · `next build`
+
+
+<!-- Vercel deployment chain heartbeat: 2026-09-26 -->
