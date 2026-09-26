@@ -90,3 +90,78 @@ html[data-reduce-motion="true"]::view-transition-old(*),
 html[data-reduce-motion="true"]::view-transition-new(*) {
   animation: none !important;
 }
+
+/* ── Global cinematic motion grammar ─────────────────────────
+ * Every route transition has one story:
+ * ORIGIN → TRAVEL → DESTINATION.
+ * Components declare intent; this layer owns the timing language.
+ */
+:root{
+  --cinema-travel:520ms;
+  --cinema-settle:680ms;
+  --cinema-ease:cubic-bezier(.16,1,.3,1);
+  --cinema-spring:cubic-bezier(.22,1.18,.24,1);
+}
+
+@supports (view-transition-name:none){
+  ::view-transition-old(root),
+  ::view-transition-new(root){
+    animation-timing-function:var(--cinema-ease);
+  }
+
+  html[data-motion-route="anime-detail"]::view-transition-old(root){
+    animation:cinematicOriginOut 420ms var(--cinema-ease) both;
+  }
+  html[data-motion-route="anime-detail"]::view-transition-new(root){
+    animation:cinematicDestinationIn 680ms var(--cinema-ease) both;
+  }
+
+  html[data-motion-origin="card"]::view-transition-group(root){
+    animation-duration:var(--cinema-travel);
+    animation-timing-function:var(--cinema-ease);
+  }
+
+  html[data-motion-route="anime-detail"]::view-transition-group(cover-*){
+    animation-duration:var(--cinema-settle);
+    animation-timing-function:var(--cinema-spring);
+  }
+
+  @keyframes cinematicOriginOut{
+    0%{opacity:1;filter:none;transform:scale(1)}
+    35%{opacity:1;filter:brightness(.96);transform:scale(.995)}
+    100%{opacity:0;filter:brightness(.82);transform:scale(.985)}
+  }
+  @keyframes cinematicDestinationIn{
+    0%{opacity:0;filter:brightness(1.12) saturate(.82);transform:scale(1.018)}
+    42%{opacity:1;filter:brightness(1.02) saturate(.94);transform:scale(1.004)}
+    100%{opacity:1;filter:none;transform:scale(1)}
+  }
+
+  /* Keep the shared poster physically legible during travel. */
+  html[data-motion-origin="card"]::view-transition-old(cover-*),
+  html[data-motion-origin="card"]::view-transition-new(cover-*){
+    animation-duration:var(--cinema-settle);
+    animation-timing-function:var(--cinema-spring);
+  }
+}
+
+/* The route scene also gives ordinary navigation a cinematic grammar
+   when the browser does not expose View Transitions. */
+html[data-motion-route="anime-detail"] .room-enter{
+  animation:cinematicRoomIn 680ms var(--cinema-ease) both;
+}
+html[data-motion-origin="card"] .room-enter{
+  animation-delay:120ms;
+}
+@keyframes cinematicRoomIn{
+  from{opacity:0;transform:translateY(18px) scale(.992);filter:blur(4px)}
+  to{opacity:1;transform:none;filter:none}
+}
+
+@media(prefers-reduced-motion:reduce){
+  :root{--cinema-travel:1ms;--cinema-settle:1ms}
+}
+html[data-reduce-motion="true"]{
+  --cinema-travel:1ms;
+  --cinema-settle:1ms;
+}
