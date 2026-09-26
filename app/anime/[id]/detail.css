@@ -338,3 +338,30 @@ body:has(.detail-cover-material.artwork-role--promotional) {
   .detail-cover-material.is-artwork-transitioning:before,
   .detail-cover-material.is-artwork-transitioning .detail-cover{animation:none}
 }
+
+
+/* Artwork change choreography: old composition releases while the new asset
+   enters on the same plane. The atmospheric layer intentionally lags behind. */
+.detail-cover-material__previous{position:absolute;inset:0;border-radius:inherit;background-image:var(--artwork-previous-image);background-size:cover;background-position:center;z-index:2;pointer-events:none;opacity:0;transform:scale(1.025);filter:blur(1px);animation:detail-artwork-release .76s cubic-bezier(.22,.8,.2,1) both}
+.detail-cover-material.is-artwork-transitioning .detail-cover{animation:detail-artwork-arrive .76s cubic-bezier(.16,1,.3,1) both}
+.detail-cover-material.is-artwork-transitioning:before{animation:detail-artwork-atmosphere .95s cubic-bezier(.16,1,.3,1) both}
+@keyframes detail-artwork-release{
+  0%{opacity:1;transform:scale(1);filter:blur(0)}
+  100%{opacity:0;transform:scale(.975);filter:blur(3px)}
+}
+@keyframes detail-artwork-arrive{
+  0%{opacity:.15;transform:scale(1.035) translateY(7px);filter:blur(3px)}
+  52%{opacity:1;transform:scale(1.008) translateY(-1px);filter:blur(0)}
+  100%{opacity:1;transform:scale(1) translateY(0);filter:blur(0)}
+}
+@keyframes detail-artwork-atmosphere{
+  0%{opacity:.04;transform:scale(1.01)}
+  55%{opacity:calc(var(--detail-atmosphere-opacity) + .07);transform:scale(calc(var(--detail-atmosphere-scale) + .025))}
+  100%{opacity:var(--detail-atmosphere-opacity);transform:scale(var(--detail-atmosphere-scale))}
+}
+@media(prefers-reduced-motion:reduce){
+  .detail-cover-material__previous,
+  .detail-cover-material.is-artwork-transitioning .detail-cover,
+  .detail-cover-material.is-artwork-transitioning:before{animation:none}
+  .detail-cover-material__previous{display:none}
+}
