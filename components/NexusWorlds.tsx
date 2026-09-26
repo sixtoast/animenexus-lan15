@@ -57,6 +57,10 @@ export function NexusWorlds({ candidates }: Props) {
       const x = ((clientX - rect.left) / rect.width - 0.5) * 2;
       const y = ((clientY - rect.top) / rect.height - 0.5) * 2;
       pointerRef.current = { x, y, active: true };
+      if (dragRef.current.active) {
+        const delta = clientX - dragRef.current.startX;
+        field.dataset.orbitDrag = (dragRef.current.startRotation + delta * 0.004).toFixed(4);
+      }
       field.style.setProperty("--world-pointer-x", x.toFixed(3));
       field.style.setProperty("--world-pointer-y", y.toFixed(3));
     };
