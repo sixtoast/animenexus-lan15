@@ -906,3 +906,102 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
   .nexus-world-readout{animation:none}
   .nexus-world-node-lock{transition:none}
 }
+
+
+/* Discovery Field V4 — cinematic assembly: strip -> trajectory -> orbit. */
+.nexus-world-map:not(.is-entered) .nexus-world-node{
+  opacity:0;
+  pointer-events:none;
+}
+.nexus-world-map.is-entered .nexus-world-node{
+  animation:
+    nexus-world-arrive 1.55s cubic-bezier(.16,.8,.18,1) both,
+    nexus-world-float 18s ease-in-out 1.65s infinite;
+  animation-delay:var(--entry-delay),calc(var(--entry-delay) + 1.55s);
+}
+.nexus-world-node--1{--entry-x:-44vw;--entry-y:-8px;--entry-rotate:-34deg;--entry-delay:0ms;--float-y:-7px;--float-x:-3px}
+.nexus-world-node--2{--entry-x:-29vw;--entry-y:5px;--entry-rotate:28deg;--entry-delay:90ms;--float-y:5px;--float-x:4px}
+.nexus-world-node--3{--entry-x:-15vw;--entry-y:-4px;--entry-rotate:-24deg;--entry-delay:180ms;--float-y:4px;--float-x:-5px}
+.nexus-world-node--4{--entry-x:0vw;--entry-y:7px;--entry-rotate:22deg;--entry-delay:270ms;--float-y:-5px;--float-x:3px}
+.nexus-world-node--5{--entry-x:15vw;--entry-y:-5px;--entry-rotate:-20deg;--entry-delay:360ms;--float-y:6px;--float-x:-4px}
+.nexus-world-node--6{--entry-x:29vw;--entry-y:4px;--entry-rotate:25deg;--entry-delay:450ms;--float-y:-4px;--float-x:5px}
+.nexus-world-node--7{--entry-x:44vw;--entry-y:-7px;--entry-rotate:-30deg;--entry-delay:540ms;--float-y:4px;--float-x:-2px}
+@keyframes nexus-world-arrive{
+  0%{
+    opacity:0;
+    transform:translate3d(var(--entry-x),var(--entry-y),0) rotateY(var(--entry-rotate)) rotateZ(calc(var(--entry-rotate) * .35)) scale(.82);
+    filter:blur(8px) saturate(.55);
+  }
+  18%{opacity:.8}
+  52%{
+    transform:translate3d(calc(var(--entry-x) * .34),-18px,0) rotateY(calc(var(--entry-rotate) * .45)) rotateZ(calc(var(--entry-rotate) * -.2)) scale(1.03);
+    filter:blur(1px) saturate(.9);
+  }
+  78%{
+    transform:translate3d(calc(var(--entry-x) * -.045),12px,0) rotateY(calc(var(--entry-rotate) * -.12)) rotateZ(3deg) scale(1.015);
+  }
+  100%{
+    opacity:1;
+    transform:translate3d(0,0,0) rotateY(0) rotateZ(0) scale(1);
+    filter:none;
+  }
+}
+@keyframes nexus-world-float{
+  0%,100%{transform:translate3d(0,0,0) rotateZ(0deg)}
+  25%{transform:translate3d(var(--float-x),var(--float-y),0) rotateZ(-.7deg)}
+  50%{transform:translate3d(calc(var(--float-x) * -1),calc(var(--float-y) * .55),0) rotateZ(.5deg)}
+  75%{transform:translate3d(calc(var(--float-x) * .45),calc(var(--float-y) * -1),0) rotateZ(-.35deg)}
+}
+.nexus-world-map.is-entered .nexus-world-node-art{
+  animation:nexus-world-art-breathe 7s ease-in-out calc(var(--entry-delay) + 2s) infinite;
+}
+@keyframes nexus-world-art-breathe{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.018)}
+}
+.nexus-world-map.is-entered .nexus-world-connections{
+  animation:nexus-world-connections-in 1.2s ease-out 1.25s both;
+}
+@keyframes nexus-world-connections-in{
+  from{opacity:0;filter:blur(4px)}
+  to{opacity:1;filter:none}
+}
+.nexus-world-map.is-entered .nexus-world-core{
+  animation:nexus-world-core-arrive 1s cubic-bezier(.2,.75,.2,1) .95s both;
+}
+@keyframes nexus-world-core-arrive{
+  from{opacity:0;transform:translate(calc(-50% + var(--world-x) * .55),calc(-50% + var(--world-y) * .55)) scale(.82);filter:blur(8px)}
+  to{opacity:1;transform:translate(calc(-50% + var(--world-x) * .55),calc(-50% + var(--world-y) * .55)) scale(1);filter:none}
+}
+@media(max-width:700px){
+  .nexus-world-map.is-entered .nexus-world-node{
+    animation:
+      nexus-world-arrive-mobile 1.25s cubic-bezier(.16,.8,.18,1) both,
+      nexus-world-float 20s ease-in-out 1.4s infinite;
+    animation-delay:var(--entry-delay),calc(var(--entry-delay) + 1.25s);
+  }
+  .nexus-world-node--1{--entry-x:-76vw;--entry-y:0;--entry-rotate:-25deg}
+  .nexus-world-node--2{--entry-x:-51vw;--entry-y:4px;--entry-rotate:23deg}
+  .nexus-world-node--3{--entry-x:-26vw;--entry-y:-3px;--entry-rotate:-20deg}
+  .nexus-world-node--4{--entry-x:0vw;--entry-y:4px;--entry-rotate:18deg}
+  .nexus-world-node--5{--entry-x:26vw;--entry-y:-3px;--entry-rotate:-18deg}
+  .nexus-world-node--6{--entry-x:51vw;--entry-y:4px;--entry-rotate:22deg}
+  .nexus-world-node--7{--entry-x:76vw;--entry-y:-2px;--entry-rotate:-24deg}
+}
+@keyframes nexus-world-arrive-mobile{
+  0%{
+    opacity:0;
+    transform:translate3d(var(--entry-x),var(--entry-y),0) rotateY(var(--entry-rotate)) rotateZ(calc(var(--entry-rotate) * .3)) scale(.8);
+    filter:blur(6px) saturate(.6);
+  }
+  48%{opacity:.9;transform:translate3d(calc(var(--entry-x) * .16),-10px,0) rotateY(calc(var(--entry-rotate) * .25)) rotateZ(-2deg) scale(1.02)}
+  78%{transform:translate3d(calc(var(--entry-x) * -.04),6px,0) rotateZ(2deg)}
+  100%{opacity:1;transform:translate3d(0,0,0) rotateY(0) rotateZ(0) scale(1);filter:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .nexus-world-map:not(.is-entered) .nexus-world-node{opacity:1;pointer-events:auto}
+  .nexus-world-map.is-entered .nexus-world-node,
+  .nexus-world-map.is-entered .nexus-world-node-art,
+  .nexus-world-map.is-entered .nexus-world-connections,
+  .nexus-world-map.is-entered .nexus-world-core{animation:none!important}
+}
