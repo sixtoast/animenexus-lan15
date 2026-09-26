@@ -174,6 +174,13 @@ export function NexusWorlds({ candidates }: Props) {
 
     const radiusX = Math.min(...geometry.map(g => g.maxX), rect.width * (mobile ? 0.44 : 0.46));
     const radiusY = Math.min(...geometry.map(g => g.maxY), rect.height * (mobile ? 0.36 : 0.40));
+    // The canonical pool is already ranked. Translate that ordering into
+    // physical proximity so AI re-ranking is visible without introducing a
+    // second recommendation algorithm.
+    const rankWeights = worlds.map((_, index) => {
+      const t = worlds.length <= 1 ? 0 : index / (worlds.length - 1);
+      return 1 - t * (fieldMode === "recommendations" || fieldMode === "mood" ? 0.24 : 0.08);
+    });
     const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
     const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
@@ -302,8 +309,9 @@ export function NexusWorlds({ candidates }: Props) {
           if (travelT >= 1) {
             const orbitT = (local - lineupDuration - travelDuration) / orbitDuration;
             const a = phase + orbitT * Math.PI * 2 + orbitPhase;
-            const dynamicRadiusX = radiusX * (1 - Math.abs(pointerX) * 0.035);
-            const dynamicRadiusY = radiusY * (1 - Math.abs(pointerY) * 0.025);
+            const rankWeight = rankWeights[index] ?? 1;
+            const dynamicRadiusX = radiusX * rankWeight * (1 - Math.abs(pointerX) * 0.035);
+            const dynamicRadiusY = radiusY * rankWeight * (1 - Math.abs(pointerY) * 0.025);
             const fieldCentreX = centreX + pointerX * 18;
             const fieldCentreY = centreY + pointerY * 12;
             const orbitalX = fieldCentreX + Math.cos(a) * dynamicRadiusX;
@@ -341,7 +349,8 @@ export function NexusWorlds({ candidates }: Props) {
             }
 
             const depth = (Math.sin(a) + 1) / 2;
-            scale = Math.min(1.18, 0.90 + depth * 0.12 + attraction / (mobile ? 700 : 900));
+            scale = Math.min(1.18, 0.90 + depth * 0.12 + attraction / (mobile ? 700 : 900) + (1 - rankWeight) * -0.035);
+            node.style.setProperty("--rank-weight", rankWeight.toFixed(3));
             rotation = Math.cos(a) * 2.2;
             rotateY += Math.sin(a) * 7 + pointerX * 2.5;
             rotateX += -Math.cos(a) * 4 + pointerY * -2.2;
@@ -386,7 +395,7 @@ export function NexusWorlds({ candidates }: Props) {
       field.removeEventListener("pointerup", onDragEnd);
       field.removeEventListener("pointercancel", onDragEnd);
     };
-  }, [entered, worlds.length]);
+  }, [entered, worlds.length, fieldMode, worlds.map((anime) => anime.id).join("|")]);
 
   useEffect(() => {
     const field = fieldRef.current;
