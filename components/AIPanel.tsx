@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   AI_PRESETS,
   defaultSettings,
@@ -39,6 +40,8 @@ export function AIPanel() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [composerFocused, setComposerFocused] = useState(false);
+  const pathname = usePathname() || "/";
+  const [nexusSignal, setNexusSignal] = useState("Listening to the current field");
   const speechTimer = useRef<number | null>(null);
   const { showToast } = useToast();
   const { add, remove } = useWatchlist();
@@ -80,6 +83,22 @@ export function AIPanel() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  function emitNexusSignal(signal: string) {
+    setNexusSignal(signal);
+    window.dispatchEvent(new CustomEvent("nexus:intent", { detail: { signal, source: "lantern" } }));
+  }
+
+  function routeSignal(path: string) {
+    if (path === "/") return "Discovery field is open";
+    if (path.startsWith("/browse") || path.startsWith("/seasonal") || path.startsWith("/airing")) return "Catalogue field is expanded";
+    if (path.startsWith("/anime/")) return "Title universe is centred";
+    if (path.startsWith("/watchlist")) return "Personal constellation is active";
+    if (path.startsWith("/mood")) return "Mood field is active";
+    return "Nexus is observing this space";
+  }
+
+  useEffect(() => { setNexusSignal(routeSignal(pathname)); }, [pathname]);
 
   function saveSettings() {
     writeAISettings(settings);
@@ -142,6 +161,9 @@ export function AIPanel() {
       }));
       const result = await runLanternAgent(v, prior);
       let reply = result.reply;
+      const lower = reply.toLowerCase();
+      const signal = lower.includes("watchlist") ? "Watchlist state identified" : lower.includes("mood") || lower.includes("psychological") || lower.includes("dark") ? "Mood field recalibrated" : lower.includes("franchise") ? "Franchise space mapped" : lower.includes("artwork") || lower.includes("poster") ? "Artwork space focused" : lower.includes("recommend") || lower.includes("watch") ? "Discovery field recalibrated" : "Nexus intelligence updated";
+      emitNexusSignal(signal);
       if (result.pendingActions.length) {
         const lines = result.pendingActions
           .map((p) => `• ${p.message} (${p.tool})`)
@@ -261,6 +283,14 @@ export function AIPanel() {
         panelClassName="ai-panel-modal"
       >
         <div className="ai-panel-inner">
+          <div className="ai-intelligence-header">
+            <div>
+              <span className="ai-intelligence-kicker">NEXUS INTELLIGENCE</span>
+              <strong>{nexusSignal}</strong>
+            </div>
+            <span className="ai-intelligence-pulse" aria-hidden="true" />
+          </div>
+
           <div className="ai-header-status">
             <span
               className={"ai-status-dot" + (configured ? " on" : "")}
@@ -345,7 +375,7 @@ export function AIPanel() {
           <div className="ai-messages">
             {messages.length === 0 ? (
               <p className="taste-footnote">
-                Ask anything anime — Lantern uses local memory and real tools.
+                The Nexus is listening to context, taste and intent. Ask Lantern to change the field, not just answer you.
                 Press A anytime.
               </p>
             ) : (
