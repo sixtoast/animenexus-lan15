@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { readIntentSession, writeIntentSession } from "@/lib/intent-session";
-import { onNexusSignal } from "@/lib/nexus-intelligence";
+import { claimNexusCommand, onNexusSignal } from "@/lib/nexus-intelligence";
 import { rankRecommendationsV3 } from "@/lib/intelligence/recommendation/ranker-v3";
 import type { Anime } from "@/lib/types";
 
@@ -33,6 +33,35 @@ export function HomePersonalizedProvider({ children, initial, limit = 180 }: { c
   const [intelligenceRevision, setIntelligenceRevision] = useState(0);
 
   useEffect(() => { setRawPool(initial); }, [initial]);
+
+  // AI commands never create a second recommender. They only update the
+  // existing session controls, then bump this revision so the canonical
+  // recommendation pipeline reruns with those controls.
+  useEffect(() => onNexusSignal((signal) => {
+    if (signal.source !== "ai" || !claimNexusCommand(signal.id)) return;
+    if (signal.type === "filter") {
+      const slug = signal.payload.experienceSlug;
+      if (typeof slug === "string" && slug.trim()) {
+        writeIntentSession({ slug: slug.trim() });
+      }
+      const session = signal.payload.session;
+      if (session && typeof session === "object") {
+        const s = session as Record<string, unknown>;
+        const patch: Parameters<typeof writeIntentSession>[0] = {};
+        if (s.intensity === "light" || s.intensity === "moderate" || s.intensity === "maximum") {
+          patch.intensity = s.intensity;
+        }
+        if (s.energy === "low" || s.energy === "medium" || s.energy === "high") {
+          patch.energy = s.energy;
+        }
+        if (s.attention === "easy" || s.attention === "medium" || s.attention === "demanding") {
+          patch.attention = s.attention;
+        }
+        if (Object.keys(patch).length) writeIntentSession(patch);
+      }
+    }
+    setIntelligenceRevision((value) => value + 1);
+  }), []);
 
   useEffect(() => {
     if (!ready) return;
