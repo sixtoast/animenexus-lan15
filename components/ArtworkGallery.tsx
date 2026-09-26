@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import type { ArtworkAsset } from "@/lib/deep-metadata";
 
 type Props = {
@@ -56,6 +57,7 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [selectedCover, setSelectedCover] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<NonNullable<ArtworkAsset["role"]>>("key-art");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const coverKey = `${COVER_KEY_PREFIX}${animeId}`;
 
@@ -66,6 +68,7 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
       const asset = assets.find((item) => item.url === url);
       const role = asset ? assetRole(asset) : "alternate-art";
       setSelectedRole(role);
+      setSelectedImage(url);
       window.dispatchEvent(new CustomEvent(COVER_EVENT, { detail: { animeId, url, role } }));
     } catch {
       // Storage can be unavailable in privacy-restricted browsers.
@@ -77,6 +80,7 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
       window.localStorage.removeItem(coverKey);
       setSelectedCover(null);
       setSelectedRole("key-art");
+      setSelectedImage(null);
       window.dispatchEvent(new CustomEvent(COVER_EVENT, { detail: { animeId, url: null, role: "key-art" } }));
     } catch {
       // Storage can be unavailable in privacy-restricted browsers.
@@ -89,6 +93,7 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
       setSelectedCover(stored);
       const asset = stored ? assets.find((item) => item.url === stored) : null;
       setSelectedRole(asset ? assetRole(asset) : "key-art");
+      setSelectedImage(stored);
     } catch {
       setSelectedCover(null);
     }
@@ -123,9 +128,12 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
       </div>
 
       {open ? (
-        <div id="artwork-gallery-content" className="artwork-gallery__content" data-selected-role={selectedRole}>
+        <div id="artwork-gallery-content" className="artwork-gallery__content" data-selected-role={selectedRole} style={{
+            "--artwork-atmosphere-image": selectedImage ? `url("${selectedImage}")` : animeImage ? `url("${animeImage}")` : bannerImage ? `url("${bannerImage}")` : "none",
+          } as CSSProperties}>
           {selectedCover ? (
-            <div className="artwork-gallery__selection">
+            <div className="artwork-gallery__atmosphere" aria-hidden="true" />
+          <div className="artwork-gallery__selection">
               <span>{selectedRole === "alternate-art" ? "Alternate key visual is shaping this title's atmosphere." : "Custom key art selected for this device."}</span>
               <button type="button" className="btn btn-outline btn-sm" onClick={clearCover}>Restore catalog cover</button>
             </div>
