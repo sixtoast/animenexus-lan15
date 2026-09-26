@@ -60,156 +60,107 @@ export function NexusWorlds({ candidates }: Props) {
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const mobile = window.matchMedia("(max-width: 700px)").matches;
-    const fieldRect = field.getBoundingClientRect();
-    const centreX = fieldRect.left + fieldRect.width / 2;
-    const centreY = fieldRect.top + fieldRect.height / 2;
+    const rect = field.getBoundingClientRect();
+    const centreX = rect.width / 2;
+    const centreY = rect.height / 2;
     const spacing = mobile ? 52 : 108;
-    const lineupY = fieldRect.height * (mobile ? 0.44 : 0.48);
-    const entryDuration = mobile ? 2200 : 2550;
-    const entryStep = mobile ? 75 : 95;
-    const travelDuration = mobile ? 1100 : 1250;
-    const timers: number[] = [];
-    const animations: Animation[] = [];
-    let orbitFrame = 0;
+    const lineupY = rect.height * (mobile ? 0.44 : 0.48);
+    const lineupDuration = mobile ? 1050 : 1200;
+    const travelDuration = mobile ? 1500 : 1750;
+    const orbitDuration = mobile ? 30000 : 36000;
+    const delayStep = mobile ? 70 : 90;
+    let raf = 0;
+    const started = performance.now();
 
-    // Keep the entrance and orbit in separate transform layers. Geometry is
-    // read from layout offsets, not getBoundingClientRect(), so the entrance
-    // transform can never contaminate the orbit's centre calculation.
-    const nodeGeometry = nodes.map((node, index) => {
-      const width = node.offsetWidth;
-      const height = node.offsetHeight;
-      const baseLeft = node.offsetLeft + (index === 6 ? -width / 2 : 0);
-      const baseTop = node.offsetTop;
-      const baseCX = fieldRect.left + baseLeft + width / 2;
-      const baseCY = fieldRect.top + baseTop + height / 2;
-      const lineupCX = centreX + (index - (nodes.length - 1) / 2) * spacing;
-
-      node.style.setProperty("--line-dx", lineupCX - baseCX + "px");
-      node.style.setProperty("--line-dy", fieldRect.top + lineupY - baseCY + "px");
-      node.style.setProperty("--spin-turns", index % 2 === 0 ? "1.75" : "-1.75");
-      node.style.setProperty("--entry-delay", index * entryStep + "ms");
-
-      return { node, width, height, baseCX, baseCY, index };
+    const geometry = nodes.map((node, index) => {
+      const w = node.offsetWidth;
+      const h = node.offsetHeight;
+      const baseX = node.offsetLeft + w / 2;
+      const baseY = node.offsetTop + h / 2;
+      const lineX = centreX + (index - (nodes.length - 1) / 2) * spacing;
+      const lineY = lineupY;
+      const maxX = Math.max(28, rect.width / 2 - w / 2 - (mobile ? 10 : 24));
+      const maxY = Math.max(42, rect.height / 2 - h / 2 - (mobile ? 22 : 32));
+      return { node, index, baseX, baseY, lineX, lineY, maxX, maxY, phase: (index / nodes.length) * Math.PI * 2 };
     });
 
-    // Calculate one safe ellipse for the entire formation. Every card shares
-    // these exact radii, so the orbit remains one unified field.
-    const maxHalfCardX = Math.max(...nodeGeometry.map(({ width }) => width / 2));
-    const maxHalfCardY = Math.max(...nodeGeometry.map(({ height }) => height / 2));
-    const radiusX = Math.max(
-      34,
-      Math.min(
-        fieldRect.width * (mobile ? 0.20 : 0.31),
-        fieldRect.width / 2 - maxHalfCardX - (mobile ? 14 : 28),
-      ),
-    );
-    const radiusY = Math.max(
-      46,
-      Math.min(
-        fieldRect.height * (mobile ? 0.22 : 0.29),
-        fieldRect.height / 2 - maxHalfCardY - (mobile ? 24 : 34),
-      ),
-    );
-    const phases = nodeGeometry.map(({ index }) => (index / nodeGeometry.length) * Math.PI * 2);
+    const radiusX = Math.min(...geometry.map(g => g.maxX), rect.width * (mobile ? 0.20 : 0.30));
+    const radiusY = Math.min(...geometry.map(g => g.maxY), rect.height * (mobile ? 0.22 : 0.29));
 
-    nodeGeometry.forEach(({ node, baseCX, baseCY, index }) => {
+    geometry.forEach(({ node }) => {
+      const motion = node.querySelector<HTMLElement>(".nexus-world-node-motion");
       const orbit = node.querySelector<HTMLElement>(".nexus-world-node-orbit-motion");
-      if (!orbit) return;
-
-      orbit.getAnimations().forEach((animation) => animation.cancel());
-      orbit.style.transform = "translate3d(0,0,0)";
-
-      if (reduceMotion) return;
-
-      const phase = phases[index];
-      const targetX = centreX + Math.cos(phase) * radiusX - baseCX;
-      const targetY = centreY + Math.sin(phase) * radiusY - baseCY;
-      const targetDepth = (Math.sin(phase) + 1) / 2;
-      const targetScale = 0.90 + targetDepth * 0.12;
-
-      const travelTimer = window.setTimeout(() => {
-        const travel = orbit.animate(
-          [
-            { transform: "translate3d(0,0,0) scale(1) rotateZ(0deg)" },
-            {
-              transform:
-                "translate3d(" +
-                targetX.toFixed(2) +
-                "px," +
-                targetY.toFixed(2) +
-                "px,0) scale(" +
-                targetScale.toFixed(3) +
-                ") rotateZ(" +
-                (Math.cos(phase) * 2.2).toFixed(2) +
-                "deg)",
-            },
-          ],
-          {
-            duration: travelDuration,
-            easing: "cubic-bezier(.16,.78,.16,1)",
-            fill: "forwards",
-          },
-        );
-        animations.push(travel);
-      }, entryDuration + index * entryStep);
-
-      timers.push(travelTimer);
+      if (!motion || !orbit) return;
+      motion.style.animation = "none";
+      motion.style.opacity = "1";
+      motion.style.transform = "none";
+      orbit.style.animation = "none";
+      orbit.style.transform = "translate3d(0,0,0) scale(1) rotateZ(0deg)";
     });
 
-    if (!reduceMotion) {
-      // Wait for the final card to finish travelling before starting ONE
-      // shared orbital clock. This removes phase drift between cards.
-      const latestTravelEnd =
-        entryDuration + (nodes.length - 1) * entryStep + travelDuration + 30;
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
-      const orbitTimer = window.setTimeout(() => {
-        const startedAt = performance.now();
-        const orbitDuration = mobile ? 30000 : 36000;
+    const tick = (now: number) => {
+      const elapsed = now - started;
 
-        const tick = (now: number) => {
-          const elapsed = (now - startedAt) % orbitDuration;
-          const commonAngle = (elapsed / orbitDuration) * Math.PI * 2;
+      geometry.forEach(({ node, index, baseX, baseY, lineX, lineY, phase }) => {
+        const orbit = node.querySelector<HTMLElement>(".nexus-world-node-orbit-motion");
+        if (!orbit) return;
 
-          nodeGeometry.forEach(({ node, baseCX, baseCY, index }) => {
-            const orbit = node.querySelector<HTMLElement>(".nexus-world-node-orbit-motion");
-            if (!orbit) return;
+        const local = Math.max(0, elapsed - index * delayStep);
+        let x = lineX - baseX;
+        let y = lineY - baseY;
+        let rotation = index % 2 === 0 ? -28 : 28;
+        let scale = 0.82;
+        let depth = 0.5;
 
-            const angle = phases[index] + commonAngle;
-            const x = centreX + Math.cos(angle) * radiusX - baseCX;
-            const y = centreY + Math.sin(angle) * radiusY - baseCY;
-            const depth = (Math.sin(angle) + 1) / 2;
-            const scale = 0.90 + depth * 0.12;
-            const tilt = Math.cos(angle) * 2.2;
+        if (local >= lineupDuration) {
+          const travelT = Math.min(1, (local - lineupDuration) / travelDuration);
+          const p = ease(travelT);
+          const angle = phase;
+          const targetX = centreX + Math.cos(angle) * radiusX - baseX;
+          const targetY = centreY + Math.sin(angle) * radiusY - baseY;
+          x = lineX - baseX + (targetX - (lineX - baseX)) * p;
+          y = lineY - baseY + (targetY - (lineY - baseY)) * p;
+          rotation = (index % 2 === 0 ? -1 : 1) * (28 * (1 - p) + Math.cos(angle) * 2.2 * p);
+          scale = 0.82 + 0.10 * p;
 
-            orbit.style.transform =
-              "translate3d(" +
-              x.toFixed(2) +
-              "px," +
-              y.toFixed(2) +
-              "px,0) scale(" +
-              scale.toFixed(3) +
-              ") rotateZ(" +
-              tilt.toFixed(2) +
-              "deg)";
+          if (travelT >= 1) {
+            const orbitT = (local - lineupDuration - travelDuration) / orbitDuration;
+            const a = phase + orbitT * Math.PI * 2;
+            x = centreX + Math.cos(a) * radiusX - baseX;
+            y = centreY + Math.sin(a) * radiusY - baseY;
+            depth = (Math.sin(a) + 1) / 2;
+            scale = 0.90 + depth * 0.12;
+            rotation = Math.cos(a) * 2.2;
+          }
+        }
 
-            node.style.zIndex = String(20 + Math.round(depth * 20));
-          });
+        orbit.style.transform = `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) scale(${scale.toFixed(3)}) rotateZ(${rotation.toFixed(2)}deg)`;
+        if (local >= lineupDuration + travelDuration) {
+          const a = phase + ((local - lineupDuration - travelDuration) / orbitDuration) * Math.PI * 2;
+          node.style.zIndex = String(20 + Math.round(((Math.sin(a) + 1) / 2) * 20));
+        } else {
+          node.style.zIndex = String(30 + index);
+        }
+      });
 
-          orbitFrame = window.requestAnimationFrame(tick);
-        };
+      raf = window.requestAnimationFrame(tick);
+    };
 
-        orbitFrame = window.requestAnimationFrame(tick);
-      }, latestTravelEnd);
-
-      timers.push(orbitTimer);
+    if (reduceMotion) {
+      geometry.forEach(({ node, baseX, baseY, phase }) => {
+        const orbit = node.querySelector<HTMLElement>(".nexus-world-node-orbit-motion");
+        if (!orbit) return;
+        orbit.style.transform = `translate3d(${(centreX + Math.cos(phase) * radiusX - baseX).toFixed(2)}px,${(centreY + Math.sin(phase) * radiusY - baseY).toFixed(2)}px,0) scale(1) rotateZ(0deg)`;
+      });
+      return;
     }
 
-    return () => {
-      timers.forEach(window.clearTimeout);
-      if (orbitFrame) window.cancelAnimationFrame(orbitFrame);
-      animations.forEach((animation) => animation.cancel());
-    };
+    raf = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(raf);
   }, [entered, worlds.length]);
+
   if (!worlds.length) return null;
 
   const activeAnime = active === null ? null : worlds[active];
