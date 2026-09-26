@@ -1,6 +1,8 @@
 import "../cold-start.css";
+import "../browse-observatory.css";
 import { Suspense } from "react";
 import { BrowseClient } from "@/components/BrowseClient";
+import { BrowseFieldMotion } from "@/components/BrowseFieldMotion";
 import { BrowseSessionStrip } from "@/components/BrowseSessionStrip";
 import { fetchDiscover, fetchFiltered, searchAnime } from "@/lib/anilist";
 import type { AnimeFilters, DiscoverFeed } from "@/lib/types";
@@ -105,17 +107,21 @@ export default async function BrowsePage({
   const { items, total, hasNext, error } = await loadInitial(sp);
 
   return (
-    <main>
-      <section className="hero" style={{ paddingBottom: 12 }}>
+    <main className="cinema-browse-page">
+      <BrowseFieldMotion />
+      <section className="browse-observatory-header">
         <div className="container">
-          <div className="hero-badge">Discover</div>
-          <h1>
-            What are you <span>looking for?</span>
-          </h1>
-          <p>
-            Title search or natural language — “tragic under 24 episodes”,
-            “smart romance without too much drama”. Refine only when you need it.
+          <div className="browse-observatory-index">
+            <span><strong>02</strong> / ARCHIVE FIELD</span>
+            <span>ANIMENEXUS · LANTERN</span>
+            <span>LIVE CATALOGUE</span>
+          </div>
+          <p className="browse-observatory-kicker">The archive is not a list</p>
+          <h1>Find the<br /><em>frequency.</em></h1>
+          <p className="browse-observatory-lead">
+            Search by title, mood or intent, then move through the catalogue as a living field rather than a wall of results.
           </p>
+          <div className="browse-orbit-marker" aria-hidden><span className="browse-orbit-label">catalogue signal</span></div>
         </div>
       </section>
       <section className="container" style={{ paddingBottom: 48 }}>
