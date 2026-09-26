@@ -31,11 +31,6 @@ function sharedDNA(current: Anime, other: Anime) {
   return shared.length ? shared.join(" · ") : other.genre || "ADJACENT WORLD";
 }
 
-function eventRotation(field: HTMLDivElement | null) {
-  if (!field) return 0;
-  const pointer = field.dataset.orbitDrag;
-  return pointer ? Number(pointer) : 0;
-}
 
 export function NexusWorlds({ candidates }: Props) {
   const { pool, surprise, ready, entries } = useHomePersonalizedPool(candidates, 140);
@@ -164,6 +159,12 @@ export function NexusWorlds({ candidates }: Props) {
     });
 
     const onDragMove = (event: PointerEvent) => {
+      const pointerRect = field.getBoundingClientRect();
+      const pointerX = ((event.clientX - pointerRect.left) / pointerRect.width - 0.5) * 2;
+      const pointerY = ((event.clientY - pointerRect.top) / pointerRect.height - 0.5) * 2;
+      pointerRef.current = { x: pointerX, y: pointerY, active: true };
+      field.style.setProperty("--world-pointer-x", pointerX.toFixed(3));
+      field.style.setProperty("--world-pointer-y", pointerY.toFixed(3));
       if (!dragRef.current.active) return;
       const now = performance.now();
       const current = Number(field.dataset.orbitDrag || "0");
@@ -184,6 +185,14 @@ export function NexusWorlds({ candidates }: Props) {
       field.classList.add("is-dragging");
     };
 
+    const onPointerLeave = () => {
+      pointerRef.current.active = false;
+      field.style.setProperty("--world-pointer-x", "0");
+      field.style.setProperty("--world-pointer-y", "0");
+      setActive(null);
+      setArmed(null);
+    };
+
     const onDragEnd = (event: PointerEvent) => {
       if (!dragRef.current.active) return;
       dragRef.current.active = false;
@@ -193,6 +202,7 @@ export function NexusWorlds({ candidates }: Props) {
     };
 
     field.addEventListener("pointermove", onDragMove);
+    field.addEventListener("pointerleave", onPointerLeave);
     field.addEventListener("pointerdown", onDragStart);
     field.addEventListener("pointerup", onDragEnd);
     field.addEventListener("pointercancel", onDragEnd);
@@ -321,6 +331,7 @@ export function NexusWorlds({ candidates }: Props) {
     return () => {
       window.cancelAnimationFrame(raf);
       field.removeEventListener("pointermove", onDragMove);
+      field.removeEventListener("pointerleave", onPointerLeave);
       field.removeEventListener("pointerdown", onDragStart);
       field.removeEventListener("pointerup", onDragEnd);
       field.removeEventListener("pointercancel", onDragEnd);
@@ -374,23 +385,6 @@ export function NexusWorlds({ candidates }: Props) {
     <div
       ref={fieldRef}
       className={"nexus-world-map" + (entered ? " is-entered" : "") + (active !== null ? " has-active" : "") + (secret ? " has-secret" : "") + (commandLabel ? " is-ai-directed" : "")}
-      onMouseMove={(event) => {
-        const rect = event.currentTarget.getBoundingClientRect();
-        event.currentTarget.style.setProperty("--world-x", ((event.clientX - rect.left) / rect.width - 0.5) * 7 + "px");
-        const px = (event.clientX - rect.left) / rect.width - 0.5;
-        const py = (event.clientY - rect.top) / rect.height - 0.5;
-        event.currentTarget.style.setProperty("--world-y", py * 7 + "px");
-        event.currentTarget.style.setProperty("--world-pointer-x", (px * 2).toFixed(3));
-        event.currentTarget.style.setProperty("--world-pointer-y", (py * 2).toFixed(3));
-      }}
-      onMouseLeave={(event) => {
-        event.currentTarget.style.setProperty("--world-x", "0px");
-        event.currentTarget.style.setProperty("--world-y", "0px");
-        event.currentTarget.style.setProperty("--world-pointer-x", "0");
-        event.currentTarget.style.setProperty("--world-pointer-y", "0");
-        setActive(null);
-        setArmed(null);
-      }}
     >
       <div className="nexus-world-grid" aria-hidden />
       <div className="nexus-world-scanline" aria-hidden />
