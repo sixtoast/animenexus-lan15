@@ -95,8 +95,8 @@ export function NexusWorlds({ candidates }: Props) {
       if (reduceMotion) return;
 
       const phase = (index / nodes.length) * Math.PI * 2;
-      const targetX = Math.cos(phase) * radiusX;
-      const targetY = Math.sin(phase) * radiusY;
+      const targetX = centreX + Math.cos(phase) * radiusX - nodeCX;
+      const targetY = centreY + Math.sin(phase) * radiusY - nodeCY;
       const targetDepth = (Math.sin(phase) + 1) / 2;
       const targetScale = 0.92 + targetDepth * 0.14;
 
@@ -135,8 +135,8 @@ export function NexusWorlds({ candidates }: Props) {
             const orbitFrames = Array.from({ length: 49 }, (_, frame) => {
               const progress = frame / 48;
               const angle = phase + progress * Math.PI * 2;
-              const x = Math.cos(angle) * radiusX;
-              const y = Math.sin(angle) * radiusY;
+              const x = centreX + Math.cos(angle) * radiusX - nodeCX;
+              const y = centreY + Math.sin(angle) * radiusY - nodeCY;
               const depth = (Math.sin(angle) + 1) / 2;
               const scale = 0.92 + depth * 0.14;
               const tilt = Math.cos(angle) * 2.2;
