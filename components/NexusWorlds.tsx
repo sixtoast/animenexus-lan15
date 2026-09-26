@@ -79,13 +79,13 @@ export function NexusWorlds({ candidates }: Props) {
       const baseY = node.offsetTop + h / 2;
       const lineX = centreX + (index - (nodes.length - 1) / 2) * spacing;
       const lineY = lineupY;
-      const maxX = Math.max(28, rect.width / 2 - w / 2 - (mobile ? 10 : 24));
-      const maxY = Math.max(42, rect.height / 2 - h / 2 - (mobile ? 22 : 32));
+      const maxX = Math.max(28, rect.width / 2 - w / 2 - (mobile ? 5 : 12));
+      const maxY = Math.max(42, rect.height / 2 - h / 2 - (mobile ? 14 : 22));
       return { node, index, baseX, baseY, lineX, lineY, maxX, maxY, phase: (index / nodes.length) * Math.PI * 2 };
     });
 
-    const radiusX = Math.min(...geometry.map(g => g.maxX), rect.width * (mobile ? 0.34 : 0.38));
-    const radiusY = Math.min(...geometry.map(g => g.maxY), rect.height * (mobile ? 0.31 : 0.34));
+    const radiusX = Math.min(...geometry.map(g => g.maxX), rect.width * (mobile ? 0.44 : 0.46));
+    const radiusY = Math.min(...geometry.map(g => g.maxY), rect.height * (mobile ? 0.36 : 0.40));
 
     geometry.forEach(({ node }) => {
       const motion = node.querySelector<HTMLElement>(".nexus-world-node-motion");
