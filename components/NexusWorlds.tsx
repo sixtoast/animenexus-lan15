@@ -60,12 +60,10 @@ export function NexusWorlds({ candidates }: Props) {
   const fieldRef = useRef<HTMLDivElement>(null);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
   const dragRef = useRef({ active: false, startX: 0, startRotation: 0 });
-  const lastCommandId = useRef<string | null>(initialFieldState?.commandId ?? null);
 
   useEffect(() => {
     const apply = (signal: ReturnType<typeof getLastNexusCommand>) => {
       if (!signal || signal.source !== "ai" || !claimNexusCommand(signal.id, "field")) return;
-      lastCommandId.current = signal.id;
       const mode = signal.type === "focus"
         ? signal.target
         : signal.payload.mode;
@@ -405,7 +403,7 @@ export function NexusWorlds({ candidates }: Props) {
       </svg>
 
       {visibleCommand ? <div className="nexus-world-intelligence" aria-live="polite"><span>INTELLIGENCE</span><strong>{visibleCommand}</strong></div> : null}
-      {intelligence ? <div className="nexus-world-command-receipt" aria-live="polite"><i /> <span>{intelligence}</span><b>{intelligenceCommand ? "SYNCED" : "READY"}</b></div> : null}
+      {visibleCommand ? <div className="nexus-world-command-receipt" aria-live="polite"><i /> <span>{visibleCommand}</span><b>SYNCED</b></div> : null}
       <div className="nexus-world-core">
         <div className="nexus-world-core-ring" aria-hidden />
         <span>DISCOVERY FIELD · {String(worlds.length).padStart(2, "0")}</span>
