@@ -1,4 +1,5 @@
 import "./detail.css";
+import "./cinema-detail.css";
 import "../../detail-trailer.css";
 import "../../watchlist-queue.css";
 import "../../franchise-path.css";
@@ -23,6 +24,7 @@ import { DetailAI } from "@/components/DetailAI";
 import { AncestryGraph } from "@/components/AncestryGraph";
 import { DetailRelatedClient } from "@/components/DetailRelatedClient";
 import { MemoryVisit } from "@/components/MemoryVisit";
+import { DetailCinematography } from "@/components/DetailCinematography";
 import { EpisodeList } from "@/components/EpisodeList";
 import { DeepSignalsPanel } from "@/components/DeepSignalsPanel";
 import { CreativeDnaPanel } from "@/components/CreativeDnaPanel";
@@ -156,6 +158,7 @@ export default async function AnimeDetailPage({ params }: Props) {
 
   return (
     <main className="cinema-detail-page">
+      <DetailCinematography />
       <MemoryVisit
         id={anime.id}
         title={anime.title}
