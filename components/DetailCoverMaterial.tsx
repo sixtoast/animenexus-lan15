@@ -25,12 +25,17 @@ export function DetailCoverMaterial({
   viewTransitionName?: string;
 }) {
   const [cover, setCover] = useState(anime.image);
+  const [artworkRole, setArtworkRole] = useState("key-art");
 
   useEffect(() => {
     const key = `${COVER_KEY_PREFIX}${anime.id}`;
     try {
       const stored = window.localStorage.getItem(key);
+      const storedAsset = stored ? undefined : undefined;
+      const role = stored ? "alternate-art" : "key-art";
       setCover(stored || anime.image);
+      setArtworkRole(role);
+      document.documentElement.style.setProperty("--detail-artwork-role", role);
       document.documentElement.style.setProperty("--detail-artwork-image", `url("${stored || anime.image}")`);
     } catch {
       setCover(anime.image);
@@ -41,13 +46,19 @@ export function DetailCoverMaterial({
       if (detail?.animeId === anime.id) {
         setCover(detail.url || anime.image);
         const role = detail.role || "key-art";
+        setArtworkRole(role);
         document.documentElement.style.setProperty("--detail-artwork-role", role);
         document.documentElement.style.setProperty("--detail-artwork-image", `url("${detail.url || anime.image}")`);
         document.documentElement.style.setProperty("--detail-artwork-accent", detail.url ? "1" : "0");
       }
     };
     window.addEventListener(COVER_EVENT, onArtworkSelected);
-    return () => window.removeEventListener(COVER_EVENT, onArtworkSelected);
+    return () => {
+      window.removeEventListener(COVER_EVENT, onArtworkSelected);
+      document.documentElement.style.removeProperty("--detail-artwork-role");
+      document.documentElement.style.removeProperty("--detail-artwork-image");
+      document.documentElement.style.removeProperty("--detail-artwork-accent");
+    };
   }, [anime.id, anime.image]);
 
   const vars = materialCssVars(materialFromAnimeEntity({ ...anime, image: cover }));
@@ -57,7 +68,11 @@ export function DetailCoverMaterial({
     <div
       className="detail-cover-material"
       data-anime-object-id={getAnimeObjectId(anime.id)}
-      style={vars as CSSProperties}
+      style={{
+        ...vars,
+        "--artwork-role": artworkRole,
+      } as CSSProperties}
+      data-artwork-role={artworkRole}
     >
       <AnimeImage
         className="detail-cover"
