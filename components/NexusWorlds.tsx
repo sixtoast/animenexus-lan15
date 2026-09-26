@@ -520,6 +520,7 @@ export function NexusWorlds({ candidates }: Props) {
             style={{
               "--node-x": position.x,
               "--node-y": position.y,
+              "--node-index": index,
             } as CSSProperties}
             onMouseEnter={() => { setActive(index); setArmed(index); fieldRef.current?.setAttribute("data-lock-target", String(index)); }}
             onFocus={() => { setActive(index); setArmed(index); fieldRef.current?.setAttribute("data-lock-target", String(index)); }}
