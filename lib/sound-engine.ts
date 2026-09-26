@@ -146,6 +146,40 @@ export type PlayOptions = {
   gain?: number;
 };
 
+function reducedAudio(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      document.documentElement.getAttribute("data-reduce-sensory") === "true";
+  } catch {
+    return false;
+  }
+}
+
+export type InteractionSound =
+  | "selection"
+  | "navigation"
+  | "discovery"
+  | "watchlist"
+  | "franchise";
+
+const INTERACTION_CUES: Record<InteractionSound, SoundCueId> = {
+  selection: "ui_tap",
+  navigation: "nav_tick",
+  discovery: "resonance",
+  watchlist: "seal",
+  franchise: "signal_acquired",
+};
+
+export function playInteractionSound(
+  kind: InteractionSound,
+  opts: PlayOptions = {},
+): void {
+  if (reducedAudio()) return;
+  const cue = INTERACTION_CUES[kind];
+  playCue(cue, { ...opts, gain: (opts.gain ?? 1) * (kind === "discovery" ? 0.72 : 0.82) });
+}
+
 export function playCue(id: SoundCueId, opts: PlayOptions = {}): void {
   if (typeof window === "undefined") return;
   if (!prefs.enabled && !opts.force) return;
