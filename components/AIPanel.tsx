@@ -20,6 +20,8 @@ import { useToast } from "@/components/ToastProvider";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { emitNexusSignal as sendNexusSignal, type NexusTarget } from "@/lib/nexus-intelligence";
+import { interpretViewingIntent } from "@/lib/intelligence/ai/interpret-intent";
+import { readIntentSession, writeAiIntentOverlay, writeIntentSession } from "@/lib/intent-session";
 
 type Msg = { role: "user" | "assistant" | "system"; content: string };
 
@@ -205,9 +207,54 @@ export function AIPanel() {
       }));
       const result = await runLanternAgent(v, prior);
       let reply = result.reply;
-      const lower = reply.toLowerCase();
-      const signal = lower.includes("watchlist") ? "Watchlist state identified" : lower.includes("mood") || lower.includes("psychological") || lower.includes("dark") ? "Mood field recalibrated" : lower.includes("franchise") ? "Franchise space mapped" : lower.includes("artwork") || lower.includes("poster") ? "Artwork space focused" : lower.includes("recommend") || lower.includes("watch") ? "Discovery field recalibrated" : "Nexus intelligence updated";
-      emitNexusSignal(signal);
+      const lower = v.toLowerCase();
+      const moodRequest = /\\b(mood|tonight|feel|feeling|quiet|calm|dark|depress|melanchol|sad|hype|intense|chill|relax|comfort|cry|romance|scary|spooky)\\b/.test(lower);
+      let appliedIntent = false;
+
+      if (moodRequest) {
+        try {
+          const structured = await interpretViewingIntent(v, { temperature: 0.2 });
+          const current = readIntentSession();
+          const nextSession = writeIntentSession({
+            slug: structured.intent !== "custom" ? structured.intent : current.slug,
+            ...(structured.session || {}),
+          });
+          writeAiIntentOverlay({
+            freeText: v,
+            structured,
+            at: Date.now(),
+          });
+          sendNexusSignal({
+            type: "filter",
+            source: "ai",
+            payload: {
+              mode: "mood",
+              experienceSlug: nextSession.slug || undefined,
+              session: nextSession,
+              label: structured.paraphrase || structured.label || "Mood field recalibrated",
+            },
+          });
+          appliedIntent = true;
+        } catch {
+          // A failed intent interpretation must not break the conversation.
+        }
+      }
+
+      const signal = lower.includes("watchlist")
+        ? "Watchlist state identified"
+        : lower.includes("franchise")
+          ? "Franchise space mapped"
+          : lower.includes("artwork") || lower.includes("poster")
+            ? "Artwork space focused"
+            : lower.includes("watch order")
+              ? "Watch order space focused"
+              : lower.includes("recommend") || lower.includes("next title")
+                ? "Recommendation field recalibrated"
+                : "Discovery field recalibrated";
+
+      if (!appliedIntent) {
+        emitNexusSignal(signal);
+      }
       if (result.pendingActions.length) {
         const lines = result.pendingActions
           .map((p) => `• ${p.message} (${p.tool})`)
