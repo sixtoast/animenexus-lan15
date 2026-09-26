@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Anime } from "@/lib/types";
+import { useHomePersonalization } from "@/components/HomePersonalization";
 import { useHomePersonalizedPool } from "@/lib/use-home-personalized-pool";
 
 type Props = { candidates: Anime[] };
