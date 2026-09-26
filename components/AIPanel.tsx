@@ -93,9 +93,44 @@ export function AIPanel() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  function emitNexusSignal(signal: string) {
-    setNexusSignal(signal);
-    window.dispatchEvent(new CustomEvent("nexus:intent", { detail: { signal, source: "lantern" } }));
+  function emitNexusSignal(
+    signal: string | { type: "focus"; target: NexusTarget; payload?: Record<string, unknown> },
+  ) {
+    if (typeof signal === "string") {
+      const lower = signal.toLowerCase();
+      const target: NexusTarget =
+        lower.includes("watchlist") ? "watchlist" :
+        lower.includes("mood") || lower.includes("dark") ? "mood" :
+        lower.includes("franchise") ? "franchise" :
+        lower.includes("artwork") || lower.includes("poster") ? "artwork" :
+        lower.includes("watch order") ? "watch-order" :
+        lower.includes("recommend") ? "recommendations" :
+        "discovery";
+      setNexusSignal(signal);
+      sendNexusSignal({
+        type: "focus",
+        target,
+        source: "ai",
+        payload: { label: signal },
+      });
+      return;
+    }
+    setNexusSignal(
+      signal.target === "watchlist"
+        ? "Watchlist constellation focused"
+        : signal.target === "mood"
+          ? "Mood field focused"
+          : signal.target === "recommendations"
+            ? "Recommendation field focused"
+            : signal.target === "watch-order"
+              ? "Watch order space focused"
+              : signal.target === "franchise"
+                ? "Franchise space focused"
+                : signal.target === "artwork"
+                  ? "Artwork space focused"
+                  : "Discovery field focused",
+    );
+    sendNexusSignal({ ...signal, source: "ai" });
   }
 
   function routeSignal(path: string) {
