@@ -195,3 +195,13 @@ a.anime-card{text-decoration:none;color:inherit}
 .artwork-gallery__item[data-role="alternate-art"]{transition:transform .35s ease,opacity .35s ease}
 .artwork-gallery__item[data-role="alternate-art"]:hover{transform:translateY(-3px)}
 @media(prefers-reduced-motion:reduce){.artwork-gallery__atmosphere,.artwork-gallery__item[data-role="alternate-art"]{transition:none}}
+
+/* Detail hero atmosphere follows the selected semantic artwork role. */
+.detail-wrap{--detail-atmosphere-opacity:.18;--detail-atmosphere-blur:52px;--detail-atmosphere-scale:1.04}
+.detail-wrap:before{content:"";position:absolute;z-index:-1;left:-10vw;right:-10vw;top:0;height:min(72vh,760px);pointer-events:none;background-image:linear-gradient(180deg,rgba(8,8,8,.12),rgba(8,8,8,.94)),var(--detail-artwork-image);background-position:center top;background-size:cover;filter:blur(var(--detail-atmosphere-blur)) saturate(.82);opacity:var(--detail-atmosphere-opacity);transform:scale(var(--detail-atmosphere-scale));transform-origin:top center;transition:opacity .8s ease,filter .9s ease,transform 1.1s cubic-bezier(.2,.72,.18,1),background-image .7s ease}
+:root[style*="--detail-artwork-role: alternate-art"] .detail-wrap{--detail-atmosphere-opacity:.28;--detail-atmosphere-blur:38px;--detail-atmosphere-scale:1.08}
+:root[style*="--detail-artwork-role: background-art"] .detail-wrap{--detail-atmosphere-opacity:.31;--detail-atmosphere-blur:30px;--detail-atmosphere-scale:1.05}
+:root[style*="--detail-artwork-role: character-art"] .detail-wrap{--detail-atmosphere-opacity:.21;--detail-atmosphere-blur:56px}
+:root[style*="--detail-artwork-role: stills"] .detail-wrap{--detail-atmosphere-opacity:.23;--detail-atmosphere-blur:34px;--detail-atmosphere-scale:1.06}
+:root[style*="--detail-artwork-role: logos"] .detail-wrap{--detail-atmosphere-opacity:.08;--detail-atmosphere-blur:64px}
+:root[style*="--detail-artwork-role: promotional"] .detail-wrap{--detail-atmosphere-opacity:.2;--detail-atmosphere-blur:44px;--detail-atmosphere-scale:1.07}
