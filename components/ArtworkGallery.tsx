@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ArtworkAsset } from "@/lib/deep-metadata";
 
 type Props = {
@@ -63,12 +63,13 @@ export function ArtworkGallery({ assets, animeId, sourceNote }: Props) {
     }
   }
 
-  useState(() => {
-    if (typeof window !== "undefined") {
+  useEffect(() => {
+    try {
       setSelectedCover(window.localStorage.getItem(coverKey));
+    } catch {
+      setSelectedCover(null);
     }
-    return undefined;
-  });
+  }, [coverKey]);
 
   const groups = useMemo(
     () => GROUPS.map((group) => ({
