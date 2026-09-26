@@ -72,6 +72,14 @@ export type GraphEdge = {
   to: number;
   kind: "official" | "recommended";
   label?: string;
+  /** Provider(s) that supplied this relationship. */
+  sources?: string[];
+  /** 0–1 confidence in the relationship. */
+  confidence?: number;
+  /** True when multiple providers independently agree on this edge. */
+  corroborated?: boolean;
+  /** Stable relationship family used by the Nexus graph engine. */
+  family?: "mainline" | "side_story" | "alternative" | "summary" | "recommendation" | "other";
 };
 
 /** Normalized anime used across the UI */
