@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Anime } from "@/lib/types";
-import { useHomePersonalization } from "@/components/HomePersonalization";
 import { useHomePersonalizedPool } from "@/lib/use-home-personalized-pool";
 
 type Props = { candidates: Anime[] };
@@ -32,10 +31,9 @@ function sharedDNA(current: Anime, other: Anime) {
 }
 
 export function NexusWorlds({ candidates }: Props) {
-  const { pool, ready, entries } = useHomePersonalizedPool(candidates, 120);
-  // The field intentionally uses the same personalised candidate stream as Surprise Me.
-  // Featured/index consume the first signals; Discovery receives the adjacent surprise set.
-  const worlds = pool.slice(8, 15);
+  const { surprise, ready, entries } = useHomePersonalizedPool(candidates, 140);
+  // Discovery Field deliberately consumes the same ranked Surprise Me stream.
+  const worlds = (surprise.length ? surprise : candidates).slice(0, 7);
   const [active, setActive] = useState<number | null>(null);
   const [armed, setArmed] = useState<number | null>(null);
   const [secret, setSecret] = useState(false);
