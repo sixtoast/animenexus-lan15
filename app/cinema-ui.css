@@ -760,3 +760,149 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
 @media(prefers-reduced-motion:reduce){
   .nexus-world-scanline,.nexus-world-core-ring,.nexus-world-core-status i{animation:none!important}
 }
+
+
+/* Discovery Field V3 — focus, relationships, tactile states. */
+.nexus-world-map.has-active .nexus-world-connections line{opacity:.28}
+.nexus-world-map.has-active .nexus-world-connections line.is-active{opacity:1}
+.nexus-world-map.has-secret{background:
+  radial-gradient(circle at 50% 50%,rgba(242,179,95,.2),transparent 14%),
+  radial-gradient(circle at 30% 70%,rgba(111,92,145,.08),transparent 30%),#08090c}
+.nexus-world-map.has-secret .nexus-world-grid{opacity:.25}
+.nexus-world-map.has-secret .nexus-world-scanline{animation-duration:2.8s}
+.nexus-world-core-active{
+  display:block;
+  margin-top:8px;
+  max-width:180px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:var(--cinema-gold)!important;
+  font-size:.42rem!important;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+.nexus-world-node{
+  transition:opacity .45s ease,filter .45s ease,transform .6s cubic-bezier(.2,.75,.2,1);
+}
+.nexus-world-node.is-armed .nexus-world-node-art{
+  border-color:rgba(242,179,95,.88);
+  box-shadow:0 18px 60px rgba(242,179,95,.16);
+}
+.nexus-world-node-lock{
+  position:absolute;
+  right:6px;
+  bottom:6px;
+  z-index:3;
+  padding:3px 5px;
+  border:1px solid rgba(244,239,231,.2);
+  background:rgba(7,8,11,.72);
+  color:rgba(244,239,231,.58);
+  font-size:.38rem;
+  letter-spacing:.13em;
+  opacity:0;
+  transform:translateY(4px);
+  transition:opacity .3s ease,transform .4s ease;
+}
+.nexus-world-node.is-active .nexus-world-node-lock,
+.nexus-world-node.is-armed .nexus-world-node-lock{opacity:1;transform:none}
+.nexus-world-readout{
+  position:absolute;
+  left:50%;
+  bottom:28px;
+  z-index:9;
+  width:min(390px,32vw);
+  padding:17px 18px;
+  border:1px solid rgba(242,179,95,.24);
+  background:rgba(7,8,11,.88);
+  backdrop-filter:blur(18px);
+  transform:translateX(-50%);
+  box-shadow:0 24px 70px rgba(0,0,0,.42);
+  animation:nexus-readout-in .5s cubic-bezier(.2,.75,.2,1) both;
+}
+.nexus-world-readout>span{
+  display:block;
+  color:var(--cinema-gold);
+  font-size:.42rem;
+  letter-spacing:.18em;
+}
+.nexus-world-readout>strong{
+  display:block;
+  margin:7px 0 3px;
+  font-family:var(--cinema-display);
+  font-size:clamp(1.7rem,2.7vw,2.6rem);
+  font-weight:500;
+  line-height:.9;
+}
+.nexus-world-readout>small{
+  display:block;
+  color:rgba(244,239,231,.4);
+  font-size:.43rem;
+  letter-spacing:.12em;
+}
+.nexus-world-readout-links{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+  margin-top:12px;
+}
+.nexus-world-readout-links button{
+  min-width:0;
+  padding:8px;
+  border:1px solid rgba(244,239,231,.09);
+  background:rgba(255,255,255,.025);
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+  transition:background .25s ease,border-color .25s ease,transform .25s ease;
+}
+.nexus-world-readout-links button:hover{
+  border-color:rgba(242,179,95,.4);
+  background:rgba(242,179,95,.06);
+  transform:translateY(-2px);
+}
+.nexus-world-readout-links b,
+.nexus-world-readout-links i{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.nexus-world-readout-links b{font-size:.55rem;font-weight:500}
+.nexus-world-readout-links i{margin-top:4px;color:rgba(242,179,95,.55);font-size:.38rem;font-style:normal}
+.nexus-world-secret-trigger{
+  appearance:none;
+  border:0;
+  padding:0;
+  background:transparent;
+  cursor:pointer;
+  font:inherit;
+}
+.nexus-world-secret-trigger:hover{color:rgba(242,179,95,.72)}
+@keyframes nexus-readout-in{
+  from{opacity:0;transform:translateX(-50%) translateY(12px);filter:blur(5px)}
+  to{opacity:1;transform:translateX(-50%);filter:none}
+}
+@media(max-width:700px){
+  .nexus-world-map.has-active .nexus-world-node:not(.is-active){opacity:.16;filter:saturate(.2) blur(.2px)}
+  .nexus-world-readout{
+    left:12px;
+    right:12px;
+    bottom:38px;
+    width:auto;
+    transform:none;
+    padding:13px;
+  }
+  .nexus-world-readout>strong{font-size:1.55rem}
+  .nexus-world-readout-links{grid-template-columns:1fr 1fr 1fr}
+  .nexus-world-readout-links button{padding:7px 6px}
+  .nexus-world-readout-links b{font-size:.47rem}
+  .nexus-world-readout-links i{font-size:.34rem}
+  .nexus-world-core-active{max-width:105px;font-size:.35rem!important}
+  .nexus-world-node-lock{font-size:.32rem;padding:2px 3px}
+  .nexus-world-secret-trigger{font-size:.36rem}
+}
+@media(prefers-reduced-motion:reduce){
+  .nexus-world-readout{animation:none}
+  .nexus-world-node-lock{transition:none}
+}
