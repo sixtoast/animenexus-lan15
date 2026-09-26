@@ -206,6 +206,7 @@ export function NexusWorlds({ candidates }: Props) {
             aria-label={"Explore " + anime.title}
           >
             <span className="nexus-world-node-motion">
+              <span className="nexus-world-node-orbit-motion">
               <span className="nexus-world-node-art">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={anime.image} alt="" loading="lazy" />
@@ -216,6 +217,7 @@ export function NexusWorlds({ candidates }: Props) {
                 <small>{anime.genre || "ADJACENT WORLD"}</small>
                 <strong>{anime.title}</strong>
                 <i>{anime.year || "—"} · ★ {anime.score > 0 ? anime.score.toFixed(1) : "—"}</i>
+              </span>
               </span>
             </span>
           </Link>
