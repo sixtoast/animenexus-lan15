@@ -63,7 +63,8 @@ export function NexusWorlds({ candidates }: Props) {
 
   return (
     <div
-      ref={fieldRef}\n      className={"nexus-world-map" + (entered ? " is-entered" : "") + (active !== null ? " has-active" : "") + (secret ? " has-secret" : "")}
+      ref={fieldRef}
+      className={"nexus-world-map" + (entered ? " is-entered" : "") + (active !== null ? " has-active" : "") + (secret ? " has-secret" : "")}
       onMouseMove={(event) => {
         const rect = event.currentTarget.getBoundingClientRect();
         event.currentTarget.style.setProperty("--world-x", ((event.clientX - rect.left) / rect.width - 0.5) * 7 + "px");
