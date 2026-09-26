@@ -474,7 +474,11 @@ export function NexusWorlds({ candidates }: Props) {
             key={anime.id}
             href={"/anime/" + anime.id}
             className={"nexus-world-node nexus-world-node--" + (index + 1) + (isActive ? " is-active" : "") + (isArmed ? " is-armed" : "") + (travelling === index ? " is-travelling-origin" : "")}
-            style={{ "--node-x": position.x, "--node-y": position.y } as CSSProperties}
+            style={{
+              "--node-x": position.x,
+              "--node-y": position.y,
+              viewTransitionName: getAnimeViewTransitionName(anime.id),
+            } as CSSProperties}
             onMouseEnter={() => { setActive(index); setArmed(index); fieldRef.current?.setAttribute("data-lock-target", String(index)); }}
             onFocus={() => { setActive(index); setArmed(index); fieldRef.current?.setAttribute("data-lock-target", String(index)); }}
             onBlur={() => { setArmed(null); fieldRef.current?.setAttribute("data-lock-target", "-1"); }}
