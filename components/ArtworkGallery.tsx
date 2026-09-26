@@ -71,6 +71,7 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
       setSelectedCover(url);
       setSelectedRole(role);
       setSelectedImage(url);
+      // Keep the gallery and detail hero on the same semantic transition event.
       window.dispatchEvent(new CustomEvent(COVER_EVENT, { detail: { animeId, url, role } }));
     } catch {
       // Storage can be unavailable in privacy-restricted browsers.
@@ -99,7 +100,7 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
       setSelectedRole(storedRole || (asset ? assetRole(asset) : "key-art"));
       setSelectedImage(stored);
       window.dispatchEvent(new CustomEvent(COVER_EVENT, {
-        detail: { animeId, url: stored, role: asset ? assetRole(asset) : "key-art" },
+        detail: { animeId, url: stored, role: storedRole || (asset ? assetRole(asset) : "key-art") },
       }));
     } catch {
       setSelectedCover(null);
