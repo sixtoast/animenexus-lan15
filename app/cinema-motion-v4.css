@@ -1167,3 +1167,16 @@ html[data-motion-route="anime-detail"][data-motion-origin="watchlist"] .nexus-na
   .nexus-world-map.is-ai-pulsing .nexus-world-connections line,
   .nexus-world-map.is-ai-pulsing .nexus-world-node { animation:none !important; }
 }
+
+
+/* Ranked orbit: higher-ranked canonical results occupy a tighter, more
+   legible orbit. The rank itself remains data-driven; CSS only animates it. */
+.nexus-world-node {
+  --rank-weight: 1;
+}
+.nexus-world-node.is-ai-reweighted .nexus-world-node-orbit-motion {
+  transition: filter .7s cubic-bezier(.16,1,.3,1);
+}
+.nexus-world-map.is-ai-pulsing .nexus-world-node.is-ai-reweighted .nexus-world-node-orbit-motion {
+  filter: drop-shadow(0 0 10px color-mix(in srgb, currentColor 18%, transparent));
+}
