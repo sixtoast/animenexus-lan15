@@ -12,6 +12,7 @@ import { CinemaMotion } from "@/components/CinemaMotion";
 import { HomeInteractionLayer } from "@/components/HomeInteractionLayer";
 import { HomeFeaturedSignal } from "@/components/HomeFeaturedSignal";
 import { HomePersonalizedIndex, HomeBeyondObvious } from "@/components/HomePersonalizedIndex";
+import { HomePersonalizedProvider } from "@/lib/use-home-personalized-pool";
 import { generateCandidatePool, poolToAnimeList } from "@/lib/recommend-candidates";
 import "./mood-home.css";
 import "./home-dash.css";
@@ -41,6 +42,7 @@ export default async function HomePage() {
   const hero = items[0];
 
   return (
+    <HomePersonalizedProvider initial={items}>
     <main className="nexus-home">
       <CinemaMotion />
       <HomeInteractionLayer />
@@ -149,5 +151,6 @@ export default async function HomePage() {
       <section className="container nexus-quote"><QuoteBanner /></section>
       <SessionQuietNote />
     </main>
+    </HomePersonalizedProvider>
   );
 }
