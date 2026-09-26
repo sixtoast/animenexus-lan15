@@ -420,3 +420,52 @@
     margin-top:30px!important;
   }
 }
+
+
+/* MOBILE CATALOGUE HEADING — keep the section title above cinematic layers. */
+@media (max-width:700px){
+  .nexus-catalog{
+    position:relative!important;
+    isolation:isolate;
+  }
+  .nexus-catalog .nexus-section-heading{
+    position:relative!important;
+    z-index:5!important;
+    display:flex!important;
+    align-items:flex-start!important;
+    flex-direction:column!important;
+    opacity:1!important;
+    visibility:visible!important;
+    filter:none!important;
+    transform:none!important;
+  }
+  .nexus-catalog .nexus-section-heading > div{
+    position:relative!important;
+    z-index:6!important;
+    display:block!important;
+    opacity:1!important;
+    visibility:visible!important;
+  }
+  .nexus-catalog .nexus-section-heading > div > span{
+    display:block!important;
+    opacity:1!important;
+    visibility:visible!important;
+  }
+  .nexus-catalog .nexus-section-heading h2{
+    display:block!important;
+    visibility:visible!important;
+    opacity:1!important;
+    color:var(--nx-paper)!important;
+    position:relative!important;
+    z-index:7!important;
+    margin:14px 0 0!important;
+    max-width:7ch!important;
+    font-size:clamp(3.7rem,17vw,6rem)!important;
+    line-height:.84!important;
+  }
+  .nexus-catalog .nexus-section-heading .view-mode-toggle,
+  .nexus-catalog .nexus-section-heading > button{
+    position:relative!important;
+    z-index:6!important;
+  }
+}
