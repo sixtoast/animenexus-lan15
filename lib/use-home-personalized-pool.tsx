@@ -56,7 +56,7 @@ export function HomePersonalizedProvider({ children, initial, limit = 180 }: { c
       experienceSlug: readIntentSession().slug || undefined,
       excludeIds: new Set(entries.map((e) => e.id)),
     }).map((r) => r.anime);
-  }, [rawPool, entries, ready]);
+  }, [rawPool, entries, ready, intelligenceRevision]);
 
   const surprise = useMemo(() => {
     const base = unique(rawSurprise.length ? rawSurprise : rawPool);
