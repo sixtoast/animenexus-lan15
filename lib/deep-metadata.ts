@@ -97,6 +97,16 @@ export type EpisodeStructure = {
 
 export type ArtworkAsset = {
   url: string;
+  /** Fine-grained visual role used by the detail atmosphere system. */
+  role?:
+    | "key-art"
+    | "alternate-art"
+    | "character-art"
+    | "background-art"
+    | "stills"
+    | "logos"
+    | "promotional"
+    | "other";
   type: "poster" | "background" | "logo" | "clearart" | "banner" | "alternate" | "still" | "other";
   language?: string;
   width?: number;
