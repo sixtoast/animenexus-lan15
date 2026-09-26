@@ -135,3 +135,14 @@
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px var(--color-accent-glow);
 }
+
+/* Intelligence layer: AI controls the Nexus rather than living as a chat box. */
+.ai-intelligence-banner{margin:0 0 14px;padding:15px;border:1px solid rgba(240,160,144,.16);border-radius:18px;background:radial-gradient(circle at 100% 0%,rgba(240,160,144,.08),transparent 55%),rgba(255,255,255,.018);box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+.ai-intelligence-kicker{display:block;font-size:.55rem;letter-spacing:.18em;color:var(--color-accent);font-weight:750;margin-bottom:6px}
+.ai-intelligence-banner strong{display:block;font-size:1.08rem;letter-spacing:-.02em;margin-bottom:4px}
+.ai-intelligence-banner p{margin:0;color:var(--color-text-muted);font-size:.72rem;line-height:1.5;max-width:42rem}
+.ai-intelligence-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px}
+.ai-intelligence-actions button{border:1px solid var(--color-border);background:rgba(255,255,255,.025);color:var(--color-text-muted);border-radius:999px;padding:6px 9px;font:600 .58rem/1 inherit;letter-spacing:.03em;cursor:pointer;transition:transform .25s ease,border-color .25s ease,color .25s ease,background .25s ease}
+.ai-intelligence-actions button:hover{transform:translateY(-1px);border-color:rgba(240,160,144,.3);color:var(--color-text);background:rgba(240,160,144,.06)}
+.ai-intelligence-actions button span{margin-left:5px;color:var(--color-accent)}
+@media(prefers-reduced-motion:reduce){.ai-intelligence-actions button{transition:none}}
