@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { Anime } from "@/lib/types";
-import { getAnimeObjectId, withViewTransition } from "@/lib/view-transition";
+import { getAnimeObjectId, getAnimeViewTransitionName, withViewTransition } from "@/lib/view-transition";
 import { playInteractionSound, playSpatialTravel } from "@/lib/sound-engine";
 import { useHomePersonalizedPool } from "@/lib/use-home-personalized-pool";
 import { claimNexusCommand, getLastNexusCommand, onNexusSignal, readNexusFieldState, type NexusFieldMode } from "@/lib/nexus-intelligence";
@@ -90,6 +90,12 @@ export function NexusWorlds({ candidates }: Props) {
               } as Record<NexusFieldMode, string>)[signal.target];
             : null;
       if (label) setCommandLabel(label);
+      // AI commands are intentionally quiet unless they materially reconfigure
+      // the field. A single resonance marks the change; ordinary pointer/scroll
+      // interaction remains silent.
+      if (signal.type === "filter" || signal.type === "travel") {
+        playInteractionSound("discovery", { gain: 0.42 });
+      }
     };
 
     apply(getLastNexusCommand());
