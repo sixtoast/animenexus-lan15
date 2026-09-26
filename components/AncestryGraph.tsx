@@ -7,6 +7,7 @@ import Link from "next/link";
 import type { AnimeRelation, GraphNode } from "@/lib/types";
 import { AncestrySpace2D } from "@/components/AncestrySpace2D";
 import { getAnimeObjectId, withViewTransition } from "@/lib/view-transition";
+import { playInteractionSound } from "@/lib/sound-engine";
 
 type Props = {
   centerTitle: string;
@@ -97,6 +98,7 @@ function AncestryLink({
       onClick={(event) => {
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
         event.preventDefault();
+        playInteractionSound("franchise", { gain: 0.72 });
         withViewTransition(
           () => router.push(href),
           {
