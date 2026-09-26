@@ -149,16 +149,18 @@ export function NexusWorlds({ candidates }: Props) {
             }}
             aria-label={"Explore " + anime.title}
           >
-            <span className="nexus-world-node-art">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={anime.image} alt="" loading="lazy" />
-              <b>{String(index + 1).padStart(2, "0")}</b>
-              <span className="nexus-world-node-lock">{isActive ? "LOCKED" : "SIGNAL"}</span>
-            </span>
-            <span className="nexus-world-node-copy">
-              <small>{anime.genre || "ADJACENT WORLD"}</small>
-              <strong>{anime.title}</strong>
-              <i>{anime.year || "—"} · ★ {anime.score > 0 ? anime.score.toFixed(1) : "—"}</i>
+            <span className="nexus-world-node-motion">
+              <span className="nexus-world-node-art">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={anime.image} alt="" loading="lazy" />
+                <b>{String(index + 1).padStart(2, "0")}</b>
+                <span className="nexus-world-node-lock">{isActive ? "LOCKED" : "SIGNAL"}</span>
+              </span>
+              <span className="nexus-world-node-copy">
+                <small>{anime.genre || "ADJACENT WORLD"}</small>
+                <strong>{anime.title}</strong>
+                <i>{anime.year || "—"} · ★ {anime.score > 0 ? anime.score.toFixed(1) : "—"}</i>
+              </span>
             </span>
           </Link>
         );
