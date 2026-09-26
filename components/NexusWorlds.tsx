@@ -50,6 +50,62 @@ export function NexusWorlds({ candidates }: Props) {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (!entered) return;
+    const field = fieldRef.current;
+    if (!field) return;
+
+    const nodes = Array.from(field.querySelectorAll<HTMLElement>(".nexus-world-node"));
+    if (!nodes.length) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const fieldRect = field.getBoundingClientRect();
+    const mobile = window.matchMedia("(max-width: 700px)").matches;
+    const spacing = mobile ? 58 : 104;
+    const lineupY = fieldRect.height * (mobile ? 0.47 : 0.49);
+    const centreX = fieldRect.left + fieldRect.width / 2;
+    const centreY = fieldRect.top + fieldRect.height / 2;
+
+    nodes.forEach((node, index) => {
+      const rect = node.getBoundingClientRect();
+      const nodeCX = rect.left + rect.width / 2;
+      const nodeCY = rect.top + rect.height / 2;
+      const lineupCX = fieldRect.left + fieldRect.width / 2 + (index - (nodes.length - 1) / 2) * spacing;
+      node.style.setProperty("--line-dx", (lineupCX - nodeCX) + "px");
+      node.style.setProperty("--line-dy", (fieldRect.top + lineupY - nodeCY) + "px");
+      node.style.setProperty("--spin-turns", index % 2 === 0 ? "2" : "-2");
+
+      if (reduceMotion) return;
+
+      const dx = nodeCX - centreX;
+      const dy = nodeCY - centreY;
+      const radius = Math.hypot(dx, dy);
+      const startAngle = Math.atan2(dy, dx);
+      const orbitRadius = Math.max(radius, 90);
+      const orbitFrames = Array.from({ length: 13 }, (_, frame) => {
+        const angle = startAngle + (Math.PI * 2 * frame) / 12;
+        const x = Math.cos(angle) * orbitRadius - dx;
+        const y = Math.sin(angle) * orbitRadius - dy;
+        const tangent = Math.cos(angle) * 3.5;
+        return {
+          offset: frame / 12,
+          transform: "translate3d(" + x + "px, " + y + "px, 0) rotateZ(" + tangent + "deg)",
+        };
+      });
+
+      const orbit = node.querySelector<HTMLElement>(".nexus-world-node-motion");
+      if (orbit) {
+        window.setTimeout(() => {
+          orbit.animate(orbitFrames, {
+            duration: 22000 + index * 900,
+            iterations: Infinity,
+            easing: "linear",
+          });
+        }, 2400 + index * 70);
+      }
+    });
+  }, [entered, worlds.length]);
+
   if (!worlds.length) return null;
 
   const activeAnime = active === null ? null : worlds[active];
