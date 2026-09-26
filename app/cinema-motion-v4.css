@@ -1127,3 +1127,43 @@ html[data-motion-route="anime-detail"][data-motion-origin="watchlist"] .nexus-na
   html[data-motion-route]::view-transition-new(root),
   html[data-motion-route] .nexus-navigation-field { animation:none !important; }
 }
+
+
+/* Discovery Field response grammar.
+   AI changes alter the field's physical emphasis instead of merely showing a label. */
+.nexus-world-map.is-ai-pulsing .nexus-world-core {
+  animation: nx-ai-core-pulse .72s cubic-bezier(.16,1,.3,1) both;
+}
+.nexus-world-map.is-ai-pulsing .nexus-world-connections line {
+  animation: nx-ai-link-pulse .72s cubic-bezier(.16,1,.3,1) both;
+}
+.nexus-world-map.is-ai-pulsing .nexus-world-node {
+  --ai-delay: calc(var(--node-index, 0) * 45ms);
+  animation: nx-ai-node-reweight .82s cubic-bezier(.16,1,.3,1) var(--ai-delay) both;
+}
+.nexus-world-map.is-ai-reweighted .nexus-world-node.is-ai-reweighted {
+  transition: filter .5s ease, opacity .5s ease;
+}
+.nexus-world-map.nexus-world-map--mood .nexus-world-node.is-ai-reweighted:nth-of-type(4n + 1) { filter:saturate(1.12) contrast(1.04); }
+.nexus-world-map.nexus-world-map--recommendations .nexus-world-node.is-ai-reweighted:nth-of-type(3n + 1) { filter:brightness(1.06) saturate(1.08); }
+.nexus-world-map.nexus-world-map--watchlist .nexus-world-node.is-ai-reweighted { opacity:.94; }
+@keyframes nx-ai-core-pulse {
+  0% { transform:scale(1); }
+  38% { transform:scale(1.035); }
+  100% { transform:scale(1); }
+}
+@keyframes nx-ai-link-pulse {
+  0% { opacity:.32; stroke-width:1; }
+  35% { opacity:.85; stroke-width:1.6; }
+  100% { opacity:.32; stroke-width:1; }
+}
+@keyframes nx-ai-node-reweight {
+  0% { transform:translateZ(0) scale(.985); filter:blur(2px); }
+  42% { transform:translateZ(0) scale(1.025); filter:blur(0); }
+  100% { transform:translateZ(0) scale(1); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .nexus-world-map.is-ai-pulsing .nexus-world-core,
+  .nexus-world-map.is-ai-pulsing .nexus-world-connections line,
+  .nexus-world-map.is-ai-pulsing .nexus-world-node { animation:none !important; }
+}
