@@ -38,6 +38,7 @@ export function NexusWorlds({ candidates }: Props) {
   if (!worlds.length) return null;
 
   const activeAnime = active === null ? null : worlds[active];
+  const signalDNA = activeAnime ? [activeAnime.genre, ...activeAnime.tags].filter(Boolean).slice(0, 3).join(" · ") : "";
   const activeRelated = active === null
     ? []
     : worlds
@@ -89,7 +90,7 @@ export function NexusWorlds({ candidates }: Props) {
         <div className="nexus-world-readout" aria-live="polite">
           <span>SIGNAL {String((active ?? 0) + 1).padStart(2, "0")} / LOCKED</span>
           <strong>{activeAnime.title}</strong>
-          <small>SHARED DNA · {sharedDNA(activeAnime, activeAnime)}</small>
+          <small>SIGNAL DNA · {signalDNA || "ADJACENT WORLD"}</small>
           <div className="nexus-world-readout-links">
             {activeRelated.map(({ anime, index, dna }) => (
               <button key={anime.id} type="button" onClick={() => setActive(index)}>
