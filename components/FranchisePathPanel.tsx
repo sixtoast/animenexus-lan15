@@ -364,7 +364,7 @@ export function FranchisePathPanel({
             >
               <span className="franchise-path__node-orbit" aria-hidden />
               <span className="franchise-path__node-art">
-                {node.image ? <img src={node.image} alt="" loading="lazy" /> : <span className="franchise-path__node-placeholder" />}
+                {node.image ? (\n                  /* eslint-disable-next-line @next/next/no-img-element */\n                  <img src={node.image} alt="" loading="lazy" />\n                ) : <span className="franchise-path__node-placeholder" />}
               </span>
               <span className="franchise-path__node-copy">
                 <small>{isCenter ? "YOU ARE HERE" : node.relation}</small>
