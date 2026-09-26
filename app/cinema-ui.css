@@ -1331,3 +1331,145 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
     transform: none !important;
   }
 }
+
+
+/* Discovery Field V9 — responsive orbital instrument.
+   JS owns the physical orbit; this layer adds depth, magnetic focus,
+   cursor response and tactile feedback without touching Lantern-ko. */
+.nexus-world-map{
+  --world-pointer-x:0;
+  --world-pointer-y:0;
+  touch-action:pan-y;
+  perspective:1200px;
+  isolation:isolate;
+  cursor:default;
+}
+.nexus-world-map::before{
+  content:"";
+  position:absolute;
+  inset:8%;
+  z-index:0;
+  pointer-events:none;
+  border:1px solid rgba(242,179,95,.045);
+  border-radius:50%;
+  transform:translate3d(calc(var(--world-pointer-x) * 8px),calc(var(--world-pointer-y) * 6px),0) scale(1.01);
+  transition:transform .8s cubic-bezier(.2,.72,.18,1);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.012),
+    inset 0 0 80px rgba(242,179,95,.018);
+}
+.nexus-world-map::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:min(62%,520px);
+  aspect-ratio:1;
+  z-index:0;
+  pointer-events:none;
+  border-radius:50%;
+  transform:translate(-50%,-50%) translate3d(calc(var(--world-pointer-x) * -5px),calc(var(--world-pointer-y) * -4px),0);
+  background:radial-gradient(circle,rgba(242,179,95,.055),rgba(242,179,95,.012) 28%,transparent 66%);
+  filter:blur(1px);
+  transition:transform .9s cubic-bezier(.2,.72,.18,1);
+}
+.nexus-world-map.is-dragging{cursor:grabbing}
+.nexus-world-map.is-dragging .nexus-world-node-orbit-motion{transition:none!important}
+.nexus-world-map.has-active .nexus-world-node:not(.is-active){
+  filter:saturate(.62) brightness(.72);
+}
+.nexus-world-map.has-active .nexus-world-node.is-active{
+  filter:none;
+}
+.nexus-world-node-orbit-motion{
+  transform-style:preserve-3d;
+  backface-visibility:hidden;
+  transition:filter .35s ease;
+}
+.nexus-world-node-art{
+  transform-style:preserve-3d;
+  box-shadow:
+    0 16px 38px rgba(0,0,0,.32),
+    0 0 0 1px rgba(255,255,255,.025);
+  transition:
+    border-color .4s ease,
+    box-shadow .5s cubic-bezier(.2,.72,.18,1),
+    filter .5s ease;
+}
+.nexus-world-node-copy{
+  transform:translateZ(10px);
+  transition:transform .45s cubic-bezier(.2,.72,.18,1),opacity .35s ease;
+}
+.nexus-world-node:hover .nexus-world-node-art,
+.nexus-world-node:focus-visible .nexus-world-node-art{
+  border-color:rgba(242,179,95,.7);
+  box-shadow:
+    0 22px 58px rgba(0,0,0,.46),
+    0 0 38px rgba(242,179,95,.10);
+}
+.nexus-world-node:hover .nexus-world-node-copy,
+.nexus-world-node:focus-visible .nexus-world-node-copy{
+  transform:translateZ(18px) translateY(-2px);
+}
+.nexus-world-node.is-active .nexus-world-node-art{
+  box-shadow:
+    0 26px 75px rgba(0,0,0,.5),
+    0 0 42px rgba(242,179,95,.14);
+}
+.nexus-world-map.has-active .nexus-world-connections line{
+  stroke-dasharray:3 7;
+  animation:nexus-world-link-flow 2.8s linear infinite;
+}
+.nexus-world-map.has-active .nexus-world-connections line.is-active{
+  stroke-dasharray:5 4;
+  filter:drop-shadow(0 0 5px rgba(242,179,95,.55));
+  animation-duration:1.2s;
+}
+@keyframes nexus-world-link-flow{
+  to{stroke-dashoffset:-28}
+}
+.nexus-world-map .nexus-world-core{
+  transform-origin:50% 50%;
+}
+.nexus-world-map.has-active .nexus-world-core-ring{
+  box-shadow:
+    0 0 0 1px rgba(242,179,95,.14),
+    0 0 28px rgba(242,179,95,.08),
+    inset 0 0 24px rgba(242,179,95,.045);
+}
+.nexus-world-map.is-dragging .nexus-world-field-note--br{
+  opacity:.45;
+}
+.nexus-world-field-note--br{
+  transition:opacity .3s ease,transform .4s cubic-bezier(.2,.72,.18,1),color .3s ease;
+}
+.nexus-world-field-note--br:hover{
+  transform:translateY(-2px);
+}
+@media(max-width:700px){
+  .nexus-world-map{
+    touch-action:pan-y;
+  }
+  .nexus-world-map::before{
+    inset:13%;
+  }
+  .nexus-world-map::after{
+    width:78%;
+  }
+  .nexus-world-map.has-active .nexus-world-node:not(.is-active){
+    filter:saturate(.7) brightness(.78);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .nexus-world-map::before,
+  .nexus-world-map::after,
+  .nexus-world-map.has-active .nexus-world-connections line{
+    transition:none!important;
+    animation:none!important;
+  }
+  .nexus-world-node-orbit-motion,
+  .nexus-world-node-art,
+  .nexus-world-node-copy{
+    transform-style:flat!important;
+  }
+}
