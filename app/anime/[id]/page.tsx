@@ -1,5 +1,4 @@
 import "./detail.css";
-import "./cinema-detail.css";
 import "../../detail-trailer.css";
 import "../../watchlist-queue.css";
 import "../../franchise-path.css";
@@ -11,7 +10,7 @@ import { getAnimeExperience } from "@/lib/anime-experience";
 import { fetchAnimeById } from "@/lib/anilist";
 import { buildExternalLinks } from "@/lib/external-links";
 import { enrichDeepFromAniDb } from "@/lib/providers/anidb";
-import { enrichArtwork } from "@/lib/providers/artwork";
+import { enrichArtworkFromFanart } from "@/lib/providers/fanart";
 import { buildCreativeDna, fullCreditLines } from "@/lib/creative-dna";
 import { buildViewingContext } from "@/lib/viewing-context";
 import { resolveMangaSourcesFromRelations } from "@/lib/manga-adapter";
@@ -24,7 +23,6 @@ import { DetailAI } from "@/components/DetailAI";
 import { AncestryGraph } from "@/components/AncestryGraph";
 import { DetailRelatedClient } from "@/components/DetailRelatedClient";
 import { MemoryVisit } from "@/components/MemoryVisit";
-import { DetailCinematography } from "@/components/DetailCinematography";
 import { EpisodeList } from "@/components/EpisodeList";
 import { DeepSignalsPanel } from "@/components/DeepSignalsPanel";
 import { CreativeDnaPanel } from "@/components/CreativeDnaPanel";
@@ -89,7 +87,7 @@ export default async function AnimeDetailPage({ params }: Props) {
   const { anime, themes, jikan, nextEpisode, layers, identity } = exp;
 
   const deep = await enrichDeepFromAniDb(identity).catch(() => null);
-  const artwork = await enrichArtwork(identity, anime).catch(() => null);
+  const fanart = await enrichArtworkFromFanart(identity).catch(() => null);
 
   const relations = anime.relations || [];
   const mangaSources = await resolveMangaSourcesFromRelations(relations).catch(
@@ -158,7 +156,6 @@ export default async function AnimeDetailPage({ params }: Props) {
 
   return (
     <main className="cinema-detail-page">
-      <DetailCinematography />
       <MemoryVisit
         id={anime.id}
         title={anime.title}
@@ -291,14 +288,14 @@ export default async function AnimeDetailPage({ params }: Props) {
 
         <CreativeConnectionsPanel dna={dnaSlots} currentId={anime.id} />
 
-        {artwork?.assets?.length ? (
+        {fanart?.assets?.length ? (
           <DetailDeferred
             title="Artwork gallery"
             note="Fan art & key visuals — expand on demand."
           >
             <ArtworkGallery
-              assets={artwork.assets}
-              sourceNote="AniList + Kitsu + Jikan/MAL"
+              assets={fanart.assets}
+              sourceNote="fanart.tv (TVDB)"
             />
           </DetailDeferred>
         ) : null}
