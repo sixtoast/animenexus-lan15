@@ -523,3 +523,240 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
  .nexus-opening-copy,.nexus-opening-subject,.nexus-world-map,.nexus-index-cut,.nexus-rails{transform:none!important}
  .cinema-route-curtain{display:none}
 }
+
+
+/* Discovery Field V2 — spatial signal instrument. */
+.nexus-world-map{
+  --world-x:0px;
+  --world-y:0px;
+  height:min(820px,62vw);
+  min-height:640px;
+  border-block:1px solid rgba(244,239,231,.1);
+  background:
+    radial-gradient(circle at calc(50% + var(--world-x)) calc(50% + var(--world-y)),rgba(242,179,95,.13),transparent 12%),
+    radial-gradient(circle at 50% 50%,rgba(242,179,95,.045),transparent 31%),
+    #08090c;
+  cursor:crosshair;
+}
+.nexus-world-map:before{display:none}
+.nexus-world-map:after{
+  background:radial-gradient(circle at calc(50% + var(--world-x)) calc(50% + var(--world-y)),rgba(242,179,95,.18),transparent 16%);
+  filter:blur(22px);
+  transition:all .35s ease;
+}
+.nexus-world-grid{
+  position:absolute;
+  inset:0;
+  opacity:.7;
+  background:
+    linear-gradient(rgba(244,239,231,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(244,239,231,.035) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(circle at 50% 50%,#000 0 45%,transparent 82%);
+}
+.nexus-world-grid:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:repeating-linear-gradient(0deg,transparent 0 5px,rgba(255,255,255,.012) 6px);
+}
+.nexus-world-scanline{
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(242,179,95,.65),transparent);
+  box-shadow:0 0 18px rgba(242,179,95,.3);
+  opacity:.45;
+  animation:nexus-field-scan 7s linear infinite;
+}
+@keyframes nexus-field-scan{0%{transform:translateY(0);opacity:0}10%{opacity:.45}90%{opacity:.45}100%{transform:translateY(820px);opacity:0}}
+.nexus-world-connections{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:1;
+  overflow:visible;
+  transform:translate3d(var(--world-x),var(--world-y),0);
+  transition:transform .35s ease;
+}
+.nexus-world-connections line{
+  stroke:rgba(242,179,95,.16);
+  stroke-width:.16;
+  stroke-dasharray:1.2 1.8;
+  vector-effect:non-scaling-stroke;
+  transition:stroke .35s ease,stroke-width .35s ease,opacity .35s ease;
+}
+.nexus-world-connections line.is-active{
+  stroke:rgba(242,179,95,.85);
+  stroke-width:.38;
+  stroke-dasharray:2 1;
+}
+.nexus-world-orbit{
+  border-color:rgba(244,239,231,.055);
+  transition:transform .5s ease;
+}
+.nexus-world-orbit--one{width:48%;height:62%}
+.nexus-world-orbit--two{width:76%;height:40%}
+.nexus-world-core{
+  width:min(300px,24vw);
+  aspect-ratio:1;
+  border:1px solid rgba(242,179,95,.38);
+  background:rgba(8,9,12,.84);
+  box-shadow:0 0 0 12px rgba(242,179,95,.018),0 0 100px rgba(242,179,95,.1);
+  transform:translate(calc(-50% + var(--world-x) * .55),calc(-50% + var(--world-y) * .55));
+  transition:transform .35s ease,box-shadow .4s ease;
+}
+.nexus-world-core-ring{
+  position:absolute;
+  inset:12px;
+  border:1px dashed rgba(242,179,95,.18);
+  border-radius:50%;
+  animation:nexus-field-rotate 22s linear infinite;
+}
+@keyframes nexus-field-rotate{to{transform:rotate(360deg)}}
+.nexus-world-core span{position:relative;z-index:2}
+.nexus-world-core strong{position:relative;z-index:2;font-size:clamp(2.4rem,4.2vw,4.5rem)}
+.nexus-world-core small{position:relative;z-index:2}
+.nexus-world-core-status{
+  position:relative;
+  z-index:2;
+  margin-top:17px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  font-size:.43rem;
+  letter-spacing:.2em;
+  color:rgba(244,239,231,.35);
+}
+.nexus-world-core-status i{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--cinema-gold);
+  box-shadow:0 0 12px var(--cinema-gold);
+  animation:nexus-field-pulse 1.6s ease-in-out infinite;
+}
+@keyframes nexus-field-pulse{50%{opacity:.35;transform:scale(.65)}}
+.nexus-world-crosshair{
+  width:28px;height:28px;
+  border-color:rgba(242,179,95,.34);
+  box-shadow:0 0 45px rgba(242,179,95,.12);
+  transform:translate(calc(-50% + var(--world-x)),calc(-50% + var(--world-y)));
+  transition:transform .35s ease;
+}
+.nexus-world-field-note{
+  position:absolute;
+  z-index:4;
+  font-size:.43rem;
+  letter-spacing:.18em;
+  color:rgba(244,239,231,.27);
+}
+.nexus-world-field-note--tl{left:18px;top:16px}
+.nexus-world-field-note--br{right:18px;bottom:16px}
+.nexus-world-node{
+  left:var(--node-x);
+  top:var(--node-y);
+  right:auto;
+  bottom:auto;
+  transform:translate3d(0,0,0);
+  z-index:5;
+}
+.nexus-world-node--7{transform:translateX(-50%)}
+.nexus-world-node:before{
+  width:58px;
+  background:linear-gradient(90deg,rgba(242,179,95,.55),transparent);
+}
+.nexus-world-node-art{
+  position:relative;
+  width:82px;
+  height:114px;
+  border-color:rgba(244,239,231,.18);
+  background:#0c0d11;
+}
+.nexus-world-node-art:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(145deg,rgba(255,255,255,.08),transparent 28% 72%,rgba(242,179,95,.12));
+  pointer-events:none;
+}
+.nexus-world-node-art b{
+  position:absolute;
+  left:7px;
+  top:6px;
+  z-index:2;
+  font-size:.44rem;
+  font-weight:500;
+  letter-spacing:.12em;
+  color:rgba(244,239,231,.7);
+  text-shadow:0 2px 10px #000;
+}
+.nexus-world-node-copy small{
+  color:rgba(242,179,95,.72);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.nexus-world-node-copy strong{font-size:1.22rem}
+.nexus-world-node-copy i{color:rgba(244,239,231,.42)}
+.nexus-world-map.has-active .nexus-world-node:not(.is-active){
+  opacity:.25;
+  filter:saturate(.25);
+}
+.nexus-world-node.is-active{z-index:8;transform:translateY(-10px) scale(1.07)}
+.nexus-world-node--7.is-active{transform:translateX(-50%) translateY(-10px) scale(1.07)}
+.nexus-world-node.is-active .nexus-world-node-art{
+  border-color:rgba(242,179,95,.7);
+  box-shadow:0 24px 80px rgba(242,179,95,.18);
+}
+.nexus-world-node.is-active .nexus-world-node-copy strong{color:var(--cinema-gold)}
+.nexus-world-node.is-active .nexus-world-node-copy small{color:rgba(242,179,95,.95)}
+@media(max-width:700px){
+  .nexus-world-map{
+    height:620px!important;
+    min-height:620px!important;
+    margin-inline:-18px!important;
+    border-inline:0;
+    cursor:default;
+    background:
+      radial-gradient(circle at 50% 50%,rgba(242,179,95,.1),transparent 25%),
+      #08090c;
+  }
+  .nexus-world-grid{background-size:42px 42px;opacity:.5}
+  .nexus-world-scanline{animation-duration:9s}
+  .nexus-world-connections{opacity:.72}
+  .nexus-world-core{
+    width:148px!important;
+    padding:20px!important;
+  }
+  .nexus-world-core strong{font-size:2rem!important}
+  .nexus-world-core small{display:block!important;font-size:.46rem!important;line-height:1.45}
+  .nexus-world-core-status{margin-top:11px;font-size:.39rem}
+  .nexus-world-core-ring{inset:8px}
+  .nexus-world-field-note{font-size:.38rem}
+  .nexus-world-field-note--tl{left:12px;top:12px}
+  .nexus-world-field-note--br{right:12px;bottom:12px}
+  .nexus-world-node{
+    gap:6px!important;
+    transform:translate3d(0,0,0)!important;
+  }
+  .nexus-world-node--7{transform:translateX(-50%)!important}
+  .nexus-world-node-art{width:48px!important;height:68px!important}
+  .nexus-world-node-copy{max-width:88px!important}
+  .nexus-world-node-copy strong{font-size:.78rem!important}
+  .nexus-world-node-copy small,.nexus-world-node-copy i{font-size:.36rem!important;letter-spacing:.07em!important}
+  .nexus-world-node:before{width:22px!important}
+  .nexus-world-node.is-active{transform:translateY(-6px) scale(1.04)!important}
+  .nexus-world-node--7.is-active{transform:translateX(-50%) translateY(-6px) scale(1.04)!important}
+  .nexus-world-node--1{left:2%!important;top:13%!important}
+  .nexus-world-node--2{left:auto!important;right:2%!important;top:20%!important}
+  .nexus-world-node--3{left:0!important;top:45%!important}
+  .nexus-world-node--4{left:auto!important;right:0!important;top:52%!important}
+  .nexus-world-node--5{left:3%!important;top:77%!important}
+  .nexus-world-node--6{left:auto!important;right:3%!important;top:78%!important}
+  .nexus-world-node--7{left:50%!important;top:5%!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .nexus-world-scanline,.nexus-world-core-ring,.nexus-world-core-status i{animation:none!important}
+}
