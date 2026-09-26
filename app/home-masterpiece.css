@@ -460,8 +460,8 @@
     z-index:7!important;
     margin:14px 0 0!important;
     max-width:7ch!important;
-    font-size:clamp(3.7rem,17vw,6rem)!important;
-    line-height:.84!important;
+    font-size:clamp(3rem,12vw,4.2rem)!important;
+    line-height:.88!important;
   }
   .nexus-catalog .nexus-section-heading .view-mode-toggle,
   .nexus-catalog .nexus-section-heading > button{
