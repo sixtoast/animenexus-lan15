@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useWatchlist } from "@/components/WatchlistProvider";
-import { readIntentSession } from "@/lib/intent-session";
+import { readIntentSession, writeIntentSession } from "@/lib/intent-session";
+import { onNexusSignal } from "@/lib/nexus-intelligence";
 import { rankRecommendationsV3 } from "@/lib/intelligence/recommendation/ranker-v3";
 import type { Anime } from "@/lib/types";
 
@@ -29,6 +30,7 @@ export function HomePersonalizedProvider({ children, initial, limit = 180 }: { c
   const { entries, ready } = useWatchlist();
   const [rawPool, setRawPool] = useState<Anime[]>(initial);
   const [rawSurprise, setRawSurprise] = useState<Anime[]>([]);
+  const [intelligenceRevision, setIntelligenceRevision] = useState(0);
 
   useEffect(() => { setRawPool(initial); }, [initial]);
 
@@ -45,7 +47,7 @@ export function HomePersonalizedProvider({ children, initial, limit = 180 }: { c
       if (Array.isArray(surprise?.data) && surprise.data.length) setRawSurprise(surprise.data as Anime[]);
     }).catch(() => undefined);
     return () => { cancelled = true; };
-  }, [entries, ready, limit]);
+  }, [entries, ready, limit, intelligenceRevision]);
 
   const pool = useMemo(() => {
     const base = unique(rawPool);
