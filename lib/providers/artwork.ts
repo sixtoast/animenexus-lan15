@@ -98,12 +98,13 @@ async function jikanArtwork(malId?: number): Promise<ArtworkAsset[]> {
 }
 
 async function shikimoriArtwork(identity: AnimeIdentity): Promise<ArtworkAsset[]> {
-  if (!identity.shikimoriId) return [];
-  const cacheK = cacheKey(["artwork", "shikimori", identity.shikimoriId]);
+  const shikimoriId = identity.shikimoriId;
+  if (!shikimoriId) return [];
+  const cacheK = cacheKey(["artwork", "shikimori", shikimoriId]);
   return dedupedFetch(cacheK, async () => {
     try {
       const res = await fetch(
-        SHIKI_BASE + "/animes/" + encodeURIComponent(identity.shikimoriId) + "/screenshots",
+        SHIKI_BASE + "/animes/" + encodeURIComponent(shikimoriId) + "/screenshots",
         {
           headers: {
             "User-Agent": "AnimeNexusLantern/1.0 (github.com/sixtoast/animenexus-lan15)",
