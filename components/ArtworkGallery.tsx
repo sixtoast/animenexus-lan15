@@ -7,6 +7,8 @@ type Props = {
   assets: ArtworkAsset[];
   animeId: number;
   sourceNote?: string;
+  animeImage?: string;
+  bannerImage?: string | null;
 };
 
 type ArtworkGroup = {
@@ -49,10 +51,11 @@ function sortAssets(items: ArtworkAsset[]) {
 const COVER_KEY_PREFIX = "animenexus:artwork-cover:";
 const COVER_EVENT = "animenexus:artwork-selected";
 
-export function ArtworkGallery({ assets, animeId, sourceNote }: Props) {
+export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, bannerImage }: Props) {
   const [open, setOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [selectedCover, setSelectedCover] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<NonNullable<ArtworkAsset["role"]>>("key-art");
 
   const coverKey = `${COVER_KEY_PREFIX}${animeId}`;
 
@@ -60,7 +63,10 @@ export function ArtworkGallery({ assets, animeId, sourceNote }: Props) {
     try {
       window.localStorage.setItem(coverKey, url);
       setSelectedCover(url);
-      window.dispatchEvent(new CustomEvent(COVER_EVENT, { detail: { animeId, url } }));
+      const asset = assets.find((item) => item.url === url);
+      const role = asset ? assetRole(asset) : "alternate-art";
+      setSelectedRole(role);
+      window.dispatchEvent(new CustomEvent(COVER_EVENT, { detail: { animeId, url, role } }));
     } catch {
       // Storage can be unavailable in privacy-restricted browsers.
     }
@@ -70,7 +76,8 @@ export function ArtworkGallery({ assets, animeId, sourceNote }: Props) {
     try {
       window.localStorage.removeItem(coverKey);
       setSelectedCover(null);
-      window.dispatchEvent(new CustomEvent(COVER_EVENT, { detail: { animeId, url: null } }));
+      setSelectedRole("key-art");
+      window.dispatchEvent(new CustomEvent(COVER_EVENT, { detail: { animeId, url: null, role: "key-art" } }));
     } catch {
       // Storage can be unavailable in privacy-restricted browsers.
     }
@@ -78,7 +85,10 @@ export function ArtworkGallery({ assets, animeId, sourceNote }: Props) {
 
   useEffect(() => {
     try {
-      setSelectedCover(window.localStorage.getItem(coverKey));
+      const stored = window.localStorage.getItem(coverKey);
+      setSelectedCover(stored);
+      const asset = stored ? assets.find((item) => item.url === stored) : null;
+      setSelectedRole(asset ? assetRole(asset) : "key-art");
     } catch {
       setSelectedCover(null);
     }
@@ -116,7 +126,7 @@ export function ArtworkGallery({ assets, animeId, sourceNote }: Props) {
         <div id="artwork-gallery-content" className="artwork-gallery__content">
           {selectedCover ? (
             <div className="artwork-gallery__selection">
-              <span>Custom cover selected for this device.</span>
+              <span>{selectedRole === "alternate-art" ? "Alternate key visual is shaping this title's atmosphere." : "Custom key art selected for this device."}</span>
               <button type="button" className="btn btn-outline btn-sm" onClick={clearCover}>Restore catalog cover</button>
             </div>
           ) : null}
