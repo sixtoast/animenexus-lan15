@@ -1092,3 +1092,64 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
     filter:none!important;
   }
 }
+
+
+/* Discovery Field V6 — real physical choreography: lineup -> spin -> travel -> orbit. */
+.nexus-world-map.is-entered .nexus-world-node{
+  animation:none!important;
+  opacity:1!important;
+  pointer-events:auto;
+  perspective:900px;
+}
+.nexus-world-map.is-entered .nexus-world-node-motion{
+  display:flex;
+  flex-direction:column;
+  transform:translate3d(var(--line-dx,0px),var(--line-dy,0px),0);
+  opacity:0;
+  will-change:transform,opacity,filter;
+  animation:nexus-world-v6-entry 2.55s cubic-bezier(.16,.78,.16,1) var(--entry-delay,0ms) both;
+}
+.nexus-world-node-orbit-motion{display:contents;}
+@keyframes nexus-world-v6-entry{
+  0%{
+    opacity:0;
+    transform:translate3d(var(--line-dx),var(--line-dy),0) rotateY(0deg) rotateZ(0deg) scale(.7);
+    filter:blur(8px) saturate(.45);
+  }
+  9%{opacity:1}
+  28%{
+    transform:translate3d(var(--line-dx),var(--line-dy),0) rotateY(calc(360deg * var(--spin-turns))) rotateZ(5deg) scale(.9);
+    filter:blur(1.8px) saturate(.72);
+  }
+  42%{
+    transform:translate3d(calc(var(--line-dx) * .78),calc(var(--line-dy) * .78 - 12px),0) rotateY(calc(360deg * var(--spin-turns) * .72)) rotateZ(-4deg) scale(.97);
+    filter:none;
+  }
+  66%{
+    transform:translate3d(calc(var(--line-dx) * .30),calc(var(--line-dy) * .30 + 10px),0) rotateY(calc(360deg * var(--spin-turns) * .28)) rotateZ(3deg) scale(1.03);
+  }
+  84%{
+    transform:translate3d(calc(var(--line-dx) * -.035),calc(var(--line-dy) * -.035),0) rotateY(0deg) rotateZ(-1deg) scale(1.015);
+  }
+  100%{
+    opacity:1;
+    transform:translate3d(0,0,0) rotateY(0deg) rotateZ(0deg) scale(1);
+    filter:none;
+  }
+}
+.nexus-world-map.is-entered .nexus-world-node-copy{
+  opacity:0;
+  animation:nexus-world-v6-copy .65s ease-out calc(var(--entry-delay,0ms) + 2.35s) forwards;
+}
+@keyframes nexus-world-v6-copy{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.nexus-world-map.is-entered .nexus-world-node-art{
+  animation:nexus-world-art-breathe 7s ease-in-out calc(var(--entry-delay,0ms) + 3s) infinite;
+}
+@media(max-width:700px){
+  .nexus-world-map.is-entered .nexus-world-node-motion{animation-duration:2.2s}
+  .nexus-world-map.is-entered .nexus-world-node-copy{animation-delay:calc(var(--entry-delay,0ms) + 2.05s)}
+  .nexus-world-map.is-entered .nexus-world-node-art{animation-delay:calc(var(--entry-delay,0ms) + 2.55s)}
+}
+@media(prefers-reduced-motion:reduce){
+  .nexus-world-map.is-entered .nexus-world-node-motion,.nexus-world-map.is-entered .nexus-world-node-copy,.nexus-world-map.is-entered .nexus-world-node-art{animation:none!important;opacity:1!important;transform:none!important;filter:none!important}
+}
