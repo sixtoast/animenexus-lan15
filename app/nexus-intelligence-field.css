@@ -10,3 +10,11 @@
 @keyframes nexus-ai-arrival{from{opacity:0;transform:translate(-50%,-12px) scale(.94)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
 @media(max-width:700px){.nexus-world-intelligence{top:8%;max-width:calc(100% - 24px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nexus-world-intelligence strong{overflow:hidden;text-overflow:ellipsis}}
 @media(prefers-reduced-motion:reduce){.nexus-world-map.is-ai-directed .nexus-world-core-ring,.nexus-world-map.is-ai-directed .nexus-world-connections line,.nexus-world-intelligence{animation:none}}
+
+.nexus-world-command-receipt{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);z-index:70;display:flex;align-items:center;gap:9px;padding:7px 10px;border:1px solid rgba(240,160,144,.16);border-radius:999px;background:rgba(8,8,8,.68);backdrop-filter:blur(10px);font-size:.58rem;letter-spacing:.04em;animation:nexus-command-receipt .42s cubic-bezier(.2,.8,.2,1)}
+.nexus-world-command-receipt i{width:5px;height:5px;border-radius:50%;background:var(--color-accent);box-shadow:0 0 12px rgba(240,160,144,.8);animation:nexus-command-dot .8s ease infinite}
+.nexus-world-command-receipt span{color:var(--color-text-muted)}.nexus-world-command-receipt b{font-size:.48rem;letter-spacing:.15em;color:var(--color-accent)}
+@keyframes nexus-command-receipt{from{opacity:0;transform:translate(-50%,8px) scale(.96)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+@keyframes nexus-command-dot{50%{opacity:.35;transform:scale(.7)}}
+@media(max-width:700px){.nexus-world-command-receipt{bottom:5%;max-width:calc(100% - 24px)}}
+@media(prefers-reduced-motion:reduce){.nexus-world-command-receipt,.nexus-world-command-receipt i{animation:none}}
