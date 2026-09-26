@@ -49,7 +49,7 @@ export function NexusNavigationField() {
         {Array.from({ length: 8 }, (_, i) => <i key={i} style={{ "--i": i } as React.CSSProperties} />)}
       </div>
       <div className="nexus-navigation-field__core">
-        <span>{labels[mode]}</span>
+        <span>{signal}</span>
         <b />
       </div>
       <div className="nexus-navigation-field__route">{String(modeIndex + 1).padStart(2,"0")} · NEXUS</div>
