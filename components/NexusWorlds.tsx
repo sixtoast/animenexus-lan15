@@ -58,6 +58,7 @@ export function NexusWorlds({ candidates }: Props) {
   const [secret, setSecret] = useState(false);
   const [entered, setEntered] = useState(false);
   const [travelling, setTravelling] = useState<number | null>(null);
+  const [aiPulse, setAiPulse] = useState(0);
   const fieldRef = useRef<HTMLDivElement>(null);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
   const dragRef = useRef({ active: false, startX: 0, startRotation: 0 });
@@ -90,6 +91,9 @@ export function NexusWorlds({ candidates }: Props) {
               } as Record<NexusFieldMode, string>)[signal.target];
             : null;
       if (label) setCommandLabel(label);
+      if (signal.type === "filter" || signal.type === "focus" || signal.type === "travel") {
+        setAiPulse((value) => value + 1);
+      }
       // AI commands are intentionally quiet unless they materially reconfigure
       // the field. A single resonance marks the change; ordinary pointer/scroll
       // interaction remains silent.
@@ -421,7 +425,8 @@ export function NexusWorlds({ candidates }: Props) {
   return (
     <div
       ref={fieldRef}
-      className={"nexus-world-map" + (entered ? " is-entered" : "") + (active !== null ? " has-active" : "") + (secret ? " has-secret" : "") + (commandLabel ? " is-ai-directed" : "") + (travelling !== null ? " is-travelling" : "")}
+      className={"nexus-world-map nexus-world-map--" + fieldMode + (entered ? " is-entered" : "") + (active !== null ? " has-active" : "") + (secret ? " has-secret" : "") + (commandLabel ? " is-ai-directed" : "") + (travelling !== null ? " is-travelling" : "") + (aiPulse ? " is-ai-pulsing" : "")}
+      data-ai-pulse={aiPulse}
     >
       <div className="nexus-world-grid" aria-hidden />
       <div className="nexus-world-scanline" aria-hidden />
@@ -487,7 +492,7 @@ export function NexusWorlds({ candidates }: Props) {
           <Link
             key={anime.id}
             href={"/anime/" + anime.id}
-            className={"nexus-world-node nexus-world-node--" + (index + 1) + (isActive ? " is-active" : "") + (isArmed ? " is-armed" : "") + (travelling === index ? " is-travelling-origin" : "")}
+            className={"nexus-world-node nexus-world-node--" + (index + 1) + (isActive ? " is-active" : "") + (isArmed ? " is-armed" : "") + (travelling === index ? " is-travelling-origin" : "") + (fieldMode !== "discovery" ? " is-ai-reweighted" : "")}
             style={{
               "--node-x": position.x,
               "--node-y": position.y,
