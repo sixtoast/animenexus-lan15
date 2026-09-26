@@ -302,6 +302,7 @@ export default async function AnimeDetailPage({ params }: Props) {
           >
             <ArtworkGallery
               assets={galleryAssets}
+              animeId={anime.id}
               sourceNote="AniList · Kitsu · Jikan · Shikimori · Fanart.tv (when available)"
             />
           </DetailDeferred>
