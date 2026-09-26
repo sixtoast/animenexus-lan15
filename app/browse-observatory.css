@@ -27,7 +27,7 @@
 .cinema-browse-page .filter-search:focus{border-color:rgba(242,179,95,.55);box-shadow:0 0 0 1px rgba(242,179,95,.16),0 18px 70px rgba(0,0,0,.2)}
 .cinema-browse-page .search-row .btn,.cinema-browse-page .filter-actions .btn{border-radius:0}
 .cinema-browse-page .filter-input{border-radius:0;background:rgba(255,255,255,.025)}
-.cinema-browse-page .cinema-browse-feature{position:relative;margin-top:54px;transform:translate3d(0,calc(var(--browse-scroll-velocity,0) * -1px),0)}
+.cinema-browse-page .cinema-browse-feature{position:relative;margin-top:54px;transform:translate3d(0,var(--browse-feature-y,0px),0)}
 .cinema-browse-page .cinema-browse-feature:before{content:"PRIMARY SIGNAL";position:absolute;top:-26px;right:0;color:rgba(244,239,231,.25);font-size:.52rem;letter-spacing:.18em}
 .cinema-browse-page .cinema-browse-feature-art{position:relative;box-shadow:0 40px 110px rgba(0,0,0,.45)}
 .cinema-browse-page .cinema-browse-feature-art:after{content:"";position:absolute;inset:0;background:radial-gradient(circle at var(--browse-pointer-x,50%) var(--browse-pointer-y,50%),rgba(242,179,95,.12),transparent 30%),linear-gradient(180deg,transparent 58%,rgba(0,0,0,.32));mix-blend-mode:screen;pointer-events:none}
