@@ -117,14 +117,15 @@ export function readNexusFieldState(): NexusFieldState | null {
 }
 
 /** Prevent the same command being applied twice after remounts/route changes. */
-export function claimNexusCommand(id: string): boolean {
+export function claimNexusCommand(id: string, scope = "global"): boolean {
   if (typeof window === "undefined") return true;
   try {
-    const raw = window.sessionStorage.getItem(SEEN_KEY);
+    const key = scope === "global" ? SEEN_KEY : `${SEEN_KEY}:${scope}`;
+    const raw = window.sessionStorage.getItem(key);
     const seen = raw ? JSON.parse(raw) as string[] : [];
     if (seen.includes(id)) return false;
     const next = [...seen.slice(-31), id];
-    window.sessionStorage.setItem(SEEN_KEY, JSON.stringify(next));
+    window.sessionStorage.setItem(key, JSON.stringify(next));
     return true;
   } catch {
     return true;
