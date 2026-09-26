@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { Anime } from "@/lib/types";
+import { getAnimeObjectId, withViewTransition } from "@/lib/view-transition";
 import { useHomePersonalizedPool } from "@/lib/use-home-personalized-pool";
 import { claimNexusCommand, getLastNexusCommand, onNexusSignal, readNexusFieldState, type NexusFieldMode } from "@/lib/nexus-intelligence";
 
