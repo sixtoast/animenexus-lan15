@@ -70,9 +70,51 @@ export function HomeInteractionLayer() {
     });
 
     let raf = 0;
+    let pointerRaf = 0;
+    let targetPointerX = window.innerWidth / 2;
+    let targetPointerY = window.innerHeight / 2;
+    let smoothPointerX = targetPointerX;
+    let smoothPointerY = targetPointerY;
+    let lastScrollY = window.scrollY;
+    let scrollVelocity = 0;
+
+    const updateAtmosphere = () => {
+      pointerRaf = 0;
+      if (reduceQuery.matches) return;
+      smoothPointerX += (targetPointerX - smoothPointerX) * 0.075;
+      smoothPointerY += (targetPointerY - smoothPointerY) * 0.075;
+      const px = smoothPointerX / Math.max(window.innerWidth, 1);
+      const py = smoothPointerY / Math.max(window.innerHeight, 1);
+      home.style.setProperty("--nexus-pointer-x", (px * 100).toFixed(2) + "%");
+      home.style.setProperty("--nexus-pointer-y", (py * 100).toFixed(2) + "%");
+      home.style.setProperty("--nexus-pointer-drift-x", ((px - 0.5) * 28).toFixed(2) + "px");
+      home.style.setProperty("--nexus-pointer-drift-y", ((py - 0.5) * 20).toFixed(2) + "px");
+      if (Math.abs(targetPointerX - smoothPointerX) > 0.5 || Math.abs(targetPointerY - smoothPointerY) > 0.5) {
+        pointerRaf = window.requestAnimationFrame(updateAtmosphere);
+      }
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (!finePointer || reduceQuery.matches) return;
+      targetPointerX = event.clientX;
+      targetPointerY = event.clientY;
+      if (!pointerRaf) pointerRaf = window.requestAnimationFrame(updateAtmosphere);
+    };
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    cleanups.push(() => {
+      window.removeEventListener("pointermove", onPointerMove);
+      if (pointerRaf) window.cancelAnimationFrame(pointerRaf);
+    });
+    updateAtmosphere();
+
     const updateSceneFocus = () => {
       raf = 0; if (reduceQuery.matches) return;
       const viewport = window.innerHeight;
+      const currentScroll = window.scrollY;
+      scrollVelocity += (currentScroll - lastScrollY - scrollVelocity) * 0.14;
+      lastScrollY = currentScroll;
+      home.style.setProperty("--nexus-scroll-velocity", Math.max(-18, Math.min(18, scrollVelocity)).toFixed(2));
+
       scenes.forEach((scene) => {
         const rect = scene.getBoundingClientRect();
         const centre = rect.top + rect.height / 2;
