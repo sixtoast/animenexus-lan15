@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Anime } from "@/lib/types";
 import { useHomePersonalizedPool } from "@/lib/use-home-personalized-pool";
-import { onNexusSignal } from "@/lib/nexus-intelligence";
+import { getLastNexusCommand, onNexusSignal } from "@/lib/nexus-intelligence";
 
 type Props = { candidates: Anime[] };
 
@@ -46,6 +46,7 @@ export function NexusWorlds({ candidates }: Props) {
   const [secret, setSecret] = useState(false);
   const [entered, setEntered] = useState(false);
   const [intelligence, setIntelligence] = useState<string | null>(null);
+  const [intelligenceCommand, setIntelligenceCommand] = useState<string | null>(null);
   const fieldRef = useRef<HTMLDivElement>(null);
   const pointerRef = useRef({ x: 0, y: 0, active: false });
   const dragRef = useRef({ active: false, startX: 0, startRotation: 0 });
@@ -413,6 +414,7 @@ export function NexusWorlds({ candidates }: Props) {
       </svg>
 
       {intelligence ? <div className="nexus-world-intelligence" aria-live="polite"><span>INTELLIGENCE</span><strong>{intelligence}</strong></div> : null}
+      {intelligence ? <div className="nexus-world-command-receipt" aria-live="polite"><i /> <span>{intelligence}</span><b>{intelligenceCommand ? "SYNCED" : "READY"}</b></div> : null}
       <div className="nexus-world-core">
         <div className="nexus-world-core-ring" aria-hidden />
         <span>DISCOVERY FIELD · {String(worlds.length).padStart(2, "0")}</span>
