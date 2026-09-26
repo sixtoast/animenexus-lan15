@@ -16,6 +16,7 @@ import {
 } from "@/lib/intent-session";
 import { inferTonightGuess } from "@/lib/tonight-infer";
 import { useSessionRevision } from "@/lib/use-session-revision";
+import { emitNexusSignal } from "@/lib/nexus-intelligence";
 
 type Props = {
   compact?: boolean;
@@ -77,7 +78,17 @@ export function TonightIntentPanel({ compact }: Props) {
 
   function applySlug(next: string) {
     setSlug(next);
-    writeIntentSession({ slug: next });
+    const session = writeIntentSession({ slug: next });
+    emitNexusSignal({
+      type: "filter",
+      source: "user",
+      payload: {
+        mode: "mood",
+        experienceSlug: next,
+        session,
+        label: `Mood aligned · ${getExperienceIntent(next)?.label || next}`,
+      },
+    });
     setAdjustOpen(true);
   }
 
@@ -91,7 +102,17 @@ export function TonightIntentPanel({ compact }: Props) {
     if (partial.intensity) setIntensity(partial.intensity);
     if (partial.energy) setEnergy(partial.energy);
     if (partial.attention) setAttention(partial.attention);
-    writeIntentSession(partial);
+    const session = writeIntentSession(partial);
+    emitNexusSignal({
+      type: "filter",
+      source: "user",
+      payload: {
+        mode: "mood",
+        experienceSlug: session.slug || undefined,
+        session,
+        label: `Mood dials · ${session.energy} energy · ${session.intensity} intensity · ${session.attention} attention`,
+      },
+    });
   }
 
   const exp = slug ? getExperienceIntent(slug) : undefined;
