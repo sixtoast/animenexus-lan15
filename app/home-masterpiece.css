@@ -609,3 +609,18 @@
     letter-spacing: .12em;
   }
 }
+
+
+/* SEASONAL PERSONAL CATALOGUE */
+.nexus-archive-seasons{display:grid;gap:clamp(70px,10vw,150px)}
+.nexus-archive-season{position:relative}
+.nexus-archive-season-head{display:flex;align-items:baseline;justify-content:space-between;gap:24px;margin:0 0 26px;padding-bottom:12px;border-bottom:1px solid var(--nx-line)}
+.nexus-archive-season-head span{font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--nx-gold)}
+.nexus-archive-season-head small{font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,240,232,.38)}
+.nexus-archive-season--older{opacity:.82}
+@media(max-width:700px){
+ .nexus-archive-seasons{gap:78px}
+ .nexus-archive-season-head{display:block}
+ .nexus-archive-season-head span,.nexus-archive-season-head small{display:block}
+ .nexus-archive-season-head small{margin-top:7px;line-height:1.45}
+}
