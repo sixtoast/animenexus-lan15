@@ -51,6 +51,7 @@ function sortAssets(items: ArtworkAsset[]) {
 
 const COVER_KEY_PREFIX = "animenexus:artwork-cover:";
 const COVER_EVENT = "animenexus:artwork-selected";
+const ROLE_KEY_PREFIX = "animenexus:artwork-role:";
 
 export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, bannerImage }: Props) {
   const [open, setOpen] = useState(false);
@@ -64,6 +65,7 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
   function chooseCover(url: string) {
     try {
       window.localStorage.setItem(coverKey, url);
+      window.localStorage.setItem(`${ROLE_KEY_PREFIX}${animeId}`, role);
       setSelectedCover(url);
       const asset = assets.find((item) => item.url === url);
       const role = asset ? assetRole(asset) : "alternate-art";
@@ -78,6 +80,7 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
   function clearCover() {
     try {
       window.localStorage.removeItem(coverKey);
+      window.localStorage.removeItem(`${ROLE_KEY_PREFIX}${animeId}`);
       setSelectedCover(null);
       setSelectedRole("key-art");
       setSelectedImage(null);
@@ -90,9 +93,10 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(coverKey);
+      const storedRole = window.localStorage.getItem(`${ROLE_KEY_PREFIX}${animeId}`) as NonNullable<ArtworkAsset["role"]> | null;
       setSelectedCover(stored);
       const asset = stored ? assets.find((item) => item.url === stored) : null;
-      setSelectedRole(asset ? assetRole(asset) : "key-art");
+      setSelectedRole(storedRole || (asset ? assetRole(asset) : "key-art"));
       setSelectedImage(stored);
       window.dispatchEvent(new CustomEvent(COVER_EVENT, {
         detail: { animeId, url: stored, role: asset ? assetRole(asset) : "key-art" },
@@ -135,8 +139,9 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
             "--artwork-atmosphere-image": selectedImage ? `url("${selectedImage}")` : animeImage ? `url("${animeImage}")` : bannerImage ? `url("${bannerImage}")` : "none",
           } as CSSProperties}>
           {selectedCover ? (
+            <>
             <div className="artwork-gallery__atmosphere" aria-hidden="true" />
-          <div className="artwork-gallery__selection">
+            <div className="artwork-gallery__selection">
               <span>{selectedRole === "alternate-art" ? "Alternate key visual is shaping this title's atmosphere." : "Custom key art selected for this device."}</span>
               <button type="button" className="btn btn-outline btn-sm" onClick={clearCover}>Restore catalog cover</button>
             </div>
