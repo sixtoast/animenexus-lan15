@@ -77,7 +77,7 @@ export function NexusWorlds({ candidates }: Props) {
     };
     const onPointerDown = (event: PointerEvent) => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
-      const current = Number(field.dataset.orbitRotation || "0");
+      const current = Number(field.dataset.orbitDrag || "0");
       dragRef.current = { active: true, startX: event.clientX, startRotation: current };
       field.setPointerCapture?.(event.pointerId);
       field.classList.add("is-dragging");
@@ -199,9 +199,7 @@ export function NexusWorlds({ candidates }: Props) {
 
           if (travelT >= 1) {
             const orbitT = (local - lineupDuration - travelDuration) / orbitDuration;
-            const dragRotation = dragRef.current.active
-              ? (eventRotation(fieldRef.current) - 0)
-              : 0;
+            const dragRotation = eventRotation(fieldRef.current);
             const a = phase + orbitT * Math.PI * 2 + dragRotation;
             const dynamicRadiusX = radiusX * (1 - Math.abs(pointerX) * 0.035);
             const dynamicRadiusY = radiusY * (1 - Math.abs(pointerY) * 0.025);
