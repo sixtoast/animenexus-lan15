@@ -137,6 +137,7 @@ export function NexusWorlds({ candidates }: Props) {
     let angularVelocity = 0;
     let lastDragTime = 0;
     const started = performance.now();
+    let arrivalCuePlayed = false;
 
     const geometry = nodes.map((node, index) => {
       const w = node.offsetWidth;
@@ -256,6 +257,10 @@ export function NexusWorlds({ candidates }: Props) {
 
         if (local >= lineupDuration) {
           const travelT = Math.min(1, (local - lineupDuration) / travelDuration);
+          if (travelT >= 1 && !arrivalCuePlayed && index === nodes.length - 1 && !reduceMotion) {
+            arrivalCuePlayed = true;
+            playInteractionSound("discovery", { gain: 0.46 });
+          }
           const p = ease(travelT);
           const angle = phase + orbitPhase;
           const targetX = centreX + Math.cos(angle) * radiusX - baseX;
