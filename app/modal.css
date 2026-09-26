@@ -173,3 +173,50 @@
     animation: none;
   }
 }
+
+
+/* MOBILE ANIME MODAL — explicit readable type tokens.
+   Keep modal copy independent from page-level cinematic text layers. */
+@media (max-width:700px){
+  .nx-modal-overlay{
+    z-index:1400!important;
+  }
+  .nx-modal-panel{
+    color:#f5eee7!important;
+    background:
+      linear-gradient(165deg,rgba(31,25,22,.985),rgba(10,8,7,.99))!important;
+    isolation:isolate;
+  }
+  .nx-modal-panel,
+  .nx-modal-panel *{
+    -webkit-text-fill-color:currentColor;
+  }
+  .nx-modal-title{
+    color:#fff8f1!important;
+    font-family:var(--font-display)!important;
+    font-weight:650!important;
+    line-height:1.08!important;
+  }
+  .nx-modal-body{
+    color:#eee5dd!important;
+  }
+  .nx-modal-body p,
+  .nx-modal-body li,
+  .nx-modal-body span,
+  .nx-modal-body div{
+    color:inherit;
+  }
+  .nx-modal-body p{
+    color:#d8cec5!important;
+  }
+  .nx-modal-body a{
+    color:#f1b477!important;
+  }
+  .nx-modal-head-actions button,
+  .nx-modal-head-actions [role="button"]{
+    color:#f5eee7!important;
+  }
+  .nx-modal-panel button{
+    -webkit-text-fill-color:currentColor;
+  }
+}
