@@ -84,8 +84,8 @@ export function NexusWorlds({ candidates }: Props) {
       return { node, index, baseX, baseY, lineX, lineY, maxX, maxY, phase: (index / nodes.length) * Math.PI * 2 };
     });
 
-    const radiusX = Math.min(...geometry.map(g => g.maxX), rect.width * (mobile ? 0.20 : 0.30));
-    const radiusY = Math.min(...geometry.map(g => g.maxY), rect.height * (mobile ? 0.22 : 0.29));
+    const radiusX = Math.min(...geometry.map(g => g.maxX), rect.width * (mobile ? 0.34 : 0.38));
+    const radiusY = Math.min(...geometry.map(g => g.maxY), rect.height * (mobile ? 0.31 : 0.34));
 
     geometry.forEach(({ node }) => {
       const motion = node.querySelector<HTMLElement>(".nexus-world-node-motion");
