@@ -710,3 +710,137 @@
 @media (prefers-reduced-motion: reduce) {
   .nexus-opening::before { opacity: .24; }
 }
+
+
+/* INTERACTION PASS — deliberate focus, tactile rails and scene-weighted motion.
+   Targets the experience layer only; Lantern-ko is intentionally untouched. */
+.home-interactions-ready .nexus-feature-field,
+.home-interactions-ready .nexus-archive-wall,
+.home-interactions-ready .home-rail {
+  --interaction-focus: 0;
+}
+
+.home-interactions-ready .nexus-feature-field.has-focus-card .nexus-index-card:not(.is-focus-card),
+.home-interactions-ready .nexus-archive-wall.has-focus-card .nexus-archive-item:not(.is-focus-card),
+.home-interactions-ready .home-rail.has-focus-card .home-rail-card:not(.is-focus-card) {
+  opacity: .42;
+  filter: saturate(.62);
+  transform: scale(.985);
+}
+
+.home-interactions-ready .nexus-index-card.is-focus-card,
+.home-interactions-ready .nexus-archive-item.is-focus-card,
+.home-interactions-ready .home-rail-card.is-focus-card {
+  opacity: 1;
+  filter: none;
+}
+
+.home-interactions-ready .nexus-archive-item {
+  opacity: 0;
+  transform:
+    translate3d(0, 34px, 0)
+    rotateX(var(--tilt-x,0deg))
+    rotateY(var(--tilt-y,0deg));
+  transition:
+    transform .9s var(--nx-ease),
+    opacity .9s ease,
+    filter .7s ease;
+  transition-delay: calc(var(--archive-index, 0) * 42ms);
+}
+
+.home-interactions-ready .nexus-archive-item.is-visible {
+  opacity: 1;
+  transform:
+    translate3d(0,var(--archive-lift,0px),0)
+    rotateX(var(--tilt-x,0deg))
+    rotateY(var(--tilt-y,0deg));
+}
+
+.home-interactions-ready .nexus-archive-item:hover {
+  --archive-lift: -8px;
+}
+
+.home-interactions-ready .home-rail.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
+  user-select: none;
+}
+
+.home-interactions-ready .home-rail.is-dragging .home-rail-card {
+  pointer-events: none;
+}
+
+.home-interactions-ready .home-rail {
+  cursor: grab;
+}
+
+.home-interactions-ready .nexus-index,
+.home-interactions-ready .nexus-worlds-section,
+.home-interactions-ready .nexus-catalog,
+.home-interactions-ready .nexus-intent-band {
+  --scene-glow: calc(var(--scene-focus, 0) * 1);
+}
+
+.home-interactions-ready .nexus-index::after,
+.home-interactions-ready .nexus-worlds-section::after,
+.home-interactions-ready .nexus-catalog::after,
+.home-interactions-ready .nexus-intent-band::after {
+  content: "";
+  position: absolute;
+  inset: 8% 0;
+  pointer-events: none;
+  opacity: calc(var(--scene-glow) * .75);
+  background: radial-gradient(
+    42% 32% at 50% 50%,
+    rgba(242,179,95,.065),
+    transparent 72%
+  );
+  transition: opacity .7s ease;
+}
+
+.home-interactions-ready .nexus-index-cut {
+  background-position:
+    calc(50% + (var(--cut-x,50%) - 50%) * .035)
+    calc(50% + (var(--cut-y,50%) - 50%) * .025);
+}
+
+.home-interactions-ready .nexus-index-cut::before {
+  background:
+    radial-gradient(
+      420px 300px at var(--cut-x,50%) var(--cut-y,50%),
+      rgba(242,179,95,.10),
+      transparent 68%
+    ),
+    linear-gradient(90deg, rgba(255,255,255,.025), transparent 30%, transparent 70%, rgba(255,255,255,.018));
+}
+
+@media (max-width: 760px) {
+  .home-interactions-ready .nexus-feature-field.has-focus-card .nexus-index-card:not(.is-focus-card),
+  .home-interactions-ready .nexus-archive-wall.has-focus-card .nexus-archive-item:not(.is-focus-card),
+  .home-interactions-ready .home-rail.has-focus-card .home-rail-card:not(.is-focus-card) {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+
+  .home-interactions-ready .nexus-archive-item,
+  .home-interactions-ready .nexus-archive-item.is-visible {
+    opacity: 1;
+    transform: none;
+    transition-delay: 0ms;
+  }
+
+  .home-interactions-ready .home-rail {
+    cursor: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-interactions-ready .nexus-archive-item,
+  .home-interactions-ready .nexus-index-card,
+  .home-interactions-ready .nexus-archive-item.is-visible {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
