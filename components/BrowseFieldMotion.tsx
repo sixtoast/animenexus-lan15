@@ -52,6 +52,7 @@ export function BrowseFieldMotion() {
       root.style.setProperty("--browse-pointer-dx", ((x / innerWidth - .5) * 18) + "px");
       root.style.setProperty("--browse-pointer-dy", ((y / innerHeight - .5) * 12) + "px");
       root.style.setProperty("--browse-scroll-velocity", Math.max(-14, Math.min(14, velocity)).toFixed(2));
+      root.style.setProperty("--browse-feature-y", (velocity * -1.1).toFixed(2) + "px");
       const progress = Math.min(1, Math.max(0, scrollY / Math.max(document.documentElement.scrollHeight - innerHeight, 1)));
       root.style.setProperty("--browse-scroll-scale", (1 + progress * .025).toFixed(4));
       root.style.setProperty("--browse-scroll-line", (.55 + progress * .45).toFixed(4));
