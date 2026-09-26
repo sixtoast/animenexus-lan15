@@ -26,17 +26,16 @@ export function DetailCoverMaterial({
   viewTransitionName?: string;
 }) {
   const [cover, setCover] = useState(anime.image);
-  const [role, setRole] = useState("key-art");
   const [artworkRole, setArtworkRole] = useState("key-art");
 
   useEffect(() => {
     const key = `${COVER_KEY_PREFIX}${anime.id}`;
     try {
       const stored = window.localStorage.getItem(key);
-      const role = stored ? "alternate-art" : "key-art";
+      const storedRole = window.localStorage.getItem(`${ROLE_KEY_PREFIX}${anime.id}`) || (stored ? "alternate-art" : "key-art");
       setCover(stored || anime.image);
-      setArtworkRole(role);
-      document.documentElement.style.setProperty("--detail-artwork-role", role);
+      setArtworkRole(storedRole);
+      document.documentElement.style.setProperty("--detail-artwork-role", storedRole);
       document.documentElement.style.setProperty("--detail-artwork-image", `url("${stored || anime.image}")`);
     } catch {
       setCover(anime.image);
@@ -67,8 +66,8 @@ export function DetailCoverMaterial({
 
   return (
     <div
-      className={`detail-cover-material artwork-role--${role}`}
-      data-artwork-role={role}
+      className={`detail-cover-material artwork-role--${artworkRole}`}
+      data-artwork-role={artworkRole}
       data-anime-object-id={getAnimeObjectId(anime.id)}
       style={{
         ...vars,
