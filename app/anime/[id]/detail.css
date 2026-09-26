@@ -205,3 +205,19 @@ a.anime-card{text-decoration:none;color:inherit}
 :root[style*="--detail-artwork-role: stills"] .detail-wrap{--detail-atmosphere-opacity:.23;--detail-atmosphere-blur:34px;--detail-atmosphere-scale:1.06}
 :root[style*="--detail-artwork-role: logos"] .detail-wrap{--detail-atmosphere-opacity:.08;--detail-atmosphere-blur:64px}
 :root[style*="--detail-artwork-role: promotional"] .detail-wrap{--detail-atmosphere-opacity:.2;--detail-atmosphere-blur:44px;--detail-atmosphere-scale:1.07}
+
+
+/* Artwork role is a visual mode, not just metadata. The selected asset subtly
+   changes the material treatment around the cover while preserving the page's
+   existing palette. */
+.detail-cover-material{position:relative;isolation:isolate;transition:transform .7s cubic-bezier(.2,.72,.18,1),filter .7s ease}
+.detail-cover-material:before{content:"";position:absolute;inset:-18px;border-radius:28px;z-index:-1;opacity:.22;filter:blur(24px);background:var(--detail-artwork-image);background-size:cover;background-position:center;transition:opacity .7s ease,transform .9s cubic-bezier(.2,.72,.18,1)}
+.detail-cover-material:after{content:attr(data-artwork-role);position:absolute;left:10px;bottom:10px;padding:4px 7px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(8,8,8,.58);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;color:var(--color-text-muted);opacity:0;transform:translateY(5px);transition:opacity .35s ease,transform .35s ease}
+.detail-cover-material:hover:after,.detail-cover-material:focus-within:after{opacity:.9;transform:translateY(0)}
+.detail-cover-material.artwork-role--alternate-art:before{opacity:.3;transform:scale(1.04)}
+.detail-cover-material.artwork-role--character-art:before{opacity:.2;filter:blur(20px) saturate(1.2)}
+.detail-cover-material.artwork-role--background-art:before{opacity:.34;transform:scale(1.08);filter:blur(28px)}
+.detail-cover-material.artwork-role--stills:before{opacity:.16;filter:blur(18px) grayscale(.08)}
+.detail-cover-material.artwork-role--logos:before{opacity:.1;filter:blur(14px) brightness(.8)}
+.detail-cover-material.artwork-role--promotional:before{opacity:.26;transform:scale(1.035)}
+@media(prefers-reduced-motion:reduce){.detail-cover-material,.detail-cover-material:before,.detail-cover-material:after{transition:none}}
