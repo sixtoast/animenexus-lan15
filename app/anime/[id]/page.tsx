@@ -360,6 +360,7 @@ export default async function AnimeDetailPage({ params }: Props) {
           centerTitle={anime.title}
           centerYear={anime.year}
           centerFormat={String(anime.format || "")}
+          centerImage={anime.image}
           relations={relations}
         />
 
