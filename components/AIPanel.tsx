@@ -19,7 +19,7 @@ import { useWatchlist } from "@/components/WatchlistProvider";
 import { useToast } from "@/components/ToastProvider";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { emitNexusSignal } from "@/lib/nexus-intelligence";
+import { emitNexusSignal as sendNexusSignal, type NexusTarget } from "@/lib/nexus-intelligence";
 
 type Msg = { role: "user" | "assistant" | "system"; content: string };
 
