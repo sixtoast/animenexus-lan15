@@ -49,6 +49,50 @@ export function getAnimeObjectId(animeId: string | number): string {
 }
 
 /** Optional: mark document for CSS that skips competing room-enter. */
+export type MotionRoute =
+  | "anime-detail"
+  | "search"
+  | "franchise"
+  | "watchlist"
+  | "generic";
+
+export type MotionOrigin = "card" | "node" | "field" | "search" | "watchlist" | "nav" | "unknown";
+
+export type MotionDestination = "hero" | "results" | "graph" | "constellation" | "detail" | "unknown";
+
+export type MotionScene = {
+  route?: MotionRoute;
+  origin?: MotionOrigin;
+  destination?: MotionDestination;
+  objectId?: string;
+};
+
+let activeScene: MotionScene | null = null;
+
+export function readMotionScene(): MotionScene | null {
+  return activeScene;
+}
+
+export function markMotionScene(scene: MotionScene): void {
+  activeScene = scene;
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  root.dataset.motionRoute = scene.route || "generic";
+  root.dataset.motionOrigin = scene.origin || "unknown";
+  root.dataset.motionDestination = scene.destination || "unknown";
+  if (scene.objectId) root.dataset.motionObject = scene.objectId;
+}
+
+export function clearMotionScene(): void {
+  activeScene = null;
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  delete root.dataset.motionRoute;
+  delete root.dataset.motionOrigin;
+  delete root.dataset.motionDestination;
+  delete root.dataset.motionObject;
+}
+
 export function markViewTransitionRoute(): void {
   if (typeof document === "undefined") return;
   document.documentElement.classList.add("room-enter-vt");
@@ -61,9 +105,11 @@ export function markViewTransitionRoute(): void {
  * Run a navigation (or any DOM update) inside a View Transition when available.
  * Always invokes `update` — never blocks the action.
  */
-export function withViewTransition(update: () => void): void {
+export function withViewTransition(update: () => void, scene: MotionScene = {}): void {
+  markMotionScene(scene);
   if (!canViewTransition()) {
     update();
+    window.setTimeout(clearMotionScene, 80);
     return;
   }
   try {
@@ -71,9 +117,10 @@ export function withViewTransition(update: () => void): void {
     const doc = document as Document & {
       startViewTransition: (cb: () => void) => { finished: Promise<void> };
     };
-    doc.startViewTransition(() => {
+    const transition = doc.startViewTransition(() => {
       update();
     });
+    transition.finished.finally(clearMotionScene);
   } catch {
     update();
   }
