@@ -304,3 +304,37 @@ body:has(.detail-cover-material.artwork-role--promotional) {
 .detail-wrap:has(.artwork-role--logos) .anime-universe-nav__inner{background:color-mix(in srgb,var(--color-bg,#090909) 90%,transparent)}
 .detail-wrap:has(.artwork-role--promotional) .anime-universe-nav button.is-active{box-shadow:inset 0 0 0 1px rgba(240,160,144,.24),0 0 24px rgba(240,160,144,.06)}
 @media(prefers-reduced-motion:reduce){.detail-wrap:has(.artwork-role--background-art) .universe-space:before{transform:none}}
+
+
+/* Artwork selection uses the same Origin -> Travel -> Destination grammar as
+   page navigation. The cover plane releases first; the new material settles
+   after the atmosphere begins moving. */
+.detail-cover-material.is-artwork-transitioning {
+  animation: artwork-plane-release .72s cubic-bezier(.16,1,.3,1) both;
+}
+.detail-cover-material.is-artwork-transitioning:before {
+  animation: artwork-atmosphere-follow .86s cubic-bezier(.16,1,.3,1) both;
+}
+.detail-cover-material.is-artwork-transitioning .detail-cover {
+  animation: artwork-image-arrive .68s cubic-bezier(.16,1,.3,1) 90ms both;
+}
+@keyframes artwork-plane-release {
+  0% { transform:translateZ(0) scale(1); filter:brightness(1); }
+  24% { transform:translateZ(0) scale(.985); filter:brightness(.78); }
+  100% { transform:translateZ(0) scale(1); filter:brightness(1); }
+}
+@keyframes artwork-image-arrive {
+  0% { opacity:.18; transform:scale(.975); filter:blur(5px); }
+  45% { opacity:.92; transform:scale(1.008); filter:blur(0); }
+  100% { opacity:1; transform:scale(1); filter:blur(0); }
+}
+@keyframes artwork-atmosphere-follow {
+  0% { opacity:.04; transform:scale(1.025); filter:blur(62px) saturate(.6); }
+  48% { opacity:.2; transform:scale(1.075); filter:blur(38px) saturate(.9); }
+  100% { opacity:var(--detail-atmosphere-opacity,.18); transform:scale(var(--detail-atmosphere-scale,1.04)); filter:blur(var(--detail-atmosphere-blur,52px)) saturate(.82); }
+}
+@media(prefers-reduced-motion:reduce){
+  .detail-cover-material.is-artwork-transitioning,
+  .detail-cover-material.is-artwork-transitioning:before,
+  .detail-cover-material.is-artwork-transitioning .detail-cover{animation:none}
+}
