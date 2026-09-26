@@ -13,6 +13,7 @@ type HomePersonalization = {
   hasTaste: boolean;
   currentSeason: Anime[];
   upcoming: Anime[];
+  previousSeason: Anime[];
   archive: Anime[];
 };
 
@@ -84,12 +85,10 @@ export function HomePersonalizationProvider({ children, initial }: { children: R
   const items = unique(ranked.length ? ranked : pool);
   const now = new Date();
   const currentYear = now.getFullYear();
-  const current = items.filter((a) => {
-    const y = Number(a.seasonYear || a.year);
-    return a.status === "RELEASING" || (y === currentYear && a.status !== "FINISHED");
-  });
-  const upcoming = items.filter((a) => a.status === "NOT_YET_RELEASED" || (Number(a.seasonYear || a.year) > currentYear));
-  const used = new Set([...current, ...upcoming].map((a) => a.id));
+  const current = items.filter((a) => Number(a.seasonYear || a.year) === currentYear || (a.status === "RELEASING" && Number(a.year) === currentYear));
+  const previousSeason = items.filter((a) => Number(a.seasonYear || a.year) === currentYear - 1);
+  const upcoming = items.filter((a) => a.status === "NOT_YET_RELEASED" || Number(a.seasonYear || a.year) > currentYear);
+  const used = new Set([...current, ...previousSeason, ...upcoming].map((a) => a.id));
   const archive = items.filter((a) => !used.has(a.id));
 
   return (
@@ -100,6 +99,7 @@ export function HomePersonalizationProvider({ children, initial }: { children: R
       hasTaste: entries.length > 0,
       currentSeason: unique(current),
       upcoming: unique(upcoming),
+      previousSeason: unique(previousSeason),
       archive: unique(archive),
     }}>
       {children}
