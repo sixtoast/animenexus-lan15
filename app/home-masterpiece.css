@@ -373,3 +373,50 @@
 @media(prefers-reduced-motion:reduce){
   .nexus-home:after{display:none}
 }
+
+
+/* MOBILE HERO FIX — keep the featured signal in normal flow.
+   cinema-ui.css originally positioned this card absolutely on small screens,
+   which caused the artwork to sit on top of the headline. */
+@media (max-width:700px){
+  .nexus-opening-inner{
+    min-height:0!important;
+    padding-top:88px!important;
+    padding-bottom:52px!important;
+  }
+  .nexus-opening-copy{
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+    padding:58px 0 0!important;
+  }
+  .nexus-opening-copy h1{
+    font-size:clamp(4rem,17vw,6.4rem)!important;
+    line-height:.76!important;
+    max-width:8ch!important;
+  }
+  .nexus-opening-subject{
+    position:relative!important;
+    inset:auto!important;
+    width:min(58vw,240px)!important;
+    max-height:none!important;
+    margin:34px 0 0 auto!important;
+    align-self:flex-end!important;
+    transform:rotate(2deg)!important;
+  }
+  .nexus-opening-subject-image{
+    max-height:none!important;
+    width:100%!important;
+  }
+  .nexus-opening-subject-info{
+    max-width:100%!important;
+    padding-left:12px!important;
+  }
+  .nexus-opening-subject-info strong{
+    font-size:clamp(1.1rem,5vw,1.5rem)!important;
+  }
+  .nexus-opening-signal{
+    width:100%!important;
+    margin-top:30px!important;
+  }
+}
