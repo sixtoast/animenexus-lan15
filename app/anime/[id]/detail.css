@@ -221,3 +221,74 @@ a.anime-card{text-decoration:none;color:inherit}
 .detail-cover-material.artwork-role--logos:before{opacity:.1;filter:blur(14px) brightness(.8)}
 .detail-cover-material.artwork-role--promotional:before{opacity:.26;transform:scale(1.035)}
 @media(prefers-reduced-motion:reduce){.detail-cover-material,.detail-cover-material:before,.detail-cover-material:after{transition:none}}
+
+
+/* Cinematic artwork environment.
+   The selected artwork role now changes the material around the whole hero,
+   while keeping the actual artwork and existing page palette intact. */
+body:has(.detail-cover-material.artwork-role--key-art),
+body:has(.detail-cover-material.artwork-role--alternate-art),
+body:has(.detail-cover-material.artwork-role--character-art),
+body:has(.detail-cover-material.artwork-role--background-art),
+body:has(.detail-cover-material.artwork-role--stills),
+body:has(.detail-cover-material.artwork-role--logos),
+body:has(.detail-cover-material.artwork-role--promotional) {
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(255,255,255,.045), transparent 52%),
+    var(--background, #080808);
+  transition: background .8s ease;
+}
+
+body:has(.detail-cover-material.artwork-role--alternate-art) {
+  background:
+    radial-gradient(ellipse at 25% 20%, rgba(255,255,255,.055), transparent 46%),
+    var(--background, #080808);
+}
+body:has(.detail-cover-material.artwork-role--character-art) {
+  background:
+    radial-gradient(ellipse at 50% 12%, rgba(255,255,255,.04), transparent 42%),
+    var(--background, #080808);
+}
+body:has(.detail-cover-material.artwork-role--background-art) {
+  background:
+    radial-gradient(ellipse at 50% 8%, rgba(255,255,255,.075), transparent 62%),
+    var(--background, #080808);
+}
+body:has(.detail-cover-material.artwork-role--stills) {
+  background:
+    radial-gradient(ellipse at 70% 24%, rgba(255,255,255,.032), transparent 48%),
+    var(--background, #080808);
+}
+body:has(.detail-cover-material.artwork-role--logos) {
+  background:
+    radial-gradient(ellipse at 50% 22%, rgba(255,255,255,.018), transparent 38%),
+    var(--background, #080808);
+}
+body:has(.detail-cover-material.artwork-role--promotional) {
+  background:
+    radial-gradient(ellipse at 34% 16%, rgba(255,255,255,.06), transparent 50%),
+    var(--background, #080808);
+}
+
+.detail-cover-material.artwork-role--background-art {
+  transform:translateY(-2px) scale(1.008);
+}
+.detail-cover-material.artwork-role--character-art {
+  transform:translateY(-1px);
+}
+.detail-cover-material.artwork-role--stills {
+  filter:saturate(.94) contrast(1.015);
+}
+.detail-cover-material.artwork-role--logos {
+  filter:saturate(.86) contrast(1.04);
+}
+.detail-cover-material.artwork-role--promotional {
+  transform:translateY(-1px) scale(1.004);
+}
+
+@media (prefers-reduced-motion:reduce) {
+  body:has(.detail-cover-material),
+  .detail-cover-material {
+    transition:none;
+  }
+}
