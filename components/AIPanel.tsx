@@ -19,13 +19,22 @@ import { useWatchlist } from "@/components/WatchlistProvider";
 import { useToast } from "@/components/ToastProvider";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { emitNexusSignal } from "@/lib/nexus-intelligence";
 
 type Msg = { role: "user" | "assistant" | "system"; content: string };
 
 const QUICK = [
-  "What should I watch tonight from a chill mood?",
-  "Explain my taste in one paragraph.",
-  "Give me a 3-title underwatched shortlist.",
+  "Tune Discovery to my mood",
+  "Find the next title for me",
+  "Explore this anime universe",
+];
+
+const INTELLIGENCE = [
+  { label: "DISCOVER", target: "discovery" as const },
+  { label: "RECOMMEND", target: "recommendations" as const },
+  { label: "MOOD", target: "mood" as const },
+  { label: "WATCH ORDER", target: "watch-order" as const },
+  { label: "FRANCHISE", target: "franchise" as const },
 ];
 
 export function AIPanel() {
@@ -283,6 +292,18 @@ export function AIPanel() {
         panelClassName="ai-panel-modal"
       >
         <div className="ai-panel-inner">
+          <div className="ai-intelligence-banner">
+            <span className="ai-intelligence-kicker">NEXUS INTELLIGENCE</span>
+            <strong>Operate the field.</strong>
+            <p>Lantern can steer discovery, taste, watch order and your constellation instead of only answering questions.</p>
+            <div className="ai-intelligence-actions">
+              {INTELLIGENCE.map((item) => (
+                <button key={item.target} type="button" onClick={() => emitNexusSignal({ type: "focus", target: item.target })}>
+                  {item.label}<span>↗</span>
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="ai-intelligence-header">
             <div>
               <span className="ai-intelligence-kicker">NEXUS INTELLIGENCE</span>
