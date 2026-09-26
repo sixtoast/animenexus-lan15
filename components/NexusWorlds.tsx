@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { Anime } from "@/lib/types";
 import { useHomePersonalizedPool } from "@/lib/use-home-personalized-pool";
@@ -33,6 +34,7 @@ function sharedDNA(current: Anime, other: Anime) {
 
 
 export function NexusWorlds({ candidates }: Props) {
+  const router = useRouter();
   const { pool, surprise, ready, entries } = useHomePersonalizedPool(candidates, 140);
   const initialFieldState = typeof window !== "undefined" ? readNexusFieldState() : null;
   const [fieldMode, setFieldMode] = useState<NexusFieldMode>(
@@ -462,11 +464,23 @@ export function NexusWorlds({ candidates }: Props) {
             onFocus={() => { setActive(index); setArmed(index); fieldRef.current?.setAttribute("data-lock-target", String(index)); }}
             onBlur={() => { setArmed(null); fieldRef.current?.setAttribute("data-lock-target", "-1"); }}
             onClick={(event) => {
+              if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
               if (armed !== index) {
                 event.preventDefault();
                 setArmed(index);
                 setActive(index);
+                return;
               }
+              event.preventDefault();
+              withViewTransition(
+                () => router.push("/anime/" + anime.id),
+                {
+                  route: "anime-detail",
+                  origin: "node",
+                  destination: "hero",
+                  objectId: getAnimeObjectId(anime.id),
+                },
+              );
             }}
             aria-label={"Explore " + anime.title}
           >
