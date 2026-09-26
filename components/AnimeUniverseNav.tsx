@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { claimNexusCommand, onNexusSignal } from "@/lib/nexus-intelligence";
 
 export const UNIVERSE_SPACES = ["story","identity","characters","creators","artwork","soundtrack","franchise","watch","personal"] as const;
@@ -56,12 +56,12 @@ export function AnimeUniverseNav() {
     };
   }, []);
 
-  const jump = (id: string) => {
+  const jump = useCallback((id: string) => {
     const target = document.getElementById(id);
     if (!target) return;
     setActive(id);
     target.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  }, []);
 
   useEffect(() => {
     return onNexusSignal((signal) => {
@@ -78,7 +78,7 @@ export function AnimeUniverseNav() {
               : null;
       if (target) jump(target);
     });
-  }, []);
+  }, [jump]);
 
   return (
     <nav className="anime-universe-nav" aria-label="Anime universe">
