@@ -71,8 +71,8 @@ export function NexusWorlds({ candidates }: Props) {
     // One shared orbital system. Every card gets the same ellipse and angular
     // velocity, with only its phase offset changing. This keeps the formation
     // visually unified instead of giving each card its own orbit.
-    const radiusX = Math.min(fieldRect.width * (mobile ? 0.34 : 0.34), mobile ? 150 : 430);
-    const radiusY = Math.min(fieldRect.height * (mobile ? 0.28 : 0.30), mobile ? 165 : 245);
+    const radiusX = Math.min(fieldRect.width * (mobile ? 0.25 : 0.34), mobile ? 110 : 430);
+    const radiusY = Math.min(fieldRect.height * (mobile ? 0.24 : 0.30), mobile ? 145 : 245);
     const orbitDuration = mobile ? 30000 : 36000;
 
     nodes.forEach((node, index) => {
