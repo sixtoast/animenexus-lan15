@@ -18,6 +18,7 @@ import { resolveMangaSourcesFromRelations } from "@/lib/manga-adapter";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
 import { AnimeImage } from "@/components/AnimeImage";
 import { DetailCoverMaterial } from "@/components/DetailCoverMaterial";
+import { AnimeUniverseNav } from "@/components/AnimeUniverseNav";
 import { BingeCalculator } from "@/components/BingeCalculator";
 import { AnimeNotes } from "@/components/AnimeNotes";
 import { DetailAI } from "@/components/DetailAI";
@@ -265,27 +266,33 @@ export default async function AnimeDetailPage({ params }: Props) {
           </div>
         </div>
 
-        <section className="detail-section">
+        <AnimeUniverseNav />
+
+        <section className="detail-section universe-space" id="story">
+          <span className="universe-space__eyebrow">01 · STORY</span>
           <h2>Synopsis</h2>
           <p className="detail-synopsis">
             {anime.description || "No description available."}
           </p>
         </section>
 
-        <YourMatchPanel anime={anime} />
-
-        <ViewingContextPanel context={viewingContext} />
+        <div id="identity" className="universe-space universe-space--cluster">
+          <YourMatchPanel anime={anime} />
+          <ViewingContextPanel context={viewingContext} />
+          <DeepSignalsPanel
+            genres={anime.tags || []}
+            deepTags={deep?.tags || []}
+            sourceNote={deep?.tags?.length ? "AniDB" : undefined}
+          />
+        </div>
 
         <MangaSourcePanel links={mangaSources} />
 
-        <WhereToWatch animeId={anime.id} title={anime.title} />
+        <div id="watch" className="universe-space universe-space--watch">
+          <WhereToWatch animeId={anime.id} title={anime.title} />
+        </div>
 
-        <DeepSignalsPanel
-          genres={anime.tags || []}
-          deepTags={deep?.tags || []}
-          sourceNote={deep?.tags?.length ? "AniDB" : undefined}
-        />
-
+        <div id="creators" className="universe-space universe-space--cluster">
         <DetailDeferred
           title="Creative DNA"
           note="Staff, production roles — expand when you want depth."
@@ -294,8 +301,10 @@ export default async function AnimeDetailPage({ params }: Props) {
         </DetailDeferred>
 
         <CreativeConnectionsPanel dna={dnaSlots} currentId={anime.id} />
+        </div>
 
         {galleryAssets.length ? (
+          <div id="artwork" className="universe-space universe-space--cluster">
           <DetailDeferred
             title="Artwork gallery"
             note="Alternate covers, key visuals, worlds, character art & stills — expand on demand."
@@ -306,6 +315,7 @@ export default async function AnimeDetailPage({ params }: Props) {
               sourceNote="AniList · Kitsu · Jikan · Shikimori · Fanart.tv (when available)"
             />
           </DetailDeferred>
+          </div>
         ) : null}
 
         {external.length > 0 ? (
@@ -330,6 +340,7 @@ export default async function AnimeDetailPage({ params }: Props) {
           </section>
         ) : null}
 
+        <div id="characters" className="universe-space universe-space--cluster">
         <EpisodeList
           episodes={jikan.episodes}
           sourceNote={
@@ -339,6 +350,9 @@ export default async function AnimeDetailPage({ params }: Props) {
           }
         />
 
+        </div>
+
+        <div id="franchise" className="universe-space universe-space--cluster">
         <DetailRelatedClient
           relations={relations}
           centerTitle={anime.title}
@@ -375,6 +389,7 @@ export default async function AnimeDetailPage({ params }: Props) {
           />
         ) : null}
 
+        <div id="personal" className="universe-space universe-space--cluster">
         <div className="detail-split">
           <BingeCalculator
             episodes={epNum}
@@ -392,9 +407,10 @@ export default async function AnimeDetailPage({ params }: Props) {
         />
 
         <DeskNoteEditor animeId={anime.id} title={anime.title} />
+        </div>
 
         {hasThemes ? (
-          <section className="detail-section">
+          <section id="soundtrack" className="detail-section universe-space">
             <h2>Themes (OP / ED / IN)</h2>
             <p className="tools-hint" style={{ marginBottom: 10 }}>
               Sources: {themes!.sourceNote}. Links open external sites.
