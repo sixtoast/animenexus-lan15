@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { playCue, unlockSound } from "@/lib/sound-engine";
+import { playCue, playInteractionSound, unlockSound } from "@/lib/sound-engine";
 
 /**
  * Delegated UI taps across buttons, dock, chips, mood controls.
@@ -64,15 +64,15 @@ export function SoftBtnSounds() {
         if (custom) {
           playCue(custom as Parameters<typeof playCue>[0]);
         } else if (isNav) {
-          playCue("nav_tick");
+          playInteractionSound("navigation");
         } else if (
           hit.classList.contains("filter-chip") ||
           hit.classList.contains("mood-chip") ||
           hit.classList.contains("chip")
         ) {
-          playCue("filter_select");
+          playInteractionSound("selection");
         } else {
-          playCue("ui_tap");
+          playInteractionSound("selection");
         }
       });
     };
