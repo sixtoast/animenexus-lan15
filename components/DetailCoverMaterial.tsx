@@ -31,7 +31,6 @@ export function DetailCoverMaterial({
     const key = `${COVER_KEY_PREFIX}${anime.id}`;
     try {
       const stored = window.localStorage.getItem(key);
-      const storedAsset = stored ? undefined : undefined;
       const role = stored ? "alternate-art" : "key-art";
       setCover(stored || anime.image);
       setArtworkRole(role);
