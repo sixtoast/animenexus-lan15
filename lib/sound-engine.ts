@@ -144,6 +144,8 @@ export async function preloadCues(ids: SoundCueId[]): Promise<void> {
 export type PlayOptions = {
   force?: boolean;
   gain?: number;
+  pan?: number;
+  playbackRate?: number;
 };
 
 function reducedAudio(): boolean {
@@ -211,11 +213,21 @@ export function playCue(id: SoundCueId, opts: PlayOptions = {}): void {
         : 1;
     g.gain.value = level * jitter;
     src.connect(g);
-    g.connect(cat);
+    if (opts.pan !== undefined && ctx) {
+      const panner = ctx.createStereoPanner();
+      panner.pan.setTargetAtTime(Math.max(-1, Math.min(1, opts.pan)), ctx.currentTime, 0.015);
+      g.connect(panner);
+      panner.connect(cat);
+    } else {
+      g.connect(cat);
+    }
     activeVoices += 1;
     src.onended = () => {
       activeVoices = Math.max(0, activeVoices - 1);
     };
+    if (opts.playbackRate !== undefined) {
+      src.playbackRate.value = Math.max(0.86, Math.min(1.14, opts.playbackRate));
+    }
     try {
       src.start();
     } catch {
