@@ -78,6 +78,9 @@ export const PRELOAD_CUES: SoundCueId[] = [
   "error",
   "menu_open",
   "menu_close",
+  "resonance",
+  "signal_acquired",
+  "shelf_settle",
 ];
 
 export const SOUND_PREF_KEY = "anime_nexus_sound";
