@@ -191,6 +191,8 @@ export function NexusWorlds({ candidates }: Props) {
       pointerRef.current.active = false;
       field.style.setProperty("--world-pointer-x", "0");
       field.style.setProperty("--world-pointer-y", "0");
+      field.style.setProperty("--world-x", "0px");
+      field.style.setProperty("--world-y", "0px");
       setActive(null);
       setArmed(null);
     };
