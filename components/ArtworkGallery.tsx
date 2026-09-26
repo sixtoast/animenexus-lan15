@@ -5,7 +5,7 @@ import type { ArtworkAsset } from "@/lib/deep-metadata";
 
 type Props = {
   assets: ArtworkAsset[];
-  /** Supplemental artwork never replaces the canonical catalog cover. */
+  animeId: number;
   sourceNote?: string;
 };
 
@@ -33,9 +33,42 @@ function sortAssets(items: ArtworkAsset[]) {
   });
 }
 
-export function ArtworkGallery({ assets, sourceNote }: Props) {
+const COVER_KEY_PREFIX = "animenexus:artwork-cover:";
+const COVER_EVENT = "animenexus:artwork-selected";
+
+export function ArtworkGallery({ assets, animeId, sourceNote }: Props) {
   const [open, setOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [selectedCover, setSelectedCover] = useState<string | null>(null);
+
+  const coverKey = `${COVER_KEY_PREFIX}${animeId}`;
+
+  function chooseCover(url: string) {
+    try {
+      window.localStorage.setItem(coverKey, url);
+      setSelectedCover(url);
+      window.dispatchEvent(new CustomEvent(COVER_EVENT, { detail: { animeId, url } }));
+    } catch {
+      // Storage can be unavailable in privacy-restricted browsers.
+    }
+  }
+
+  function clearCover() {
+    try {
+      window.localStorage.removeItem(coverKey);
+      setSelectedCover(null);
+      window.dispatchEvent(new CustomEvent(COVER_EVENT, { detail: { animeId, url: null } }));
+    } catch {
+      // Storage can be unavailable in privacy-restricted browsers.
+    }
+  }
+
+  useState(() => {
+    if (typeof window !== "undefined") {
+      setSelectedCover(window.localStorage.getItem(coverKey));
+    }
+    return undefined;
+  });
 
   const groups = useMemo(
     () => GROUPS.map((group) => ({
@@ -56,7 +89,7 @@ export function ArtworkGallery({ assets, sourceNote }: Props) {
         <div>
           <h2 id="artwork-heading">Supplemental artwork</h2>
           <p className="tools-hint artwork-gallery__intro">
-            Alternate artwork is organised by purpose. The AniList catalog cover remains the primary image and is not replaced by this gallery.
+            Alternate artwork is organised by purpose. Choose any alternate cover or poster to make it your personal cover on this device.
             {sourceNote ? ` · Source: ${sourceNote}` : ""}
           </p>
         </div>
@@ -67,6 +100,12 @@ export function ArtworkGallery({ assets, sourceNote }: Props) {
 
       {open ? (
         <div id="artwork-gallery-content" className="artwork-gallery__content">
+          {selectedCover ? (
+            <div className="artwork-gallery__selection">
+              <span>Custom cover selected for this device.</span>
+              <button type="button" className="btn btn-outline btn-sm" onClick={clearCover}>Restore catalog cover</button>
+            </div>
+          ) : null}
           <div className="artwork-gallery__index" aria-label="Artwork categories">
             {groups.map((group) => (
               <button key={group.id} type="button" className="artwork-gallery__index-item" onClick={() => setOpenGroups((current) => ({ ...current, [group.id]: true }))}>
@@ -87,7 +126,7 @@ export function ArtworkGallery({ assets, sourceNote }: Props) {
                     </span>
                     <span className="artwork-gallery__count">{group.items.length}<span aria-hidden="true">{expanded ? "−" : "+"}</span></span>
                   </button>
-                  {expanded ? <ArtworkGrid items={group.items} /> : null}
+                  {expanded ? <ArtworkGrid items={group.items} selectedCover={selectedCover} onChooseCover={chooseCover} /> : null}
                 </section>
               );
             })}
@@ -104,7 +143,15 @@ export function ArtworkGallery({ assets, sourceNote }: Props) {
   );
 }
 
-function ArtworkGrid({ items }: { items: ArtworkAsset[] }) {
+function ArtworkGrid({
+  items,
+  selectedCover,
+  onChooseCover,
+}: {
+  items: ArtworkAsset[];
+  selectedCover: string | null;
+  onChooseCover: (url: string) => void;
+}) {
   return (
     <div className="artwork-gallery__grid">
       {items.map((asset, index) => {
@@ -112,8 +159,12 @@ function ArtworkGrid({ items }: { items: ArtworkAsset[] }) {
         const label = asset.language || asset.type;
         const dimensions = asset.width && asset.height ? `${asset.width} × ${asset.height}` : null;
 
+        const canSelect = asset.type === "alternate" || asset.type === "poster";
+        const isSelected = selectedCover === asset.url;
+
         return (
-          <a key={`${asset.url}-${index}`} href={asset.url} target="_blank" rel="noreferrer" className="artwork-gallery__item" aria-label={`Open artwork, ${label}`}>
+          <div key={`${asset.url}-${index}`} className={`artwork-gallery__item${isSelected ? " is-selected" : ""}`}>
+            <a href={asset.url} target="_blank" rel="noreferrer" className="artwork-gallery__link" aria-label={`Open artwork, ${label}`}>
             <span className="artwork-gallery__media">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={preview} alt="" loading="lazy" />
@@ -123,7 +174,18 @@ function ArtworkGrid({ items }: { items: ArtworkAsset[] }) {
               {asset.likes != null ? <span>♥ {asset.likes}</span> : null}
               {dimensions ? <span>{dimensions}</span> : null}
             </span>
-          </a>
+            </a>
+            {canSelect ? (
+              <button
+                type="button"
+                className="artwork-gallery__choose"
+                onClick={() => onChooseCover(asset.url)}
+                aria-pressed={isSelected}
+              >
+                {isSelected ? "✓ Using as cover" : "Use as cover"}
+              </button>
+            ) : null}
+          </div>
         );
       })}
     </div>
