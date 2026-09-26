@@ -334,6 +334,37 @@ export function NexusWorlds({ candidates }: Props) {
     };
   }, [entered, worlds.length]);
 
+  useEffect(() => {
+    const field = fieldRef.current;
+    if (!field) return;
+
+    let raf = 0;
+    const updateWorldProgress = () => {
+      const rect = field.getBoundingClientRect();
+      const viewport = window.innerHeight || 1;
+      const progress = Math.max(0, Math.min(1, (viewport - rect.top) / (viewport + rect.height)));
+      const edge = 1 - Math.min(1, Math.abs(progress - 0.5) * 2);
+      field.style.setProperty("--world-scroll", progress.toFixed(3));
+      field.style.setProperty("--world-scroll-edge", edge.toFixed(3));
+    };
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        updateWorldProgress();
+      });
+    };
+
+    updateWorldProgress();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, []);
+
   if (!worlds.length) return null;
 
   const activeAnime = active === null ? null : worlds[active];
