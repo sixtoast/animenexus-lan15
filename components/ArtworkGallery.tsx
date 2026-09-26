@@ -25,7 +25,7 @@ export function ArtworkGallery({ assets, sourceNote }: Props) {
     <section className="detail-section" aria-labelledby="artwork-heading">
       <h2 id="artwork-heading">Supplemental artwork</h2>
       <p className="tools-hint" style={{ marginBottom: 10 }}>
-        Fan community art — does not replace the catalog cover.
+        Curated artwork from multiple anime-native sources. The canonical catalog cover remains primary.
         {sourceNote ? ` · ${sourceNote}` : ""}
       </p>
       <button
@@ -41,7 +41,7 @@ export function ArtworkGallery({ assets, sourceNote }: Props) {
           <Group label="Posters" items={posters} />
           <Group label="Backgrounds" items={backgrounds} />
           <Group label="Logos" items={logos} />
-          <Group label="Other" items={rest} />
+          <Group label="Alternate artwork" items={alternates} />\n          <Group label="Stills" items={stills} />\n          <Group label="Other" items={rest} />
         </div>
       ) : null}
     </section>
