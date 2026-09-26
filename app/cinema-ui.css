@@ -1473,3 +1473,30 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
     transform-style:flat!important;
   }
 }
+
+
+.nexus-world-map{
+  --world-scroll:0;
+  --world-scroll-edge:0;
+  contain:layout paint;
+  transform:translate3d(0,calc((.5 - var(--world-scroll)) * 10px),0);
+  transition:transform .7s cubic-bezier(.2,.72,.18,1);
+}
+.nexus-world-map::before{
+  transform:translate3d(calc(var(--world-pointer-x) * 8px),calc(var(--world-pointer-y) * 6px + (var(--world-scroll) - .5) * 10px),0) scale(calc(1.01 + var(--world-scroll-edge) * .025));
+}
+.nexus-world-map::after{
+  opacity:calc(.72 + var(--world-scroll-edge) * .28);
+  transform:translate(-50%,-50%) translate3d(calc(var(--world-pointer-x) * -5px),calc(var(--world-pointer-y) * -4px + (var(--world-scroll) - .5) * -8px),0) scale(calc(.96 + var(--world-scroll-edge) * .08));
+}
+.nexus-world-map.is-dragging{transition:none}
+.nexus-world-map.is-dragging .nexus-world-node-art{
+  box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 52px rgba(242,179,95,.12);
+}
+.nexus-world-map .nexus-world-node{transition:opacity .3s ease,filter .45s ease}
+@media(max-width:700px){
+  .nexus-world-map{transform:translate3d(0,calc((.5 - var(--world-scroll)) * 5px),0)}
+}
+@media(prefers-reduced-motion:reduce){
+  .nexus-world-map{transform:none!important;transition:none!important}
+}
