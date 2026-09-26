@@ -1104,10 +1104,10 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
 .nexus-world-map.is-entered .nexus-world-node-motion{
   display:flex;
   flex-direction:column;
-  transform:translate3d(var(--line-dx,0px),var(--line-dy,0px),0);
-  opacity:0;
+  transform:translate3d(0,0,0);
+  opacity:1;
   will-change:transform,opacity,filter;
-  animation:nexus-world-v6-entry 2.55s cubic-bezier(.16,.78,.16,1) var(--entry-delay,0ms) both;
+  animation:none!important;
 }
 .nexus-world-node-orbit-motion{display:contents;}
 @keyframes nexus-world-v6-entry{
@@ -1176,3 +1176,27 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
 }
 .nexus-world-map.is-entered .nexus-world-node-motion{animation-name:nexus-world-v6-entry!important}
 @media(prefers-reduced-motion:reduce){.nexus-world-node-orbit-motion{transform:none!important}}
+
+/* Discovery Field V8 — JS owns the physical transform. Do not let legacy
+   hover/entry animations compete with the orbit layer. */
+.nexus-world-map.is-entered .nexus-world-node-motion,
+.nexus-world-map.is-entered .nexus-world-node-motion:hover{
+  animation:none!important;
+}
+.nexus-world-map.is-entered .nexus-world-node{
+  transition:opacity .25s ease, filter .25s ease!important;
+}
+.nexus-world-map.is-entered .nexus-world-node.is-active{
+  transform:none!important;
+}
+.nexus-world-map.is-entered .nexus-world-node--7,
+.nexus-world-map.is-entered .nexus-world-node--7.is-active{
+  transform:translateX(-50%)!important;
+}
+.nexus-world-node-orbit-motion{
+  display:flex!important;
+  flex-direction:column!important;
+  width:max-content!important;
+  transform-origin:50% 50%!important;
+  will-change:transform!important;
+}
