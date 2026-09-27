@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { claimNexusCommand, onNexusSignal } from "@/lib/nexus-intelligence";
 
 export const UNIVERSE_SPACES = ["story","identity","characters","creators","artwork","soundtrack","franchise","watch","personal"] as const;
+type UniverseSpace = (typeof UNIVERSE_SPACES)[number];
 
 const labels: Record<string,string> = {
   story:"Story", identity:"Identity", characters:"Characters", creators:"Creators",
@@ -11,7 +12,7 @@ const labels: Record<string,string> = {
 };
 
 export function AnimeUniverseNav() {
-  const [active, setActive] = useState<string>(UNIVERSE_SPACES[0]);
+  const [active, setActive] = useState<UniverseSpace>(UNIVERSE_SPACES[0]);
   const [progress, setProgress] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
 
@@ -38,7 +39,7 @@ export function AnimeUniverseNav() {
         .filter((entry) => entry.isIntersecting)
         .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
       if (!visible) return;
-      setActive(visible.target.id);
+      setActive(visible.target.id as UniverseSpace);
       const button = trackRef.current?.querySelector<HTMLButtonElement>(
         `button[data-space="${visible.target.id}"]`,
       );
@@ -56,7 +57,7 @@ export function AnimeUniverseNav() {
     };
   }, []);
 
-  const jump = useCallback((id: string) => {
+  const jump = useCallback((id: UniverseSpace) => {
     const target = document.getElementById(id);
     if (!target) return;
     setActive(id);
@@ -68,7 +69,7 @@ export function AnimeUniverseNav() {
       if (signal.source !== "ai" || !claimNexusCommand(signal.id, "universe-nav") || signal.type !== "focus") {
         return;
       }
-      const target =
+      const target: UniverseSpace | null =
         signal.target === "artwork"
           ? "artwork"
           : signal.target === "franchise"
