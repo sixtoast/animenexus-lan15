@@ -627,3 +627,108 @@
     animation:none;
   }
 }
+
+/* Directional watch-order rail: make before/after legible without relying on relation labels. */
+.franchise-path__route {
+  margin: 0 0 10px;
+  padding: 10px;
+  border: 1px solid rgba(240,160,144,.11);
+  border-radius: 12px;
+  background: rgba(255,255,255,.018);
+}
+.franchise-path__route-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.franchise-path__route-head span {
+  color: var(--color-accent);
+  font-size: .54rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+.franchise-path__route-head small {
+  color: var(--color-text-muted);
+  font-size: .58rem;
+}
+.franchise-path__route-track {
+  display: flex;
+  align-items: stretch;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 2px 1px 4px;
+  scrollbar-width: thin;
+}
+.franchise-path__route-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+}
+.franchise-path__route-step > i {
+  color: var(--color-accent);
+  font-style: normal;
+  opacity: .7;
+}
+.franchise-path__route-card {
+  min-width: 126px;
+  max-width: 170px;
+  padding: 8px 9px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 9px;
+  background: rgba(0,0,0,.18);
+}
+.franchise-path__route-card b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  margin-bottom: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.07);
+  color: var(--color-text-muted);
+  font-size: .5rem;
+}
+.franchise-path__route-card strong,
+.franchise-path__route-card small {
+  display: block;
+}
+.franchise-path__route-card strong {
+  font-size: .63rem;
+  line-height: 1.15;
+}
+.franchise-path__route-card small {
+  margin-top: 4px;
+  color: var(--color-text-muted);
+  font-size: .48rem;
+  letter-spacing: .05em;
+}
+.franchise-path__route-card.is-current {
+  border-color: rgba(240,160,144,.35);
+  background: rgba(240,160,144,.065);
+  box-shadow: inset 0 0 0 1px rgba(240,160,144,.05), 0 0 20px rgba(240,160,144,.05);
+}
+.franchise-path__route-card.is-current b {
+  background: var(--color-accent);
+  color: #17100e;
+}
+.franchise-path__edges marker path {
+  fill: var(--color-accent);
+}
+@media (max-width: 700px) {
+  .franchise-path__route {
+    padding: 8px;
+  }
+  .franchise-path__route-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .franchise-path__route-card {
+    min-width: 112px;
+    max-width: 145px;
+  }
+}
