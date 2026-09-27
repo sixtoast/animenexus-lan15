@@ -289,10 +289,10 @@ export function resolveFranchiseGraph(opts: {
   const easterEggNodes = all.filter((n) => n.id != null && map.get(n.id!)?.layer === "easter_egg");
   const release = [...storyNodes].sort(byRelease);
   const mainIds = new Set<number>([center.id!]);
-  const queue = [center.id!];
+  const mainQueue = [center.id!];
 
-  while (queue.length) {
-    const current = queue.shift()!;
+  while (mainQueue.length) {
+    const current = mainQueue.shift()!;
     for (const e of official) {
       if (e.from !== current && e.to !== current) continue;
       const type = normalizeRelationType(e.label || "OTHER");
