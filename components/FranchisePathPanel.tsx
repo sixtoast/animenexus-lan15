@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { AnimeRelation, GraphEdge, GraphNode } from "@/lib/types";
 import { mergeRelations } from "@/lib/relation-merge";
+import { getAnimeObjectId, withViewTransition } from "@/lib/view-transition";
+import { playInteractionSound, playSpatialTravel } from "@/lib/sound-engine";
 import {
   resolveFranchise,
   franchiseSummaryLine,
@@ -268,10 +270,24 @@ export function FranchisePathPanel({
 
   const focusClass = selected ? " has-focus" : "";
 
-  const selectNode = (node: LayoutNode) => {
+  const selectNode = (node: LayoutNode, event?: React.MouseEvent<HTMLButtonElement>) => {
     if (node.id == null || node.id === centerId) return;
     setSelectedId(node.id);
-    window.setTimeout(() => router.push(`/anime/${node.id}`), 360);
+    const rect = event?.currentTarget.getBoundingClientRect();
+    const spatialX = rect
+      ? ((rect.left + rect.width / 2) / Math.max(window.innerWidth, 1)) * 2 - 1
+      : 0;
+    playInteractionSound("franchise", { gain: 0.72 });
+    playSpatialTravel(spatialX, 0.32);
+    withViewTransition(
+      () => router.push(`/anime/${node.id}`),
+      {
+        route: "franchise",
+        origin: "node",
+        destination: "graph",
+        objectId: getAnimeObjectId(node.id),
+      },
+    );
   };
 
   return (
@@ -363,7 +379,7 @@ export function FranchisePathPanel({
                 dim ? "is-dim" : "",
               ].filter(Boolean).join(" ")}
               style={{ "--node-x": `${node.x}%`, "--node-y": `${node.y}%` } as React.CSSProperties}
-              onClick={() => selectNode(node)}
+              onClick={(event) => selectNode(node, event)}
               aria-label={isCenter ? `${node.title}. You are here.` : `Open ${node.title}`}
             >
               <span className="franchise-path__node-orbit" aria-hidden />
