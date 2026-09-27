@@ -344,12 +344,41 @@ export function FranchisePathPanel({
         </p>
       ) : null}
 
+      <div className="franchise-path__route" aria-label={active.label + " route"}>
+        <div className="franchise-path__route-head">
+          <span>HOW TO FOLLOW IT</span>
+          <small>{active.id === "easter_eggs" ? "Connections stay as leaves - they never create new branches." : "Follow the numbered path. Optional branches never become new roots."}</small>
+        </div>
+        <div className="franchise-path__route-track">
+          {active.nodes.map((node, index) => {
+            const isCenter = node.id === centerId;
+            const centerIndex = active.nodes.findIndex((item) => item.id === centerId);
+            const phase = isCenter ? "YOU ARE HERE" : index < centerIndex ? "BEFORE" : "AFTER";
+            return (
+              <span className="franchise-path__route-step" key={nodeKey(node)}>
+                <span className={"franchise-path__route-card" + (isCenter ? " is-current" : "")}>
+                  <b>{isCenter ? "NOW" : index + 1}</b>
+                  <strong>{node.title}</strong>
+                  <small>{isCenter ? phase : phase + " - " + relationLabel(node)}</small>
+                </span>
+                {index < active.nodes.length - 1 ? <i aria-hidden>→</i> : null}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="franchise-path__viewport" role="application" aria-label="Interactive franchise map">
         <div className="franchise-path__grid" aria-hidden />
         <div className="franchise-path__halo franchise-path__halo--outer" aria-hidden />
         <div className="franchise-path__halo franchise-path__halo--inner" aria-hidden />
 
         <svg className="franchise-path__edges" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+          <defs>
+            <marker id="franchise-arrow-main" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" />
+            </marker>
+          </defs>
           {edges.map((edge, index) => {
             const from = nodeMap.get(edge.from);
             const to = nodeMap.get(edge.to);
@@ -365,6 +394,7 @@ export function FranchisePathPanel({
                 x2={to.x}
                 y2={to.y}
                 className={`is-${kind}${dim ? " is-dim" : ""}${activeEdge ? " is-selected" : ""}`}
+                markerEnd={kind === "main" ? "url(#franchise-arrow-main)" : undefined}
               />
             );
           })}
