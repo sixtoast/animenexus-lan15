@@ -138,6 +138,13 @@ const WATCH_GRAPH_RELATIONS = new Set([
   "SPIN_OFF",
 ]);
 
+// These relations are interesting connections, but they are NOT story edges.
+// They are surfaced as root-level Easter eggs only and are never expanded.
+const EASTER_EGG_RELATIONS = new Set([
+  "CHARACTER",
+  "OTHER",
+]);
+
 function isWatchGraphRelation(value?: string): boolean {
   return WATCH_GRAPH_RELATIONS.has((value || "").toUpperCase());
 }
@@ -499,6 +506,19 @@ export async function fetchAncestryGraph(
       addEdge(rootId, r.id, "official", r.relationType);
     }
   }
+
+  // Surface weak AniList connections as Easter eggs, but deliberately keep
+  // them as leaves. A shared character/OTHER relation must never become the
+  // root of another franchise branch.
+  for (const r of root.relations) {
+    const relationType = (r.relationType || "").toUpperCase();
+    if (!EASTER_EGG_RELATIONS.has(relationType)) continue;
+    if (r.id === rootId) continue;
+    if (addNode({ ...r, relationType }, 0, "easter_egg")) {
+      addEdge(rootId, r.id, "official", relationType);
+    }
+  }
+
   // Expand official relationships first. Recommendations live in a separate
   // layer so a recommended title can never steal an official node's identity.
   // This also lets an official relationship discovered later upgrade a node.
