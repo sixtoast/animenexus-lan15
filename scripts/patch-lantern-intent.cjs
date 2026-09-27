@@ -6,7 +6,7 @@ const file = path.join(process.cwd(), "lib/lantern-agent/tools.ts");
 function main() {
   if (!fs.existsSync(file)) return;
   let t = fs.readFileSync(file, "utf8");
-  if (t.includes("getViewingIntent") && t.includes('forceVersion: "v3"')) {
+  if (t.includes("getViewingIntent") && t.includes("EXPERIENCE_INTENTS")) {
     console.log("[patch-lantern-intent] already wired");
     return;
   }
