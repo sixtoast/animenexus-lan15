@@ -175,38 +175,44 @@ export function NexusWorlds({ candidates }: Props) {
       const lineY = lineupY;
       const maxX = Math.max(28, rect.width / 2 - w / 2 - (mobile ? 5 : 12));
       const maxY = Math.max(42, rect.height / 2 - h / 2 - (mobile ? 14 : 22));
-      return { node, index, baseX, baseY, lineX, lineY, maxX, maxY, phase: (index / nodes.length) * Math.PI * 2 };
+      const motion = node.querySelector<HTMLElement>(".nexus-world-node-motion");
+      const orbit = node.querySelector<HTMLElement>(".nexus-world-node-orbit-motion");
+      return { node, motion, orbit, index, baseX, baseY, lineX, lineY, maxX, maxY, phase: (index / nodes.length) * Math.PI * 2 };
     });
 
     const radiusX = Math.min(...geometry.map(g => g.maxX), rect.width * (mobile ? 0.44 : 0.46));
     const radiusY = Math.min(...geometry.map(g => g.maxY), rect.height * (mobile ? 0.36 : 0.40));
+    const rankDenominator = Math.max(1, nodes.length - 1);
+    const modeTargets = new Map<NexusFieldMode, Array<{ x: number; y: number }>>();
+    const modes: NexusFieldMode[] = ["discovery", "recommendations", "mood", "watchlist", "franchise", "artwork", "watch-order"];
+    for (const mode of modes) {
+      modeTargets.set(mode, nodes.map((_, index) => {
+        const count = Math.max(1, nodes.length);
+        const t = count <= 1 ? 0 : index / (count - 1);
+        const centred = t - 0.5;
+        if (mode === "mood") return { x: centred * 0.22, y: Math.sin(t * Math.PI) * -0.10 };
+        if (mode === "recommendations") return { x: centred * 0.34, y: Math.cos(t * Math.PI * 2) * 0.06 };
+        if (mode === "watchlist") return { x: centred * 0.44, y: Math.sin(t * Math.PI * 2) * 0.16 };
+        if (mode === "franchise") return { x: centred * 0.52, y: Math.sin(t * Math.PI) * 0.22 };
+        if (mode === "artwork") return { x: centred * 0.62, y: Math.cos(t * Math.PI) * 0.26 };
+        if (mode === "watch-order") return { x: centred * 0.76, y: Math.sin(t * Math.PI * 2) * 0.30 };
+        return { x: centred, y: 0 };
+      }));
+    }
     // The canonical pool is already ranked. Read the current order on every
     // frame so an AI re-rank changes orbital proximity without restarting the
     // cinematic entrance or snapping the field back to lineup.
     const getRankWeight = (index: number) => {
-      const currentWorlds = worldsRef.current;
       const currentMode = fieldModeRef.current;
-      const t = currentWorlds.length <= 1 ? 0 : index / (currentWorlds.length - 1);
+      const t = index / rankDenominator;
       return 1 - t * (currentMode === "recommendations" || currentMode === "mood" ? 0.24 : 0.08);
     };
-    const getModeTarget = (index: number, mode: NexusFieldMode) => {
-      const count = Math.max(1, nodes.length);
-      const t = count <= 1 ? 0 : index / (count - 1);
-      const centred = t - 0.5;
-      if (mode === "mood") return { x: centred * 0.22, y: Math.sin(t * Math.PI) * -0.10 };
-      if (mode === "recommendations") return { x: centred * 0.34, y: Math.cos(t * Math.PI * 2) * 0.06 };
-      if (mode === "watchlist") return { x: centred * 0.44, y: Math.sin(t * Math.PI * 2) * 0.16 };
-      if (mode === "franchise") return { x: centred * 0.52, y: Math.sin(t * Math.PI) * 0.22 };
-      if (mode === "artwork") return { x: centred * 0.62, y: Math.cos(t * Math.PI) * 0.26 };
-      if (mode === "watch-order") return { x: centred * 0.76, y: Math.sin(t * Math.PI * 2) * 0.30 };
-      return { x: centred, y: 0 };
-    };
+    const getModeTarget = (index: number, mode: NexusFieldMode) =>
+      modeTargets.get(mode)?.[index] ?? { x: 0, y: 0 };
     const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
     const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
-    geometry.forEach(({ node }) => {
-      const motion = node.querySelector<HTMLElement>(".nexus-world-node-motion");
-      const orbit = node.querySelector<HTMLElement>(".nexus-world-node-orbit-motion");
+    geometry.forEach(({ motion, orbit }) => {
       if (!motion || !orbit) return;
       motion.style.animation = "none";
       motion.style.opacity = "1";
@@ -216,9 +222,8 @@ export function NexusWorlds({ candidates }: Props) {
     });
 
     const onDragMove = (event: PointerEvent) => {
-      const pointerRect = field.getBoundingClientRect();
-      const pointerX = ((event.clientX - pointerRect.left) / pointerRect.width - 0.5) * 2;
-      const pointerY = ((event.clientY - pointerRect.top) / pointerRect.height - 0.5) * 2;
+      const pointerX = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+      const pointerY = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
       pointerRef.current = { x: pointerX, y: pointerY, active: true };
       field.style.setProperty("--world-pointer-x", pointerX.toFixed(3));
       field.style.setProperty("--world-pointer-y", pointerY.toFixed(3));
@@ -289,8 +294,7 @@ export function NexusWorlds({ candidates }: Props) {
       const pointerY = pointer.active ? pointer.y : 0;
       const lockTarget = Number(field.dataset.lockTarget ?? "-1");
 
-      geometry.forEach(({ node, index, baseX, baseY, lineX, lineY, phase }) => {
-        const orbit = node.querySelector<HTMLElement>(".nexus-world-node-orbit-motion");
+      geometry.forEach(({ node, orbit, index, baseX, baseY, lineX, lineY, phase }) => {
         if (!orbit) return;
 
         const local = Math.max(0, elapsed - index * delayStep);
@@ -401,8 +405,7 @@ export function NexusWorlds({ candidates }: Props) {
     };
 
     if (reduceMotion) {
-      geometry.forEach(({ node, baseX, baseY, phase }) => {
-        const orbit = node.querySelector<HTMLElement>(".nexus-world-node-orbit-motion");
+      geometry.forEach(({ baseX, baseY, phase, orbit }) => {
         if (!orbit) return;
         orbit.style.transform =
           `translate3d(${(centreX + Math.cos(phase) * radiusX - baseX).toFixed(2)}px,${(centreY + Math.sin(phase) * radiusY - baseY).toFixed(2)}px,0) scale(1)`;
