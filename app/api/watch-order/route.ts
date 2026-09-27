@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchAncestryGraph } from "@/lib/anilist-detail";
 import { resolveFranchiseGraph } from "@/lib/franchise-resolver";
-import { enrichJikanChronology } from "@/lib/providers/jikan-chronology";
+import { enrichJikanFranchise } from "@/lib/providers/jikan-franchise";
 
 export const dynamic = "force-dynamic";
 
@@ -16,40 +16,52 @@ export async function GET(req: NextRequest) {
       hopRecLimit: 0,
       maxNodes: 80,
     });
-    // Jikan/MAL is secondary evidence for exact airing dates. AniList remains
-    // authoritative for the relationship graph itself.
-    const chronology = await enrichJikanChronology(graph.nodes, 36);
-    const enrichedNodes = graph.nodes.map((node) => {
-      const malId = node.idMal;
-      const evidence = malId ? chronology.get(malId) : undefined;
-      return evidence
-        ? { ...node, airedFrom: evidence.airedFrom, airedTo: evidence.airedTo }
-        : node;
-    });
 
-    const root = enrichedNodes.find((n) => n.id === id);
+    // AniList supplies the franchise graph. Jikan/MAL is independent evidence
+    // for exact airing dates, relation corroboration, and shared-character
+    // evidence on Easter-egg leaves. It never creates recommendation edges.
+    const enriched = await enrichJikanFranchise(graph.nodes, graph.edges, id, 28);
+
+    const root = enriched.nodes.find((n) => n.id === id);
     const center = root
-      ? { id: root.id, title: root.title, year: root.year == null ? undefined : Number(root.year), format: root.format }
+      ? {
+          id: root.id,
+          title: root.title,
+          year: root.year == null ? undefined : Number(root.year),
+          format: root.format,
+          airedFrom: root.airedFrom,
+          airedTo: root.airedTo,
+        }
       : { id, title: "Current title" };
 
     const plan = resolveFranchiseGraph({
       center,
-      nodes: enrichedNodes,
-      edges: graph.edges,
-      sources: ["anilist"],
+      nodes: enriched.nodes,
+      edges: enriched.edges,
+      sources: ["anilist", "jikan"],
     });
 
     return NextResponse.json({
       ...plan,
-      graph: { ...graph, nodes: enrichedNodes },
+      graph: { nodes: enriched.nodes, edges: enriched.edges },
       chronology: {
         provider: "Jikan / MyAnimeList",
-        enrichedNodes: chronology.size,
+        enrichedNodes: enriched.enrichedNodes,
+        corroboratedEdges: enriched.corroboratedEdges,
+      },
+      easterEggs: {
+        provider: "AniList + Jikan / MyAnimeList",
+        characterEvidence: enriched.characterEvidence,
       },
     });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to resolve watch order" },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to resolve watch order",
+      },
       { status: 502 },
     );
   }
