@@ -3,7 +3,7 @@
  * Describes the anime — not the user. Dimensions normalised 0..1.
  */
 
-export const FINGERPRINT_VERSION = "fingerprint_v1";
+export const FINGERPRINT_VERSION = "fingerprint_v2";
 
 export type FingerprintSource =
   | "anilist-tags"
