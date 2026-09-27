@@ -52,6 +52,7 @@ export function normalizeRelationType(raw: string): string {
     "full story": "FULL_STORY",
     other: "OTHER",
     "same setting": "OTHER",
+    "same universe": "SAME_UNIVERSE",
   };
   if (map[t]) return map[t];
   if (t.includes("sequel")) return "SEQUEL";
