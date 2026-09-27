@@ -12,6 +12,8 @@ import {
 import type { AnimePreferenceFingerprint } from "@/lib/intelligence/items/anime-preference-fingerprint";
 import { getBestAvailableFingerprint } from "@/lib/intelligence/items/resolve-fingerprint";
 import { compareFingerprints } from "@/lib/intelligence/semantic-ops/compare";
+import { loadSemanticIndexFromStore } from "./semantic-index-persist";
+import { hydrateCandidateRecords, isStubTitle } from "./hydrate";
 
 export type CandidateIntent = "fusion" | "reverse" | "recommendation";
 
@@ -173,6 +175,17 @@ export async function retrieveAnimeCandidates(
   const sourceCounts: Record<string, number> = {};
   let semanticNeighbourCount = 0;
   let cacheHits = 0;
+
+  // Warm the persistent semantic index before querying it. Without this,
+  // every Vercel cold start behaved like a brand-new browser and Fusion fell
+  // back to the broad discovery pool.
+  if (opts.targetFingerprint || opts.fingerprintA || opts.fingerprintB) {
+    try {
+      await loadSemanticIndexFromStore({ limit: 400, minConfidence: 0.35 });
+    } catch {
+      /* persistence is an optimisation; discovery still works */
+    }
+  }
 
   function ingest(
     list: Anime[],
@@ -363,10 +376,61 @@ export async function retrieveAnimeCandidates(
 
   let candidates = [...byNexusId.values()];
 
-  // Discovery endpoints are deliberately broad, but their provider order is
-  // not the Fusion signal. When a semantic target exists, rank the entire
-  // deduped pool by target similarity before applying the result limit.
   if (opts.targetFingerprint) {
+    // Semantic-index rows only carry fingerprints, so a cold-start neighbour
+    // initially has an "Indexed #id" placeholder. Resolve those records before
+    // they can reach the UI, then canonicalise again to close provider-ID
+    // duplicate gaps (e.g. AniList vs Shikimori representations of one title).
+    try {
+      candidates = await hydrateCandidateRecords(candidates, {
+        allowNetwork: true,
+        limit: candidates.length,
+      });
+    } catch {
+      candidates = candidates.filter((c) => !isStubTitle(c.anime?.title));
+    }
+
+    const canonical = new Map<string, CandidateRecord>();
+    for (const rec of candidates) {
+      const nx = nexusOf(rec.anime);
+      const existing = canonical.get(nx);
+      if (!existing) {
+        canonical.set(nx, { ...rec, nexusId: nx });
+        continue;
+      }
+      existing.sources = [...new Set([...existing.sources, ...rec.sources])];
+      if (
+        rec.semanticSimilarity != null &&
+        (existing.semanticSimilarity == null ||
+          rec.semanticSimilarity > existing.semanticSimilarity)
+      ) {
+        existing.semanticSimilarity = rec.semanticSimilarity;
+      }
+      if (isStubTitle(existing.anime?.title) && !isStubTitle(rec.anime?.title)) {
+        existing.anime = rec.anime;
+      }
+      if (!existing.fingerprint && rec.fingerprint) {
+        existing.fingerprint = rec.fingerprint;
+      }
+    }
+    candidates = [...canonical.values()];
+
+    // Recompute the semantic score from the hydrated title metadata. This is
+    // deliberately done after hydration so a stale/weak index fingerprint
+    // cannot dictate the displayed Fusion score.
+    for (const rec of candidates) {
+      try {
+        const resolved = getBestAvailableFingerprint(rec.anime);
+        rec.fingerprint = resolved.fingerprint;
+        rec.semanticSimilarity = compareFingerprints(
+          opts.targetFingerprint,
+          resolved.fingerprint,
+        ).similarity;
+      } catch {
+        /* retain the retrieval score */
+      }
+    }
+
     candidates.sort(
       (a, b) =>
         (b.semanticSimilarity ?? -1) - (a.semanticSimilarity ?? -1) ||
