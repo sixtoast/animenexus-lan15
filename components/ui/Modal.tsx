@@ -52,7 +52,15 @@ export function Modal({
   const panelRef = useRef<HTMLDivElement>(null);
   const prevFocus = useRef<HTMLElement | null>(null);
   const wasOpen = useRef(false);
+  const wasOpenForFocus = useRef(false);
+  const onCloseRef = useRef(onClose);
   const titleId = useId();
+
+  // Keep the latest close handler without making the focus-trap effect
+  // restart on every parent render. Restarting that effect used to run its
+  // cleanup and restore focus to the original banner trigger while the modal
+  // was still open, which could scroll the page back to the Synopsis section.
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
@@ -76,7 +84,10 @@ export function Modal({
 
   useEffect(() => {
     if (!open) return;
+
     prevFocus.current = document.activeElement as HTMLElement | null;
+    wasOpenForFocus.current = true;
+
     const panel = panelRef.current;
     if (!panel) return;
 
@@ -90,7 +101,7 @@ export function Modal({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== "Tab" || !panelRef.current) return;
@@ -113,10 +124,24 @@ export function Modal({
 
     window.addEventListener("keydown", onKey);
     return () => {
+      // Cleanup also runs when dependencies change. Do not restore focus here:
+      // doing so can steal focus from an open modal and cause browser scroll
+      // restoration to the original banner trigger.
       window.removeEventListener("keydown", onKey);
-      prevFocus.current?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
+
+  useEffect(() => {
+    if (open || !wasOpenForFocus.current) return;
+
+    const target = prevFocus.current;
+    prevFocus.current = null;
+    wasOpenForFocus.current = false;
+
+    // Restore keyboard focus only after an actual close, and never let focus
+    // restoration change the user's current scroll position.
+    target?.focus?.({ preventScroll: true });
+  }, [open]);
 
   if (!open) return null;
 
