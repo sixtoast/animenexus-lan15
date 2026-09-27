@@ -31,7 +31,7 @@ export function AddToWatchlist({ anime }: Props) {
   const { showToast } = useToast();
   const entry = getEntry(anime.id);
   if (!ready) return <Button variant="outline" size="sm" loading disabled>Loading</Button>;
-  if (!entry) return <div className="wl-actions mobile-sticky-cta">
+  if (!entry) return <div className="wl-actions mobile-sticky-cta" data-watchlist-origin="true">
     <Button variant="accent" size="sm" onClick={()=>{const ok=add(anime,"planning");reactToOutcome(ok,"choice");if(ok){signalWatchlistChange("add","planning");showToast("Sealed to your list","🕯️",true)}else showToast(FAIL_MSG,"⚠️")}}>+ Add to watchlist</Button>
     <Button variant="outline" size="sm" onClick={()=>{const ok=add(anime,"watching");reactToOutcome(ok,"success");if(ok){signalWatchlistChange("add","watching");showToast("Now watching","▶",true)}else showToast(FAIL_MSG,"⚠️")}}>Start watching</Button>
   </div>;
