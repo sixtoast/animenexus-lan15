@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { AnimeRelation, GraphNode } from "@/lib/types";
 import { AncestrySpace2D } from "@/components/AncestrySpace2D";
+import { getAnimeObjectId, withViewTransition } from "@/lib/view-transition";
+import { playInteractionSound, playSpatialTravel } from "@/lib/sound-engine";
 
 type Props = {
   centerTitle: string;
@@ -70,13 +74,49 @@ function PosterCard({
   if (current || !href) {
     return <div className={"ab-card" + (current ? " ab-current" : "")}>{body}</div>;
   }
+  return <AncestryLink href={href} title={title} objectId={href.split("/").pop() || ""}>{body}</AncestryLink>;
+}
+
+
+function AncestryLink({
+  href,
+  title,
+  objectId,
+  children,
+}: {
+  href: string;
+  title: string;
+  objectId: string;
+  children: ReactNode;
+}) {
+  const router = useRouter();
   return (
-    <Link href={href} className="ab-card">
-      {body}
+    <Link
+      href={href}
+      className="ab-card"
+      data-motion-origin="node"
+      onClick={(event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+        event.preventDefault();
+        const rect = event.currentTarget.getBoundingClientRect();
+        const spatialX = ((rect.left + rect.width / 2) / Math.max(window.innerWidth, 1)) * 2 - 1;
+        playInteractionSound("franchise", { gain: 0.72 });
+        playSpatialTravel(spatialX, 0.28);
+        withViewTransition(
+          () => router.push(href),
+          {
+            route: "franchise",
+            origin: "node",
+            destination: "graph",
+            objectId: getAnimeObjectId(objectId),
+          },
+        );
+      }}
+    >
+      {children}
     </Link>
   );
 }
-
 export function AncestryGraph({
   centerTitle,
   centerId,
@@ -84,7 +124,7 @@ export function AncestryGraph({
   centerYear,
   relations: initial,
 }: Props) {
-  const [relations, setRelations] = useState<AnimeRelation[]>(\n    (initial || []).filter((r) => isWatchRelation(r.relationType)),\n  );
+  const [relations, setRelations] = useState<AnimeRelation[]>(initial || []);
   const [loading, setLoading] = useState(false);
   const [showFlat, setShowFlat] = useState(true);
 
@@ -98,8 +138,8 @@ export function AncestryGraph({
     fetch(`/api/relations?id=${centerId}&deep=0`)
       .then((r) => r.json())
       .then((j) => {
-        if (!cancelled && Array.isArray(j.data)) setRelations(j.data);
-        else if (!cancelled && Array.isArray(j.nodes)) setRelations(j.nodes);
+        if (!cancelled && Array.isArray(j.data)) setRelations(j.data.filter((r: AnimeRelation) => isWatchRelation(r.relationType)));
+        else if (!cancelled && Array.isArray(j.nodes)) setRelations(j.nodes.filter((r: AnimeRelation) => isWatchRelation(r.relationType)));
       })
       .catch(() => {})
       .finally(() => {
