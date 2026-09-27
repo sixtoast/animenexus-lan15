@@ -83,8 +83,8 @@ function relationLabel(node: FranchiseNode) {
     ALTERNATIVE: "ALTERNATIVE",
     SUMMARY: "RECAP",
     CHARACTER: "CHARACTER EASTER EGG",
-    OTHER: "EASTER EGG · OTHER",
-    SAME_UNIVERSE: "EASTER EGG · SAME UNIVERSE",
+    OTHER: "OTHER",
+    SAME_UNIVERSE: "IN UNIVERSE",
   };
   return labels[relation] || (node.format ? String(node.format).replace(/_/g, " ") : "UNCERTAIN");
 }
@@ -266,7 +266,7 @@ export function FranchisePathPanel({
 
   if (!plan || plan.relationCount < 1) return null;
 
-  if (!active || active.nodes.length < 2) return null;
+  if (!active) return null;
 
   const visibleKeys = new Set(active.nodes.map(nodeKey));
   const visibleIds = new Set(active.nodes.map((node) => node.id).filter((id): id is number => id != null));
@@ -351,7 +351,7 @@ export function FranchisePathPanel({
       <div className="franchise-path__route" aria-label={active.label + " route"}>
         <div className="franchise-path__route-head">
           <span>HOW TO FOLLOW IT</span>
-          <small>{active.id === "easter_eggs" ? "Connections stay as leaves - they never create new branches." : "Follow the numbered path. Optional branches never become new roots."}</small>
+          <small>{active.id === "easter_eggs" ? "Connections stay as leaves - they never create new branches. “Other” means a provider reported a weaker franchise connection that is not a main story relation." : "Follow the numbered path. Optional branches never become new roots."}</small>
         </div>
         <div className="franchise-path__route-track">
           {active.nodes.map((node, index) => {
