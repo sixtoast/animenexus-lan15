@@ -12,7 +12,10 @@ import {
 import type { AnimePreferenceFingerprint } from "@/lib/intelligence/items/anime-preference-fingerprint";
 import { getBestAvailableFingerprint } from "@/lib/intelligence/items/resolve-fingerprint";
 import { compareFingerprints } from "@/lib/intelligence/semantic-ops/compare";
-import { loadSemanticIndexFromStore } from "./semantic-index-persist";
+import {
+  loadSemanticIndexFromStore,
+  indexAndPersistFingerprint,
+} from "./semantic-index-persist";
 import { hydrateCandidateRecords, isStubTitle } from "./hydrate";
 
 export type CandidateIntent = "fusion" | "reverse" | "recommendation";
@@ -367,13 +370,6 @@ export async function retrieveAnimeCandidates(
     );
   }
 
-  for (const rec of byNexusId.values()) {
-    if (rec.fingerprint) {
-      indexFingerprint(rec.nexusId, rec.fingerprint);
-      cacheHits++;
-    }
-  }
-
   let candidates = [...byNexusId.values()];
 
   if (opts.targetFingerprint) {
@@ -392,7 +388,15 @@ export async function retrieveAnimeCandidates(
 
     const canonical = new Map<string, CandidateRecord>();
     for (const rec of candidates) {
-      const nx = nexusOf(rec.anime);
+      const titleKey = String(rec.anime?.title || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+      const nx = rec.anime?.anilist_id
+        ? `anilist:${rec.anime.anilist_id}`
+        : titleKey
+          ? `title:${titleKey}`
+          : nexusOf(rec.anime);
       const existing = canonical.get(nx);
       if (!existing) {
         canonical.set(nx, { ...rec, nexusId: nx });
@@ -439,6 +443,18 @@ export async function retrieveAnimeCandidates(
   }
 
   candidates = candidates.slice(0, limit);
+
+  // Persist only the useful final semantic pool. This keeps Supabase writes
+  // bounded while ensuring the next cold start has a real index to query.
+  if (opts.targetFingerprint && candidates.length) {
+    await Promise.allSettled(
+      candidates.slice(0, 40).map(async (rec) => {
+        if (!rec.fingerprint) return;
+        await indexAndPersistFingerprint(rec.nexusId, rec.fingerprint);
+        cacheHits++;
+      }),
+    );
+  }
 
   return {
     candidates,
