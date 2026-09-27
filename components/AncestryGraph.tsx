@@ -74,20 +74,19 @@ function WatchCard({
   current?: boolean;
   relation?: string;
 }) {
+  const router = useRouter();
   const href = node.id != null ? `/anime/${node.id}` : undefined;
   const content = (
     <div className={"wo-card" + (current ? " wo-card-current" : "")}>
       <div className="wo-poster">
         <span className="wo-index">{String(index + 1).padStart(2, "0")}</span>
         {/* eslint-disable-next-line @next/next/no-img-element */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={node.id != null ? undefined : "https://placehold.co/300x450/15100f/665?text=?"}
+          src={node.image || "https://placehold.co/300x450/15100f/665?text=?"}
           alt=""
           loading="lazy"
         />
-        {node.id != null ? (
-          <WatchPosterImage id={node.id} title={node.title} />
-        ) : null}
         {current ? <span className="wo-here">YOU ARE HERE</span> : null}
       </div>
       {relation && !current ? (
@@ -113,7 +112,7 @@ function WatchCard({
         playInteractionSound("franchise", { gain: 0.72 });
         playSpatialTravel(spatialX, 0.28);
         withViewTransition(
-          () => useRouter().push(href),
+          () => router.push(href),
           {
             route: "franchise",
             origin: "node",
