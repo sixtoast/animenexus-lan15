@@ -18,6 +18,7 @@ type Props = {
 type WatchNode = {
   id?: number;
   title: string;
+  image?: string;
   year?: number;
   format?: string;
   relationFromCenter?: string;
@@ -81,7 +82,6 @@ function WatchCard({
       <div className="wo-poster">
         <span className="wo-index">{String(index + 1).padStart(2, "0")}</span>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={node.image || "https://placehold.co/300x450/15100f/665?text=?"}
           alt=""
@@ -124,36 +124,6 @@ function WatchCard({
     >
       {content}
     </Link>
-  );
-}
-
-function WatchPosterImage({ id, title }: { id: number; title: string }) {
-  const [src, setSrc] = useState<string | undefined>();
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/anime?id=${id}`)
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (!cancelled) setSrc(data?.image || data?.data?.image);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
-
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={src || "https://placehold.co/300x450/15100f/665?text=…"}
-      alt=""
-      loading="lazy"
-      onError={(event) => {
-        event.currentTarget.style.opacity = "0";
-      }}
-      title={title}
-    />
   );
 }
 
