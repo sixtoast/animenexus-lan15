@@ -10,7 +10,7 @@ import {
 } from "./semantic-index";
 import type { AnimePreferenceFingerprint } from "@/lib/intelligence/items/anime-preference-fingerprint";
 import { getBestAvailableFingerprint } from "@/lib/intelligence/items/resolve-fingerprint";
-import { buildEnrichedFingerprint } from "@/lib/intelligence/items/fingerprint-enrichment";
+import { buildEnrichedFingerprint as buildEnrichedCandidateFingerprint } from "@/lib/intelligence/items/fingerprint-enrichment";
 import { compareFingerprints } from "@/lib/intelligence/semantic-ops/compare";
 import {
   loadSemanticIndexFromStore,
@@ -405,7 +405,7 @@ export async function retrieveAnimeCandidates(
 
     for (const rec of candidates) {
       try {
-        const refreshed = buildEnrichedFingerprint(rec.anime, {
+        const refreshed = buildEnrichedCandidateFingerprint(rec.anime, {
           forceRefresh: true,
         });
         rec.fingerprint = refreshed;
