@@ -13,6 +13,7 @@ import {
   resolveKitsuIdFromAnilist,
 } from "./providers/kitsu-relations";
 import { SHIKI_ID_OFFSET } from "./providers/shikimori";
+import { fetchJikanFranchiseEnrichment } from "./providers/jikan";
 import {
   fetchFallbackRecommendations,
   resolveMalIdFromAnilist,
@@ -276,6 +277,24 @@ function nodeFromRel(n: RelNode, relationType: string): AnimeRelation | null {
     year: n.startDate?.year ?? null,
     score: n.averageScore != null ? n.averageScore / 10 : null,
   };
+}
+
+async function enrichRelationChronology(r: AnimeRelation): Promise<AnimeRelation> {
+  if (!r.idMal || r.idMal < 1) return r;
+  try {
+    const jikan = await fetchJikanFranchiseEnrichment(r.idMal);
+    if (!jikan) return r;
+    const relationEvidence = [...(r.relationEvidence || [])];
+    if (jikan.aired.from) r.airedFrom = jikan.aired.from;
+    if (jikan.aired.to) r.airedTo = jikan.aired.to;
+    const corroboration = jikan.relations.find((x) => x.malId === r.idMal);
+    if (corroboration && !relationEvidence.some((x) => x.startsWith("Jikan/MAL relation:"))) {
+      relationEvidence.push("Jikan/MAL relation: " + corroboration.relation);
+    }
+    return relationEvidence.length ? { ...r, relationEvidence } : r;
+  } catch {
+    return r;
+  }
 }
 
 export function mapRelationEdges(
@@ -599,7 +618,11 @@ export async function fetchAncestryGraph(
 
   const root = await fetchMediaLinks(rootId);
 
-  for (const r of root.relations) {
+  const enrichedRootRelations = await Promise.all(
+    root.relations.map((r) => enrichRelationChronology(r)),
+  );
+
+  for (const r of enrichedRootRelations) {
     const relationType = (r.relationType || "").toUpperCase();
 
     if (isWatchGraphRelation(relationType) || ISOLATED_STORY_RELATIONS.has(relationType)) {
@@ -612,7 +635,7 @@ export async function fetchAncestryGraph(
   // Surface weak AniList connections as Easter eggs, but deliberately keep
   // them as leaves. A shared character/OTHER relation must never become the
   // root of another franchise branch.
-  const rootEasterEggs = root.relations.filter((r) => {
+  const rootEasterEggs = enrichedRootRelations.filter((r) => {
     const relationType = (r.relationType || "").toUpperCase();
     return EASTER_EGG_RELATIONS.has(relationType) && r.id !== rootId;
   });
@@ -644,7 +667,7 @@ export async function fetchAncestryGraph(
   // Expand the official franchise graph breadth-first.
   // only expanded recommendation nodes, which made "watch order" effectively one hop.
   const visited = new Set<number>([rootId]);
-  const queue: { id: number; depth: number }[] = root.relations
+  const queue: { id: number; depth: number }[] = enrichedRootRelations
     .filter((r) => isWatchGraphRelation(r.relationType))
     .map((r) => ({
       id: r.id,
@@ -664,22 +687,23 @@ export async function fetchAncestryGraph(
     }
 
     for (const r of links.relations) {
-      const relationType = (r.relationType || "").toUpperCase();
+      const enriched = await enrichRelationChronology(r);
+      const relationType = (enriched.relationType || "").toUpperCase();
       const isWatch = isWatchGraphRelation(relationType);
       const isIsolatedStory = ISOLATED_STORY_RELATIONS.has(relationType);
       if (!isWatch && !isIsolatedStory) continue;
-      if (r.id === rootId) {
-        addEdge(currentId, r.id, "official", relationType);
+      if (enriched.id === rootId) {
+        addEdge(currentId, enriched.id, "official", relationType);
         continue;
       }
-      if (!nodeMap.has(r.id)) {
-        if (!addNode({ ...r, relationType }, depth, "official")) continue;
+      if (!nodeMap.has(enriched.id)) {
+        if (!addNode({ ...enriched, relationType }, depth, "official")) continue;
       }
-      addEdge(currentId, r.id, "official", relationType);
+      addEdge(currentId, enriched.id, "official", relationType);
       // Alternative/summary works are intentionally leaves. Only true story
       // edges continue the traversal so these cannot create new branches.
-      if (isWatch && depth < 5 && !visited.has(r.id)) {
-        queue.push({ id: r.id, depth: depth + 1 });
+      if (isWatch && depth < 5 && !visited.has(enriched.id)) {
+        queue.push({ id: enriched.id, depth: depth + 1 });
       }
       if (nodeMap.size >= maxNodes) break;
     }
