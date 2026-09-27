@@ -34,6 +34,7 @@ export type ToolName =
   | "getStats"
   | "getRecentActivity"
   | "getRecommendations"
+  | "getViewingIntent"
   | "getCompletionQueue"
   | "addToWatchlist"
   | "removeFromWatchlist";
