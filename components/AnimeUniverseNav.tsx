@@ -50,10 +50,21 @@ export function AnimeUniverseNav() {
       if (!visible) return;
 
       setActive(visible.target.id as UniverseSpace);
-      const button = trackRef.current?.querySelector<HTMLButtonElement>(
+      const track = trackRef.current;
+      const button = track?.querySelector<HTMLButtonElement>(
         `button[data-space="${visible.target.id}"]`,
       );
-      button?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      if (track && button) {
+        // IMPORTANT: never call Element.scrollIntoView() from the section
+        // observer. Even with block:"nearest", browsers may scroll the page
+        // ancestor as well as the horizontal nav. On the anime detail view
+        // that can yank the document back towards #story when the hero/modal
+        // changes size or receives interaction. Scroll only the nav's own
+        // horizontal scroller.
+        const targetLeft =
+          button.offsetLeft - Math.max(0, (track.clientWidth - button.offsetWidth) / 2);
+        track.scrollTo({ left: targetLeft, behavior: "smooth" });
+      }
     }, { rootMargin: "-22% 0px -55% 0px", threshold: [0.05, 0.18, 0.45, 0.75] });
 
     els.forEach((el) => observer.observe(el));
@@ -74,9 +85,9 @@ export function AnimeUniverseNav() {
 
     setActive(id);
 
-    // scrollIntoView() can interact badly with the sticky Universe nav and with
-    // nested/previously-open modal focus. Use an explicit document position so
-    // the destination is deterministic and cannot snap back to Story.
+    // Use an explicit document position rather than scrollIntoView(). This
+    // keeps the sticky Universe nav from participating in the document scroll
+    // and makes the section destination deterministic.
     const top = Math.max(
       0,
       window.scrollY + target.getBoundingClientRect().top - NAV_OFFSET,
