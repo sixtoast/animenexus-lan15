@@ -57,6 +57,7 @@ export function NexusWorlds({ candidates }: Props) {
   const [armed, setArmed] = useState<number | null>(null);
   const [secret, setSecret] = useState(false);
   const [entered, setEntered] = useState(false);
+  const [inView, setInView] = useState(false);
   const [travelling, setTravelling] = useState<number | null>(null);
   const [aiPulse, setAiPulse] = useState(0);
   const [aiPulsing, setAiPulsing] = useState(false);
@@ -119,11 +120,9 @@ export function NexusWorlds({ candidates }: Props) {
     const field = fieldRef.current;
     if (!field) return;
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setEntered(true);
-        observer.disconnect();
-      }
-    }, { threshold: 0.18 });
+      setInView(entry.isIntersecting);
+      if (entry.isIntersecting) setEntered(true);
+    }, { threshold: 0.12, rootMargin: "120px 0px" });
     observer.observe(field);
     return () => observer.disconnect();
   }, []);
@@ -276,7 +275,7 @@ export function NexusWorlds({ candidates }: Props) {
     field.addEventListener("pointercancel", onDragEnd);
 
     const tick = (now: number) => {
-      if (motionAbort) return;
+      if (motionAbort || !inView || document.visibilityState === "hidden") return;
       const elapsed = now - started;
       const dt = Math.min(48, Math.max(8, now - previousNow));
       previousNow = now;
@@ -289,6 +288,9 @@ export function NexusWorlds({ candidates }: Props) {
         field.dataset.orbitInertia = angularVelocity.toFixed(4);
       }
 
+      const pulseMorph = aiPulsing
+        ? Math.min(1, Math.max(0, (now - aiPulseStartedRef.current) / 720))
+        : 1;
       const pointer = pointerRef.current;
       const pointerX = pointer.active ? pointer.x : 0;
       const pointerY = pointer.active ? pointer.y : 0;
@@ -336,7 +338,7 @@ export function NexusWorlds({ candidates }: Props) {
             const rankWeight = getRankWeight(index);
             const mode = fieldModeRef.current;
             const modeTarget = getModeTarget(index, mode);
-            const modeMorph = aiPulsing ? Math.min(1, Math.max(0, (performance.now() - aiPulseStartedRef.current) / 720)) : 1;
+            const modeMorph = pulseMorph;
             const modeX = 1 + modeTarget.x * modeMorph;
             const modeY = 1 + modeTarget.y * modeMorph;
             const dynamicRadiusX = radiusX * rankWeight * modeX * (1 - Math.abs(pointerX) * 0.035);
@@ -423,7 +425,7 @@ export function NexusWorlds({ candidates }: Props) {
       field.removeEventListener("pointerup", onDragEnd);
       field.removeEventListener("pointercancel", onDragEnd);
     };
-  }, [entered, worlds.length]);
+  }, [entered, inView, worlds.length]);
 
   useEffect(() => {
     const field = fieldRef.current;
