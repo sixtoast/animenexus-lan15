@@ -221,6 +221,23 @@ export function playInteractionSound(
   playCue(cue, { ...opts, gain: (opts.gain ?? 1) * (kind === "discovery" ? 0.72 : 0.82) });
 }
 
+export type TransitionSoundPhase = "depart" | "arrive";
+
+/** View-transition semantic cue. Audio is enhancement-only and soft-fails. */
+export function playTransitionSound(
+  kind: InteractionSound,
+  phase: TransitionSoundPhase,
+): void {
+  const cue = kind === "navigation"
+    ? phase === "depart" ? "nav_tick" : "ui_confirm"
+    : kind === "watchlist"
+      ? "seal"
+      : kind === "franchise"
+        ? "signal_acquired"
+        : "resonance";
+  playCue(cue, { gain: phase === "depart" ? 0.5 : 0.7 });
+}
+
 export function playCue(id: SoundCueId, opts: PlayOptions = {}): void {
   if (typeof window === "undefined") return;
   if (!prefs.enabled && !opts.force) return;
