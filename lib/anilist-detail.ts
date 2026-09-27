@@ -143,6 +143,7 @@ const WATCH_GRAPH_RELATIONS = new Set([
 const EASTER_EGG_RELATIONS = new Set([
   "CHARACTER",
   "OTHER",
+  "SAME_UNIVERSE",
 ]);
 
 function isWatchGraphRelation(value?: string): boolean {
