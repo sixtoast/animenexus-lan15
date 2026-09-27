@@ -16,6 +16,9 @@ export type FranchiseNode = {
   year?: number;
   format?: string;
   relationFromCenter?: string;
+  /** Human-readable explanation for a relation, especially Easter eggs. */
+  relationDetail?: string;
+  relationEvidence?: string[];
   layer?: "official" | "recommended" | "easter_egg";
 };
 
@@ -89,6 +92,8 @@ export function resolveFranchise(opts: {
         year: extra.year,
         format: extra.format,
         relationFromCenter: normalizeRelationType(r.relationType),
+        relationDetail: r.relationDetail,
+        relationEvidence: r.relationEvidence,
       });
     } else if (r.externalTargetId) {
       related.push({
@@ -235,6 +240,9 @@ export function resolveFranchiseGraph(opts: {
   const watchEdges = official.filter((e) =>
     WATCH_EDGE.has(normalizeRelationType(e.label || "OTHER")),
   );
+  const isolatedStoryEdges = official.filter((e) =>
+    ["ALTERNATIVE", "SUMMARY"].includes(normalizeRelationType(e.label || "OTHER")),
+  );
   const adjacency = new Map<number, Array<{ id: number; type: string }>>();
   const addAdjacency = (from: number, to: number, type: string) => {
     if (!adjacency.has(from)) adjacency.set(from, []);
@@ -257,6 +265,16 @@ export function resolveFranchiseGraph(opts: {
   for (const e of official) {
     const type = normalizeRelationType(e.label || "OTHER");
     if (!["CHARACTER", "OTHER", "SAME_UNIVERSE"].includes(type)) continue;
+    const other = e.from === center.id ? e.to : e.to === center.id ? e.from : null;
+    if (other == null || !map.has(other)) continue;
+    allowedIds.add(other);
+    relationFromRoot.set(other, type);
+  }
+
+  // Alternatives and summaries belong to the franchise view, but remain
+  // isolated leaves. They must never become traversal roots.
+  for (const e of isolatedStoryEdges) {
+    const type = normalizeRelationType(e.label || "OTHER");
     const other = e.from === center.id ? e.to : e.to === center.id ? e.from : null;
     if (other == null || !map.has(other)) continue;
     allowedIds.add(other);
@@ -307,7 +325,9 @@ export function resolveFranchiseGraph(opts: {
     }
   }
 
-  const mainNodes = storyNodes.filter((n) => n.id != null && mainIds.has(n.id));
+  // The main franchise view includes the connected story works plus isolated
+  // alternatives/recaps. They are deliberately leaves rather than new roots.
+  const mainNodes = storyNodes;
   const main = orderByConstraints(mainNodes, official);
   const story = orderByConstraints(storyNodes, official);
   const incomplete = main.length !== mainNodes.length || main.length <= 1;
@@ -351,8 +371,8 @@ export function resolveFranchiseGraph(opts: {
         nodes: main,
         uncertain: incomplete,
         note: incomplete
-          ? "The main-line relation graph is incomplete or ambiguous."
-          : "Connected main-line works; side stories and alternatives excluded.",
+          ? "The connected story graph is incomplete or ambiguous."
+          : "Story-connected works are shown together; alternatives and recaps remain isolated leaves.",
       },
       {
         id: "completion",
