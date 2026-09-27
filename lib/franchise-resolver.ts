@@ -229,6 +229,8 @@ export function resolveFranchiseGraph(opts: {
     year: n.year == null ? undefined : Number(n.year),
     format: n.format,
     relationFromCenter: n.relationType,
+    relationDetail: n.relationDetail,
+    relationEvidence: n.relationEvidence,
     layer: n.layer,
   } as FranchiseNode]));
   // Build the watchable franchise from the ROOT outward. A node is only
@@ -271,16 +273,6 @@ export function resolveFranchiseGraph(opts: {
     relationFromRoot.set(other, type);
   }
 
-  // Alternatives and summaries belong to the franchise view, but remain
-  // isolated leaves. They must never become traversal roots.
-  for (const e of isolatedStoryEdges) {
-    const type = normalizeRelationType(e.label || "OTHER");
-    const other = e.from === center.id ? e.to : e.to === center.id ? e.from : null;
-    if (other == null || !map.has(other)) continue;
-    allowedIds.add(other);
-    relationFromRoot.set(other, type);
-  }
-
   const franchiseTraversalQueue = [center.id!];
 
   while (franchiseTraversalQueue.length) {
@@ -297,6 +289,20 @@ export function resolveFranchiseGraph(opts: {
     }
   }
 
+  // Add alternative/summary works attached anywhere in the connected story
+  // graph, but never traverse through them.
+  for (const e of isolatedStoryEdges) {
+    const fromAllowed = allowedIds.has(e.from);
+    const toAllowed = allowedIds.has(e.to);
+    if (!fromAllowed && !toAllowed) continue;
+    const other = fromAllowed ? e.to : e.from;
+    if (!map.has(other)) continue;
+    allowedIds.add(other);
+    if (e.from === center.id || e.to === center.id) {
+      relationFromRoot.set(other, normalizeRelationType(e.label || "OTHER"));
+    }
+  }
+
   const all = dedupeNodes(
     [center, ...[...map.values()]
       .filter((n) => n.id != null && allowedIds.has(n.id))
@@ -308,29 +314,13 @@ export function resolveFranchiseGraph(opts: {
   const storyNodes = all.filter((n) => n.id === center.id || map.get(n.id!)?.layer !== "easter_egg");
   const easterEggNodes = all.filter((n) => n.id != null && (n.layer === "easter_egg" || map.get(n.id!)?.layer === "easter_egg"));
   const release = [...storyNodes].sort(byRelease);
-  const mainIds = new Set<number>([center.id!]);
-  const mainStoryQueue = [center.id!];
-
-  while (mainStoryQueue.length) {
-    const current = mainStoryQueue.shift()!;
-    for (const e of official) {
-      if (e.from !== current && e.to !== current) continue;
-      const type = normalizeRelationType(e.label || "OTHER");
-      if (!["SEQUEL", "PREQUEL", "PARENT", "FULL_STORY"].includes(type)) continue;
-      const next = e.from === current ? e.to : e.from;
-      if (allowedIds.has(next) && map.has(next) && !mainIds.has(next)) {
-        mainIds.add(next);
-        mainStoryQueue.push(next);
-      }
-    }
-  }
 
   // The main franchise view includes the connected story works plus isolated
   // alternatives/recaps. They are deliberately leaves rather than new roots.
   const mainNodes = storyNodes;
   const main = orderByConstraints(mainNodes, official);
   const story = orderByConstraints(storyNodes, official);
-  const incomplete = main.length !== mainNodes.length || main.length <= 1;
+  const incomplete = main.length <= 1;
   const chronologyUncertain = story.length !== storyNodes.length || hasCycle(storyNodes, official);
 
   return {
