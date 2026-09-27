@@ -20,6 +20,7 @@ export type MergedRelation = {
   confidence: number;
   /** Optional human-readable evidence supplied by the relation provider. */
   relationDetail?: string;
+  /** Additional provider-backed evidence for why this relation exists. */
   relationEvidence?: string[];
 };
 
