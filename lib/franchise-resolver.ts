@@ -38,7 +38,6 @@ const MAIN_EDGE = new Set([
   "PREQUEL",
   "PARENT",
   "FULL_STORY",
-  "SUMMARY",
 ]);
 
 const SIDE_EDGE = new Set([
@@ -47,6 +46,18 @@ const SIDE_EDGE = new Set([
   "ALTERNATIVE",
   "OTHER",
   "CHARACTER",
+]);
+
+// Only these AniList relation types describe works that belong in a watch-order
+// experience. Recommendations, characters, alternatives, summaries and generic
+// relations are deliberately excluded from the watch-order graph.
+const WATCH_EDGE = new Set([
+  "SEQUEL",
+  "PREQUEL",
+  "PARENT",
+  "FULL_STORY",
+  "SIDE_STORY",
+  "SPIN_OFF",
 ]);
 
 function nodeKey(n: FranchiseNode): string {
@@ -213,8 +224,17 @@ export function resolveFranchiseGraph(opts: {
     format: n.format,
     relationFromCenter: n.relationType,
   } as FranchiseNode]));
-  const official = edges.filter((e) => e.kind === "official");
-  const all = dedupeNodes([center, ...[...map.values()].filter((n) => n.id !== center.id)]);
+  const official = edges.filter(
+    (e) =>
+      e.kind === "official" &&
+      WATCH_EDGE.has(normalizeRelationType(e.label || "OTHER")),
+  );
+  const watchNodes = [...map.values()].filter(
+    (n) =>
+      n.id !== center.id &&
+      WATCH_EDGE.has(normalizeRelationType(n.relationFromCenter || "OTHER")),
+  );
+  const all = dedupeNodes([center, ...watchNodes]);
   const release = [...all].sort(byRelease);
   const mainIds = new Set<number>([center.id!]);
   const queue = [center.id!];
