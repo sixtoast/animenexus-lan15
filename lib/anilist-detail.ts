@@ -146,8 +146,103 @@ const EASTER_EGG_RELATIONS = new Set([
   "SAME_UNIVERSE",
 ]);
 
+// These are legitimate franchise works, but they should be visible as
+// isolated leaves rather than becoming new traversal roots.
+const ISOLATED_STORY_RELATIONS = new Set([
+  "ALTERNATIVE",
+  "SUMMARY",
+]);
+
 function isWatchGraphRelation(value?: string): boolean {
   return WATCH_GRAPH_RELATIONS.has((value || "").toUpperCase());
+}
+
+type CharacterEvidence = {
+  id: number;
+  name?: { full?: string };
+};
+
+async function buildEasterEggEvidence(
+  rootId: number,
+  rootTitle: string,
+  targetId: number,
+  relationType: string,
+): Promise<{ relationDetail?: string; relationEvidence?: string[] }> {
+  const type = relationType.toUpperCase();
+
+  if (type === "SAME_UNIVERSE") {
+    return {
+      relationDetail: "Same universe as this title.",
+      relationEvidence: ["AniList relation: SAME_UNIVERSE"],
+    };
+  }
+
+  if (type === "OTHER") {
+    return {
+      relationDetail:
+        "AniList marks this as another related work, but does not provide a more specific relation type.",
+      relationEvidence: ["AniList relation: OTHER"],
+    };
+  }
+
+  if (type !== "CHARACTER") return {};
+
+  try {
+    const data = await gql<{
+      root: { characters?: { nodes?: CharacterEvidence[] } } | null;
+      target: { characters?: { nodes?: CharacterEvidence[] } } | null;
+    }>(
+      `
+        query ($root: Int!, $target: Int!) {
+          root: Media(id: $root, type: ANIME) {
+            characters(perPage: 25) {
+              nodes {
+                id
+                name { full }
+              }
+            }
+          }
+          target: Media(id: $target, type: ANIME) {
+            characters(perPage: 25) {
+              nodes {
+                id
+                name { full }
+              }
+            }
+          }
+        }
+      `,
+      { root: rootId, target: targetId },
+    );
+
+    const rootCharacters = data.root?.characters?.nodes || [];
+    const targetCharacters = data.target?.characters?.nodes || [];
+    const targetIds = new Set(targetCharacters.map((c) => c.id));
+    const shared = rootCharacters
+      .filter((c) => targetIds.has(c.id))
+      .map((c) => c.name?.full)
+      .filter((name): name is string => Boolean(name))
+      .slice(0, 3);
+
+    if (shared.length) {
+      return {
+        relationDetail: `Shared character: ${shared.join(", ")}`,
+        relationEvidence: shared.map((name) => `Shared character: ${name}`),
+      };
+    }
+
+    return {
+      relationDetail:
+        `AniList marks this as sharing a character with ${rootTitle}, but the current character data did not expose the shared character.`,
+      relationEvidence: ["AniList relation: CHARACTER"],
+    };
+  } catch {
+    return {
+      relationDetail:
+        `AniList marks this as sharing a character with ${rootTitle}; character evidence could not be loaded right now.`,
+      relationEvidence: ["AniList relation: CHARACTER"],
+    };
+  }
 }
 
 const NON_ANIME_TYPE = new Set(["MANGA", "NOVEL"]);
@@ -502,20 +597,40 @@ export async function fetchAncestryGraph(
   const root = await fetchMediaLinks(rootId);
 
   for (const r of root.relations) {
-    if (!isWatchGraphRelation(r.relationType)) continue;
-    if (addNode(r, 0, "official")) {
-      addEdge(rootId, r.id, "official", r.relationType);
+    const relationType = (r.relationType || "").toUpperCase();
+
+    if (isWatchGraphRelation(relationType) || ISOLATED_STORY_RELATIONS.has(relationType)) {
+      if (addNode(r, 0, "official")) {
+        addEdge(rootId, r.id, "official", relationType);
+      }
     }
   }
 
   // Surface weak AniList connections as Easter eggs, but deliberately keep
   // them as leaves. A shared character/OTHER relation must never become the
   // root of another franchise branch.
-  for (const r of root.relations) {
+  const rootEasterEggs = root.relations.filter((r) => {
     const relationType = (r.relationType || "").toUpperCase();
-    if (!EASTER_EGG_RELATIONS.has(relationType)) continue;
-    if (r.id === rootId) continue;
-    if (addNode({ ...r, relationType }, 0, "easter_egg")) {
+    return EASTER_EGG_RELATIONS.has(relationType) && r.id !== rootId;
+  });
+
+  const eggEvidence = await Promise.all(
+    rootEasterEggs.map(async (r) => ({
+      id: r.id,
+      evidence: await buildEasterEggEvidence(
+        rootId,
+        rootId === r.id ? "this title" : "this title",
+        r.id,
+        (r.relationType || "").toUpperCase(),
+      ),
+    })),
+  );
+  const eggEvidenceById = new Map(eggEvidence.map((entry) => [entry.id, entry.evidence]));
+
+  for (const r of rootEasterEggs) {
+    const relationType = (r.relationType || "").toUpperCase();
+    const evidence = eggEvidenceById.get(r.id) || {};
+    if (addNode({ ...r, relationType, ...evidence }, 0, "easter_egg")) {
       addEdge(rootId, r.id, "official", relationType);
     }
   }
@@ -546,16 +661,23 @@ export async function fetchAncestryGraph(
     }
 
     for (const r of links.relations) {
-      if (!isWatchGraphRelation(r.relationType)) continue;
+      const relationType = (r.relationType || "").toUpperCase();
+      const isWatch = isWatchGraphRelation(relationType);
+      const isIsolatedStory = ISOLATED_STORY_RELATIONS.has(relationType);
+      if (!isWatch && !isIsolatedStory) continue;
       if (r.id === rootId) {
-        addEdge(currentId, r.id, "official", r.relationType);
+        addEdge(currentId, r.id, "official", relationType);
         continue;
       }
       if (!nodeMap.has(r.id)) {
-        if (!addNode({ ...r }, depth, "official")) continue;
+        if (!addNode({ ...r, relationType }, depth, "official")) continue;
       }
-      addEdge(currentId, r.id, "official", r.relationType);
-      if (depth < 5 && !visited.has(r.id)) queue.push({ id: r.id, depth: depth + 1 });
+      addEdge(currentId, r.id, "official", relationType);
+      // Alternative/summary works are intentionally leaves. Only true story
+      // edges continue the traversal so these cannot create new branches.
+      if (isWatch && depth < 5 && !visited.has(r.id)) {
+        queue.push({ id: r.id, depth: depth + 1 });
+      }
       if (nodeMap.size >= maxNodes) break;
     }
   }
