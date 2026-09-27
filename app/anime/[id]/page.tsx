@@ -16,6 +16,7 @@ import { buildCreativeDna, fullCreditLines } from "@/lib/creative-dna";
 import { buildViewingContext } from "@/lib/viewing-context";
 import { resolveMangaSourcesFromRelations } from "@/lib/manga-adapter";
 import { AddToWatchlist } from "@/components/AddToWatchlist";
+import { DetailWatchlistChoreography } from "@/components/DetailWatchlistChoreography";
 import { AnimeImage } from "@/components/AnimeImage";
 import { DetailCoverMaterial } from "@/components/DetailCoverMaterial";
 import { AnimeUniverseNav } from "@/components/AnimeUniverseNav";
@@ -165,6 +166,7 @@ export default async function AnimeDetailPage({ params }: Props) {
 
   return (
     <main className="cinema-detail-page detail-artwork-aware" data-artwork-role="key-art">
+      <DetailWatchlistChoreography />
       <MemoryVisit
         id={anime.id}
         title={anime.title}
@@ -250,7 +252,7 @@ export default async function AnimeDetailPage({ params }: Props) {
             <AddToWatchlist anime={anime} />
             <QuickOutcomeControls animeId={anime.id} surface="detail" />
             <div className="detail-actions" style={{ marginTop: 12 }}>
-              <Link href="/watchlist" className="btn btn-outline btn-sm">
+              <Link href="/watchlist" className="btn btn-outline btn-sm" data-watchlist-destination>
                 Open watchlist
               </Link>
               <ShareTitleButton title={anime.title} animeId={anime.id} />
