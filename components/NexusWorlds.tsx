@@ -581,7 +581,7 @@ export function NexusWorlds({ candidates }: Props) {
                 style={{ viewTransitionName: getAnimeViewTransitionName(anime.id) } as CSSProperties}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={anime.image} alt="" loading="lazy" />
+                <img src={anime.image} alt="" loading="lazy" decoding="async" fetchPriority="low" />
                 <b>{String(index + 1).padStart(2, "0")}</b>
                 <span className="nexus-world-node-lock">{isActive ? "LOCKED" : "SIGNAL"}</span>
               </span>
