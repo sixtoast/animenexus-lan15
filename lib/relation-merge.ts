@@ -18,6 +18,9 @@ export type MergedRelation = {
   /** Providers that attested this edge */
   sources: string[];
   confidence: number;
+  /** Optional human-readable evidence supplied by the relation provider. */
+  relationDetail?: string;
+  relationEvidence?: string[];
 };
 
 export type AniListRelationLike = {
@@ -84,6 +87,8 @@ export function mergeRelations(
       if (existing) {
         if (!existing.sources.includes("anidb")) existing.sources.push("anidb");
         existing.confidence = Math.max(existing.confidence, r.confidence);
+        if (!existing.relationDetail && r.provenance?.note) existing.relationDetail = r.provenance.note;
+        if (r.provenance?.method) existing.relationEvidence = [...(existing.relationEvidence || []), `${r.source}: ${r.provenance.method}`];
         continue;
       }
       out.push({
@@ -91,6 +96,8 @@ export function mergeRelations(
         relationType: type,
         sources: ["anidb"],
         confidence: r.confidence,
+        relationDetail: r.provenance?.note,
+        relationEvidence: r.provenance?.method ? [`${r.source}: ${r.provenance.method}`] : undefined,
       });
       continue;
     }
@@ -102,6 +109,8 @@ export function mergeRelations(
       relationType: type,
       sources: ["anidb"],
       confidence: r.confidence,
+      relationDetail: r.provenance?.note,
+      relationEvidence: r.provenance?.method ? [`${r.source}: ${r.provenance.method}`] : undefined,
     });
   }
 
