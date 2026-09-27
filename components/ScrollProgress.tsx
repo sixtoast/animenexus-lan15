@@ -1,24 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
 export function ScrollProgress() {
-  const [pct, setPct] = useState(0);
+  const fillRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const onScroll = () => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
       const el = document.documentElement;
       const max = el.scrollHeight - el.clientHeight;
-      setPct(max > 0 ? Math.min(100, (el.scrollTop / max) * 100) : 0);
+      const pct = max > 0 ? Math.min(100, (el.scrollTop / max) * 100) : 0;
+      fillRef.current?.style.setProperty("width", `${pct}%`);
     };
-    onScroll();
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(update);
+    };
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
   }, []);
 
   return (
     <div className="scroll-progress" aria-hidden="true">
-      <div className="scroll-progress-fill" style={{ width: `${pct}%` }} />
+      <div ref={fillRef} className="scroll-progress-fill" />
     </div>
   );
 }
