@@ -90,7 +90,7 @@ export function HomePersonalizedProvider({ children, initial, limit = 180 }: { c
 
   useEffect(() => {
     if (!ready) return;
-    const controller = new AbortController();
+    let cancelled = false;
     const session = readIntentSession();
     const base = { entries: entries.slice(0, 200), maxPool: Math.max(limit, 160), perSource: 36 };
     const key = JSON.stringify({
@@ -107,7 +107,6 @@ export function HomePersonalizedProvider({ children, initial, limit = 180 }: { c
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...base, experienceSlug: session.slug || undefined }),
-          signal: controller.signal,
         }).then((r) => {
           if (!r.ok) throw new Error(`recommendation pool failed: ${r.status}`);
           return r.json() as Promise<PoolResponse>;
@@ -116,20 +115,17 @@ export function HomePersonalizedProvider({ children, initial, limit = 180 }: { c
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...base, experienceSlug: "surprise" }),
-          signal: controller.signal,
         }).then((r) => {
           if (!r.ok) throw new Error(`surprise pool failed: ${r.status}`);
           return r.json() as Promise<PoolResponse>;
         }),
       ]),
     ).then(([normal, surprise]) => {
-      if (controller.signal.aborted) return;
+      if (cancelled) return;
       if (Array.isArray(normal?.data) && normal.data.length) setRawPool(normal.data as Anime[]);
       if (Array.isArray(surprise?.data) && surprise.data.length) setRawSurprise(surprise.data as Anime[]);
-    }).catch((error) => {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-    });
-    return () => controller.abort();
+    }).catch(() => undefined);
+    return () => { cancelled = true; };
   }, [entries, ready, limit, intelligenceRevision]);
 
   const pool = useMemo(() => {
