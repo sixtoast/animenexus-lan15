@@ -46,6 +46,7 @@ type LayoutNode = FranchiseNode & {
   x: number;
   y: number;
   relation?: string;
+  relationDetail?: string;
   image?: string;
 };
 
@@ -83,7 +84,7 @@ function relationLabel(node: FranchiseNode) {
     SUMMARY: "RECAP",
     CHARACTER: "CHARACTER",
     OTHER: "EASTER EGG",
-    SAME_UNIVERSE: "EASTER EGG",
+    SAME_UNIVERSE: "SAME UNIVERSE",
   };
   return labels[relation] || (node.format ? String(node.format).replace(/_/g, " ") : "UNCERTAIN");
 }
@@ -99,6 +100,7 @@ function layoutNodes(plan: RemotePlan | FranchisePlan, centerId: number, activeP
         year: n.year == null ? undefined : Number(n.year),
         format: n.format,
         relationFromCenter: n.relationType,
+        relationDetail: n.relationDetail,
         image: n.image,
       }))
     : plan.paths.find((p) => p.id === "completion")?.nodes || [];
@@ -433,6 +435,9 @@ export function FranchisePathPanel({
                 <small>{isCenter ? "YOU ARE HERE" : node.relation}</small>
                 <strong>{node.title}</strong>
                 <i>{node.year || "—"}{node.format ? ` · ${node.format}` : ""}</i>
+                {!isCenter && node.relationDetail ? (
+                  <em>{node.relationDetail}</em>
+                ) : null}
               </span>
             </button>
           );
