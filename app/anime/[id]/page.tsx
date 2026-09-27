@@ -383,6 +383,7 @@ export default async function AnimeDetailPage({ params }: Props) {
             />
           </DetailDeferred>
         </div>
+        </div>
 
         {anime.trailer?.site?.toLowerCase() === "youtube" && anime.trailer.id ? (
           <DetailTrailer
