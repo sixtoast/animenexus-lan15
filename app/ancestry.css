@@ -404,3 +404,317 @@
 }
 
 .ab-grid .ab-card { width: 100%; }
+
+
+/* Watch-order presentation: a readable spine instead of a collision-heavy graph. */
+.wo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  justify-content: flex-end;
+}
+
+.wo-shell {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(240, 160, 144, 0.2);
+  border-radius: 16px;
+  background:
+    radial-gradient(ellipse 80% 90% at 8% 50%, rgba(240, 160, 144, 0.08), transparent 58%),
+    linear-gradient(135deg, rgba(20, 15, 13, 0.98), rgba(7, 6, 5, 0.99));
+}
+
+.wo-intro {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  padding: 15px 15px 13px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.wo-intro-line {
+  width: 3px;
+  min-width: 3px;
+  height: 34px;
+  border-radius: 99px;
+  background: var(--color-accent);
+  box-shadow: 0 0 18px rgba(240,160,144,0.3);
+}
+
+.wo-intro strong,
+.wo-section-label strong {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.wo-intro span:not(.wo-intro-line),
+.wo-section-label small {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-text-muted);
+  font-size: 0.69rem;
+  line-height: 1.4;
+}
+
+.wo-main,
+.wo-side {
+  padding: 17px 14px 18px;
+}
+
+.wo-side {
+  border-top: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.015);
+}
+
+.wo-section-label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 13px;
+}
+
+.wo-section-label > span,
+.wo-empty > span {
+  color: var(--color-accent);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.wo-scroll {
+  display: flex;
+  align-items: flex-start;
+  overflow-x: auto;
+  padding: 3px 2px 12px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.wo-card-wrap {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  animation: wo-enter 520ms cubic-bezier(.2,.8,.2,1) both;
+}
+
+.wo-card-wrap:nth-child(2) { animation-delay: 45ms; }
+.wo-card-wrap:nth-child(3) { animation-delay: 90ms; }
+.wo-card-wrap:nth-child(4) { animation-delay: 135ms; }
+.wo-card-wrap:nth-child(5) { animation-delay: 180ms; }
+.wo-card-wrap:nth-child(6) { animation-delay: 225ms; }
+
+.wo-arrow {
+  display: flex;
+  align-items: center;
+  width: 38px;
+  min-width: 38px;
+  color: rgba(240,160,144,0.72);
+}
+
+.wo-arrow span {
+  width: 23px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(240,160,144,0.15), rgba(240,160,144,0.7));
+}
+
+.wo-arrow b {
+  margin-left: -1px;
+  font-size: 1.15rem;
+  font-weight: 400;
+}
+
+.wo-card {
+  position: relative;
+  width: 126px;
+}
+
+.wo-poster-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.wo-poster {
+  position: relative;
+  overflow: hidden;
+  width: 126px;
+  aspect-ratio: 2 / 3;
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 12px;
+  background: #100d0c;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.34);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.wo-poster img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.wo-poster-link:active .wo-poster {
+  transform: scale(0.97);
+}
+
+.wo-card-current .wo-poster {
+  border-color: var(--color-accent);
+  box-shadow:
+    0 0 0 2px rgba(240,160,144,0.16),
+    0 12px 30px rgba(0,0,0,0.45),
+    0 0 24px rgba(240,160,144,0.14);
+}
+
+.wo-here {
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  bottom: 7px;
+  padding: 5px 6px;
+  border: 1px solid rgba(240,160,144,0.3);
+  border-radius: 7px;
+  background: rgba(7,6,5,0.82);
+  color: var(--color-accent);
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+  backdrop-filter: blur(7px);
+}
+
+.wo-index {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,0.13);
+  border-radius: 50%;
+  background: rgba(5,4,4,0.76);
+  color: rgba(255,255,255,0.78);
+  font-size: 0.55rem;
+  font-weight: 700;
+  backdrop-filter: blur(7px);
+}
+
+.wo-relation {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 7px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 99px;
+  color: #b8e0c4;
+  background: rgba(143,212,160,0.07);
+  font-size: 0.52rem;
+  font-weight: 750;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.wo-title {
+  margin-top: 6px;
+  color: var(--color-text);
+  font-size: 0.73rem;
+  font-weight: 650;
+  line-height: 1.28;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.wo-meta {
+  margin-top: 3px;
+  color: var(--color-text-muted);
+  font-size: 0.61rem;
+}
+
+.wo-side-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.wo-side-grid .wo-card-wrap {
+  min-width: 0;
+  align-items: flex-start;
+}
+
+.wo-side-grid .wo-arrow {
+  display: none;
+}
+
+.wo-side-grid .wo-card {
+  width: 100%;
+}
+
+.wo-side-grid .wo-poster {
+  width: 100%;
+}
+
+.wo-card-accent .wo-relation {
+  color: #e7c57e;
+  background: rgba(231,197,126,0.07);
+  border-color: rgba(231,197,126,0.2);
+}
+
+.wo-empty {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  padding: 18px 15px 21px;
+}
+
+.wo-empty p {
+  margin-top: 5px;
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+@keyframes wo-enter {
+  from {
+    opacity: 0;
+    transform: translateX(10px) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+@media (min-width: 640px) {
+  .wo-main,
+  .wo-side {
+    padding: 21px 18px 23px;
+  }
+
+  .wo-card {
+    width: 144px;
+  }
+
+  .wo-poster {
+    width: 144px;
+  }
+
+  .wo-side-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wo-card-wrap {
+    animation: none;
+  }
+
+  .wo-poster {
+    transition: none;
+  }
+}
