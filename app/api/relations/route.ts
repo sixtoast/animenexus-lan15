@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   try {
     if (deep) {
       const graph = await fetchAncestryGraph(id, {
-        hopRecLimit: 5,
+        hopRecLimit: 0,
         maxNodes: 36,
       });
       return NextResponse.json(buildNexusGraph(id, graph.nodes, graph.edges));
