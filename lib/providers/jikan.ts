@@ -296,3 +296,82 @@ export async function fetchJikanFullAnime(
     CACHE_TTL.medium,
   );
 }
+
+
+export type JikanRelation = {
+  malId: number;
+  relation: string;
+  title: string;
+  url?: string;
+};
+
+export type JikanAired = {
+  from?: string | null;
+  to?: string | null;
+};
+
+export type JikanFranchiseEnrichment = {
+  malId: number;
+  aired: JikanAired;
+  relations: JikanRelation[];
+};
+
+/**
+ * Franchise-focused Jikan enrichment.
+ * Jikan mirrors MyAnimeList's explicit related-work buckets, which are useful
+ * as a second opinion for release/chronology and side-story classification.
+ */
+export async function fetchJikanFranchiseEnrichment(
+  malId: number,
+): Promise<JikanFranchiseEnrichment | null> {
+  if (!malId || malId < 1) return null;
+  const key = cacheKey(["jikan", "franchise", malId]);
+  return dedupedFetch(
+    key,
+    async () => {
+      try {
+        const json = await jikanGet<{
+          data?: {
+            mal_id?: number;
+            aired?: { from?: string | null; to?: string | null };
+            relations?: {
+              relation?: string;
+              entry?: {
+                mal_id?: number;
+                name?: string;
+                url?: string;
+              }[];
+            }[];
+          };
+        }>(`/anime/${malId}/full`);
+        const d = json?.data;
+        if (!d?.mal_id) return null;
+        const relations: JikanRelation[] = [];
+        for (const group of d.relations || []) {
+          const relation = String(group.relation || "").trim();
+          if (!relation) continue;
+          for (const entry of group.entry || []) {
+            if (!entry?.mal_id) continue;
+            relations.push({
+              malId: entry.mal_id,
+              relation,
+              title: entry.name || `MAL #${entry.mal_id}`,
+              url: entry.url,
+            });
+          }
+        }
+        return {
+          malId: d.mal_id,
+          aired: {
+            from: d.aired?.from,
+            to: d.aired?.to,
+          },
+          relations,
+        };
+      } catch {
+        return null;
+      }
+    },
+    CACHE_TTL.medium,
+  );
+}
