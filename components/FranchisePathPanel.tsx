@@ -87,7 +87,7 @@ function relationLabel(node: FranchiseNode) {
 }
 
 function layoutNodes(plan: RemotePlan | FranchisePlan, centerId: number): LayoutNode[] {
-  const graphNodes = plan.graph?.nodes;
+  const graphNodes = "graph" in plan ? plan.graph?.nodes : undefined;
   const source = graphNodes?.length
     ? graphNodes.map((n) => ({
         id: n.id,
