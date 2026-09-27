@@ -229,7 +229,7 @@ export function playTransitionSound(
   phase: TransitionSoundPhase,
 ): void {
   const cue = kind === "navigation"
-    ? phase === "depart" ? "nav_tick" : "ui_confirm"
+    ? phase === "depart" ? "nav_tick" : "ui_tap"
     : kind === "watchlist"
       ? "seal"
       : kind === "franchise"
