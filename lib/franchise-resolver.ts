@@ -19,7 +19,7 @@ export type FranchiseNode = {
 };
 
 export type FranchisePath = {
-  id: "release" | "chronological" | "main_story" | "completion";
+  id: "release" | "chronological" | "main_story" | "completion" | "easter_eggs";
   label: string;
   nodes: FranchiseNode[];
   /** When relation graph is thin or contradictory */
@@ -45,8 +45,6 @@ const SIDE_EDGE = new Set([
   "SIDE_STORY",
   "SPIN_OFF",
   "ALTERNATIVE",
-  "OTHER",
-  "CHARACTER",
 ]);
 
 // Only these AniList relation types describe works that belong in a watch-order
@@ -250,6 +248,19 @@ export function resolveFranchiseGraph(opts: {
 
   const allowedIds = new Set<number>([center.id!]);
   const relationFromRoot = new Map<number, string>();
+
+  // Easter eggs are root-level leaves. They are visible, but never become
+  // traversal roots, so a shared-character/OTHER link cannot pull in another
+  // franchise's branches.
+  for (const e of official) {
+    const type = normalizeRelationType(e.label || "OTHER");
+    if (!["CHARACTER", "OTHER"].includes(type)) continue;
+    const other = e.from === center.id ? e.to : e.to === center.id ? e.from : null;
+    if (other == null || !map.has(other)) continue;
+    allowedIds.add(other);
+    relationFromRoot.set(other, type);
+  }
+
   const queue = [center.id!];
 
   while (queue.length) {
@@ -274,7 +285,9 @@ export function resolveFranchiseGraph(opts: {
         relationFromCenter: relationFromRoot.get(n.id!) || n.relationFromCenter,
       }))],
   );
-  const release = [...all].sort(byRelease);
+  const storyNodes = all.filter((n) => n.id === center.id || map.get(n.id!)?.layer !== "easter_egg");
+  const easterEggNodes = all.filter((n) => n.id != null && map.get(n.id!)?.layer === "easter_egg");
+  const release = [...storyNodes].sort(byRelease);
   const mainIds = new Set<number>([center.id!]);
   const queue = [center.id!];
 
@@ -287,16 +300,16 @@ export function resolveFranchiseGraph(opts: {
       const next = e.from === current ? e.to : e.from;
       if (allowedIds.has(next) && map.has(next) && !mainIds.has(next)) {
         mainIds.add(next);
-        queue.push(next);
+        mainQueue.push(next);
       }
     }
   }
 
-  const mainNodes = all.filter((n) => n.id != null && mainIds.has(n.id));
+  const mainNodes = storyNodes.filter((n) => n.id != null && mainIds.has(n.id));
   const main = orderByConstraints(mainNodes, official);
-  const story = orderByConstraints(all, official);
+  const story = orderByConstraints(storyNodes, official);
   const incomplete = main.length !== mainNodes.length || main.length <= 1;
-  const chronologyUncertain = story.length !== all.length || hasCycle(all, official);
+  const chronologyUncertain = story.length !== storyNodes.length || hasCycle(storyNodes, official);
 
   return {
     center,
@@ -322,6 +335,15 @@ export function resolveFranchiseGraph(opts: {
           : "Uses explicit prequel/sequel/parent constraints; release dates break ties.",
       },
       {
+        id: "easter_eggs",
+        label: "Easter eggs",
+        nodes: [center, ...easterEggNodes],
+        uncertain: easterEggNodes.length === 0,
+        note: easterEggNodes.length
+          ? "Shared-character and other weak links. These are leaves only and never spawn branches."
+          : "No root-level Easter egg links were reported.",
+      },
+      {
         id: "main_story",
         label: "Main story",
         nodes: main,
@@ -333,9 +355,9 @@ export function resolveFranchiseGraph(opts: {
       {
         id: "completion",
         label: "Full franchise",
-        nodes: release,
+        nodes: [...release, ...easterEggNodes],
         uncertain: release.length <= 1,
-        note: "Includes all connected official works currently known.",
+        note: "Includes story-connected works; Easter eggs remain leaf nodes.",
       },
     ],
   };
