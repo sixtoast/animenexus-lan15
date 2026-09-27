@@ -1263,3 +1263,21 @@ html[data-motion-route="anime-detail"][data-motion-origin="node"]::view-transiti
     transition:none;
   }
 }
+
+
+/* Mobile GPU guardrail: preserve the field's identity with transforms and
+   opacity, while avoiding filter work across the full orbit on small devices. */
+@media (max-width: 700px) and (prefers-reduced-motion: no-preference) {
+  .nexus-world-map.is-ai-pulsing .nexus-world-node-orbit-motion,
+  .nexus-world-map.nexus-world-map--mood.is-ai-pulsing .nexus-world-node-orbit-motion,
+  .nexus-world-map.nexus-world-map--recommendations.is-ai-pulsing .nexus-world-node-orbit-motion,
+  .nexus-world-map.nexus-world-map--watchlist.is-ai-pulsing .nexus-world-node-orbit-motion,
+  .nexus-world-map.nexus-world-map--franchise.is-ai-pulsing .nexus-world-node-orbit-motion,
+  .nexus-world-map.nexus-world-map--artwork.is-ai-pulsing .nexus-world-node-orbit-motion,
+  .nexus-world-map.nexus-world-map--watch-order.is-ai-pulsing .nexus-world-node-orbit-motion {
+    filter: none;
+  }
+  .nexus-world-map.is-ai-pulsing .nexus-world-node.is-ai-reweighted {
+    will-change: transform;
+  }
+}
