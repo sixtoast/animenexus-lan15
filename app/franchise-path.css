@@ -744,3 +744,13 @@
   font-style: normal;
   max-width: 180px;
 }
+
+
+.franchise-path__route-card em {
+  display: block;
+  margin-top: 4px;
+  color: rgba(240, 160, 144, 0.82);
+  font-size: 0.58rem;
+  line-height: 1.25;
+  font-style: normal;
+}
