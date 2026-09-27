@@ -13,7 +13,7 @@ type Props = {
   relations: AnimeRelation[];
 };
 
-const SIDE = new Set(["SPIN_OFF", "ALTERNATIVE", "SUMMARY", "OTHER", "CHARACTER"]);
+const SIDE = new Set(["SIDE_STORY", "SPIN_OFF"]);\nconst WATCH_RELATIONS = new Set(["PREQUEL", "PARENT", "SEQUEL", "FULL_STORY", "SIDE_STORY", "SPIN_OFF"]);\n\nfunction isWatchRelation(type?: string) {\n  return WATCH_RELATIONS.has((type || "").toUpperCase());\n}
 
 function labelType(t: string) {
   return t.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
@@ -84,13 +84,13 @@ export function AncestryGraph({
   centerYear,
   relations: initial,
 }: Props) {
-  const [relations, setRelations] = useState<AnimeRelation[]>(\n    (initial || []).filter((r) => (r.relationType || "").toUpperCase() !== "RECOMMENDED"),\n  );
+  const [relations, setRelations] = useState<AnimeRelation[]>(\n    (initial || []).filter((r) => isWatchRelation(r.relationType)),\n  );
   const [loading, setLoading] = useState(false);
   const [showFlat, setShowFlat] = useState(true);
 
   useEffect(() => {
     if (initial?.length) {
-      setRelations(initial.filter((r) => (r.relationType || "").toUpperCase() !== "RECOMMENDED"));
+      setRelations(initial.filter((r) => isWatchRelation(r.relationType)));
       return;
     }
     let cancelled = false;
@@ -121,7 +121,7 @@ export function AncestryGraph({
     }));
   }, [relations]);
 
-  const { timeline, sideOrbit, recommended } = useMemo(() => {
+  const { timeline, sideOrbit } = useMemo(() => {
     const prequels: AnimeRelation[] = [];
     const sequels: AnimeRelation[] = [];
     const sides: AnimeRelation[] = [];
@@ -181,7 +181,7 @@ export function AncestryGraph({
     (r) => (r.relationType || "").toUpperCase() !== "RECOMMENDED",
   ).length;
 
-  const showMap = relations.length > 0 || loading;
+  const showMap = !showFlat && (relations.length > 0 || loading);
 
   return (
     <section className="detail-section ancestry-section" id="ancestry">
