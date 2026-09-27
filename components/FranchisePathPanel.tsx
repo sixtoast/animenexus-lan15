@@ -62,7 +62,7 @@ function branchKind(node: FranchiseNode & { image?: string }): BranchKind {
   if ([ "SUMMARY", "COMPILATION" ].includes(relation)) return "recap";
   if (format === "MOVIE") return "film";
   if ([ "OVA", "SPECIAL", "ONA" ].includes(format)) return "satellite";
-  if ([ "SIDE_STORY", "SPIN_OFF", "CHARACTER" ].includes(relation)) return "distant";
+  if ([ "SIDE_STORY", "SPIN_OFF", "CHARACTER", "OTHER", "SAME_UNIVERSE" ].includes(relation)) return "distant";
   return "uncertain";
 }
 
@@ -82,6 +82,8 @@ function relationLabel(node: FranchiseNode) {
     ALTERNATIVE: "ALTERNATIVE",
     SUMMARY: "RECAP",
     CHARACTER: "CHARACTER",
+    OTHER: "EASTER EGG",
+    SAME_UNIVERSE: "EASTER EGG",
   };
   return labels[relation] || (node.format ? String(node.format).replace(/_/g, " ") : "UNCERTAIN");
 }
