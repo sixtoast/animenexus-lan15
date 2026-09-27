@@ -64,7 +64,7 @@ export type AnimeRelation = {
 /** Graph node for ancestry constellation */
 export type GraphNode = AnimeRelation & {
   depth?: number;
-  layer?: "official" | "recommended";
+  layer?: "official" | "recommended" | "easter_egg";
 };
 
 export type GraphEdge = {
