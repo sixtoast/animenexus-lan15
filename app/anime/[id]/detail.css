@@ -365,3 +365,29 @@ body:has(.detail-cover-material.artwork-role--promotional) {
   .detail-cover-material.is-artwork-transitioning:before{animation:none}
   .detail-cover-material__previous{display:none}
 }
+
+
+/* Semantic detail-page choreography: the artwork is the source event, while
+   hero, metadata and atmosphere resolve in sequence. */
+.detail-artwork-aware .detail-hero,
+.detail-artwork-aware .detail-info,
+.detail-artwork-aware .detail-wrap{--detail-choreo-ease:cubic-bezier(.16,1,.3,1)}
+.detail-artwork-aware.is-artwork-transitioning .detail-hero [data-artwork-transition-target],
+.detail-artwork-aware.is-artwork-transitioning [data-artwork-transition-target]{animation:detail-page-artwork-resolve .72s var(--detail-choreo-ease) both}
+.detail-artwork-aware.is-artwork-transitioning .detail-info{animation-delay:.11s}
+.detail-artwork-aware.is-artwork-transitioning .detail-wrap{animation:detail-page-atmosphere-resolve .92s var(--detail-choreo-ease) both}
+@keyframes detail-page-artwork-resolve{
+  0%{opacity:.82;transform:translateY(9px)}
+  52%{opacity:1;transform:translateY(-1px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+@keyframes detail-page-atmosphere-resolve{
+  0%{filter:saturate(.86)}
+  55%{filter:saturate(1.035)}
+  100%{filter:saturate(1)}
+}
+@media(prefers-reduced-motion:reduce){
+  .detail-artwork-aware.is-artwork-transitioning .detail-hero [data-artwork-transition-target],
+  .detail-artwork-aware.is-artwork-transitioning [data-artwork-transition-target],
+  .detail-artwork-aware.is-artwork-transitioning .detail-wrap{animation:none}
+}
