@@ -423,11 +423,15 @@ export async function retrieveAnimeCandidates(
     // cannot dictate the displayed Fusion score.
     for (const rec of candidates) {
       try {
-        const resolved = getBestAvailableFingerprint(rec.anime);
-        rec.fingerprint = resolved.fingerprint;
+        // Force-refresh here: the first discovery pass may have cached a
+        // sparse provider fingerprint before hydration supplied full metadata.
+        const refreshed = buildEnrichedFingerprint(rec.anime, {
+          forceRefresh: true,
+        });
+        rec.fingerprint = refreshed;
         rec.semanticSimilarity = compareFingerprints(
           opts.targetFingerprint,
-          resolved.fingerprint,
+          refreshed,
         ).similarity;
       } catch {
         /* retain the retrieval score */
