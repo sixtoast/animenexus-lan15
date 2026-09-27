@@ -457,40 +457,53 @@ img {
 }
 
 
-/* AI desk: own the scroll surface and stay clear of the mobile navigation dock. */
+/* AI desk: isolate scrolling to the conversation viewport. */
+.ai-panel-modal {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .ai-panel-modal .nx-modal-body {
   min-height: 0;
   flex: 1 1 auto;
   overflow: hidden;
-  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
+  overscroll-behavior: contain;
 }
 
 .ai-panel-inner {
   min-height: 0;
   height: 100%;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.ai-messages {
+  min-height: 0;
+  flex: 1 1 auto;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   scrollbar-gutter: stable;
-  padding-bottom: 2px;
+  padding-bottom: 8px;
 }
 
-.ai-messages {
+.ai-quick {
   flex: 0 0 auto;
-  min-height: 0;
-  overflow: visible;
+  overflow-x: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ai-compose {
   flex: 0 0 auto;
-  position: sticky;
-  bottom: 0;
+  position: relative;
   z-index: 2;
   padding: 10px 0 max(4px, env(safe-area-inset-bottom, 0px));
   background: var(--color-primary);
@@ -506,17 +519,21 @@ img {
     z-index: 1;
   }
 
-  .ai-panel-modal .nx-modal-panel {
+  .ai-panel-modal {
     height: calc(100dvh - var(--dock-h, 64px) - env(safe-area-inset-bottom, 0px));
     max-height: calc(100dvh - var(--dock-h, 64px) - env(safe-area-inset-bottom, 0px));
-    min-height: 0;
     margin-bottom: calc(var(--dock-h, 64px) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .ai-panel-modal .nx-modal-panel {
+    min-height: 0;
   }
 
   .ai-panel-modal .nx-modal-body {
     min-height: 0;
     height: auto;
     flex: 1 1 auto;
+    overflow: hidden;
   }
 
   .ai-compose {
