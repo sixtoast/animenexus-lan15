@@ -11,7 +11,7 @@ import { CreativeRuntimeProvider } from "@/components/CreativeRuntimeProvider";
 import { ToastProvider } from "@/components/ToastProvider";
 import { SoundProvider } from "@/components/SoundProvider";
 import { ScrollProgress } from "@/components/ScrollProgress";
-import { AIPanel } from "@/components/AIPanel";
+import { AIPanelLazy } from "@/components/AIPanelLazy";
 import { CommandPalette } from "@/components/CommandPalette";
 import { PwaRegister } from "@/components/PwaRegister";
 import { SessionTools } from "@/components/SessionTools";
@@ -206,7 +206,7 @@ export default function RootLayout({
                       <MascotErrorBoundary>
                         <MascotHost />
                       </MascotErrorBoundary>
-                      <AIPanel />
+                      <AIPanelLazy />
                       <CommandPalette />
                       <SessionTools />
                       <ConfettiHost />
