@@ -218,6 +218,7 @@ export function AncestryGraph({
           .map((r) => ({
             id: r.id,
             title: r.title,
+            image: r.image,
             year: r.year == null ? undefined : Number(r.year),
             format: r.format,
             relationFromCenter: watchType(r.relationType),
