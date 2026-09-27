@@ -60,6 +60,7 @@ export function DetailCoverMaterial({
         document.documentElement.style.setProperty("--detail-artwork-role", role);
         document.documentElement.style.setProperty("--detail-artwork-image", `url("${detail.url || anime.image}")`);
         document.documentElement.style.setProperty("--detail-artwork-accent", detail.url ? "1" : "0");
+        window.dispatchEvent(new CustomEvent("animenexus:detail-artwork-transition", { detail: { animeId: anime.id, role, url: detail.url || anime.image } }));
       }
     };
     window.addEventListener(COVER_EVENT, onArtworkSelected);
