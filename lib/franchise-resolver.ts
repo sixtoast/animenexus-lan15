@@ -226,17 +226,54 @@ export function resolveFranchiseGraph(opts: {
     format: n.format,
     relationFromCenter: n.relationType,
   } as FranchiseNode]));
-  const official = edges.filter(
-    (e) =>
-      e.kind === "official" &&
-      WATCH_EDGE.has(normalizeRelationType(e.label || "OTHER")),
+  // Build the watchable franchise from the ROOT outward. A node is only
+  // eligible when it is reached through a watchable edge. This is important
+  // because AniList can connect unrelated works through CHARACTER/OTHER
+  // relations, and those nodes can themselves have valid-looking SEQUEL edges.
+  // Filtering node.relationType alone would therefore leak unrelated franchises.
+  const official = edges.filter((e) => e.kind === "official");
+  const watchEdges = official.filter((e) =>
+    WATCH_EDGE.has(normalizeRelationType(e.label || "OTHER")),
   );
-  const watchNodes = [...map.values()].filter(
-    (n) =>
-      n.id !== center.id &&
-      WATCH_EDGE.has(normalizeRelationType(n.relationFromCenter || "OTHER")),
+  const adjacency = new Map<number, Array<{ id: number; type: string }>>();
+  const addAdjacency = (from: number, to: number, type: string) => {
+    if (!adjacency.has(from)) adjacency.set(from, []);
+    const list = adjacency.get(from)!;
+    if (!list.some((x) => x.id === to && x.type === type)) list.push({ id: to, type });
+  };
+
+  for (const e of watchEdges) {
+    const type = normalizeRelationType(e.label || "OTHER");
+    addAdjacency(e.from, e.to, type);
+    addAdjacency(e.to, e.from, type);
+  }
+
+  const allowedIds = new Set<number>([center.id!]);
+  const relationFromRoot = new Map<number, string>();
+  const queue = [center.id!];
+
+  while (queue.length) {
+    const current = queue.shift()!;
+    for (const next of adjacency.get(current) || []) {
+      if (!map.has(next.id) && next.id !== center.id) continue;
+      if (!allowedIds.has(next.id)) {
+        allowedIds.add(next.id);
+        queue.push(next.id);
+      }
+      if (current === center.id && !relationFromRoot.has(next.id)) {
+        relationFromRoot.set(next.id, next.type);
+      }
+    }
+  }
+
+  const all = dedupeNodes(
+    [center, ...[...map.values()]
+      .filter((n) => n.id != null && allowedIds.has(n.id))
+      .map((n) => ({
+        ...n,
+        relationFromCenter: relationFromRoot.get(n.id!) || n.relationFromCenter,
+      }))],
   );
-  const all = dedupeNodes([center, ...watchNodes]);
   const release = [...all].sort(byRelease);
   const mainIds = new Set<number>([center.id!]);
   const queue = [center.id!];
