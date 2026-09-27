@@ -1193,3 +1193,27 @@ html[data-motion-route="anime-detail"][data-motion-origin="watchlist"] .nexus-na
 .nexus-world-map.is-ai-pulsing .nexus-world-node:nth-child(5) { --ai-rank-lag: 105ms; }
 .nexus-world-map.is-ai-pulsing .nexus-world-node:nth-child(6) { --ai-rank-lag: 140ms; }
 .nexus-world-map.is-ai-pulsing .nexus-world-node:nth-child(7) { --ai-rank-lag: 175ms; }
+
+
+/* Discovery modes have distinct spatial identities while preserving one field. */
+.nexus-world-map.is-ai-pulsing .nexus-world-node-orbit-motion{
+  will-change:transform,filter;
+}
+.nexus-world-map.nexus-world-map--mood.is-ai-pulsing .nexus-world-node-orbit-motion{
+  filter:saturate(1.08);
+}
+.nexus-world-map.nexus-world-map--recommendations.is-ai-pulsing .nexus-world-node-orbit-motion{
+  filter:brightness(1.04) saturate(1.06);
+}
+.nexus-world-map.nexus-world-map--watchlist.is-ai-pulsing .nexus-world-node-orbit-motion{
+  filter:drop-shadow(0 0 8px rgba(242,179,95,.16));
+}
+.nexus-world-map.nexus-world-map--franchise.is-ai-pulsing .nexus-world-node-orbit-motion{
+  filter:drop-shadow(0 0 10px rgba(182,158,210,.16));
+}
+.nexus-world-map.nexus-world-map--artwork.is-ai-pulsing .nexus-world-node-orbit-motion{
+  filter:saturate(1.14) contrast(1.02);
+}
+.nexus-world-map.nexus-world-map--watch-order.is-ai-pulsing .nexus-world-node-orbit-motion{
+  filter:contrast(1.05);
+}
