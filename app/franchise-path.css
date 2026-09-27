@@ -732,3 +732,15 @@
     max-width: 145px;
   }
 }
+
+
+/* Relation evidence under isolated Easter-egg / optional nodes. */
+.franchise-path__node-copy em {
+  display: block;
+  margin-top: 4px;
+  color: rgba(240, 160, 144, 0.9);
+  font-size: 0.62rem;
+  line-height: 1.25;
+  font-style: normal;
+  max-width: 180px;
+}
