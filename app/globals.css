@@ -493,8 +493,12 @@ img {
 }
 
 @media (max-width: 640px) {
-  .ai-panel-modal {
+  .ai-panel-modal-overlay {
     z-index: calc(var(--z-ai-fab, 2600) + 20) !important;
+  }
+
+  .ai-panel-modal {
+    z-index: 1;
   }
 
   .ai-panel-modal .nx-modal-panel {
