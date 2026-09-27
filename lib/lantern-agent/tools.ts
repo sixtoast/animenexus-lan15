@@ -24,7 +24,7 @@ import { rankRecommendationsV3 } from "@/lib/intelligence/recommendation/ranker-
 import { fetchByGenres } from "@/lib/anilist-discover";
 import type { Anime, WatchlistEntry } from "@/lib/types";
 import { readIntentSession, readAiIntentOverlay } from "@/lib/intent-session";
-import { getExperienceIntent } from "@/lib/viewing-intent";
+import { getExperienceIntent, EXPERIENCE_INTENTS } from "@/lib/viewing-intent";
 
 export type ToolName =
   | "searchAnime"
