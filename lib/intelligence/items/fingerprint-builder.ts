@@ -85,9 +85,26 @@ function synopsisHints(text: string): DimPatch[] {
   const rules: [RegExp, string][] = [
     [/moral(?:ly)? ambiguous|anti-?hero|grey morality/, "psychological"],
     [/slow[- ]burn|gradually|over time/, "mystery"],
-    [/found family|bonds between/, "slice of life"],
-    [/political|government conspiracy|war between/, "mecha"],
-    [/psychological|identity|mind/, "psychological"],
+    [/found family|bonds between|crew|companions/, "slice of life"],
+    [/political|government conspiracy|war between|rebellion|revolution/, "politics"],
+    [/psychological|identity|mind|memory|trauma/, "psychological"],
+    [/detective|investigation|murder|serial killer|case/, "mystery"],
+    [/bounty hunter|space|spaceship|galaxy|planet|interstellar/, "sci-fi"],
+    [/cyberpunk|megacorp|dystopian|neon city/, "cyberpunk"],
+    [/samurai|swordsmanship|ronin|feudal|edo period/, "military"],
+    [/ninja|shinobi|assassin|stealth/, "military"],
+    [/magic|wizard|sorcer|spell|mana|mage/, "fantasy"],
+    [/demon|devil|exorc|occult|supernatural/, "supernatural"],
+    [/monster|creature|beast|kaiju/, "supernatural"],
+    [/school|academy|student|classroom/, "coming of age"],
+    [/tournament|competition|championship|battle royale/, "action"],
+    [/war|military|soldier|army|weapon|combat/, "military"],
+    [/mafia|gang|crime|criminal|yakuza|underworld/, "anti-hero"],
+    [/revenge|vengeance|aveng/, "tragedy"],
+    [/romantic|love story|relationship|couple|girlfriend|boyfriend/, "romance"],
+    [/comedy|comic relief|humorous|hilarious|parody/, "comedy"],
+    [/music|band|singer|concert|instrument/, "slice of life"],
+    [/survival|apocalypse|post-apocalyptic|zombie/, "horror"],
   ];
   for (const [re, label] of rules) {
     if (!re.test(t)) continue;
@@ -95,7 +112,7 @@ function synopsisHints(text: string): DimPatch[] {
     if (p) {
       out.push({
         ...p,
-        weight: p.weight * 0.45,
+        weight: p.weight * 0.55,
         source: "synopsis-heuristic",
       });
     }
