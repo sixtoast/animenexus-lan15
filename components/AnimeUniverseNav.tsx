@@ -11,10 +11,14 @@ const labels: Record<string,string> = {
   artwork:"Artwork", soundtrack:"Soundtrack", franchise:"Franchise", watch:"Watch", personal:"Yours",
 };
 
+const NAV_OFFSET = 92;
+
 export function AnimeUniverseNav() {
   const [active, setActive] = useState<UniverseSpace>(UNIVERSE_SPACES[0]);
   const [progress, setProgress] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
+  const programmaticScrollUntil = useRef(0);
+  const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const els = UNIVERSE_SPACES.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
@@ -35,10 +39,16 @@ export function AnimeUniverseNav() {
     };
 
     const observer = new IntersectionObserver((entries) => {
+      // A programmatic jump owns the active state until the smooth scroll settles.
+      // Without this guard, the outgoing Story section can win an intersection
+      // callback during the jump to Identity/Characters and fight the navigation.
+      if (performance.now() < programmaticScrollUntil.current) return;
+
       const visible = entries
         .filter((entry) => entry.isIntersecting)
         .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
       if (!visible) return;
+
       setActive(visible.target.id as UniverseSpace);
       const button = trackRef.current?.querySelector<HTMLButtonElement>(
         `button[data-space="${visible.target.id}"]`,
@@ -54,14 +64,31 @@ export function AnimeUniverseNav() {
       observer.disconnect();
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", updateProgress);
+      if (scrollTimer.current) clearTimeout(scrollTimer.current);
     };
   }, []);
 
   const jump = useCallback((id: UniverseSpace) => {
     const target = document.getElementById(id);
     if (!target) return;
+
     setActive(id);
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    // scrollIntoView() can interact badly with the sticky Universe nav and with
+    // nested/previously-open modal focus. Use an explicit document position so
+    // the destination is deterministic and cannot snap back to Story.
+    const top = Math.max(
+      0,
+      window.scrollY + target.getBoundingClientRect().top - NAV_OFFSET,
+    );
+
+    programmaticScrollUntil.current = performance.now() + 900;
+    if (scrollTimer.current) clearTimeout(scrollTimer.current);
+    scrollTimer.current = setTimeout(() => {
+      programmaticScrollUntil.current = 0;
+    }, 1000);
+
+    window.scrollTo({ top, behavior: "smooth" });
   }, []);
 
   useEffect(() => {
