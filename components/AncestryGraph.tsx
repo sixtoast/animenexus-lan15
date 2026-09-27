@@ -17,7 +17,12 @@ type Props = {
   relations: AnimeRelation[];
 };
 
-const SIDE = new Set(["SIDE_STORY", "SPIN_OFF"]);\nconst WATCH_RELATIONS = new Set(["PREQUEL", "PARENT", "SEQUEL", "FULL_STORY", "SIDE_STORY", "SPIN_OFF"]);\n\nfunction isWatchRelation(type?: string) {\n  return WATCH_RELATIONS.has((type || "").toUpperCase());\n}
+const SIDE = new Set(["SIDE_STORY", "SPIN_OFF"]);
+const WATCH_RELATIONS = new Set(["PREQUEL", "PARENT", "SEQUEL", "FULL_STORY", "SIDE_STORY", "SPIN_OFF"]);
+
+function isWatchRelation(type?: string) {
+  return WATCH_RELATIONS.has((type || "").toUpperCase());
+}
 
 function labelType(t: string) {
   return t.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
@@ -171,7 +176,7 @@ export function AncestryGraph({
     for (const r of relations) {
       const t = (r.relationType || "").toUpperCase();
       if (t === "PREQUEL" || t === "PARENT") prequels.push(r);
-      else if (t === "SEQUEL") sequels.push(r);
+      else if (t === "SEQUEL" || t === "FULL_STORY") sequels.push(r);
       else if (t === "SIDE_STORY") sides.push(r);
       else if (SIDE.has(t)) orbit.push(r);
       else if (t === "RECOMMENDED") recs.push(r);
