@@ -92,8 +92,8 @@ export function resolveFranchise(opts: {
         year: extra.year,
         format: extra.format,
         relationFromCenter: normalizeRelationType(r.relationType),
-        relationDetail: r.relationDetail,
-        relationEvidence: r.relationEvidence,
+        relationDetail: "relationDetail" in r ? r.relationDetail : undefined,
+        relationEvidence: "relationEvidence" in r ? r.relationEvidence : undefined,
       });
     } else if (r.externalTargetId) {
       related.push({
