@@ -75,7 +75,9 @@ export function NexusWorlds({ candidates }: Props) {
       if (!signal || signal.source !== "ai" || !claimNexusCommand(signal.id, "field")) return;
       const mode = signal.type === "focus"
         ? signal.target
-        : signal.payload.mode;
+        : signal.type === "filter"
+          ? signal.payload.mode
+          : "discovery";
       const valid: NexusFieldMode[] = [
         "discovery", "recommendations", "mood", "watchlist",
         "franchise", "artwork", "watch-order",
