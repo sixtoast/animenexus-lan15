@@ -274,8 +274,20 @@ export function NexusWorlds({ candidates }: Props) {
     field.addEventListener("pointerup", onDragEnd);
     field.addEventListener("pointercancel", onDragEnd);
 
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible" && !motionAbort && !raf) {
+        previousNow = performance.now();
+        raf = window.requestAnimationFrame(tick);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
     const tick = (now: number) => {
-      if (motionAbort || !inView || document.visibilityState === "hidden") return;
+      if (motionAbort || !inView) return;
+      if (document.visibilityState === "hidden") {
+        raf = 0;
+        return;
+      }
       const elapsed = now - started;
       const dt = Math.min(48, Math.max(8, now - previousNow));
       previousNow = now;
@@ -424,6 +436,7 @@ export function NexusWorlds({ candidates }: Props) {
       field.removeEventListener("pointerdown", onDragStart);
       field.removeEventListener("pointerup", onDragEnd);
       field.removeEventListener("pointercancel", onDragEnd);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [entered, inView, worlds.length]);
 
