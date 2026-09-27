@@ -63,9 +63,21 @@ export function DetailCoverMaterial({
         window.dispatchEvent(new CustomEvent("animenexus:detail-artwork-transition", { detail: { animeId: anime.id, role, url: detail.url || anime.image } }));
       }
     };
+    const onDetailArtworkTransition = (event: Event) => {
+      const detail = (event as CustomEvent<{ animeId?: number }>).detail;
+      if (detail?.animeId !== anime.id) return;
+      const page = document.querySelector(".detail-artwork-aware");
+      if (!page) return;
+      page.classList.remove("is-artwork-transitioning");
+      void (page as HTMLElement).offsetWidth;
+      page.classList.add("is-artwork-transitioning");
+      window.setTimeout(() => page.classList.remove("is-artwork-transitioning"), 980);
+    };
     window.addEventListener(COVER_EVENT, onArtworkSelected);
+    window.addEventListener("animenexus:detail-artwork-transition", onDetailArtworkTransition);
     return () => {
       window.removeEventListener(COVER_EVENT, onArtworkSelected);
+      window.removeEventListener("animenexus:detail-artwork-transition", onDetailArtworkTransition);
       document.documentElement.style.removeProperty("--detail-artwork-role");
       document.documentElement.style.removeProperty("--detail-artwork-image");
       document.documentElement.style.removeProperty("--detail-artwork-accent");
