@@ -17,6 +17,25 @@ type HomePoolContext = {
 
 const HomePoolCtx = createContext<HomePoolContext | null>(null);
 
+type PoolResponse = { data?: Anime[] };
+type PoolCacheEntry = { expires: number; promise: Promise<[PoolResponse, PoolResponse]> };
+const poolCache = new Map<string, PoolCacheEntry>();
+const POOL_CACHE_TTL = 30_000;
+
+function getPoolPair(
+  key: string,
+  request: () => Promise<[PoolResponse, PoolResponse]>,
+) {
+  const cached = poolCache.get(key);
+  if (cached && cached.expires > Date.now()) return cached.promise;
+  const promise = request().catch((error) => {
+    poolCache.delete(key);
+    throw error;
+  });
+  poolCache.set(key, { expires: Date.now() + POOL_CACHE_TTL, promise });
+  return promise;
+}
+
 function unique(list: Anime[]) {
   const seen = new Set<number>();
   return list.filter((a) => {
@@ -71,17 +90,46 @@ export function HomePersonalizedProvider({ children, initial, limit = 180 }: { c
 
   useEffect(() => {
     if (!ready) return;
-    let cancelled = false;
+    const controller = new AbortController();
+    const session = readIntentSession();
     const base = { entries: entries.slice(0, 200), maxPool: Math.max(limit, 160), perSource: 36 };
-    Promise.all([
-      fetch("/api/recommend/pool", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...base, experienceSlug: readIntentSession().slug || undefined }) }).then((r) => r.json()),
-      fetch("/api/recommend/pool", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...base, experienceSlug: "surprise" }) }).then((r) => r.json()),
-    ]).then(([normal, surprise]) => {
-      if (cancelled) return;
+    const key = JSON.stringify({
+      ids: base.entries.map((entry) => entry.id),
+      slug: session.slug || "",
+      intensity: session.intensity || "",
+      energy: session.energy || "",
+      attention: session.attention || "",
+      limit: base.maxPool,
+    });
+    getPoolPair(key, () =>
+      Promise.all([
+        fetch("/api/recommend/pool", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...base, experienceSlug: session.slug || undefined }),
+          signal: controller.signal,
+        }).then((r) => {
+          if (!r.ok) throw new Error(`recommendation pool failed: ${r.status}`);
+          return r.json() as Promise<PoolResponse>;
+        }),
+        fetch("/api/recommend/pool", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...base, experienceSlug: "surprise" }),
+          signal: controller.signal,
+        }).then((r) => {
+          if (!r.ok) throw new Error(`surprise pool failed: ${r.status}`);
+          return r.json() as Promise<PoolResponse>;
+        }),
+      ]),
+    ).then(([normal, surprise]) => {
+      if (controller.signal.aborted) return;
       if (Array.isArray(normal?.data) && normal.data.length) setRawPool(normal.data as Anime[]);
       if (Array.isArray(surprise?.data) && surprise.data.length) setRawSurprise(surprise.data as Anime[]);
-    }).catch(() => undefined);
-    return () => { cancelled = true; };
+    }).catch((error) => {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+    });
+    return () => controller.abort();
   }, [entries, ready, limit, intelligenceRevision]);
 
   const pool = useMemo(() => {
