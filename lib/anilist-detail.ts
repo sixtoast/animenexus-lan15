@@ -129,6 +129,19 @@ const DETAIL_FIELDS = `
   }
 `;
 
+const WATCH_GRAPH_RELATIONS = new Set([
+  "PREQUEL",
+  "SEQUEL",
+  "PARENT",
+  "FULL_STORY",
+  "SIDE_STORY",
+  "SPIN_OFF",
+]);
+
+function isWatchGraphRelation(value?: string): boolean {
+  return WATCH_GRAPH_RELATIONS.has((value || "").toUpperCase());
+}
+
 const NON_ANIME_TYPE = new Set(["MANGA", "NOVEL"]);
 
 type RelNode = {
@@ -481,6 +494,7 @@ export async function fetchAncestryGraph(
   const root = await fetchMediaLinks(rootId);
 
   for (const r of root.relations) {
+    if (!isWatchGraphRelation(r.relationType)) continue;
     if (addNode(r, 0, "official")) {
       addEdge(rootId, r.id, "official", r.relationType);
     }
@@ -491,10 +505,12 @@ export async function fetchAncestryGraph(
   // Expand the official franchise graph breadth-first.
   // only expanded recommendation nodes, which made "watch order" effectively one hop.
   const visited = new Set<number>([rootId]);
-  const queue: { id: number; depth: number }[] = root.relations.map((r) => ({
-    id: r.id,
-    depth: 1,
-  }));
+  const queue: { id: number; depth: number }[] = root.relations
+    .filter((r) => isWatchGraphRelation(r.relationType))
+    .map((r) => ({
+      id: r.id,
+      depth: 1,
+    }));
 
   while (queue.length && nodeMap.size < maxNodes) {
     const { id: currentId, depth } = queue.shift()!;
@@ -509,6 +525,7 @@ export async function fetchAncestryGraph(
     }
 
     for (const r of links.relations) {
+      if (!isWatchGraphRelation(r.relationType)) continue;
       if (r.id === rootId) {
         addEdge(currentId, r.id, "official", r.relationType);
         continue;
