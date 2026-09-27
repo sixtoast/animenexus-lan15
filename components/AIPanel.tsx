@@ -385,6 +385,7 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
             </Button>
           </>
         }
+        className="ai-panel-modal-overlay"
         panelClassName="ai-panel-modal"
       >
         <div className="ai-panel-inner">
