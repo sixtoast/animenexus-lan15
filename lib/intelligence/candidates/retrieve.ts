@@ -6,7 +6,6 @@ import type { Anime } from "@/lib/types";
 import { identityFromAnime, ensureNexusId } from "@/lib/anime-identity";
 import {
   findSemanticNeighbours,
-  indexFingerprint,
   type SemanticNeighbour,
 } from "./semantic-index";
 import type { AnimePreferenceFingerprint } from "@/lib/intelligence/items/anime-preference-fingerprint";
