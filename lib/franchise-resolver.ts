@@ -15,6 +15,9 @@ export type FranchiseNode = {
   image?: string;
   year?: number;
   format?: string;
+  idMal?: number | null;
+  airedFrom?: string | null;
+  airedTo?: string | null;
   relationFromCenter?: string;
   /** Human-readable explanation for a relation, especially Easter eggs. */
   relationDetail?: string;
@@ -228,6 +231,9 @@ export function resolveFranchiseGraph(opts: {
     image: n.image,
     year: n.year == null ? undefined : Number(n.year),
     format: n.format,
+    idMal: n.idMal,
+    airedFrom: n.airedFrom,
+    airedTo: n.airedTo,
     relationFromCenter: n.relationType,
     relationDetail: n.relationDetail,
     relationEvidence: n.relationEvidence,
@@ -344,7 +350,9 @@ export function resolveFranchiseGraph(opts: {
         uncertain: chronologyUncertain,
         note: chronologyUncertain
           ? "Provider relations do not establish a complete story chronology."
-          : "Uses explicit prequel/sequel/parent constraints; release dates break ties.",
+          : story.some((n) => n.airedFrom)
+            ? "Uses explicit story relations, with provider airing dates as chronological evidence."
+            : "Uses explicit prequel/sequel/parent constraints; release years break ties.",
       },
       {
         id: "easter_eggs",
@@ -375,7 +383,17 @@ export function resolveFranchiseGraph(opts: {
   };
 }
 
+function chronologyTimestamp(node: FranchiseNode): number | null {
+  const raw = node.airedFrom;
+  if (!raw) return null;
+  const time = Date.parse(raw);
+  return Number.isFinite(time) ? time : null;
+}
+
 function byRelease(a: FranchiseNode, b: FranchiseNode) {
+  const ta = chronologyTimestamp(a);
+  const tb = chronologyTimestamp(b);
+  if (ta != null && tb != null && ta !== tb) return ta - tb;
   return (a.year ?? 9999) - (b.year ?? 9999) || a.title.localeCompare(b.title);
 }
 
