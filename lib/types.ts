@@ -59,6 +59,11 @@ export type AnimeRelation = {
   image?: string;
   year?: number | null;
   score?: number | null;
+  /** MyAnimeList identifier when AniList exposes the mapping. */
+  idMal?: number | null;
+  /** Provider-backed full-airing dates used for chronology enrichment. */
+  airedFrom?: string | null;
+  airedTo?: string | null;
   /** Human-readable evidence for weak/isolated franchise links. */
   relationDetail?: string;
   relationEvidence?: string[];
