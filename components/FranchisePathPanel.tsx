@@ -82,9 +82,9 @@ function relationLabel(node: FranchiseNode) {
     SPIN_OFF: "SPIN-OFF",
     ALTERNATIVE: "ALTERNATIVE",
     SUMMARY: "RECAP",
-    CHARACTER: "CHARACTER",
-    OTHER: "EASTER EGG",
-    SAME_UNIVERSE: "SAME UNIVERSE",
+    CHARACTER: "CHARACTER EASTER EGG",
+    OTHER: "EASTER EGG · OTHER",
+    SAME_UNIVERSE: "EASTER EGG · SAME UNIVERSE",
   };
   return labels[relation] || (node.format ? String(node.format).replace(/_/g, " ") : "UNCERTAIN");
 }
@@ -364,6 +364,7 @@ export function FranchisePathPanel({
                   <b>{isCenter ? "NOW" : index + 1}</b>
                   <strong>{node.title}</strong>
                   <small>{isCenter ? phase : phase + " - " + relationLabel(node)}</small>
+                  {!isCenter && node.relationDetail ? <em>{node.relationDetail}</em> : null}
                 </span>
                 {index < active.nodes.length - 1 ? <i aria-hidden>→</i> : null}
               </span>
