@@ -146,6 +146,7 @@ export function ArtworkGallery({ assets, animeId, sourceNote, animeImage, banner
               <span>{selectedRole === "alternate-art" ? "Alternate key visual is shaping this title's atmosphere." : "Custom key art selected for this device."}</span>
               <button type="button" className="btn btn-outline btn-sm" onClick={clearCover}>Restore catalog cover</button>
             </div>
+            </>
           ) : null}
           <div className="artwork-gallery__index" aria-label="Artwork categories">
             {groups.map((group) => (
