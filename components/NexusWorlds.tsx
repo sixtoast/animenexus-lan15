@@ -95,7 +95,7 @@ export function NexusWorlds({ candidates }: Props) {
                 franchise: "Franchise space focused",
                 artwork: "Artwork space focused",
                 "watch-order": "Watch order space focused",
-              } as Record<NexusFieldMode, string>)[signal.target];
+              } as Record<NexusFieldMode, string>)[signal.target]
             : null;
       if (label) setCommandLabel(label);
       if (signal.type === "filter" || signal.type === "focus" || signal.type === "travel") {
