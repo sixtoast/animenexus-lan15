@@ -17,7 +17,52 @@ type Props = {
   relations: AnimeRelation[];
 };
 
-const SIDE = new Set(["SPIN_OFF", "ALTERNATIVE", "SUMMARY", "OTHER", "CHARACTER"]);
+type WatchNode = {
+  id?: number;
+  title: string;
+  image?: string;
+  year?: number | string | null;
+  format?: string;
+  relationFromCenter?: string;
+};
+
+type WatchPath = {
+  id: "release" | "chronological" | "main_story" | "completion";
+  label: string;
+  nodes: WatchNode[];
+  uncertain: boolean;
+  note?: string;
+};
+
+type WatchPlan = {
+  center: WatchNode;
+  paths: WatchPath[];
+  relationCount: number;
+};
+
+const WATCH_RELATIONS = new Set([
+  "SEQUEL",
+  "PREQUEL",
+  "PARENT",
+  "FULL_STORY",
+  "SIDE_STORY",
+  "SPIN_OFF",
+]);
+
+const MAIN_RELATIONS = new Set([
+  "SEQUEL",
+  "PREQUEL",
+  "PARENT",
+  "FULL_STORY",
+]);
+
+function isWatchRelation(relationType?: string) {
+  return WATCH_RELATIONS.has((relationType || "").toUpperCase());
+}
+
+function isMainRelation(relationType?: string) {
+  return MAIN_RELATIONS.has((relationType || "").toUpperCase());
+}
 
 function labelType(t: string) {
   return t.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase());
@@ -29,7 +74,6 @@ function badgeClass(t: string) {
   if (u === "PREQUEL" || u === "PARENT") return "ab-prequel";
   if (u === "SIDE_STORY") return "ab-side";
   if (u === "SPIN_OFF") return "ab-spin";
-  if (u === "RECOMMENDED") return "ab-rec";
   return "ab-other";
 }
 
@@ -53,7 +97,6 @@ function PosterCard({
   const body = (
     <>
       <div className="ab-poster">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={image || "https://placehold.co/200x300/1a1a1a/555?text=?"}
           alt=""
@@ -74,9 +117,16 @@ function PosterCard({
   if (current || !href) {
     return <div className={"ab-card" + (current ? " ab-current" : "")}>{body}</div>;
   }
-  return <AncestryLink href={href} title={title} objectId={href.split("/").pop() || ""}>{body}</AncestryLink>;
+  return (
+    <AncestryLink
+      href={href}
+      title={title}
+      objectId={href.split("/").pop() || ""}
+    >
+      {body}
+    </AncestryLink>
+  );
 }
-
 
 function AncestryLink({
   href,
@@ -96,10 +146,18 @@ function AncestryLink({
       className="ab-card"
       data-motion-origin="node"
       onClick={(event) => {
-        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+        if (
+          event.metaKey ||
+          event.ctrlKey ||
+          event.shiftKey ||
+          event.altKey ||
+          event.button !== 0
+        )
+          return;
         event.preventDefault();
         const rect = event.currentTarget.getBoundingClientRect();
-        const spatialX = ((rect.left + rect.width / 2) / Math.max(window.innerWidth, 1)) * 2 - 1;
+        const spatialX =
+          ((rect.left + rect.width / 2) / Math.max(window.innerWidth, 1)) * 2 - 1;
         playInteractionSound("franchise", { gain: 0.72 });
         playSpatialTravel(spatialX, 0.28);
         withViewTransition(
@@ -117,6 +175,62 @@ function AncestryLink({
     </Link>
   );
 }
+
+function WatchCard({
+  node,
+  index,
+  centerId,
+  accent,
+}: {
+  node: WatchNode;
+  index: number;
+  centerId: number;
+  accent?: boolean;
+}) {
+  const current = node.id === centerId;
+  const relation = node.relationFromCenter?.toUpperCase();
+
+  return (
+    <div className={"wo-card-wrap" + (accent ? " wo-card-accent" : "")}>
+      {index > 0 ? (
+        <div className="wo-arrow" aria-hidden>
+          <span />
+          <b>›</b>
+        </div>
+      ) : null}
+      <div className={"wo-card" + (current ? " wo-card-current" : "")}>
+        {node.id != null ? (
+          <Link
+            href={current ? "#" : "/anime/" + node.id}
+            className="wo-poster-link"
+            aria-label={current ? node.title : "Open " + node.title}
+            onClick={(event) => {
+              if (current) event.preventDefault();
+            }}
+          >
+            <div className="wo-poster">
+              <img
+                src={node.image || "https://placehold.co/220x330/1a1a1a/555?text=?"}
+                alt=""
+                loading="lazy"
+              />
+              {current ? <span className="wo-here">YOU ARE HERE</span> : null}
+            </div>
+          </Link>
+        ) : null}
+        <div className="wo-index">{String(index + 1).padStart(2, "0")}</div>
+        {relation && !current ? (
+          <span className="wo-relation">{labelType(relation)}</span>
+        ) : null}
+        <div className="wo-title">{node.title}</div>
+        <div className="wo-meta">
+          {[node.format, node.year ? String(node.year) : null].filter(Boolean).join(" · ")}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AncestryGraph({
   centerTitle,
   centerId,
@@ -124,224 +238,269 @@ export function AncestryGraph({
   centerYear,
   relations: initial,
 }: Props) {
-  const [relations, setRelations] = useState<AnimeRelation[]>(initial || []);
+  const [relations, setRelations] = useState<AnimeRelation[]>(
+    (initial || []).filter((r) => isWatchRelation(r.relationType)),
+  );
+  const [plan, setPlan] = useState<WatchPlan | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showMap, setShowMap] = useState(false);
   const [showFlat, setShowFlat] = useState(false);
 
   useEffect(() => {
-    if (initial?.length) {
-      setRelations(initial);
-      return;
-    }
     let cancelled = false;
     setLoading(true);
-    fetch(`/api/relations?id=${centerId}&deep=0`)
+
+    fetch("/api/watch-order?id=" + centerId, { cache: "no-store" })
       .then((r) => r.json())
-      .then((j) => {
-        if (!cancelled && Array.isArray(j.data)) setRelations(j.data);
-        else if (!cancelled && Array.isArray(j.nodes)) setRelations(j.nodes);
+      .then((j: WatchPlan & { graph?: { nodes?: GraphNode[] } }) => {
+        if (cancelled) return;
+        if (Array.isArray(j.paths)) setPlan(j);
+        const official = (j.graph?.nodes || [])
+          .filter((n) => n.layer !== "recommended" && isWatchRelation(n.relationType))
+          .map((n) => n as AnimeRelation);
+        if (official.length) setRelations(official);
       })
       .catch(() => {})
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+
     return () => {
       cancelled = true;
     };
-  }, [centerId, initial]);
+  }, [centerId]);
 
-  const seedNodes: GraphNode[] = useMemo(() => {
-    return relations.map((r) => ({
-      ...r,
-      depth: 0,
-      layer:
-        (r.relationType || "").toUpperCase() === "RECOMMENDED"
-          ? ("recommended" as const)
-          : ("official" as const),
-    }));
-  }, [relations]);
+  const centre = useMemo(
+    () => ({
+      id: centerId,
+      title: centerTitle,
+      image: centerImage,
+      year: centerYear,
+    }),
+    [centerId, centerTitle, centerImage, centerYear],
+  );
 
-  const { timeline, sideOrbit, recommended } = useMemo(() => {
-    const prequels: AnimeRelation[] = [];
-    const sequels: AnimeRelation[] = [];
-    const sides: AnimeRelation[] = [];
-    const orbit: AnimeRelation[] = [];
-    const recs: AnimeRelation[] = [];
-
-    for (const r of relations) {
-      const t = (r.relationType || "").toUpperCase();
-      if (t === "PREQUEL" || t === "PARENT") prequels.push(r);
-      else if (t === "SEQUEL") sequels.push(r);
-      else if (t === "SIDE_STORY") sides.push(r);
-      else if (SIDE.has(t)) orbit.push(r);
-      else if (t === "RECOMMENDED") recs.push(r);
-      else sides.push(r);
-    }
-
-    const byYear = (a: AnimeRelation, b: AnimeRelation) =>
-      (a.year || 0) - (b.year || 0) || a.title.localeCompare(b.title);
-
-    prequels.sort(byYear);
-    sequels.sort(byYear);
-
-    return {
-      timeline: [
-        ...prequels.map((r) => ({
-          id: r.id,
-          title: r.title,
-          image: r.image,
-          year: r.year,
-          score: r.score,
-          badge: labelType(r.relationType),
-          badgeType: r.relationType,
-        })),
+  const fallbackMain: WatchNode[] = useMemo(
+    () =>
+      [
+        ...relations.filter((r) => isMainRelation(r.relationType)),
         {
           id: centerId,
           title: centerTitle,
           image: centerImage,
           year: centerYear,
-          current: true as const,
         },
-        ...sequels.map((r) => ({
-          id: r.id,
-          title: r.title,
-          image: r.image,
-          year: r.year,
-          score: r.score,
-          badge: labelType(r.relationType),
-          badgeType: r.relationType,
-        })),
-      ],
-      sideOrbit: [...sides, ...orbit].sort(byYear),
-      recommended: recs,
-    };
-  }, [relations, centerId, centerTitle, centerImage, centerYear]);
+      ]
+        .filter((n, i, arr) => arr.findIndex((x) => x.id === n.id) === i)
+        .sort(
+          (a, b) =>
+            (Number(a.year) || 9999) - (Number(b.year) || 9999) ||
+            a.title.localeCompare(b.title),
+        ),
+    [relations, centerId, centerTitle, centerImage, centerYear],
+  );
 
-  const officialCount = relations.filter(
-    (r) => (r.relationType || "").toUpperCase() !== "RECOMMENDED",
-  ).length;
+  const mainPath = useMemo(() => {
+    const fromPlan = plan?.paths.find((p) => p.id === "main_story")?.nodes;
+    const source = fromPlan?.length ? fromPlan : fallbackMain;
+    return source.map((n) => {
+      if (n.id === centerId) {
+        return {
+          ...n,
+          title: centerTitle,
+          image: centerImage,
+          year: centerYear,
+        };
+      }
+      return n;
+    });
+  }, [plan, fallbackMain, centerId, centerTitle, centerImage, centerYear]);
 
-  const showMap = relations.length > 0 || loading;
+  const allOfficial = useMemo(() => {
+    const source =
+      plan?.paths.find((p) => p.id === "completion")?.nodes || relations;
+    const seen = new Set<number>();
+    const out: WatchNode[] = [];
+
+    for (const n of source) {
+      if (n.id == null || seen.has(n.id) || !isWatchRelation(n.relationFromCenter)) continue;
+      seen.add(n.id);
+      out.push(n);
+    }
+
+    if (!seen.has(centerId)) {
+      out.unshift(centre);
+    }
+    return out;
+  }, [plan, relations, centerId, centre]);
+
+  const sideNodes = useMemo(
+    () =>
+      allOfficial.filter((n) => {
+        if (n.id === centerId) return false;
+        const t = (n.relationFromCenter || "").toUpperCase();
+        return t === "SIDE_STORY" || t === "SPIN_OFF";
+      }),
+    [allOfficial, centerId],
+  );
+
+  const mapSeedNodes: GraphNode[] = useMemo(
+    () =>
+      relations.map((r) => ({
+        ...r,
+        depth: 0,
+        layer: "official" as const,
+      })),
+    [relations],
+  );
+
+  const officialCount = allOfficial.filter((n) => n.id !== centerId).length;
+  const showMapSection = relations.length > 0 || loading;
+  const hasStoryPath = mainPath.length > 1;
+  const mainPathUncertain =
+    plan?.paths.find((p) => p.id === "main_story")?.uncertain ?? !hasStoryPath;
 
   return (
     <section className="detail-section ancestry-section" id="ancestry">
       <div className="ab-header">
         <div>
-          <p className="ab-kicker">Map</p>
-          <h2>Ancestry</h2>
+          <p className="ab-kicker">Franchise</p>
+          <h2>Watch order</h2>
           <p className="ancestry-lead">
             {loading
-              ? "Charting links…"
-              : relations.length
-                ? `${officialCount} official · recommendations expand into a chain with physics`
-                : "No linked anime found for this title."}
+              ? "Tracing the official franchise…"
+              : officialCount > 0
+                ? officialCount + " official story links · recommendations excluded"
+                : "No official franchise links found for this title."}
           </p>
         </div>
-        {relations.length > 0 ? (
-          <button
-            type="button"
-            className="btn btn-outline btn-sm"
-            onClick={() => setShowFlat((v) => !v)}
-          >
-            {showFlat ? "Hide list" : "List view"}
-          </button>
+        {showMapSection ? (
+          <div className="wo-actions">
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => setShowMap((v) => !v)}
+            >
+              {showMap ? "Watch path" : "Explore map"}
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={() => setShowFlat((v) => !v)}
+            >
+              {showFlat ? "Hide list" : "List view"}
+            </button>
+          </div>
         ) : null}
       </div>
 
-      {showMap ? (
-        <AncestrySpace2D
-          center={{
-            id: centerId,
-            title: centerTitle,
-            image: centerImage,
-            year: centerYear,
-          }}
-          seedNodes={seedNodes}
-        />
-      ) : null}
+      {showMap && showMapSection ? (
+        <AncestrySpace2D center={centre} seedNodes={mapSeedNodes} />
+      ) : (
+        <div className="wo-shell">
+          <div className="wo-intro">
+            <span className="wo-intro-line" />
+            <div>
+              <strong>Follow the spine</strong>
+              <span>
+                The connected main story is the path. Side stories and spinoffs sit below as optional branches.
+              </span>
+            </div>
+          </div>
+
+          {hasStoryPath ? (
+            <div className="wo-main">
+              <div className="wo-section-label">
+                <span>01</span>
+                <div>
+                  <strong>Main story</strong>
+                  <small>
+                    {mainPathUncertain
+                      ? "Provider links are incomplete, so this path is approximate."
+                      : "Follow left → right."}
+                  </small>
+                </div>
+              </div>
+              <div className="wo-scroll" aria-label="Main story watch order">
+                {mainPath.map((node, index) => (
+                  <WatchCard
+                    key={(node.id || "node") + "-" + index}
+                    node={node}
+                    index={index}
+                    centerId={centerId}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="wo-empty">
+              <span>01</span>
+              <div>
+                <strong>No clear main-story chain</strong>
+                <p>
+                  {plan?.paths.find((p) => p.id === "main_story")?.note ||
+                    "The available provider relations do not establish a main-line sequence."}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {sideNodes.length ? (
+            <div className="wo-side">
+              <div className="wo-section-label">
+                <span>02</span>
+                <div>
+                  <strong>Side stories & spinoffs</strong>
+                  <small>Optional franchise entries. They are not inserted into the main path.</small>
+                </div>
+              </div>
+              <div className="wo-side-grid">
+                {sideNodes.map((node, index) => (
+                  <WatchCard
+                    key={(node.id || "side") + "-" + index}
+                    node={node}
+                    index={index}
+                    centerId={centerId}
+                    accent
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {!loading && !hasStoryPath && !sideNodes.length ? (
+            <p className="tools-hint">
+              This title does not have enough official relation data to build a watch path.
+            </p>
+          ) : null}
+        </div>
+      )}
 
       {showFlat ? (
         <div className="ab-flat">
-          {timeline.length > 1 ? (
-            <div className="ab-block">
-              <h3 className="ab-block-title">Story line</h3>
-              <div className="ab-timeline">
-                {timeline.map((n, i) => (
-                  <div key={`${n.id}-${i}`} className="ab-timeline-item">
-                    {i > 0 ? <div className="ab-connector" aria-hidden /> : null}
-                    <PosterCard
-                      href={
-                        "current" in n && n.current
-                          ? undefined
-                          : `/anime/${n.id}`
-                      }
-                      title={n.title}
-                      image={n.image}
-                      current={"current" in n && n.current}
-                      badge={"badge" in n ? n.badge : undefined}
-                      badgeType={"badgeType" in n ? n.badgeType : undefined}
-                      meta={[
-                        n.year ? String(n.year) : null,
-                        "score" in n && n.score != null
-                          ? `★ ${n.score.toFixed(1)}`
-                          : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    />
-                  </div>
-                ))}
-              </div>
+          <div className="ab-block">
+            <h3 className="ab-block-title">Official franchise entries</h3>
+            <div className="ab-grid">
+              {allOfficial.map((n) => (
+                <PosterCard
+                  key={"official-" + n.id}
+                  href={n.id === centerId ? undefined : "/anime/" + n.id}
+                  title={n.title}
+                  image={n.image}
+                  current={n.id === centerId}
+                  badge={n.id === centerId ? undefined : labelType(n.relationFromCenter || "RELATED")}
+                  badgeType={n.relationFromCenter}
+                  meta={[n.format, n.year ? String(n.year) : null].filter(Boolean).join(" · ")}
+                />
+              ))}
             </div>
-          ) : null}
-
-          {sideOrbit.length > 0 ? (
-            <div className="ab-block">
-              <h3 className="ab-block-title">Side stories</h3>
-              <div className="ab-grid">
-                {sideOrbit.map((r) => (
-                  <PosterCard
-                    key={`${r.id}-${r.relationType}`}
-                    href={`/anime/${r.id}`}
-                    title={r.title}
-                    image={r.image}
-                    badge={labelType(r.relationType)}
-                    badgeType={r.relationType}
-                    meta={[r.format, r.year ? String(r.year) : null]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {recommended.length > 0 ? (
-            <div className="ab-block">
-              <h3 className="ab-block-title">Similar</h3>
-              <div className="ab-grid">
-                {recommended.map((r) => (
-                  <PosterCard
-                    key={`rec-${r.id}`}
-                    href={`/anime/${r.id}`}
-                    title={r.title}
-                    image={r.image}
-                    badge="Similar"
-                    badgeType="RECOMMENDED"
-                    meta={[r.format, r.year ? String(r.year) : null]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null}
+          </div>
         </div>
       ) : null}
 
-      {!loading && !relations.length ? (
+      {!loading && !showMapSection ? (
         <p className="tools-hint" style={{ marginTop: 8 }}>
-          Try a multi-season franchise for a fuller map.
+          Try a title with an established franchise for a fuller watch path.
         </p>
       ) : null}
     </section>
