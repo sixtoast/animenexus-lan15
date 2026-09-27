@@ -10,6 +10,7 @@ import {
 } from "./semantic-index";
 import type { AnimePreferenceFingerprint } from "@/lib/intelligence/items/anime-preference-fingerprint";
 import { getBestAvailableFingerprint } from "@/lib/intelligence/items/resolve-fingerprint";
+import { buildEnrichedFingerprint } from "@/lib/intelligence/items/fingerprint-enrichment";
 import { compareFingerprints } from "@/lib/intelligence/semantic-ops/compare";
 import {
   loadSemanticIndexFromStore,
@@ -178,9 +179,6 @@ export async function retrieveAnimeCandidates(
   let semanticNeighbourCount = 0;
   let cacheHits = 0;
 
-  // Warm the persistent semantic index before querying it. Without this,
-  // every Vercel cold start behaved like a brand-new browser and Fusion fell
-  // back to the broad discovery pool.
   if (opts.targetFingerprint || opts.fingerprintA || opts.fingerprintB) {
     try {
       await loadSemanticIndexFromStore({ limit: 400, minConfidence: 0.35 });
@@ -201,12 +199,6 @@ export async function retrieveAnimeCandidates(
       beforeDedup++;
       sourceCounts[source] = (sourceCounts[source] || 0) + 1;
 
-      // Fusion/Reverse must be semantic before they are truncated. Previously
-      // only the in-memory semantic index could supply a score, which meant a
-      // fresh browser/session fell straight back to popularity/score ordering.
-      // Score every discovered candidate against the actual target fingerprint
-      // as it enters the pool. This makes the first request deterministic and
-      // target-aware without requiring a warm global index.
       let semanticSimilarity = extra?.semanticSimilarity;
       let fingerprint = extra?.fingerprint;
       if (opts.targetFingerprint && !fingerprint) {
@@ -363,19 +355,12 @@ export async function retrieveAnimeCandidates(
   ]);
 
   if (opts.personal?.length) {
-    ingest(
-      opts.personal.filter((a) => !excludeIds.has(a.id)),
-      "personal",
-    );
+    ingest(opts.personal.filter((a) => !excludeIds.has(a.id)), "personal");
   }
 
   let candidates = [...byNexusId.values()];
 
   if (opts.targetFingerprint) {
-    // Semantic-index rows only carry fingerprints, so a cold-start neighbour
-    // initially has an "Indexed #id" placeholder. Resolve those records before
-    // they can reach the UI, then canonicalise again to close provider-ID
-    // duplicate gaps (e.g. AniList vs Shikimori representations of one title).
     try {
       candidates = await hydrateCandidateRecords(candidates, {
         allowNetwork: true,
@@ -418,13 +403,8 @@ export async function retrieveAnimeCandidates(
     }
     candidates = [...canonical.values()];
 
-    // Recompute the semantic score from the hydrated title metadata. This is
-    // deliberately done after hydration so a stale/weak index fingerprint
-    // cannot dictate the displayed Fusion score.
     for (const rec of candidates) {
       try {
-        // Force-refresh here: the first discovery pass may have cached a
-        // sparse provider fingerprint before hydration supplied full metadata.
         const refreshed = buildEnrichedFingerprint(rec.anime, {
           forceRefresh: true,
         });
@@ -447,8 +427,6 @@ export async function retrieveAnimeCandidates(
 
   candidates = candidates.slice(0, limit);
 
-  // Persist only the useful final semantic pool. This keeps Supabase writes
-  // bounded while ensuring the next cold start has a real index to query.
   if (opts.targetFingerprint && candidates.length) {
     await Promise.allSettled(
       candidates.slice(0, 40).map(async (rec) => {
