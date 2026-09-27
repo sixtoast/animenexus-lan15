@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { AnimeRelation, GraphEdge, GraphNode } from "@/lib/types";
 import { mergeRelations } from "@/lib/relation-merge";
@@ -270,7 +271,7 @@ export function FranchisePathPanel({
 
   const focusClass = selected ? " has-focus" : "";
 
-  const selectNode = (node: LayoutNode, event?: React.MouseEvent<HTMLButtonElement>) => {
+  const selectNode = (node: LayoutNode, event?: MouseEvent<HTMLButtonElement>) => {
     if (node.id == null || node.id === centerId) return;
     setSelectedId(node.id);
     const rect = event?.currentTarget.getBoundingClientRect();
