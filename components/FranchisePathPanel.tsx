@@ -82,9 +82,9 @@ function relationLabel(node: FranchiseNode) {
     SPIN_OFF: "SPIN-OFF",
     ALTERNATIVE: "ALTERNATIVE",
     SUMMARY: "RECAP",
-    CHARACTER: "CHARACTER EASTER EGG",
+    CHARACTER: "CHARACTER",
     OTHER: "OTHER",
-    SAME_UNIVERSE: "IN UNIVERSE",
+    SAME_UNIVERSE: "OTHER",
   };
   return labels[relation] || (node.format ? String(node.format).replace(/_/g, " ") : "UNCERTAIN");
 }
@@ -268,6 +268,9 @@ export function FranchisePathPanel({
 
   if (!active) return null;
 
+  // An empty optional path is still a valid state. Never unmount the entire
+  // franchise panel just because a season has no root-level Easter eggs.
+  const activeHasWorks = active.nodes.length > 1;
   const visibleKeys = new Set(active.nodes.map(nodeKey));
   const visibleIds = new Set(active.nodes.map((node) => node.id).filter((id): id is number => id != null));
   const edges = graphEdges.length
@@ -323,6 +326,9 @@ export function FranchisePathPanel({
         <span className="is-recap">RECAPS</span>
         <span className="is-uncertain">UNCERTAIN</span>
       </div>
+      <p className="franchise-path__legend-note">
+        Easter eggs are optional connections and never affect the watch path. <strong>OTHER</strong> means a provider reported a related-work connection without a more specific category.
+      </p>
 
       <div className="franchise-path__tabs" role="tablist" aria-label="Franchise views">
         {plan.paths.map((p) => (
@@ -348,10 +354,17 @@ export function FranchisePathPanel({
         </p>
       ) : null}
 
+      {!activeHasWorks && active.id === "easter_eggs" ? (
+        <div className="franchise-path__empty" role="status">
+          <strong>No Easter eggs found for this entry.</strong>
+          <span>The view stays available because provider relation data can differ between seasons or entries.</span>
+        </div>
+      ) : null}
+
       <div className="franchise-path__route" aria-label={active.label + " route"}>
         <div className="franchise-path__route-head">
           <span>HOW TO FOLLOW IT</span>
-          <small>{active.id === "easter_eggs" ? "Connections stay as leaves - they never create new branches. “Other” means a provider reported a weaker franchise connection that is not a main story relation." : "Follow the numbered path. Optional branches never become new roots."}</small>
+          <small>{active.id === "easter_eggs" ? "Connections stay as leaves - they never create new branches." : "Follow the numbered path. Optional branches never become new roots."}</small>
         </div>
         <div className="franchise-path__route-track">
           {active.nodes.map((node, index) => {
