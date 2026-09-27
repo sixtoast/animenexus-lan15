@@ -39,8 +39,8 @@ const INTELLIGENCE = [
   { label: "FRANCHISE", target: "franchise" as const },
 ];
 
-export function AIPanel() {
-  const [open, setOpen] = useState(false);
+export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
+  const [open, setOpen] = useState(initialOpen);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settings, setSettings] = useState<AISettings>(defaultSettings());
   const [configured, setConfigured] = useState(false);
