@@ -187,6 +187,18 @@ export function NexusWorlds({ candidates }: Props) {
       const t = currentWorlds.length <= 1 ? 0 : index / (currentWorlds.length - 1);
       return 1 - t * (currentMode === "recommendations" || currentMode === "mood" ? 0.24 : 0.08);
     };
+    const getModeTarget = (index: number, mode: NexusFieldMode) => {
+      const count = Math.max(1, nodes.length);
+      const t = count <= 1 ? 0 : index / (count - 1);
+      const centred = t - 0.5;
+      if (mode === "mood") return { x: centred * 0.22, y: Math.sin(t * Math.PI) * -0.10 };
+      if (mode === "recommendations") return { x: centred * 0.34, y: Math.cos(t * Math.PI * 2) * 0.06 };
+      if (mode === "watchlist") return { x: centred * 0.44, y: Math.sin(t * Math.PI * 2) * 0.16 };
+      if (mode === "franchise") return { x: centred * 0.52, y: Math.sin(t * Math.PI) * 0.22 };
+      if (mode === "artwork") return { x: centred * 0.62, y: Math.cos(t * Math.PI) * 0.26 };
+      if (mode === "watch-order") return { x: centred * 0.76, y: Math.sin(t * Math.PI * 2) * 0.30 };
+      return { x: centred, y: 0 };
+    };
     const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
     const ease = (t: number) => 1 - Math.pow(1 - t, 3);
 
@@ -316,8 +328,13 @@ export function NexusWorlds({ candidates }: Props) {
             const orbitT = (local - lineupDuration - travelDuration) / orbitDuration;
             const a = phase + orbitT * Math.PI * 2 + orbitPhase;
             const rankWeight = getRankWeight(index);
-            const dynamicRadiusX = radiusX * rankWeight * (1 - Math.abs(pointerX) * 0.035);
-            const dynamicRadiusY = radiusY * rankWeight * (1 - Math.abs(pointerY) * 0.025);
+            const mode = fieldModeRef.current;
+            const modeTarget = getModeTarget(index, mode);
+            const modeMorph = aiPulsing ? Math.min(1, (performance.now() - (started + lineupDuration + travelDuration)) / 720) : 1;
+            const modeX = 1 + modeTarget.x * modeMorph;
+            const modeY = 1 + modeTarget.y * modeMorph;
+            const dynamicRadiusX = radiusX * rankWeight * modeX * (1 - Math.abs(pointerX) * 0.035);
+            const dynamicRadiusY = radiusY * rankWeight * modeY * (1 - Math.abs(pointerY) * 0.025);
             const fieldCentreX = centreX + pointerX * 18;
             const fieldCentreY = centreY + pointerY * 12;
             const orbitalX = fieldCentreX + Math.cos(a) * dynamicRadiusX;
