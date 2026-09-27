@@ -394,7 +394,8 @@ export function FranchisePathPanel({
                 x2={to.x}
                 y2={to.y}
                 className={`is-${kind}${dim ? " is-dim" : ""}${activeEdge ? " is-selected" : ""}`}
-                markerEnd={kind === "main" ? "url(#franchise-arrow-main)" : undefined}
+                markerEnd={kind === "main" && ["SEQUEL", "FULL_STORY"].includes(normaliseRelation(edge.label)) ? "url(#franchise-arrow-main)" : undefined}
+                markerStart={kind === "main" && ["PREQUEL", "PARENT"].includes(normaliseRelation(edge.label)) ? "url(#franchise-arrow-main)" : undefined}
               />
             );
           })}
