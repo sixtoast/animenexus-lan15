@@ -50,7 +50,13 @@ export async function hydrateCandidateByNexusId(
     if (parsed.provider === "anilist" && parsed.id) {
       const id = parseInt(parsed.id, 10);
       if (id > 0) {
-        const res = await fetch(`/api/anime/${id}`, { cache: "force-cache" });
+        const base =
+          typeof window !== "undefined"
+            ? window.location.origin
+            : process.env.VERCEL_URL
+              ? `https://${process.env.VERCEL_URL}`
+              : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+        const res = await fetch(`${base}/api/anime/${id}`, { cache: "no-store" });
         if (res.ok) {
           const j = await res.json();
           const a = (j.data || j.anime || j) as Anime;
