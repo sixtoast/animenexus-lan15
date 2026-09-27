@@ -12,6 +12,7 @@ export type FranchiseNode = {
   id?: number;
   externalId?: string;
   title: string;
+  image?: string;
   year?: number;
   format?: string;
   relationFromCenter?: string;
@@ -220,6 +221,7 @@ export function resolveFranchiseGraph(opts: {
   const map = new Map(nodes.map((n) => [n.id, {
     id: n.id,
     title: n.title,
+    image: n.image,
     year: n.year == null ? undefined : Number(n.year),
     format: n.format,
     relationFromCenter: n.relationType,
