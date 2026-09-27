@@ -71,6 +71,7 @@ async function gql<T>(
 
 const RELATION_NODE = `
   id
+  idMal
   type
   title { romaji english }
   format
@@ -256,6 +257,7 @@ type RelNode = {
   startDate?: { year?: number | null };
   averageScore?: number | null;
   coverImage?: { large?: string; medium?: string };
+  idMal?: number | null;
 };
 
 function nodeFromRel(n: RelNode, relationType: string): AnimeRelation | null {
@@ -266,6 +268,7 @@ function nodeFromRel(n: RelNode, relationType: string): AnimeRelation | null {
   return {
     id: n.id,
     title: n.title?.english || n.title?.romaji || "Untitled",
+    idMal: n.idMal ?? null,
     relationType,
     format: n.format,
     status: n.status,
