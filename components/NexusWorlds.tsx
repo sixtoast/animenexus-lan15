@@ -476,7 +476,7 @@ export function NexusWorlds({ candidates }: Props) {
   if (!worlds.length) return null;
 
   const activeAnime = active === null ? null : worlds[active];
-  const visibleCommand = commandLabel ?? intelligence;
+  const visibleCommand = commandLabel ?? "Explore the Discovery Field";
   const signalDNA = activeAnime ? [activeAnime.genre, ...activeAnime.tags].filter(Boolean).slice(0, 3).join(" · ") : "";
   const activeRelated = active === null
     ? []
