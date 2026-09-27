@@ -16,6 +16,7 @@ export type FranchiseNode = {
   year?: number;
   format?: string;
   relationFromCenter?: string;
+  layer?: "official" | "recommended" | "easter_egg";
 };
 
 export type FranchisePath = {
@@ -223,6 +224,7 @@ export function resolveFranchiseGraph(opts: {
     year: n.year == null ? undefined : Number(n.year),
     format: n.format,
     relationFromCenter: n.relationType,
+    layer: n.layer,
   } as FranchiseNode]));
   // Build the watchable franchise from the ROOT outward. A node is only
   // eligible when it is reached through a watchable edge. This is important
@@ -254,22 +256,22 @@ export function resolveFranchiseGraph(opts: {
   // franchise's branches.
   for (const e of official) {
     const type = normalizeRelationType(e.label || "OTHER");
-    if (!["CHARACTER", "OTHER"].includes(type)) continue;
+    if (!["CHARACTER", "OTHER", "SAME_UNIVERSE"].includes(type)) continue;
     const other = e.from === center.id ? e.to : e.to === center.id ? e.from : null;
     if (other == null || !map.has(other)) continue;
     allowedIds.add(other);
     relationFromRoot.set(other, type);
   }
 
-  const queue = [center.id!];
+  const franchiseTraversalQueue = [center.id!];
 
-  while (queue.length) {
-    const current = queue.shift()!;
+  while (franchiseTraversalQueue.length) {
+    const current = franchiseTraversalQueue.shift()!;
     for (const next of adjacency.get(current) || []) {
       if (!map.has(next.id) && next.id !== center.id) continue;
       if (!allowedIds.has(next.id)) {
         allowedIds.add(next.id);
-        queue.push(next.id);
+        franchiseTraversalQueue.push(next.id);
       }
       if (current === center.id && !relationFromRoot.has(next.id)) {
         relationFromRoot.set(next.id, next.type);
@@ -286,13 +288,13 @@ export function resolveFranchiseGraph(opts: {
       }))],
   );
   const storyNodes = all.filter((n) => n.id === center.id || map.get(n.id!)?.layer !== "easter_egg");
-  const easterEggNodes = all.filter((n) => n.id != null && map.get(n.id!)?.layer === "easter_egg");
+  const easterEggNodes = all.filter((n) => n.id != null && (n.layer === "easter_egg" || map.get(n.id!)?.layer === "easter_egg"));
   const release = [...storyNodes].sort(byRelease);
   const mainIds = new Set<number>([center.id!]);
-  const mainQueue = [center.id!];
+  const mainStoryQueue = [center.id!];
 
-  while (mainQueue.length) {
-    const current = mainQueue.shift()!;
+  while (mainStoryQueue.length) {
+    const current = mainStoryQueue.shift()!;
     for (const e of official) {
       if (e.from !== current && e.to !== current) continue;
       const type = normalizeRelationType(e.label || "OTHER");
@@ -300,7 +302,7 @@ export function resolveFranchiseGraph(opts: {
       const next = e.from === current ? e.to : e.from;
       if (allowedIds.has(next) && map.has(next) && !mainIds.has(next)) {
         mainIds.add(next);
-        mainQueue.push(next);
+        mainStoryQueue.push(next);
       }
     }
   }
