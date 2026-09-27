@@ -86,10 +86,12 @@ function relationLabel(node: FranchiseNode) {
   return labels[relation] || (node.format ? String(node.format).replace(/_/g, " ") : "UNCERTAIN");
 }
 
-function layoutNodes(plan: RemotePlan | FranchisePlan, centerId: number): LayoutNode[] {
+function layoutNodes(plan: RemotePlan | FranchisePlan, centerId: number, activePathId: FranchisePath["id"]): LayoutNode[] {
   const graphNodes = "graph" in plan ? plan.graph?.nodes : undefined;
+  const activePath = plan.paths.find((p) => p.id === activePathId) || plan.paths[0];
+  const activeIds = new Set((activePath?.nodes || []).map((n) => n.id).filter((id): id is number => id != null));
   const source = graphNodes?.length
-    ? graphNodes.map((n) => ({
+    ? graphNodes.filter((n) => activeIds.has(n.id)).map((n) => ({
         id: n.id,
         title: n.title,
         year: n.year == null ? undefined : Number(n.year),
@@ -241,11 +243,15 @@ export function FranchisePathPanel({
   const plan = remotePlan || fallbackPlan;
   const graphEdges = remotePlan?.graph?.edges || [];
 
+  const active = plan
+    ? plan.paths.find((p) => p.id === pathId) || plan.paths.find((p) => p.id === "main_story") || plan.paths[0]
+    : null;
+
   const constellation = useMemo(
-    () => (plan ? layoutNodes(plan, centerId) : []).map((node) =>
+    () => (plan && active ? layoutNodes(plan, centerId, active.id) : []).map((node) =>
       node.id === centerId && centerImage ? { ...node, image: centerImage } : node,
     ),
-    [plan, centerId],
+    [plan, active?.id, centerId, centerImage],
   );
 
   const selected = constellation.find((node) => node.id === selectedId) || null;
@@ -256,12 +262,12 @@ export function FranchisePathPanel({
 
   if (!plan || plan.relationCount < 1) return null;
 
-  const active = plan.paths.find((p) => p.id === pathId) || plan.paths.find((p) => p.id === "main_story") || plan.paths[0];
   if (!active || active.nodes.length < 2) return null;
 
   const visibleKeys = new Set(active.nodes.map(nodeKey));
+  const visibleIds = new Set(active.nodes.map((node) => node.id).filter((id): id is number => id != null));
   const edges = graphEdges.length
-    ? graphEdges.filter((edge) => nodeMap.has(edge.from) && nodeMap.has(edge.to))
+    ? graphEdges.filter((edge) => visibleIds.has(edge.from) && visibleIds.has(edge.to))
     : active.nodes.slice(1).map((node, index) => ({
         from: active.nodes[index].id || centerId,
         to: node.id || centerId,
