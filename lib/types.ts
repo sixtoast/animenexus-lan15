@@ -59,6 +59,9 @@ export type AnimeRelation = {
   image?: string;
   year?: number | null;
   score?: number | null;
+  /** Human-readable evidence for weak/isolated franchise links. */
+  relationDetail?: string;
+  relationEvidence?: string[];
 };
 
 /** Graph node for ancestry constellation */
