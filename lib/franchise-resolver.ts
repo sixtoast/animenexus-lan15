@@ -285,7 +285,7 @@ export function resolveFranchiseGraph(opts: {
       const type = normalizeRelationType(e.label || "OTHER");
       if (!["SEQUEL", "PREQUEL", "PARENT", "FULL_STORY"].includes(type)) continue;
       const next = e.from === current ? e.to : e.from;
-      if (map.has(next) && !mainIds.has(next)) {
+      if (allowedIds.has(next) && map.has(next) && !mainIds.has(next)) {
         mainIds.add(next);
         queue.push(next);
       }
