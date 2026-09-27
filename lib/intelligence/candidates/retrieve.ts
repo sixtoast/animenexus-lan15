@@ -10,6 +10,8 @@ import {
   type SemanticNeighbour,
 } from "./semantic-index";
 import type { AnimePreferenceFingerprint } from "@/lib/intelligence/items/anime-preference-fingerprint";
+import { getBestAvailableFingerprint } from "@/lib/intelligence/items/resolve-fingerprint";
+import { compareFingerprints } from "@/lib/intelligence/semantic-ops/compare";
 
 export type CandidateIntent = "fusion" | "reverse" | "recommendation";
 
@@ -183,17 +185,39 @@ export async function retrieveAnimeCandidates(
       if (excludeNx.has(nexusId)) continue;
       beforeDedup++;
       sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+
+      // Fusion/Reverse must be semantic before they are truncated. Previously
+      // only the in-memory semantic index could supply a score, which meant a
+      // fresh browser/session fell straight back to popularity/score ordering.
+      // Score every discovered candidate against the actual target fingerprint
+      // as it enters the pool. This makes the first request deterministic and
+      // target-aware without requiring a warm global index.
+      let semanticSimilarity = extra?.semanticSimilarity;
+      let fingerprint = extra?.fingerprint;
+      if (opts.targetFingerprint && !fingerprint) {
+        try {
+          const resolved = getBestAvailableFingerprint(a);
+          fingerprint = resolved.fingerprint;
+          semanticSimilarity = compareFingerprints(
+            opts.targetFingerprint,
+            fingerprint,
+          ).similarity;
+        } catch {
+          /* keep the candidate; semantic score remains unavailable */
+        }
+      }
+
       const existing = byNexusId.get(nexusId);
       if (existing) {
         if (!existing.sources.includes(source)) existing.sources.push(source);
-        if (extra?.fingerprint && !existing.fingerprint)
-          existing.fingerprint = extra.fingerprint;
+        if (fingerprint && !existing.fingerprint)
+          existing.fingerprint = fingerprint;
         if (
-          extra?.semanticSimilarity != null &&
+          semanticSimilarity != null &&
           (existing.semanticSimilarity == null ||
-            extra.semanticSimilarity > existing.semanticSimilarity)
+            semanticSimilarity > existing.semanticSimilarity)
         ) {
-          existing.semanticSimilarity = extra.semanticSimilarity;
+          existing.semanticSimilarity = semanticSimilarity;
         }
         continue;
       }
@@ -206,8 +230,8 @@ export async function retrieveAnimeCandidates(
           mal: a.idMal || undefined,
           ...extra?.providerIds,
         },
-        fingerprint: extra?.fingerprint,
-        semanticSimilarity: extra?.semanticSimilarity,
+        fingerprint,
+        semanticSimilarity,
       });
     }
   }
@@ -337,7 +361,21 @@ export async function retrieveAnimeCandidates(
     }
   }
 
-  const candidates = [...byNexusId.values()].slice(0, limit);
+  let candidates = [...byNexusId.values()];
+
+  // Discovery endpoints are deliberately broad, but their provider order is
+  // not the Fusion signal. When a semantic target exists, rank the entire
+  // deduped pool by target similarity before applying the result limit.
+  if (opts.targetFingerprint) {
+    candidates.sort(
+      (a, b) =>
+        (b.semanticSimilarity ?? -1) - (a.semanticSimilarity ?? -1) ||
+        b.sources.length - a.sources.length,
+    );
+  }
+
+  candidates = candidates.slice(0, limit);
+
   return {
     candidates,
     providersAttempted: attempted,
