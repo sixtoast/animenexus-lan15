@@ -84,7 +84,7 @@ function relationLabel(node: FranchiseNode) {
     SUMMARY: "RECAP",
     CHARACTER: "CHARACTER",
     OTHER: "OTHER",
-    SAME_UNIVERSE: "OTHER",
+    SAME_UNIVERSE: "IN UNIVERSE",
   };
   return labels[relation] || (node.format ? String(node.format).replace(/_/g, " ") : "UNCERTAIN");
 }
