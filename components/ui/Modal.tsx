@@ -64,10 +64,38 @@ export function Modal({
 
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+
+    // Lock the document at its exact current position while the modal owns
+    // interaction. Merely setting body overflow:hidden is not sufficient on
+    // mobile Safari and some Chromium layouts: pointer/focus interaction
+    // inside a fixed dialog can cause the page scroll container to be
+    // re-anchored to the element that originally opened the dialog.
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const previous = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+    };
+
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+
     return () => {
-      document.body.style.overflow = prev;
+      body.style.overflow = previous.overflow;
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.left = previous.left;
+      body.style.right = previous.right;
+      body.style.width = previous.width;
+      window.scrollTo({ top: scrollY, left: window.scrollX, behavior: "auto" });
     };
   }, [open]);
 
@@ -96,7 +124,10 @@ export function Modal({
     const auto = panel.querySelector<HTMLElement>(
       "[data-autofocus], input, textarea",
     );
-    (auto || first).focus();
+    // Never let opening the dialog or switching focus inside it move the
+    // underlying page. This is especially important when the trigger lives
+    // near #story on the anime detail page.
+    (auto || first).focus({ preventScroll: true });
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
