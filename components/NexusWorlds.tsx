@@ -60,6 +60,7 @@ export function NexusWorlds({ candidates }: Props) {
   const [travelling, setTravelling] = useState<number | null>(null);
   const [aiPulse, setAiPulse] = useState(0);
   const [aiPulsing, setAiPulsing] = useState(false);
+  const aiPulseStartedRef = useRef(0);
   const fieldRef = useRef<HTMLDivElement>(null);
   const worldsRef = useRef(worlds);
   const fieldModeRef = useRef(fieldMode);
@@ -97,6 +98,7 @@ export function NexusWorlds({ candidates }: Props) {
             : null;
       if (label) setCommandLabel(label);
       if (signal.type === "filter" || signal.type === "focus" || signal.type === "travel") {
+        aiPulseStartedRef.current = performance.now();
         setAiPulse((value) => value + 1);
         setAiPulsing(false);
         window.requestAnimationFrame(() => setAiPulsing(true));
@@ -330,7 +332,7 @@ export function NexusWorlds({ candidates }: Props) {
             const rankWeight = getRankWeight(index);
             const mode = fieldModeRef.current;
             const modeTarget = getModeTarget(index, mode);
-            const modeMorph = aiPulsing ? Math.min(1, (performance.now() - (started + lineupDuration + travelDuration)) / 720) : 1;
+            const modeMorph = aiPulsing ? Math.min(1, Math.max(0, (performance.now() - aiPulseStartedRef.current) / 720)) : 1;
             const modeX = 1 + modeTarget.x * modeMorph;
             const modeY = 1 + modeTarget.y * modeMorph;
             const dynamicRadiusX = radiusX * rankWeight * modeX * (1 - Math.abs(pointerX) * 0.035);
