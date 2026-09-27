@@ -164,7 +164,7 @@ export default async function AnimeDetailPage({ params }: Props) {
       (themes.inserts && themes.inserts.length > 0));
 
   return (
-    <main className="cinema-detail-page">
+    <main className="cinema-detail-page detail-artwork-aware" data-artwork-role="key-art">
       <MemoryVisit
         id={anime.id}
         title={anime.title}
@@ -186,10 +186,10 @@ export default async function AnimeDetailPage({ params }: Props) {
           ← Back to browse
         </Link>
 
-        <div className="detail-hero">
+        <div className="detail-hero" data-artwork-transition-target="hero">
           <DetailCoverMaterial anime={anime} viewTransitionName={vtCover} />
 
-          <div className="detail-info">
+          <div className="detail-info" data-artwork-transition-target="metadata">
             <p className="detail-kicker">Lantern · detail</p>
             <h1>{anime.title}</h1>
             {(anime.titleRomaji || anime.titleNative) &&
