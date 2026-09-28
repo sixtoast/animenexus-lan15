@@ -166,12 +166,33 @@ function parsePlan(raw: string): ToolCallPlan {
   const trimmed = raw.trim();
   const start = trimmed.indexOf("{");
   const end = trimmed.lastIndexOf("}");
-  if (start < 0 || end <= start) return { tools: [], answerDirectly: true };
-  try {
-    return JSON.parse(trimmed.slice(start, end + 1)) as ToolCallPlan;
-  } catch {
-    return { tools: [], answerDirectly: true };
+  if (start >= 0 && end > start) {
+    try {
+      return JSON.parse(trimmed.slice(start, end + 1)) as ToolCallPlan;
+    } catch {
+      // Some OpenAI-compatible models ignore the JSON-only instruction and emit
+      // their own XML-ish tool-call format. Parse that format as a compatibility
+      // fallback instead of leaking the raw tool call to the user.
+    }
   }
+
+  const calls: { name: string; args: Record<string, unknown> }[] = [];
+  const callRe = /<tool_call>\\s*([A-Za-z0-9_-]+)\\s*([\\s\\S]*?)<\\/tool_call>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = callRe.exec(trimmed))) {
+    const name = match[1];
+    const body = match[2];
+    const args: Record<string, unknown> = {};
+    const argRe = /<arg_key>\\s*([^<]+?)\\s*<\\/arg_key>\\s*<arg_value>\\s*([\\s\\S]*?)\\s*<\\/arg_value>/gi;
+    let arg: RegExpExecArray | null;
+    while ((arg = argRe.exec(body))) {
+      args[arg[1].trim()] = arg[2].trim();
+    }
+    calls.push({ name, args });
+  }
+
+  if (calls.length) return { tools: calls, answerDirectly: false };
+  return { tools: [], answerDirectly: true };
 }
 
 const ALLOWED = new Set<string>([
