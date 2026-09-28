@@ -192,6 +192,34 @@ function parsePlan(raw: string): ToolCallPlan {
   }
 
   if (calls.length) return { tools: calls, answerDirectly: false };
+
+  // Compatibility with models that emit ChatML-style tool calls instead of the
+  // JSON/XML formats above, e.g.:
+  // <|tool_call_start|>[searchWeb(query='...'), searchWeb(query='...')]<|tool_call_end|>
+  // Some OpenAI-compatible/free-router models do this even when asked for JSON.
+  const chatMlMatch = trimmed.match(
+    /<\\|tool_call_start\\|>\\s*\\[([\\s\\S]*?)\\]\\s*<\\|tool_call_end\\|>/i,
+  );
+  if (chatMlMatch) {
+    const body = chatMlMatch[1];
+    const chatMlRe = /([A-Za-z0-9_-]+)\\s*\\(([^)]*)\\)/g;
+    let toolMatch: RegExpExecArray | null;
+    while ((toolMatch = chatMlRe.exec(body))) {
+      const name = toolMatch[1];
+      const args: Record<string, unknown> = {};
+      const argBody = toolMatch[2];
+      const argRe = /([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*(?:'([^']*)'|"([^"]*)"|([^,]+))/g;
+      let argMatch: RegExpExecArray | null;
+      while ((argMatch = argRe.exec(argBody))) {
+        const raw = argMatch[2] ?? argMatch[3] ?? argMatch[4]?.trim() ?? "";
+        args[argMatch[1]] = raw;
+      }
+      calls.push({ name, args });
+      if (calls.length >= 3) break;
+    }
+    if (calls.length) return { tools: calls, answerDirectly: false };
+  }
+
   return { tools: [], answerDirectly: true };
 }
 
