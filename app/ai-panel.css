@@ -216,3 +216,44 @@
   display: grid;
   place-items: center;
 }
+
+
+.ai-web-sources {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.ai-web-sources-label {
+  font-size: 9px;
+  letter-spacing: .14em;
+  opacity: .58;
+  font-weight: 700;
+}
+
+.ai-web-source {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  background: color-mix(in srgb, var(--color-primary) 88%, transparent);
+}
+
+.ai-web-source:hover {
+  border-color: var(--color-accent);
+}
+
+.ai-web-source strong {
+  font-size: 11px;
+}
+
+.ai-web-source span {
+  font-size: 9px;
+  opacity: .55;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
