@@ -28,6 +28,7 @@ import { getExperienceIntent, EXPERIENCE_INTENTS } from "@/lib/viewing-intent";
 
 export type ToolName =
   | "searchAnime"
+  | "searchWeb"
   | "getAnimeDetails"
   | "getWatchlist"
   | "getTasteProfile"
@@ -53,6 +54,17 @@ export const TOOL_SPECS: ToolSpec[] = [
     description: "Search the anime catalog by title query.",
     requiresConfirmation: false,
     parameters: { query: "string", limit: "number optional, default 5" },
+  },
+  {
+    name: "searchWeb",
+    description: "Search the live web for general facts, current information, interviews, episode/chapter context, and anime details missing from the catalogue. Returns source URLs and snippets. Respect the supplied spoiler boundary.",
+    requiresConfirmation: false,
+    parameters: {
+      query: "string",
+      context: "optional anime/title context",
+      spoilerBoundary: "optional what the user has seen/read; never exceed it",
+      maxResults: "optional 3-8, default 5",
+    },
   },
   {
     name: "getAnimeDetails",
@@ -176,6 +188,41 @@ export async function executeTool(
             query,
             count: page.data.length,
             results: page.data.map(compactAnime),
+          },
+        };
+      }
+      case "searchWeb": {
+        const query = String(args.query || "").trim();
+        if (!query) return { ok: false, tool: name, error: "Missing web search query" };
+        const maxResults = Math.min(8, Math.max(3, Number(args.maxResults) || 5));
+        const context = String(args.context || "").trim().slice(0, 400);
+        const spoilerBoundary = String(args.spoilerBoundary || "").trim().slice(0, 300);
+        const res = await fetch("/api/web-search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, context, spoilerBoundary, maxResults }),
+        });
+        const json = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          provider?: string;
+          results?: { title: string; url: string; snippet: string; publishedDate?: string | null }[];
+          error?: string;
+        };
+        if (!res.ok || !json.ok) {
+          return { ok: false, tool: name, error: json.error || `Web search HTTP ${res.status}` };
+        }
+        return {
+          ok: true,
+          tool: name,
+          data: {
+            query,
+            provider: json.provider,
+            sources: (json.results || []).map((r) => ({
+              title: r.title,
+              url: r.url,
+              snippet: r.snippet,
+              publishedDate: r.publishedDate || null,
+            })),
           },
         };
       }
