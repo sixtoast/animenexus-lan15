@@ -34,9 +34,10 @@ async function geminiWebSearch(
   context: string,
   spoilerBoundary: string,
   maxResults: number,
+  key: string,
 ) {
-  const key = process.env.GEMINI_API_KEY?.trim();
-  if (!key) return null;
+  const trimmedKey = key.trim();
+  if (!trimmedKey) return null;
 
   const model = process.env.GEMINI_WEB_MODEL?.trim() || "gemini-3.7-flash";
   const prompt = [
@@ -53,7 +54,7 @@ async function geminiWebSearch(
 
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=` +
-    encodeURIComponent(key);
+    encodeURIComponent(trimmedKey);
 
   const res = await fetch(url, {
     method: "POST",
@@ -102,15 +103,15 @@ async function geminiWebSearch(
   return { answer, results };
 }
 
-async function tavily(query: string, maxResults: number) {
-  const key = process.env.TAVILY_API_KEY?.trim();
-  if (!key) return null;
+async function tavily(query: string, maxResults: number, key: string) {
+  const trimmedKey = key.trim();
+  if (!trimmedKey) return null;
 
   const res = await fetch("https://api.tavily.com/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      api_key: key,
+      api_key: trimmedKey,
       query,
       search_depth: "advanced",
       topic: "general",
@@ -134,15 +135,15 @@ async function tavily(query: string, maxResults: number) {
   };
 }
 
-async function serper(query: string, maxResults: number) {
-  const key = process.env.SERPER_API_KEY?.trim();
-  if (!key) return null;
+async function serper(query: string, maxResults: number, key: string) {
+  const trimmedKey = key.trim();
+  if (!trimmedKey) return null;
 
   const res = await fetch("https://google.serper.dev/search", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-API-KEY": key,
+      "X-API-KEY": trimmedKey,
     },
     body: JSON.stringify({ q: query, num: maxResults }),
     cache: "no-store",
@@ -170,6 +171,12 @@ export async function POST(req: Request) {
       maxResults?: number;
       context?: string;
       spoilerBoundary?: string;
+      provider?: "auto" | "gemini" | "tavily" | "serper";
+      keys?: {
+        gemini?: string;
+        tavily?: string;
+        serper?: string;
+      };
     };
 
     const query = cleanText(body.query, 500);
@@ -189,19 +196,38 @@ export async function POST(req: Request) {
       .filter(Boolean)
       .join("\n");
 
-    // Prefer Gemini's native Google Search grounding when configured. It gives
-    // Lantern a grounded answer plus source URLs, while keeping the key server-side.
-    let grounded = await geminiWebSearch(query, context, spoilerBoundary, maxResults);
-    let provider = "gemini-google-search";
+    const keys = body.keys || {};
+    const providerPreference = body.provider || "auto";
+    const providers =
+      providerPreference === "auto"
+        ? ["gemini", "tavily", "serper"]
+        : [providerPreference];
 
-    if (!grounded) {
-      grounded = await tavily(enrichedQuery, maxResults);
-      provider = "tavily";
-    }
+    let grounded: Awaited<ReturnType<typeof geminiWebSearch>> = null;
+    let provider = "";
 
-    if (!grounded) {
-      grounded = await serper(enrichedQuery, maxResults);
-      provider = "serper";
+    for (const candidate of providers) {
+      try {
+        if (candidate === "gemini") {
+          grounded = await geminiWebSearch(
+            query,
+            context,
+            spoilerBoundary,
+            maxResults,
+            String(keys.gemini || ""),
+          );
+          if (grounded) provider = "gemini-google-search";
+        } else if (candidate === "tavily") {
+          grounded = await tavily(enrichedQuery, maxResults, String(keys.tavily || ""));
+          if (grounded) provider = "tavily";
+        } else if (candidate === "serper") {
+          grounded = await serper(enrichedQuery, maxResults, String(keys.serper || ""));
+          if (grounded) provider = "serper";
+        }
+        if (grounded) break;
+      } catch {
+        // A failed provider can fall through to the next user-configured provider.
+      }
     }
 
     if (!grounded) {
@@ -209,7 +235,7 @@ export async function POST(req: Request) {
         {
           ok: false,
           error:
-            "Web search is not configured. Add GEMINI_API_KEY (recommended), TAVILY_API_KEY, or SERPER_API_KEY to the Vercel environment.",
+            "Web search could not run. Check your selected provider/key in AI Desk settings.",
         },
         { status: 503 },
       );
