@@ -457,14 +457,21 @@ img {
 }
 
 
-/* AI desk: the whole desk remains scrollable.
-   Keep the composer visible without trapping the rest of the panel in a
-   zero-height flex viewport. This is especially important on mobile where
-   the banner, settings and quick actions can exceed the available height. */
+/* AI desk: one stable scroll surface + a composer that stays reachable.
+   The drawer itself must not scroll. The modal body owns vertical scrolling,
+   while the composer is sticky inside that scroll surface. This prevents
+   iOS/Chromium from treating a button press as a request to re-anchor the
+   page or to scroll a nested flex container back to its boundary. */
 .ai-panel-modal {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.ai-panel-modal .nx-modal-body {
+  min-height: 0;
+  flex: 1 1 auto;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -473,15 +480,8 @@ img {
   scrollbar-gutter: stable;
 }
 
-.ai-panel-modal .nx-modal-body {
-  min-height: 0;
-  flex: 0 0 auto;
-  overflow: visible;
-  overscroll-behavior: auto;
-}
-
 .ai-panel-inner {
-  min-height: 0;
+  min-height: 100%;
   height: auto;
   display: flex;
   flex-direction: column;
@@ -505,10 +505,16 @@ img {
 
 .ai-compose {
   flex: 0 0 auto;
-  position: relative;
-  z-index: 2;
-  padding: 10px 0 max(4px, env(safe-area-inset-bottom, 0px));
-  background: var(--color-primary);
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  padding: 10px 0 max(10px, env(safe-area-inset-bottom, 0px));
+  margin-top: 8px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-primary) 0%, transparent),
+    var(--color-primary) 18%
+  );
   border-top: 1px solid var(--color-border);
 }
 
@@ -534,8 +540,12 @@ img {
   .ai-panel-modal .nx-modal-body {
     min-height: 0;
     height: auto;
-    flex: 0 0 auto;
-    overflow: visible;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
   }
 
   .ai-compose {
