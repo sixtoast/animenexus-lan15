@@ -345,7 +345,9 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
     <>
       <button
         type="button"
-        className="ai-fab"
+        className={"ai-fab" + (open ? " is-hidden" : "")}
+        aria-hidden={open ? true : undefined}
+        tabIndex={open ? -1 : undefined}
         aria-label="Open AI panel"
         title="AI panel (A)"
         onClick={() => setOpen(true)}
