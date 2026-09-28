@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-type SearchHit = {
+type SearchResult = {\n  title: string;\n  url: string;\n  snippet: string;\n  publishedDate: string | null;\n};\n\ntype SearchHit = {
   title?: string;
   url?: string;
   content?: string;
@@ -78,7 +78,7 @@ async function geminiWebSearch(
 
   const chunks = candidate?.groundingMetadata?.groundingChunks || [];
   const seen = new Set<string>();
-  const results = chunks
+  const results: SearchResult[] = chunks
     .map((chunk) => ({
       title: cleanText(chunk.web?.title, 180),
       url: String(chunk.web?.uri || ""),
