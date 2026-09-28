@@ -23,7 +23,11 @@ import { emitNexusSignal as sendNexusSignal, type NexusTarget } from "@/lib/nexu
 import { interpretViewingIntent } from "@/lib/intelligence/ai/interpret-intent";
 import { readIntentSession, writeAiIntentOverlay, writeIntentSession } from "@/lib/intent-session";
 
-type Msg = { role: "user" | "assistant" | "system"; content: string };
+type Msg = {
+  role: "user" | "assistant" | "system";
+  content: string;
+  sources?: { title: string; url: string; snippet?: string; publishedDate?: string | null }[];
+};
 
 const QUICK = [
   "Tune Discovery to my mood",
@@ -266,7 +270,7 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
       } else {
         setPending([]);
       }
-      setMessages([...next, { role: "assistant", content: reply }]);
+      setMessages([...next, { role: "assistant", content: reply, sources: result.webSources }]);
       setMascotConversationState({ thinking: false, speaking: true });
       if (speechTimer.current) window.clearTimeout(speechTimer.current);
       speechTimer.current = window.setTimeout(
@@ -502,6 +506,23 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
               messages.map((m, i) => (
                 <div key={i} className={"ai-msg " + m.role}>
                   {m.content || (busy && m.role === "assistant" ? "…" : "")}
+                  {m.sources?.length ? (
+                    <div className="ai-web-sources">
+                      <span className="ai-web-sources-label">WEB RESEARCH</span>
+                      {m.sources.map((source) => (
+                        <a
+                          key={source.url}
+                          href={source.url}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="ai-web-source"
+                        >
+                          <strong>{source.title || source.url}</strong>
+                          <span>{source.url}</span>
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ))
             )}
