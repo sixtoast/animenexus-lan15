@@ -581,10 +581,13 @@ img {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
-    padding-bottom: 8px;
+    /* Leave a full dock-sized runway beneath the composer. The composer
+       stays in the conversation flow, but can never finish underneath the
+       fixed mobile navigation. */
+    padding-bottom: calc(var(--dock-h, 64px) + 32px + env(safe-area-inset-bottom, 0px));
   }
 
   .ai-compose {
-    margin-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    margin-bottom: 0;
   }
 }
