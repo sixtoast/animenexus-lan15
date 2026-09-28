@@ -177,13 +177,13 @@ function parsePlan(raw: string): ToolCallPlan {
   }
 
   const calls: { name: string; args: Record<string, unknown> }[] = [];
-  const callRe = /<tool_call>\\s*([A-Za-z0-9_-]+)\\s*([\\s\\S]*?)<\\/tool_call>/gi;
+  const callRe = /<tool_call>\s*([A-Za-z0-9_-]+)\s*([\s\S]*?)<\/tool_call>/gi;
   let match: RegExpExecArray | null;
   while ((match = callRe.exec(trimmed))) {
     const name = match[1];
     const body = match[2];
     const args: Record<string, unknown> = {};
-    const argRe = /<arg_key>\\s*([^<]+?)\\s*<\\/arg_key>\\s*<arg_value>\\s*([\\s\\S]*?)\\s*<\\/arg_value>/gi;
+        const argRe = /<arg_key>\s*([^<]+?)\s*<\/arg_key>\s*<arg_value>\s*([\s\S]*?)\s*<\/arg_value>/gi;
     let arg: RegExpExecArray | null;
     while ((arg = argRe.exec(body))) {
       args[arg[1].trim()] = arg[2].trim();
