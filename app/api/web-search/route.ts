@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 
-type SearchResult = {\n  title: string;\n  url: string;\n  snippet: string;\n  publishedDate: string | null;\n};\n\ntype SearchHit = {
+type SearchResult = {
+  title: string;
+  url: string;
+  snippet: string;
+  publishedDate: string | null;
+};
+
+type SearchHit = {
   title?: string;
   url?: string;
   content?: string;
