@@ -332,9 +332,9 @@ export async function runLanternAgent(
   // during the final answer pass even though tools have already executed.
   // Never expose that protocol to the user.
   const reply = rawReply
-    .replace(/<tool_call>[\\s\\S]*?<\\/tool_call>/gi, "")
-    .replace(/<\\|tool_call_start\\|>[\\s\\S]*?<\\|tool_call_end\\|>/gi, "")
-    .replace(/<arg_key>[\\s\\S]*?<\\/arg_value>/gi, "")
+    .replace(/<tool_call>[\s\S]*?<\/tool_call>/gi, "")
+    .replace(/<\|tool_call_start\|>[\s\S]*?<\|tool_call_end\|>/gi, "")
+    .replace(/<arg_key>[\s\S]*?<\/arg_value>/gi, "")
     .trim();
 
   return { reply, toolResults, pendingActions, webSources };
