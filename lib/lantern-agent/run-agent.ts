@@ -83,6 +83,21 @@ function viewingIntentDigest(): string {
   }
 }
 
+
+function spoilerBoundaryDigest(): string {
+  try {
+    const entries = readWatchlist();
+    if (!entries.length) return "No recorded watch progress. If a question could reveal plot details, avoid major spoilers unless the user explicitly asks for them.";
+    return entries.slice(0, 30).map((e) => {
+      const status = e.watchStatus || "unknown";
+      const progress = e.progress != null ? ` episode/chapter progress=${e.progress}` : "";
+      return `- ${e.title}: status=${status}${progress}`;
+    }).join("\n");
+  } catch {
+    return "Watch progress unavailable. Avoid major spoilers unless explicitly requested.";
+  }
+}
+
 function plannerSystem(): string {
   return [
     "You are Lantern's planner for AnimeNexus.",
@@ -92,6 +107,8 @@ function plannerSystem(): string {
     'or {"tools":[],"answerDirectly":true} for pure chat.',
     "CURRENT VIEWING INTENT (authoritative for tonight):",
     viewingIntentDigest(),
+    "RECORDED SPOILER BOUNDARIES:",
+    spoilerBoundaryDigest(),
     "Available tools:",
     toolsCatalogForPrompt(),
     "Rules:",
@@ -100,6 +117,10 @@ function plannerSystem(): string {
     "- MUST call getCompletionQueue for 'what should I finish', 'what to complete next', backlog / queue prioritization.",
     "- MUST call getTasteProfile or getStats for taste/stats questions.",
     "- MUST call searchAnime when the user names a title to look up.",
+    "- Use searchWeb for general factual questions, current information, interviews, episode/chapter context, production details, character facts, or narrative details that may not exist in AniList/AnimeNexus.",
+    "- For anime questions where catalogue data may be incomplete, prefer searchAnime + searchWeb together when both add distinct information.",
+    "- Pass a concise context and spoilerBoundary to searchWeb. Never ask the web search tool for unrestricted spoilers when the user's watch progress is known.",
+    "- For current/recent facts, web research is preferred over memory.",
     "- MUST call getRecommendations for 'recommend something' / 'what should I watch' when not pure chat. Prefer pairing with getViewingIntent.",
     "- When recommending, respect hard avoids from viewing intent; current intent outranks long-term genre habits.",
     "- Use getRecentActivity for 'what was I looking at'.",
@@ -116,7 +137,10 @@ function answerSystem(toolBlock: string): string {
     "CURRENT VIEWING INTENT:",
     viewingIntentDigest(),
     "Steer picks toward the requested experience; do not default to their usual action/fantasy diet if tonight asks for something else.",
-    "You MUST treat TOOL_RESULTS as ground truth.",
+    "You MUST treat TOOL_RESULTS as ground truth for catalogue/user data, but treat web snippets as sourced evidence that may be incomplete or stale.",
+    "When web research was used, distinguish researched facts from inference and include a compact Sources section with the relevant source titles and URLs.",
+    "Never invent citations or URLs. Only cite URLs returned by searchWeb.",
+    "Respect spoiler boundaries. Never reveal plot information beyond the user's recorded progress unless the user explicitly asks for spoilers. If progress is unknown, prefer spoiler-light answers and say that the boundary is unknown.",
     "If a tool failed or returned empty, say so honestly. Never invent titles or claim you modified the list unless a tool confirmed it.",
     "If a tool needs confirmation, tell the user what would happen and that they must confirm in the UI.",
     "When recommending, prefer the tool's confidence + reasons; do not invent match percentages.",
@@ -144,6 +168,7 @@ function parsePlan(raw: string): ToolCallPlan {
 
 const ALLOWED = new Set<string>([
   "searchAnime",
+  "searchWeb",
   "getAnimeDetails",
   "getWatchlist",
   "getTasteProfile",
