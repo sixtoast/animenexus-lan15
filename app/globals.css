@@ -457,11 +457,8 @@ img {
 }
 
 
-/* AI desk: one stable scroll surface + a composer that stays reachable.
-   The drawer itself must not scroll. The modal body owns vertical scrolling,
-   while the composer is sticky inside that scroll surface. This prevents
-   iOS/Chromium from treating a button press as a request to re-anchor the
-   page or to scroll a nested flex container back to its boundary. */
+/* AI desk: the composer is part of the conversation flow, not a second
+   fixed/sticky layer competing with the mobile navigation dock. */
 .ai-panel-modal {
   min-height: 0;
   display: flex;
@@ -505,17 +502,58 @@ img {
 
 .ai-compose {
   flex: 0 0 auto;
-  position: sticky;
-  bottom: 0;
-  z-index: 5;
-  padding: 10px 0 max(10px, env(safe-area-inset-bottom, 0px));
-  margin-top: 8px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--color-primary) 0%, transparent),
-    var(--color-primary) 18%
-  );
-  border-top: 1px solid var(--color-border);
+  position: relative;
+  z-index: 1;
+  margin: 12px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.ai-compose-field {
+  position: relative;
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: var(--color-tertiary);
+  box-shadow: 0 4px 18px rgb(0 0 0 / 0.16);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.ai-compose-field:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-glow), 0 4px 18px rgb(0 0 0 / 0.16);
+}
+
+.ai-compose-field .notes-area {
+  display: block;
+  width: 100%;
+  min-height: 64px;
+  max-height: 180px;
+  resize: vertical;
+  margin: 0;
+  padding: 14px 56px 14px 15px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+}
+
+.ai-compose-send {
+  position: absolute !important;
+  right: 8px;
+  bottom: 8px;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0 !important;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
 }
 
 @media (max-width: 640px) {
@@ -525,9 +563,6 @@ img {
 
   .ai-panel-modal {
     z-index: 1;
-  }
-
-  .ai-panel-modal {
     height: calc(100dvh - var(--dock-h, 64px) - env(safe-area-inset-bottom, 0px));
     max-height: calc(100dvh - var(--dock-h, 64px) - env(safe-area-inset-bottom, 0px));
     margin-bottom: calc(var(--dock-h, 64px) + env(safe-area-inset-bottom, 0px));
@@ -546,9 +581,10 @@ img {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
+    padding-bottom: 8px;
   }
 
   .ai-compose {
-    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    margin-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   }
 }
