@@ -198,17 +198,17 @@ function parsePlan(raw: string): ToolCallPlan {
   // <|tool_call_start|>[searchWeb(query='...'), searchWeb(query='...')]<|tool_call_end|>
   // Some OpenAI-compatible/free-router models do this even when asked for JSON.
   const chatMlMatch = trimmed.match(
-    /<\\|tool_call_start\\|>\\s*\\[([\\s\\S]*?)\\]\\s*<\\|tool_call_end\\|>/i,
+    /<\|tool_call_start\|>\s*\[([\s\S]*?)\]\s*<\|tool_call_end\|>/i,
   );
   if (chatMlMatch) {
     const body = chatMlMatch[1];
-    const chatMlRe = /([A-Za-z0-9_-]+)\\s*\\(([^)]*)\\)/g;
+  const chatMlRe = /([A-Za-z0-9_-]+)\s*\(([^)]*)\)/g;
     let toolMatch: RegExpExecArray | null;
     while ((toolMatch = chatMlRe.exec(body))) {
       const name = toolMatch[1];
       const args: Record<string, unknown> = {};
       const argBody = toolMatch[2];
-      const argRe = /([A-Za-z_][A-Za-z0-9_]*)\\s*=\\s*(?:'([^']*)'|"([^"]*)"|([^,]+))/g;
+      const argRe = /([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(?:'([^']*)'|"([^"]*)"|([^,]+))/g;
       let argMatch: RegExpExecArray | null;
       while ((argMatch = argRe.exec(argBody))) {
         const raw = argMatch[2] ?? argMatch[3] ?? argMatch[4]?.trim() ?? "";
