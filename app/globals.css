@@ -457,7 +457,10 @@ img {
 }
 
 
-/* AI desk: isolate scrolling to the conversation viewport. */
+/* AI desk: the whole desk remains scrollable.
+   Keep the composer visible without trapping the rest of the panel in a
+   zero-height flex viewport. This is especially important on mobile where
+   the banner, settings and quick actions can exceed the available height. */
 .ai-panel-modal {
   min-height: 0;
   display: flex;
@@ -467,30 +470,26 @@ img {
 .ai-panel-modal .nx-modal-body {
   min-height: 0;
   flex: 1 1 auto;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  overscroll-behavior: contain;
-}
-
-.ai-panel-inner {
-  min-height: 0;
-  height: 100%;
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.ai-messages {
-  min-height: 0;
-  flex: 1 1 auto;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   scrollbar-gutter: stable;
+}
+
+.ai-panel-inner {
+  min-height: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.ai-messages {
+  min-height: 120px;
+  flex: 0 1 auto;
+  overflow: visible;
   padding-bottom: 8px;
 }
 
