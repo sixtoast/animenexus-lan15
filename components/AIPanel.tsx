@@ -433,7 +433,7 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
                 value={settings.provider}
                 onChange={(e) => applyPreset(e.target.value as AIProviderId)}
               >
-                <option value="openrouter">OpenRouter</option>
+                <option value="openrouter">OpenRouter · Free Router</option>
                 <option value="openai">OpenAI</option>
                 <option value="gemini">Gemini</option>
                 <option value="groq">Groq</option>
@@ -466,6 +466,18 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
                 }
                 placeholder="sk-…"
               />
+              <label className="filter-label">Fallback provider</label>
+              <select
+                className="filter-input"
+                value={settings.fallbackProvider || "groq"}
+                onChange={(e) =>
+                  setSettings((s) => ({ ...s, fallbackProvider: e.target.value }))
+                }
+              >
+                <option value="groq">Groq</option>
+                <option value="gemini">Gemini</option>
+                <option value="openrouter">OpenRouter</option>
+              </select>
               <label className="filter-label">Fallback key (optional)</label>
               <input
                 className="filter-input"

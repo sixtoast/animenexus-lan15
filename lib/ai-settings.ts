@@ -26,7 +26,7 @@ export const AI_PRESETS: Record<
 > = {
   openrouter: {
     baseUrl: "https://openrouter.ai/api/v1",
-    model: "openai/gpt-4o-mini",
+    model: "openrouter/free",
     hint: "https://openrouter.ai/keys",
   },
   openai: {
@@ -91,7 +91,7 @@ export function defaultSettings(): AISettings {
     baseUrl: env.baseUrl || preset.baseUrl,
     model: env.model || preset.model,
     apiKey: env.apiKey || "",
-    fallbackProvider: "",
+    fallbackProvider: "groq",
     fallbackKey: "",
   };
 }
