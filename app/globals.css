@@ -534,8 +534,8 @@ img {
   .ai-panel-modal .nx-modal-body {
     min-height: 0;
     height: auto;
-    flex: 1 1 auto;
-    overflow: hidden;
+    flex: 0 0 auto;
+    overflow: visible;
   }
 
   .ai-compose {
