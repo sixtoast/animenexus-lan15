@@ -25,6 +25,7 @@ import { fetchByGenres } from "@/lib/anilist-discover";
 import type { Anime, WatchlistEntry } from "@/lib/types";
 import { readIntentSession, readAiIntentOverlay } from "@/lib/intent-session";
 import { getExperienceIntent, EXPERIENCE_INTENTS } from "@/lib/viewing-intent";
+import { readWebSearchSettings } from "@/lib/web-search-settings";
 
 export type ToolName =
   | "searchAnime"
@@ -197,10 +198,29 @@ export async function executeTool(
         const maxResults = Math.min(8, Math.max(3, Number(args.maxResults) || 5));
         const context = String(args.context || "").trim().slice(0, 400);
         const spoilerBoundary = String(args.spoilerBoundary || "").trim().slice(0, 300);
+        const webSettings = readWebSearchSettings();
+        if (!webSettings.geminiKey && !webSettings.tavilyKey && !webSettings.serperKey) {
+          return {
+            ok: false,
+            tool: name,
+            error: "Web search is not configured. Open AI Desk settings and add your own Gemini, Tavily, or Serper key.",
+          };
+        }
         const res = await fetch("/api/web-search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query, context, spoilerBoundary, maxResults }),
+          body: JSON.stringify({
+            query,
+            context,
+            spoilerBoundary,
+            maxResults,
+            provider: webSettings.provider,
+            keys: {
+              gemini: webSettings.geminiKey,
+              tavily: webSettings.tavilyKey,
+              serper: webSettings.serperKey,
+            },
+          }),
         });
         const json = (await res.json().catch(() => ({}))) as {
           ok?: boolean;
