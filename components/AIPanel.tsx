@@ -541,30 +541,35 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
           </div>
 
           <div className="ai-compose">
-            <textarea
-              className="notes-area"
-              rows={2}
-              value={input}
-              onFocus={() => setComposerFocused(true)}
-              onBlur={() => setComposerFocused(false)}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Message the desk…"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void send(input);
-                }
-              }}
-            />
-            <Button
-              variant="accent"
-              size="sm"
-              disabled={busy}
-              loading={busy}
-              onClick={() => void send(input)}
-            >
-              Send
-            </Button>
+            <div className="ai-compose-field">
+              <textarea
+                className="notes-area"
+                rows={2}
+                value={input}
+                onFocus={() => setComposerFocused(true)}
+                onBlur={() => setComposerFocused(false)}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Message the desk…"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void send(input);
+                  }
+                }}
+              />
+              <Button
+                variant="accent"
+                size="sm"
+                disabled={busy}
+                loading={busy}
+                onClick={() => void send(input)}
+                aria-label="Send message"
+                title="Send message"
+                className="ai-compose-send"
+              >
+                ↑
+              </Button>
+            </div>
           </div>
         </div>
       </Modal>
