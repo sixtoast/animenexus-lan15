@@ -22,6 +22,13 @@ import { Button } from "@/components/ui/Button";
 import { emitNexusSignal as sendNexusSignal, type NexusTarget } from "@/lib/nexus-intelligence";
 import { interpretViewingIntent } from "@/lib/intelligence/ai/interpret-intent";
 import { readIntentSession, writeAiIntentOverlay, writeIntentSession } from "@/lib/intent-session";
+import {
+  DEFAULT_WEB_SEARCH_SETTINGS,
+  hasWebSearchKey,
+  readWebSearchSettings,
+  writeWebSearchSettings,
+  type WebSearchSettings,
+} from "@/lib/web-search-settings";
 
 type Msg = {
   role: "user" | "assistant" | "system";
@@ -48,6 +55,8 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settings, setSettings] = useState<AISettings>(defaultSettings());
   const [configured, setConfigured] = useState(false);
+  const [webSearch, setWebSearch] = useState<WebSearchSettings>(DEFAULT_WEB_SEARCH_SETTINGS);
+  const [webConfigured, setWebConfigured] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [pending, setPending] = useState<
     { tool: string; args: Record<string, unknown>; message: string }[]
@@ -65,6 +74,9 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
     const s = readAISettings();
     setSettings(s);
     setConfigured(isAIConfigured(s));
+    const web = readWebSearchSettings();
+    setWebSearch(web);
+    setWebConfigured(hasWebSearchKey(web));
   }, [open]);
 
   useEffect(() => {
@@ -152,8 +164,10 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
 
   function saveSettings() {
     writeAISettings(settings);
+    writeWebSearchSettings(webSearch);
     setConfigured(isAIConfigured(settings));
-    showToast("AI settings saved", "🤖");
+    setWebConfigured(hasWebSearchKey(webSearch));
+    showToast("AI + web search settings saved", "🤖");
     setSettingsOpen(false);
   }
 
@@ -487,6 +501,72 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
                   setSettings((s) => ({ ...s, fallbackKey: e.target.value }))
                 }
               />
+              <div
+                style={{
+                  marginTop: 18,
+                  paddingTop: 16,
+                  borderTop: "1px solid var(--color-border, rgba(255,255,255,.12))",
+                }}
+              >
+                <span className="filter-label">Live web search · BYOK</span>
+                <p className="tools-hint" style={{ margin: "4px 0 10px" }}>
+                  No search key is stored on the server. Add your own key below.
+                  It stays in this browser and is sent only when Lantern performs a web search.
+                </p>
+                <label className="filter-label">Search provider</label>
+                <select
+                  className="filter-input"
+                  value={webSearch.provider}
+                  onChange={(e) =>
+                    setWebSearch((v) => ({
+                      ...v,
+                      provider: e.target.value as WebSearchSettings["provider"],
+                    }))
+                  }
+                >
+                  <option value="auto">Auto · Gemini → Tavily → Serper</option>
+                  <option value="gemini">Gemini · Google Search grounding</option>
+                  <option value="tavily">Tavily</option>
+                  <option value="serper">Serper</option>
+                </select>
+                <label className="filter-label">Gemini API key</label>
+                <input
+                  className="filter-input"
+                  type="password"
+                  autoComplete="off"
+                  value={webSearch.geminiKey}
+                  onChange={(e) =>
+                    setWebSearch((v) => ({ ...v, geminiKey: e.target.value }))
+                  }
+                  placeholder="AIza…"
+                />
+                <label className="filter-label">Tavily API key</label>
+                <input
+                  className="filter-input"
+                  type="password"
+                  autoComplete="off"
+                  value={webSearch.tavilyKey}
+                  onChange={(e) =>
+                    setWebSearch((v) => ({ ...v, tavilyKey: e.target.value }))
+                  }
+                  placeholder="tvly-…"
+                />
+                <label className="filter-label">Serper API key</label>
+                <input
+                  className="filter-input"
+                  type="password"
+                  autoComplete="off"
+                  value={webSearch.serperKey}
+                  onChange={(e) =>
+                    setWebSearch((v) => ({ ...v, serperKey: e.target.value }))
+                  }
+                  placeholder="••••••••"
+                />
+                <p className="tools-hint" style={{ marginTop: 8 }}>
+                  Status: {webConfigured ? "Web search ready" : "Add at least one search key"}
+                </p>
+              </div>
+
               <div className="daily-actions" style={{ marginTop: 12 }}>
                 <Button variant="accent" size="sm" onClick={saveSettings}>
                   Save
@@ -502,8 +582,9 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
                 </Button>
               </div>
               <p className="taste-footnote">
-                Keys stay in this browser (anime_nexus_ai_settings). Chat uses
-                tools for watchlist, taste, search, and recommendations.
+                AI keys stay in this browser (anime_nexus_ai_settings). Web-search keys stay
+                in anime_nexus_web_search_settings. Chat uses tools for watchlist, taste,
+                live web search, and recommendations.
               </p>
             </div>
           ) : null}
