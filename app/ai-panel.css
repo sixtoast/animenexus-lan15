@@ -116,7 +116,7 @@
 .ai-compose {
   display: block;
   position: sticky;
-  bottom: 8px;
+  bottom: calc(var(--dock-h, 64px) + 18px);
   z-index: 10;
   margin-top: 8px;
   padding: 0;
@@ -163,7 +163,7 @@
 
 @media (max-width: 640px) {
   .ai-compose {
-    bottom: 8px;
+    bottom: calc(var(--dock-h, 64px) + 18px);
   }
 
   .ai-compose .notes-area {
