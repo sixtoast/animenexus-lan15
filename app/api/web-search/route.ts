@@ -49,7 +49,8 @@ async function geminiWebSearch(
     `User question: ${query}`,
   ]
     .filter(Boolean)
-    .join("\n");
+    .join("
+");
 
   const url =
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=` +
@@ -187,7 +188,8 @@ export async function POST(req: Request) {
       spoilerBoundary ? `Spoiler boundary: ${spoilerBoundary}` : "",
     ]
       .filter(Boolean)
-      .join("\n");
+      .join("
+");
 
     // Prefer Gemini's native Google Search grounding when configured. It gives
     // Lantern a grounded answer plus source URLs, while keeping the key server-side.
