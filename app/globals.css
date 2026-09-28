@@ -565,7 +565,9 @@ img {
     z-index: 1;
     height: calc(100dvh - var(--dock-h, 64px) - env(safe-area-inset-bottom, 0px));
     max-height: calc(100dvh - var(--dock-h, 64px) - env(safe-area-inset-bottom, 0px));
-    margin-bottom: calc(var(--dock-h, 64px) + env(safe-area-inset-bottom, 0px));
+    /* Nudge the AI desk slightly lower while keeping the composer clear
+       of the fixed mobile navigation dock. */
+    margin-bottom: calc(var(--dock-h, 64px) - 10px + env(safe-area-inset-bottom, 0px));
   }
 
   .ai-panel-modal .nx-modal-panel {
