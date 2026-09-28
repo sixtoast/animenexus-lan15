@@ -125,7 +125,8 @@ function plannerSystem(): string {
     "- MUST call getCompletionQueue for 'what should I finish', 'what to complete next', backlog / queue prioritization.",
     "- MUST call getTasteProfile or getStats for taste/stats questions.",
     "- MUST call searchAnime when the user names a title to look up.",
-    "- Use searchWeb for general factual questions, current information, interviews, episode/chapter context, production details, character facts, or narrative details that may not exist in AniList/AnimeNexus.",
+    "- Use searchWeb for general factual questions, current information, interviews, episode/chapter context, production details, character facts, narrative details, or shared-universe/canon/crossover questions that may not exist in AniList/AnimeNexus.",
+    "- For shared-universe, same-world, crossover, canon connection, or Easter-egg questions involving named anime, MUST use searchWeb; searchAnime may be added for catalogue context but must not replace web research.",
     "- For anime questions where catalogue data may be incomplete, prefer searchAnime + searchWeb together when both add distinct information.",
     "- Pass a concise context and spoilerBoundary to searchWeb. Never ask the web search tool for unrestricted spoilers when the user's watch progress is known.",
     "- For current/recent facts, web research is preferred over memory.",
@@ -147,6 +148,7 @@ function answerSystem(toolBlock: string): string {
     "Steer picks toward the requested experience; do not default to their usual action/fantasy diet if tonight asks for something else.",
     "You MUST treat TOOL_RESULTS as ground truth for catalogue/user data, but treat web snippets as sourced evidence that may be incomplete or stale.",
     "When web research was used, distinguish researched facts from inference and include a compact Sources section with the relevant source titles and URLs.",
+    "FINAL ANSWER OUTPUT MUST BE PLAIN USER-FACING TEXT. NEVER emit, repeat, or simulate tool calls, XML tool tags, ChatML tool tags, JSON tool plans, or <arg_key>/<arg_value> blocks. Tools have already been executed by the agent runner.",
     "Never invent citations or URLs. Only cite URLs returned by searchWeb.",
     "Respect spoiler boundaries. Never reveal plot information beyond the user's recorded progress unless the user explicitly asks for spoilers. If progress is unknown, prefer spoiler-light answers and say that the boundary is unknown.",
     "If a tool failed or returned empty, say so honestly. Never invent titles or claim you modified the list unless a tool confirmed it.",
@@ -317,7 +319,7 @@ export async function runLanternAgent(
   }).filter((s, i, all) => s?.url && all.findIndex((x) => x.url === s.url) === i).slice(0, 8);
 
   const toolBlock = JSON.stringify(toolResults, null, 2);
-  const reply = await callChatCompletions(
+  const rawReply = await callChatCompletions(
     [
       { role: "system", content: answerSystem(toolBlock) },
       ...prior.slice(-6),
@@ -325,6 +327,15 @@ export async function runLanternAgent(
     ],
     { temperature: 0.7 },
   );
+
+  // A few OpenAI-compatible models can still emit a tool-call-shaped response
+  // during the final answer pass even though tools have already executed.
+  // Never expose that protocol to the user.
+  const reply = rawReply
+    .replace(/<tool_call>[\\s\\S]*?<\\/tool_call>/gi, "")
+    .replace(/<\\|tool_call_start\\|>[\\s\\S]*?<\\|tool_call_end\\|>/gi, "")
+    .replace(/<arg_key>[\\s\\S]*?<\\/arg_value>/gi, "")
+    .trim();
 
   return { reply, toolResults, pendingActions, webSources };
 }
