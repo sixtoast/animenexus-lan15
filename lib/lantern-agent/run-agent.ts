@@ -29,9 +29,17 @@ export type AgentPendingAction = {
   message: string;
 };
 
+export type AgentWebSource = {
+  title: string;
+  url: string;
+  snippet?: string;
+  publishedDate?: string | null;
+};
+
 export type AgentRunResult = {
   reply: string;
   toolResults: ToolResult[];
+  webSources: AgentWebSource[];
   pendingActions: AgentPendingAction[];
 };
 
@@ -253,6 +261,12 @@ export async function runLanternAgent(
     }
   }
 
+  const webSources = toolResults.flatMap((r) => {
+    if (!r.ok || r.tool !== "searchWeb") return [];
+    const data = r.data as { sources?: AgentWebSource[] };
+    return Array.isArray(data?.sources) ? data.sources : [];
+  }).filter((s, i, all) => s?.url && all.findIndex((x) => x.url === s.url) === i).slice(0, 8);
+
   const toolBlock = JSON.stringify(toolResults, null, 2);
   const reply = await callChatCompletions(
     [
@@ -263,5 +277,5 @@ export async function runLanternAgent(
     { temperature: 0.7 },
   );
 
-  return { reply, toolResults, pendingActions };
+  return { reply, toolResults, pendingActions, webSources };
 }
