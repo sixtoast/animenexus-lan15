@@ -87,7 +87,7 @@ export function CoralImageRig2D({anim="idle",speed=0,perch="stand",facingAngleDe
    <g className="coral-standing-legs"><g className="coral-leg coral-leg-left"><SkinnedLeg side="left"/></g>
    {/* Both legs share one silhouette so calf and boot proportions match exactly. */}
    <g className="coral-leg coral-leg-right"><g transform="translate(1044 0) scale(-1 1)"><SkinnedLeg side="right"/></g></g></g>
-   <g className="coral-arm coral-arm-left">{part("grip")}</g>
+   <g className="coral-arm coral-arm-left">{part("grip")}</g>\n   <g className="coral-lantern">{part("lantern")}</g>
    <g className="coral-arm coral-arm-right"><g className="coral-rest-arm">{part("arm-right")}</g><g className="coral-point-arm">{part("pointing")}</g></g>
    <g className="coral-dress-settle"><SeatedGarment/></g>
    <g className="coral-bow">{part("bow")}</g>
