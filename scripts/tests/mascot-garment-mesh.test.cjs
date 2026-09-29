@@ -20,7 +20,16 @@ test('seated lap widens and lifts the hem with bounded local kick response',()=>
  const centre={x:305,y:505},edge={x:610,y:505};
  assert.equal(garmentVertex(centre,1,0,0).y,425);
  assert.ok(garmentVertex(edge,1,0,0).x>edge.x);
- const rest=garmentVertex(centre,1,0,0),kick=garmentVertex(centre,1,1,0);assert.ok(rest.y-kick.y>0&&rest.y-kick.y<=8);
+ const rest=garmentVertex(centre,1,0,0),kick=garmentVertex(centre,1,1,0);assert.ok(rest.y-kick.y>0&&rest.y-kick.y<=7);
+});
+test('one-sided kicks create local fold displacement without exceeding the skirt width envelope',()=>{
+ const neutral=garmentVertex({x:305,y:505},1,0,0);
+ const left=garmentVertex({x:305,y:505},1,1,0);
+ const right=garmentVertex({x:305,y:505},1,0,1);
+ assert.ok(Math.abs(left.x-neutral.x)>0);
+ assert.ok(Math.abs(right.x-neutral.x)>0);
+ assert.ok(left.x!==right.x);
+ assert.ok(Math.abs(left.x-neutral.x)<=6&&Math.abs(right.x-neutral.x)<=6);
 });
 test('garment returns to one rest texture and skips settled writes',()=>{
  let writes=0;const el={dataset:{},querySelectorAll:()=>GARMENT_TRIANGLES.map(()=>({setAttribute:()=>writes++}))};
