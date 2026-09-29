@@ -59,3 +59,12 @@ test('hidden tabs and reduced motion stop scheduling, resume without duplicate l
  h.media.matches=false;h.listeners.get('media:change')();h.listeners.get('media:change')();assert.equal(h.queued.size,1);
  h.dispose();assert.equal(h.queued.size,0);
 });
+
+
+test('lantern has a rendered layer and an interruptible physics channel',()=>{
+ const rig=fs.readFileSync('components/mascot2d/CoralImageRig2D.tsx','utf8');
+ const motion=fs.readFileSync('components/mascot2d/useCoralMotion.ts','utf8');
+ assert.match(rig,/className="coral-lantern"[^>]*>\{part\("lantern"\)\}/);
+ assert.match(motion,/lantern:channel\(\)/);
+ assert.match(motion,/--physics-lantern/);
+});
