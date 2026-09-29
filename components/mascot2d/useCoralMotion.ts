@@ -23,7 +23,7 @@ export function useCoralMotion(anim:string,speed:number,perch:string,facingAngle
   const updateLegMesh=bindLegMesh(el);
   const updateGarmentMesh=bindGarmentMesh(el);
   const updateFaceMeshes=bindFaceMeshes(el);
-  const springs={angle:channel(currentAngle),body:channel(currentAngle),hair:channel(currentAngle),hood:channel(currentAngle),cloak:channel(),brow:channel(),curve:channel(.2),mouth:channel(),width:channel(),slump:channel(),gazeX:channel(),gazeY:channel()};
+  const springs={angle:channel(currentAngle),body:channel(currentAngle),hair:channel(currentAngle),hood:channel(currentAngle),cloak:channel(),brow:channel(),curve:channel(.2),mouth:channel(),width:channel(),slump:channel(),gazeX:channel(),gazeY:channel(),lantern:channel()};
   const lid=lidState();
   const written=new Map<string,string>();
   const property=(key:string,value:number)=>{const next=String(Math.round(value*1000)/1000);if(written.get(key)!==next){written.set(key,next);el.style.setProperty(key,next);}};
@@ -47,6 +47,7 @@ export function useCoralMotion(anim:string,speed:number,perch:string,facingAngle
    property('--hair-turn',spring('hair',currentAngle,2.1,.58)/90);
    property('--hood-turn',spring('hood',currentAngle,2.6,.9)/90);
    property('--cloth-lag',spring('cloak',-pose.lean*.35-springs.body.velocity*.015,1.8,.7));
+   property('--physics-lantern',spring('lantern',pose.lantern-springs.body.velocity*.08,2.4,.62));
    const f=input.current.face,e=expressionTargets(f.expression,f.mouthOpen,f.mouthWide,f.mouthMood);
    const eyeTarget=f.blink||input.current.anim==='sleep'?0:e.eye;
    if(reduced){lid.value=eyeTarget;lid.from=eyeTarget;lid.target=eyeTarget;lid.elapsed=0;}
