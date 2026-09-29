@@ -6,12 +6,15 @@ export const GARMENT_TRIANGLES:Triangle[]=ROWS.slice(0,-1).flatMap((v,row)=>COLS
  return [[a,b,c],[b,d,c]] as Triangle[];
 }));
 const bounded=(n:number)=>Math.max(0,Math.min(1,Number.isFinite(n)?n:0));
-/** The collar/cape stay registered. Only the lower skirt fans across the lap. */
+/** The collar/cape stay registered. The lower skirt fans across the lap with soft, localised fold motion. */
 export function garmentVertex(p:Point,seat:number,kickL:number,kickR:number):Point{
  const s=bounded(seat),u=p.x/GARMENT_WIDTH,v=p.y/GARMENT_HEIGHT,q=bounded((v-.5)/.5);
  const middle=1-(2*u-1)**2;
- const kickLift=(bounded(kickL)*Math.exp(-Math.pow((u-.35)/.18,2))+bounded(kickR)*Math.exp(-Math.pow((u-.65)/.18,2)))*8*q*q*s;
- return {x:GARMENT_WIDTH/2+(p.x-GARMENT_WIDTH/2)*(1+.2*q*s),y:p.y-s*(55*q+25*q*q*middle)-kickLift};
+ const left=bounded(kickL),right=bounded(kickR);
+ const fold=(left-right)*6*Math.sin(Math.PI*u)*q*q*s;
+ const hemLift=(left*Math.exp(-Math.pow((u-.35)/.18,2))+right*Math.exp(-Math.pow((u-.65)/.18,2)))*7*q*q*s;
+ const flare=1+.12*q*s;
+ return {x:GARMENT_WIDTH/2+(p.x-GARMENT_WIDTH/2)*flare+fold,y:p.y-s*(55*q+25*q*q*middle)-hemLift};
 }
 export function garmentMatrices(seat:number,kickL:number,kickR:number){
  const cache=new Map<string,Point>();
