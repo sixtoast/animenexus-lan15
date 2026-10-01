@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import type { Anime } from "@/lib/types";
 import { getAnimeObjectId, getAnimeViewTransitionName, withViewTransition } from "@/lib/view-transition";
-import { playInteractionSound, playSpatialTravel } from "@/lib/sound-engine";
+import { playInteractionSound } from "@/lib/sound-engine";
 import { useHomePersonalizedPool } from "@/lib/use-home-personalized-pool";
 import { claimNexusCommand, getLastNexusCommand, onNexusSignal, readNexusFieldState, type NexusFieldMode } from "@/lib/nexus-intelligence";
 
@@ -63,9 +63,7 @@ export function NexusWorlds({ candidates }: Props) {
   const [aiPulsing, setAiPulsing] = useState(false);
   const aiPulseStartedRef = useRef(0);
   const fieldRef = useRef<HTMLDivElement>(null);
-  const worldsRef = useRef(worlds);
   const fieldModeRef = useRef(fieldMode);
-  worldsRef.current = worlds;
   fieldModeRef.current = fieldMode;
   const pointerRef = useRef({ x: 0, y: 0, active: false });
   const dragRef = useRef({ active: false, startX: 0, startRotation: 0 });
@@ -390,16 +388,15 @@ export function NexusWorlds({ candidates }: Props) {
               y -= ny * repulsion;
             }
 
-            // Keep the pointer field magnetic without allowing a card to leave
-            // the shared orbital envelope on narrow viewports.
-            const edgeX = Math.max(12, rect.width / 2 - node.offsetWidth / 2 - (mobile ? 4 : 14));
-            const edgeY = Math.max(18, rect.height / 2 - node.offsetHeight / 2 - (mobile ? 12 : 24));
+            // The magnetic field is allowed to move freely, but the final card
+            // centre is clamped against the actual viewport-safe bounds. This
+            // keeps the orbital envelope stable on narrow screens too.
             const targetCenterX = centreX + x;
             const targetCenterY = centreY + y;
             const safeX = clamp(targetCenterX, node.offsetWidth / 2 + 6, rect.width - node.offsetWidth / 2 - 6);
             const safeY = clamp(targetCenterY, node.offsetHeight / 2 + 12, rect.height - node.offsetHeight / 2 - 18);
-            x = clamp(safeX - baseX, -edgeX - Math.abs(baseX - centreX), edgeX + Math.abs(baseX - centreX));
-            y = clamp(safeY - baseY, -edgeY - Math.abs(baseY - centreY), edgeY + Math.abs(baseY - centreY));
+            x = safeX - baseX;
+            y = safeY - baseY;
 
             if (lockTarget === index) {
               const lockPulse = 0.5 + 0.5 * Math.sin(now * 0.005);
