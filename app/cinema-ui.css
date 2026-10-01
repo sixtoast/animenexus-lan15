@@ -1722,3 +1722,49 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
   .nexus-world-map[data-phase="orbit"] .nexus-world-node-art:after,
   .nexus-world-map[data-phase="orbit"] .nexus-world-core-ring{animation:none}
 }
+
+
+/* DISCOVERY FIELD — PASS 4 / FOCUS LENS
+   Selection should change the atmosphere of the field, not merely add a border. */
+.nexus-world-map.has-active[data-phase="orbit"] .nexus-world-node:not(.is-active){
+  opacity:calc(.42 + var(--orbit-depth, .5) * .24);
+  filter:blur(.15px) saturate(.72) drop-shadow(0 12px 24px rgba(0,0,0,.25));
+}
+.nexus-world-map.has-active[data-phase="orbit"] .nexus-world-node.is-active{
+  opacity:1;
+}
+.nexus-world-map.has-active[data-phase="orbit"] .nexus-world-node.is-active .nexus-world-node-art{
+  box-shadow:
+    0 24px 55px rgba(0,0,0,.52),
+    0 0 0 1px rgba(242,179,95,.16),
+    0 0 34px rgba(242,179,95,.10);
+}
+.nexus-world-map.has-active[data-phase="orbit"] .nexus-world-core{
+  border-color:rgba(242,179,95,.38);
+  background:rgba(8,9,12,.78);
+}
+.nexus-world-map.is-dragging{
+  cursor:grabbing;
+}
+.nexus-world-map.is-dragging .nexus-world-node{
+  pointer-events:none;
+}
+.nexus-world-map[data-phase="orbit"] .nexus-world-node:focus-visible{
+  outline:1px solid rgba(242,179,95,.72);
+  outline-offset:7px;
+}
+.nexus-world-map[data-phase="orbit"] .nexus-world-node.is-active .nexus-world-node-lock{
+  color:var(--cinema-gold);
+  opacity:1;
+}
+@media(max-width:700px){
+  .nexus-world-map.has-active[data-phase="orbit"] .nexus-world-node:not(.is-active){
+    opacity:.62;
+    filter:none;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .nexus-world-map.has-active[data-phase="orbit"] .nexus-world-node:not(.is-active){
+    filter:none;
+  }
+}
