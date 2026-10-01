@@ -164,6 +164,7 @@ export function NexusWorlds({ candidates }: Props) {
     let lastDragTime = 0;
     const started = performance.now();
     let arrivalCuePlayed = false;
+    let phase: "lineup" | "travel" | "orbit" | "" = "";
 
     let motionAbort = false;
 
@@ -292,6 +293,11 @@ export function NexusWorlds({ candidates }: Props) {
       }
       const elapsed = now - started;
       const dt = Math.min(48, Math.max(8, now - previousNow));
+      const nextPhase: typeof phase = elapsed < lineupDuration ? "lineup" : elapsed < lineupDuration + travelDuration ? "travel" : "orbit";
+      if (nextPhase !== phase) {
+        phase = nextPhase;
+        field.dataset.phase = phase;
+      }
       previousNow = now;
 
       if (dragRef.current.active) {
@@ -383,6 +389,17 @@ export function NexusWorlds({ candidates }: Props) {
               x -= nx * repulsion;
               y -= ny * repulsion;
             }
+
+            // Keep the pointer field magnetic without allowing a card to leave
+            // the shared orbital envelope on narrow viewports.
+            const edgeX = Math.max(12, rect.width / 2 - node.offsetWidth / 2 - (mobile ? 4 : 14));
+            const edgeY = Math.max(18, rect.height / 2 - node.offsetHeight / 2 - (mobile ? 12 : 24));
+            const targetCenterX = centreX + x;
+            const targetCenterY = centreY + y;
+            const safeX = clamp(targetCenterX, node.offsetWidth / 2 + 6, rect.width - node.offsetWidth / 2 - 6);
+            const safeY = clamp(targetCenterY, node.offsetHeight / 2 + 12, rect.height - node.offsetHeight / 2 - 18);
+            x = clamp(safeX - baseX, -edgeX - Math.abs(baseX - centreX), edgeX + Math.abs(baseX - centreX));
+            y = clamp(safeY - baseY, -edgeY - Math.abs(baseY - centreY), edgeY + Math.abs(baseY - centreY));
 
             if (lockTarget === index) {
               const lockPulse = 0.5 + 0.5 * Math.sin(now * 0.005);
@@ -492,6 +509,14 @@ export function NexusWorlds({ candidates }: Props) {
       data-ai-pulse={aiPulse}
     >
       <div className="nexus-world-grid" aria-hidden />
+      <div className="nexus-world-orbit-plane" aria-hidden>
+        <i className="nexus-world-orbit-plane__ring nexus-world-orbit-plane__ring--outer" />
+        <i className="nexus-world-orbit-plane__ring nexus-world-orbit-plane__ring--inner" />
+        <i className="nexus-world-orbit-plane__axis nexus-world-orbit-plane__axis--x" />
+        <i className="nexus-world-orbit-plane__axis nexus-world-orbit-plane__axis--y" />
+      </div>
+      <div className="nexus-world-trajectory" aria-hidden><i /><i /><i /><i /><i /><i /></div>
+      <div className="nexus-world-arrival-flare" aria-hidden />
       <div className="nexus-world-scanline" aria-hidden />
       <div className="nexus-world-crosshair" aria-hidden />
       <svg className="nexus-world-connections" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
