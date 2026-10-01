@@ -59,6 +59,7 @@ export function BrowseClient({
   const [displayTotal, setDisplayTotal] = useState(initialTotal);
   const [leaving, setLeaving] = useState(false);
   const [portalAnime, setPortalAnime] = useState<Anime | null>(null);
+  const [portalSourceRect, setPortalSourceRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const sessionKey = useSessionRevision();
   const prevTotal = useRef(initialTotal);
 
@@ -226,7 +227,10 @@ export function BrowseClient({
 
   const canBlend = ready && entries.length >= 2 && items.length > 1;
   const queryValid = q.trim().length >= 1;
-  const closePortal = useCallback(() => setPortalAnime(null), []);
+  const closePortal = useCallback(() => {
+    setPortalAnime(null);
+    setPortalSourceRect(null);
+  }, []);
 
   const displayItems = useMemo(() => {
     if (!shelfBlend || !canBlend) return items;
@@ -541,7 +545,7 @@ export function BrowseClient({
         </div>
       ) : (
         <>
-          <div className="cinema-browse-grid"><AnimeGrid items={displayItems.slice(1)} trackBehaviour onPreview={setPortalAnime} /></div>
+          <div className="cinema-browse-grid"><AnimeGrid items={displayItems.slice(1)} trackBehaviour onPreview={(anime, sourceRect) => { setPortalSourceRect(sourceRect); setPortalAnime(anime); }} /></div>
           {hasNext ? (
             <div style={{ textAlign: "center", marginTop: 28 }}>
               <button
@@ -556,7 +560,7 @@ export function BrowseClient({
           ) : null}
         </>
       )}
-      {portalAnime ? <AnimeUniversePortal anime={portalAnime} onClose={closePortal} /> : null}
+      {portalAnime ? <AnimeUniversePortal anime={portalAnime} sourceRect={portalSourceRect} onClose={closePortal} /> : null}
     </div>
   );
 }
