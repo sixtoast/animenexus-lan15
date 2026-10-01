@@ -50,6 +50,7 @@ export function AnimeCard({ anime, index = 0, recommended = false, onPreview }: 
   const status = entry?.watchStatus;
   const [recent, setRecent] = useState(false);
   const [pressed, setPressed] = useState(false);
+  const [portalLaunching, setPortalLaunching] = useState(false);
   const cardRef = useRef<HTMLAnchorElement>(null);
   const rafRef = useRef(0);
   const score = anime.score > 0 ? anime.score.toFixed(1) : "\u2014";
@@ -89,6 +90,7 @@ export function AnimeCard({ anime, index = 0, recommended = false, onPreview }: 
     recent && !entry ? "is-recent" : "",
     recommended && !entry ? "is-recommended" : "",
     pressed ? "is-pressed" : "",
+    portalLaunching ? "is-portal-launching" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -146,8 +148,11 @@ export function AnimeCard({ anime, index = 0, recommended = false, onPreview }: 
     e.preventDefault();
     if (onPreview) {
       const rect = cardRef.current?.getBoundingClientRect();
-      if (rect) onPreview({ x: rect.left, y: rect.top, width: rect.width, height: rect.height });
-      else onPreview({ x: window.innerWidth / 2 - 80, y: window.innerHeight / 2 - 120, width: 160, height: 240 });
+      const sourceRect = rect
+        ? { x: rect.left, y: rect.top, width: rect.width, height: rect.height }
+        : { x: window.innerWidth / 2 - 80, y: window.innerHeight / 2 - 120, width: 160, height: 240 };
+      setPortalLaunching(true);
+      window.setTimeout(() => onPreview(sourceRect), 90);
       return;
     }
     withViewTransition(
