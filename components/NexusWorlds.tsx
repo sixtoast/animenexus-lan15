@@ -350,16 +350,39 @@ export function NexusWorlds({ candidates }: Props) {
           const targetY = centreY + Math.sin(angle) * radiusY - baseY;
           const startX = lineX - baseX;
           const startY = lineY - baseY;
-          const travelX = startX + (targetX - startX) * p;
-          const travelY = startY + (targetY - startY) * p;
-          // A single spatial arc gives every card the same physical journey:
-          // lineup -> lift/arc -> orbital destination. The sign only varies the
-          // side of the arc, never the destination geometry.
-          const arc = Math.sin(Math.PI * p) * travelArc * rect.height * (index % 2 === 0 ? -1 : 1);
-          x = travelX;
-          y = travelY - Math.sin(Math.PI * p) * travelLift + arc;
-          rotation = (index % 2 === 0 ? -1 : 1) * (28 * (1 - p) + Math.cos(angle) * 2.2 * p);
-          scale = 0.82 + 0.10 * p;
+          const side = index % 2 === 0 ? -1 : 1;
+
+          // Three unmistakable stages: lift from lineup -> collapse toward the
+          // shared centre -> slingshot outward into the final orbit.
+          const entryP = Math.min(1, p / 0.14);
+          const entryEase = ease(entryP);
+          const spiralP = Math.min(1, Math.max(0, (p - 0.10) / 0.66));
+          const spiralEase = ease(spiralP);
+          const outwardP = Math.min(1, Math.max(0, (p - 0.62) / 0.38));
+          const outwardEase = ease(outwardP);
+          const centreLocalX = centreX - baseX;
+          const centreLocalY = centreY - baseY;
+          const entryX = startX + (centreLocalX - startX) * entryEase;
+          const entryY = startY + (centreLocalY - startY) * entryEase;
+          const spiralRadius = 0.42 * (1 - spiralEase) + 0.58 * outwardEase;
+          const spiralX = centreLocalX + Math.cos(angle + side * 0.72 * (1 - p)) * radiusX * spiralRadius;
+          const spiralY = centreLocalY + Math.sin(angle + side * 0.72 * (1 - p)) * radiusY * spiralRadius;
+          const arc = Math.sin(Math.PI * p) * travelArc * rect.height * (1 + index * 0.035);
+
+          x = p < 0.14
+            ? entryX
+            : spiralX + (targetX - spiralX) * outwardEase;
+          y = p < 0.14
+            ? entryY - Math.sin(Math.PI * entryP) * travelLift
+            : spiralY + (targetY - spiralY) * outwardEase + arc * side;
+
+          // A full, visible 3D spin makes the journey readable even on a
+          // relatively small mobile viewport.
+          const spinTurns = 1.35 + index * 0.08;
+          rotation = side * (125 * (1 - p)) + Math.sin(p * Math.PI * 2 * spinTurns) * 22 * (1 - p);
+          rotateY = side * (170 * (1 - p)) + Math.sin(p * Math.PI) * side * 18;
+          rotateX = Math.sin(p * Math.PI) * -14 * side;
+          scale = 0.66 + 0.24 * p;
 
           if (travelT >= 1) {
             const orbitT = (local - lineupDuration - travelDuration) / orbitDuration;
