@@ -24,6 +24,8 @@ type Props = {
   anime: Anime;
   index?: number;
   recommended?: boolean;
+  /** Open the cinematic universe portal instead of navigating directly. */
+  onPreview?: () => void;
 };
 
 function episodeCap(anime: Anime, entryEpisodes?: number | string): number {
@@ -41,7 +43,7 @@ function isFinePointer(): boolean {
   }
 }
 
-export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
+export function AnimeCard({ anime, index = 0, recommended = false, onPreview }: Props) {
   const router = useRouter();
   const { entries, ready } = useWatchlist();
   const entry = ready ? findWatchlistEntry(entries, anime) : undefined;
@@ -142,6 +144,10 @@ export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
       return;
     }
     e.preventDefault();
+    if (onPreview) {
+      onPreview();
+      return;
+    }
     withViewTransition(
       () => {
         router.push(href);
