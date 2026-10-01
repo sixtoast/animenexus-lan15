@@ -2064,3 +2064,115 @@
 .anime-universe-portal__close b{
   border-radius:calc(30px - var(--anime-softness,.45) * 12px);
 }
+
+
+/* PORTAL PASS 9 — the selected anime gets a physical "world signature".
+   These layers sit behind the artwork so the UI reads as an environment. */
+.anime-universe-portal__world-effects{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  overflow:hidden;
+  pointer-events:none;
+}
+.world-effect{
+  position:absolute;
+  display:block;
+  pointer-events:none;
+}
+.world-effect--ring-a{
+  width:min(72vw,920px);
+  aspect-ratio:1;
+  right:-9%;
+  top:8%;
+  border:1px solid color-mix(in srgb,var(--portal-accent) calc(18% + var(--anime-energy,.4) * 24%),transparent);
+  border-radius:50%;
+  box-shadow:
+    0 0 0 34px color-mix(in srgb,var(--portal-accent) 2%,transparent),
+    0 0 0 35px rgba(255,255,255,.025);
+  transform:translate3d(calc(var(--portal-mx) * 24px),calc(var(--portal-my) * 15px),0) rotate(-12deg);
+  animation:world-ring-a 24s linear infinite;
+}
+.world-effect--ring-b{
+  width:min(48vw,610px);
+  aspect-ratio:1;
+  right:7%;
+  top:23%;
+  border:1px dashed color-mix(in srgb,var(--portal-accent) calc(10% + var(--anime-mystery,.3) * 22%),transparent);
+  border-radius:50%;
+  transform:rotate(28deg);
+  animation:world-ring-b 16s linear infinite reverse;
+}
+.world-effect--beam{
+  width:45%;
+  height:150%;
+  right:20%;
+  top:-20%;
+  opacity:calc(.035 + var(--anime-energy,.4) * .075);
+  background:linear-gradient(90deg,transparent,var(--portal-accent),transparent);
+  filter:blur(34px);
+  transform:rotate(19deg) translate3d(calc(var(--portal-mx) * 18px),calc(var(--portal-my) * 10px),0);
+  mix-blend-mode:screen;
+  animation:world-beam 8s ease-in-out infinite alternate;
+}
+.world-effect--glow{
+  width:min(46vw,620px);
+  height:min(46vw,620px);
+  right:10%;
+  top:22%;
+  border-radius:50%;
+  background:radial-gradient(circle,
+    color-mix(in srgb,var(--portal-accent) calc(8% + var(--anime-reflect,.35) * 14%),transparent),
+    transparent 68%);
+  filter:blur(12px);
+  transform:translate3d(calc(var(--portal-mx) * 20px),calc(var(--portal-my) * 14px),0);
+  animation:world-glow 4.8s ease-in-out infinite;
+}
+.anime-universe-portal__scene{
+  z-index:2;
+}
+.anime-universe-portal__main{
+  z-index:10;
+}
+.anime-universe-portal__scene:before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:16%;
+  bottom:12%;
+  width:1px;
+  background:linear-gradient(transparent,var(--portal-accent),transparent);
+  opacity:.34;
+  box-shadow:0 0 20px color-mix(in srgb,var(--portal-accent) 55%,transparent);
+}
+.anime-universe-portal__scene-caption{
+  letter-spacing:.14em;
+}
+@keyframes world-ring-a{
+  from{transform:translate3d(calc(var(--portal-mx) * 24px),calc(var(--portal-my) * 15px),0) rotate(-12deg)}
+  to{transform:translate3d(calc(var(--portal-mx) * 24px),calc(var(--portal-my) * 15px),0) rotate(348deg)}
+}
+@keyframes world-ring-b{
+  from{transform:rotate(28deg) scale(.98)}
+  to{transform:rotate(-332deg) scale(1.02)}
+}
+@keyframes world-beam{
+  from{opacity:.55;transform:rotate(19deg) translate3d(calc(var(--portal-mx) * 18px),calc(var(--portal-my) * 10px),0)}
+  to{opacity:1;transform:rotate(25deg) translate3d(calc(var(--portal-mx) * 18px),calc(var(--portal-my) * 10px),0)}
+}
+@keyframes world-glow{
+  0%,100%{opacity:.45;transform:translate3d(calc(var(--portal-mx) * 20px),calc(var(--portal-my) * 14px),0) scale(.94)}
+  50%{opacity:1;transform:translate3d(calc(var(--portal-mx) * 20px),calc(var(--portal-my) * 14px),0) scale(1.06)}
+}
+@media(max-width:700px){
+  .world-effect--ring-a{width:120vw;right:-40%;top:18%}
+  .world-effect--ring-b{width:82vw;right:-12%;top:27%}
+  .world-effect--beam{right:5%;opacity:.07}
+  .world-effect--glow{width:85vw;height:85vw;right:-15%;top:28%}
+}
+@media(prefers-reduced-motion:reduce){
+  .world-effect--ring-a,
+  .world-effect--ring-b,
+  .world-effect--beam,
+  .world-effect--glow{animation:none}
+}
