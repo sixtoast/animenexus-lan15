@@ -121,9 +121,13 @@ export function NexusWorlds({ candidates }: Props) {
     const field = fieldRef.current;
     if (!field) return;
     const observer = new IntersectionObserver(([entry]) => {
-      setInView(entry.isIntersecting);
-      if (entry.isIntersecting) setEntered(true);
-    }, { threshold: 0.12, rootMargin: "120px 0px" });
+      // Do not start the cinematic entrance in the preload margin. The field
+      // must actually be on-screen before its clock begins, otherwise a slow
+      // scroll can consume the entire LINEUP -> TRAVEL sequence off-screen.
+      const visible = entry.isIntersecting && entry.intersectionRatio >= 0.2;
+      setInView(visible);
+      if (visible) setEntered(true);
+    }, { threshold: [0, 0.2], rootMargin: "0px" });
     observer.observe(field);
     return () => observer.disconnect();
   }, []);
