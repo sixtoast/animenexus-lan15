@@ -217,6 +217,12 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
           ))}
         </nav>
 
+        <div className="anime-universe-portal__world-effects" aria-hidden>
+          <span className="world-effect world-effect--ring-a" />
+          <span className="world-effect world-effect--ring-b" />
+          <span className="world-effect world-effect--beam" />
+          <span className="world-effect world-effect--glow" />
+        </div>
         <div className="anime-universe-portal__scene" aria-hidden>
           <div className="anime-universe-portal__scene-haze" />
           <div className="anime-universe-portal__art">
