@@ -1156,3 +1156,164 @@
   .anime-universe-portal__scene-caption,
   .portal-view-scene{transition:none;animation:none}
 }
+
+
+/* PORTAL PASS 5 — make the universe react as one physical composition. */
+.anime-universe-portal__world{
+  perspective:1200px;
+}
+.anime-universe-portal__world:after{
+  pointer-events:none;
+  background:
+    radial-gradient(circle at calc(50% + var(--portal-mx) * 34%) calc(50% + var(--portal-my) * 34%), color-mix(in srgb,var(--portal-accent) 13%,transparent) 0, transparent 20%),
+    linear-gradient(90deg,transparent 0 14%,rgba(255,255,255,.035) 14.1%,transparent 14.3% 84%,rgba(255,255,255,.025) 84.1%,transparent 84.3%),
+    radial-gradient(ellipse at 76% 45%,transparent 0 18%,rgba(255,255,255,.11) 18.1%,transparent 18.5% 29%,rgba(255,255,255,.055) 29.1%,transparent 29.5% 42%,rgba(255,255,255,.025) 42.1%,transparent 42.5%),
+    linear-gradient(115deg,transparent 0 47%,color-mix(in srgb,var(--portal-accent) 22%,transparent) 47.2%,transparent 47.5%),
+    linear-gradient(0deg,transparent 0 68%,rgba(255,255,255,.045) 68.1%,transparent 68.3%);
+  transition:background-position .12s linear;
+}
+.anime-universe-portal__scene{
+  transform-style:preserve-3d;
+}
+.anime-universe-portal__scene .anime-universe-portal__art{
+  will-change:transform;
+  transform:
+    translate3d(calc(var(--portal-mx) * 34px),calc(var(--portal-my) * 22px),40px)
+    rotateY(calc(var(--portal-mx) * -1.1deg))
+    rotateX(calc(var(--portal-my) * 1deg))
+    scale(1.045);
+  transition:transform .18s ease-out;
+}
+.anime-universe-portal__scene-haze{
+  transform:translate3d(calc(var(--portal-mx) * 20px),calc(var(--portal-my) * 13px),10px);
+  transition:transform .2s ease-out;
+}
+.anime-universe-portal__identity{
+  transform:
+    translate3d(calc(var(--portal-mx) * -5px),calc(var(--portal-my) * -3px),70px);
+  transition:transform .2s ease-out;
+}
+.anime-universe-portal__panel{
+  transform:
+    translate3d(calc(var(--portal-mx) * -2px),calc(var(--portal-my) * -1px),35px);
+  transition:transform .2s ease-out;
+}
+.anime-universe-portal h1{
+  overflow-wrap:anywhere;
+  animation:
+    portal-title-reveal .95s cubic-bezier(.16,1,.3,1) .8s both;
+}
+.anime-universe-portal__eyebrow{
+  animation:portal-eyebrow-in .55s ease-out .74s both;
+}
+.anime-universe-portal__native{
+  animation:portal-native-in .6s cubic-bezier(.16,1,.3,1) 1.02s both;
+}
+.anime-universe-portal__identity-line{
+  animation:portal-line-in .7s cubic-bezier(.16,1,.3,1) 1.12s both;
+}
+.anime-universe-portal__nav button{
+  position:relative;
+}
+.anime-universe-portal__nav button:after{
+  content:"";
+  position:absolute;
+  left:24px;
+  right:0;
+  bottom:-5px;
+  height:1px;
+  transform:scaleX(0);
+  transform-origin:left;
+  background:var(--portal-accent);
+  box-shadow:0 0 12px color-mix(in srgb,var(--portal-accent) 70%,transparent);
+  transition:transform .35s cubic-bezier(.16,1,.3,1);
+}
+.anime-universe-portal__nav button:hover:after,
+.anime-universe-portal__nav button.is-active:after{
+  transform:scaleX(1);
+}
+.anime-universe-portal__nav button.is-active{
+  text-shadow:0 0 18px color-mix(in srgb,var(--portal-accent) 30%,transparent);
+}
+.anime-universe-portal__panel{
+  overflow:hidden;
+}
+.anime-universe-portal__panel:after{
+  content:"";
+  position:absolute;
+  top:0;
+  bottom:0;
+  left:-30%;
+  width:24%;
+  pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.09),transparent);
+  transform:skewX(-18deg);
+  animation:portal-panel-sheen 7s cubic-bezier(.2,.7,.2,1) 2.2s infinite;
+}
+.anime-universe-portal__facts span,
+.anime-universe-portal__tags span,
+.anime-universe-portal__actions .btn{
+  animation:portal-detail-rise .55s cubic-bezier(.16,1,.3,1) both;
+}
+.anime-universe-portal__facts span:nth-child(1){animation-delay:1.18s}
+.anime-universe-portal__facts span:nth-child(2){animation-delay:1.23s}
+.anime-universe-portal__facts span:nth-child(3){animation-delay:1.28s}
+.anime-universe-portal__facts span:nth-child(4){animation-delay:1.33s}
+.anime-universe-portal__description{animation:portal-detail-rise .65s cubic-bezier(.16,1,.3,1) 1.38s both}
+.anime-universe-portal__tags span:nth-child(1){animation-delay:1.46s}
+.anime-universe-portal__tags span:nth-child(2){animation-delay:1.5s}
+.anime-universe-portal__tags span:nth-child(3){animation-delay:1.54s}
+.anime-universe-portal__tags span:nth-child(4){animation-delay:1.58s}
+.anime-universe-portal__tags span:nth-child(5){animation-delay:1.62s}
+.anime-universe-portal__actions .btn:nth-child(1){animation-delay:1.68s}
+.anime-universe-portal__actions .btn:nth-child(2){animation-delay:1.74s}
+@keyframes portal-title-reveal{
+  from{opacity:0;transform:translate3d(-18px,26px,0);clip-path:inset(0 0 100% 0);filter:blur(8px)}
+  to{opacity:1;transform:none;clip-path:inset(0);filter:none}
+}
+@keyframes portal-eyebrow-in{
+  from{opacity:0;transform:translateX(-14px);letter-spacing:.38em}
+  to{opacity:1;transform:none;letter-spacing:.18em}
+}
+@keyframes portal-native-in{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:none}
+}
+@keyframes portal-line-in{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:none}
+}
+@keyframes portal-detail-rise{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:none}
+}
+@keyframes portal-panel-sheen{
+  0%,58%{left:-30%;opacity:0}
+  64%{opacity:.7}
+  73%,100%{left:125%;opacity:0}
+}
+@media(max-width:700px){
+  .anime-universe-portal__scene .anime-universe-portal__art{
+    transform:
+      translate3d(calc(var(--portal-mx) * 10px),calc(var(--portal-my) * 8px),20px)
+      scale(1.04);
+  }
+  .anime-universe-portal__identity,
+  .anime-universe-portal__panel{
+    transform:none;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .anime-universe-portal__scene .anime-universe-portal__art,
+  .anime-universe-portal__scene-haze,
+  .anime-universe-portal__identity,
+  .anime-universe-portal__panel{transition:none;transform:none}
+  .anime-universe-portal h1,
+  .anime-universe-portal__eyebrow,
+  .anime-universe-portal__native,
+  .anime-universe-portal__identity-line,
+  .anime-universe-portal__facts span,
+  .anime-universe-portal__tags span,
+  .anime-universe-portal__description,
+  .anime-universe-portal__actions .btn{animation:none}
+}
