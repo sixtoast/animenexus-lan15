@@ -475,7 +475,7 @@ export function BrowseClient({
 
       {displayItems.length > 0 ? (
         <article className="cinema-browse-feature">
-          <Link href={`/anime/${displayItems[0].id}`} className="cinema-browse-feature-art" aria-label={`Open ${displayItems[0].title}`}>
+          <Link href={`/anime/${displayItems[0].id}`} className="cinema-browse-feature-art" aria-label={`Open ${displayItems[0].title}`} onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return; e.preventDefault(); const rect = e.currentTarget.getBoundingClientRect(); setPortalSourceRect({ x: rect.left, y: rect.top, width: rect.width, height: rect.height }); setPortalAnime(displayItems[0]); }}>
             <AnimeImage
               src={displayItems[0].image}
               title={displayItems[0].title}
