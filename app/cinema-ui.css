@@ -1974,3 +1974,38 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
 .nexus-world-map[data-phase="orbit"] .nexus-world-node-art{
   will-change:box-shadow,transform;
 }
+
+
+/* DISCOVERY FIELD — PASS 7 / VERIFIED MOTION ROUTE
+   Translation lives on the positioned Link so the card, artwork and hit-area
+   all travel together. */
+.nexus-world-node{
+  --node-motion-x:0px;
+  --node-motion-y:0px;
+  transform:var(--node-base-transform, none) translate3d(var(--node-motion-x),var(--node-motion-y),0);
+  transition:transform .28s cubic-bezier(.16,1,.3,1),opacity .6s ease,filter .6s ease;
+  will-change:transform;
+}
+.nexus-world-node--7{
+  --node-base-transform:translateX(-50%);
+}
+.nexus-world-node:hover{
+  transform:var(--node-base-transform, none) translate3d(var(--node-motion-x),var(--node-motion-y),0) translateY(-7px) scale(1.025);
+}
+.nexus-world-node--7:hover{
+  transform:var(--node-base-transform, none) translate3d(var(--node-motion-x),var(--node-motion-y),0) translateY(-7px) scale(1.025);
+}
+.nexus-world-map[data-phase="travel"] .nexus-world-node{
+  transition:transform .08s linear,opacity .4s ease,filter .4s ease;
+}
+.nexus-world-map[data-phase="orbit"] .nexus-world-node{
+  transition:transform .08s linear,opacity .6s ease,filter .6s ease;
+}
+.nexus-world-node-motion{
+  transform:none!important;
+}
+.nexus-world-node-orbit-motion{
+  transform-origin:50% 50%;
+  transform-style:preserve-3d;
+  will-change:transform;
+}
