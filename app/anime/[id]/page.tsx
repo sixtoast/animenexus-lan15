@@ -166,7 +166,14 @@ export default async function AnimeDetailPage({ params }: Props) {
       (themes.inserts && themes.inserts.length > 0));
 
   return (
-    <main className="cinema-detail-page detail-artwork-aware" data-artwork-role="key-art">
+    <main
+      className="cinema-detail-page detail-artwork-aware"
+      data-artwork-role="key-art"
+      style={{
+        "--detail-key-art": `url("${anime.image}")`,
+        "--detail-banner-art": anime.bannerImage ? `url("${anime.bannerImage}")` : `url("${anime.image}")`,
+      } as CSSProperties}
+    >
       <DetailWatchlistChoreography />
       <MemoryVisit
         id={anime.id}
@@ -175,6 +182,13 @@ export default async function AnimeDetailPage({ params }: Props) {
         genres={anime.tags}
         studios={anime.studios}
       />
+      <div className="detail-world" aria-hidden="true">
+        <div className="detail-world__backdrop" />
+        <div className="detail-world__mist" />
+        <div className="detail-world__keyart" />
+        <div className="detail-world__grain" />
+      </div>
+
       {anime.bannerImage ? (
         <div
           className="detail-banner"
