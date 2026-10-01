@@ -42,7 +42,7 @@ export function AnimeGrid({
             recommendationId={recommendationId}
             source={source}
           >
-            <AnimeCard anime={a} index={i} onPreview={onPreview ? () => onPreview(a) : undefined} />
+            <AnimeCard anime={a} index={i} onPreview={onPreview ? (sourceRect) => onPreview(a, sourceRect) : undefined} />
           </BehaviourTracker>
         );
       })}
