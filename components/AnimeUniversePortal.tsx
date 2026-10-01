@@ -49,8 +49,8 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
   const activeCharacter = characters.find((c) => c.id === selectedCharacter) || null;
   const portalVars = {
     ...materialVars,
-    "--portal-source-x": `${sourceRect?.x ?? window.innerWidth / 2 - 80}px`,
-    "--portal-source-y": `${sourceRect?.y ?? window.innerHeight / 2 - 120}px`,
+    "--portal-source-x": `${sourceRect?.x ?? 0}px`,
+    "--portal-source-y": `${sourceRect?.y ?? 0}px`,
     "--portal-source-w": `${sourceRect?.width ?? 160}px`,
     "--portal-source-h": `${sourceRect?.height ?? 240}px`,
   } as CSSProperties;
