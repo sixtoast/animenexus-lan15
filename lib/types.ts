@@ -91,6 +91,12 @@ export type GraphEdge = {
 };
 
 /** Normalized anime used across the UI */
+export type AnimeReleaseDate = {
+  year?: number | null;
+  month?: number | null;
+  day?: number | null;
+};
+
 export type Anime = {
   id: number;
   title: string;
@@ -123,6 +129,8 @@ export type Anime = {
   characters?: AnimeCharacter[];
   relations?: AnimeRelation[];
   idMal?: number | null;
+  /** Known release date precision from the catalogue. Missing parts remain null. */
+  releaseDate?: AnimeReleaseDate | null;
 };
 
 /** Local shelf entry (watchlist) */
