@@ -1500,3 +1500,148 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
 @media(prefers-reduced-motion:reduce){
   .nexus-world-map{transform:none!important;transition:none!important}
 }
+
+
+/* DISCOVERY FIELD / SHARED ORBITAL ARRIVAL
+   The cards travel into one physical field rather than reading as seven
+   unrelated absolute-positioned cards. */
+.nexus-world-map{
+  --world-orbit-line:rgba(242,179,95,.12);
+  --world-orbit-glow:rgba(242,179,95,.08);
+  overflow:hidden;
+  isolation:isolate;
+}
+.nexus-world-map::before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:min(78%,920px);
+  aspect-ratio:1.8;
+  transform:translate(-50%,-50%) rotate(-7deg);
+  border:1px solid var(--world-orbit-line);
+  border-radius:50%;
+  box-shadow:0 0 90px var(--world-orbit-glow),inset 0 0 90px rgba(242,179,95,.025);
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .9s ease;
+  z-index:1;
+}
+.nexus-world-map[data-phase="travel"]::before,
+.nexus-world-map[data-phase="orbit"]::before{opacity:1}
+.nexus-world-orbit-plane{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:min(76%,900px);
+  height:min(64%,500px);
+  transform:translate(-50%,-50%) rotate(-7deg);
+  pointer-events:none;
+  z-index:1;
+  opacity:0;
+  transition:opacity 1s cubic-bezier(.16,1,.3,1),transform 1.2s cubic-bezier(.16,1,.3,1);
+}
+.nexus-world-map[data-phase="travel"] .nexus-world-orbit-plane,
+.nexus-world-map[data-phase="orbit"] .nexus-world-orbit-plane{opacity:1}
+.nexus-world-orbit-plane__ring{
+  position:absolute;
+  inset:0;
+  border:1px solid var(--world-orbit-line);
+  border-radius:50%;
+}
+.nexus-world-orbit-plane__ring--inner{
+  inset:16% 12%;
+  border-style:dashed;
+  opacity:.45;
+  animation:nx-field-ring-drift 28s linear infinite reverse;
+}
+.nexus-world-orbit-plane__ring--outer{
+  animation:nx-field-ring-drift 40s linear infinite;
+}
+.nexus-world-orbit-plane__axis{
+  position:absolute;
+  left:50%;
+  top:50%;
+  background:linear-gradient(90deg,transparent,var(--world-orbit-line),transparent);
+  opacity:.35;
+}
+.nexus-world-orbit-plane__axis--x{width:100%;height:1px;transform:translate(-50%,-50%)}
+.nexus-world-orbit-plane__axis--y{width:1px;height:100%;transform:translate(-50%,-50%);background:linear-gradient(180deg,transparent,var(--world-orbit-line),transparent)}
+.nexus-world-trajectory{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:min(72%,860px);
+  height:min(56%,440px);
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  z-index:2;
+  opacity:0;
+}
+.nexus-world-map[data-phase="travel"] .nexus-world-trajectory{opacity:1}
+.nexus-world-trajectory i{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:clamp(50px,8vw,120px);
+  height:1px;
+  transform-origin:0 50%;
+  background:linear-gradient(90deg,rgba(242,179,95,.0),rgba(242,179,95,.45),rgba(242,179,95,0));
+  filter:blur(.15px);
+  animation:nx-field-trajectory 1.1s cubic-bezier(.16,1,.3,1) infinite;
+}
+.nexus-world-trajectory i:nth-child(1){transform:rotate(-13deg);animation-delay:0s}
+.nexus-world-trajectory i:nth-child(2){transform:rotate(42deg);animation-delay:.13s}
+.nexus-world-trajectory i:nth-child(3){transform:rotate(103deg);animation-delay:.26s}
+.nexus-world-trajectory i:nth-child(4){transform:rotate(164deg);animation-delay:.39s}
+.nexus-world-trajectory i:nth-child(5){transform:rotate(222deg);animation-delay:.52s}
+.nexus-world-trajectory i:nth-child(6){transform:rotate(302deg);animation-delay:.65s}
+.nexus-world-arrival-flare{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:70px;
+  height:70px;
+  transform:translate(-50%,-50%) scale(.35);
+  border:1px solid rgba(242,179,95,.6);
+  border-radius:50%;
+  box-shadow:0 0 0 0 rgba(242,179,95,.2),0 0 80px rgba(242,179,95,.18);
+  pointer-events:none;
+  z-index:5;
+  opacity:0;
+}
+.nexus-world-map[data-phase="orbit"] .nexus-world-arrival-flare{
+  animation:nx-field-arrival .95s cubic-bezier(.16,1,.3,1) both;
+}
+.nexus-world-map[data-phase="orbit"] .nexus-world-node{
+  will-change:transform;
+}
+.nexus-world-map[data-phase="lineup"] .nexus-world-orbit-plane,
+.nexus-world-map[data-phase="lineup"] .nexus-world-trajectory{display:none}
+@keyframes nx-field-ring-drift{
+  to{transform:rotate(360deg)}
+}
+@keyframes nx-field-trajectory{
+  0%{opacity:0;transform-origin:0 50%;translate:-20px 0 scaleX(.3)}
+  25%{opacity:.8}
+  100%{opacity:0;translate:90px 0 scaleX(1)}
+}
+@keyframes nx-field-arrival{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.35);box-shadow:0 0 0 0 rgba(242,179,95,.18),0 0 80px rgba(242,179,95,.12)}
+  35%{opacity:1}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(3.4);box-shadow:0 0 0 18px rgba(242,179,95,0),0 0 120px rgba(242,179,95,0)}
+}
+@media(max-width:700px){
+  .nexus-world-map::before{width:96%;aspect-ratio:1.05;transform:translate(-50%,-50%) rotate(-5deg)}
+  .nexus-world-orbit-plane{width:94%;height:68%;transform:translate(-50%,-50%) rotate(-5deg)}
+  .nexus-world-trajectory{width:90%;height:64%}
+  .nexus-world-trajectory i{width:58px}
+}
+@media(prefers-reduced-motion:reduce){
+  .nexus-world-map::before,
+  .nexus-world-orbit-plane__ring--inner,
+  .nexus-world-trajectory i,
+  .nexus-world-arrival-flare{animation:none;transition:none}
+  .nexus-world-map[data-phase="travel"] .nexus-world-trajectory,
+  .nexus-world-map[data-phase="orbit"] .nexus-world-orbit-plane{opacity:.5}
+}
