@@ -54,8 +54,8 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
     "--portal-source-y": `${sourceRect?.y ?? 0}px`,
     "--portal-source-w": `${sourceRect?.width ?? 160}px`,
     "--portal-source-h": `${sourceRect?.height ?? 240}px`,
-    "--portal-source-cx": `${(sourceRect?.x ?? window.innerWidth / 2 - 80) + (sourceRect?.width ?? 160) / 2}px`,
-    "--portal-source-cy": `${(sourceRect?.y ?? window.innerHeight / 2 - 120) + (sourceRect?.height ?? 240) / 2}px`,
+    "--portal-source-cx": `${((sourceRect?.x ?? window.innerWidth / 2 - 80) + (sourceRect?.width ?? 160) / 2) - 12}px`,
+    "--portal-source-cy": `${((sourceRect?.y ?? window.innerHeight / 2 - 120) + (sourceRect?.height ?? 240) / 2) - 12}px`,
     "--portal-source-scale": `${Math.max(.12, Math.min(.42, (sourceRect?.width ?? 160) / 520))}`,
   } as CSSProperties;
 
