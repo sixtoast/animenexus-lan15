@@ -1952,3 +1952,25 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
     will-change:auto;
   }
 }
+
+
+/* DISCOVERY FIELD — PASS 6 / CONVERGENCE MOMENT */
+.nexus-world-map[data-phase="travel"] .nexus-world-connections{opacity:.04}
+.nexus-world-map[data-phase="travel"] .nexus-world-core{
+  box-shadow:0 0 0 1px rgba(242,179,95,.10),0 0 90px rgba(242,179,95,.11),inset 0 0 80px rgba(242,179,95,.05);
+}
+.nexus-world-map[data-phase="travel"] .nexus-world-core-ring{
+  transform:scale(.78);
+  opacity:.5;
+  transition:transform .9s cubic-bezier(.16,1,.3,1),opacity .4s ease;
+}
+.nexus-world-map[data-phase="orbit"] .nexus-world-core-ring{
+  transform:scale(1);
+  opacity:1;
+}
+.nexus-world-map[data-phase="orbit"] .nexus-world-node{
+  transform-origin:center;
+}
+.nexus-world-map[data-phase="orbit"] .nexus-world-node-art{
+  will-change:box-shadow,transform;
+}
