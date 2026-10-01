@@ -61,6 +61,7 @@ export function NexusWorlds({ candidates }: Props) {
   const [travelling, setTravelling] = useState<number | null>(null);
   const [aiPulse, setAiPulse] = useState(0);
   const [aiPulsing, setAiPulsing] = useState(false);
+  const [fieldRevision, setFieldRevision] = useState(0);
   const aiPulseStartedRef = useRef(0);
   const fieldRef = useRef<HTMLDivElement>(null);
   const fieldModeRef = useRef(fieldMode);
@@ -283,6 +284,16 @@ export function NexusWorlds({ candidates }: Props) {
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
 
+    // A responsive field cannot keep using the geometry captured before a
+    // rotation/resize. Re-run the motion setup after the viewport settles so
+    // the shared centre and radii are recalculated from the new field bounds.
+    let resizeTimer = 0;
+    const onResize = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => setFieldRevision((value) => value + 1), 140);
+    };
+    window.addEventListener("resize", onResize, { passive: true });
+
     const tick = (now: number) => {
       if (motionAbort || !inView) return;
       if (document.visibilityState === "hidden") {
@@ -453,8 +464,10 @@ export function NexusWorlds({ candidates }: Props) {
       field.removeEventListener("pointerup", onDragEnd);
       field.removeEventListener("pointercancel", onDragEnd);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("resize", onResize);
+      window.clearTimeout(resizeTimer);
     };
-  }, [entered, inView, worlds.length]);
+  }, [entered, inView, worlds.length, fieldRevision]);
 
   useEffect(() => {
     const field = fieldRef.current;
