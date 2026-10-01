@@ -259,7 +259,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
 
           <section className="anime-universe-portal__panel">
             {view === "entry" ? (
-              <>
+              <div key="entry" className="portal-view-scene portal-view-scene--entry">
                 <div className="anime-universe-portal__facts">
                   {anime.score > 0 ? <span><b>★ {anime.score.toFixed(1)}</b> SIGNAL</span> : null}
                   {anime.year ? <span><b>{anime.year}</b> YEAR</span> : null}
@@ -280,11 +280,11 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
                     Return to discovery
                   </button>
                 </div>
-              </>
+              </div>
             ) : null}
 
             {view === "figures" ? (
-              <div className="anime-universe-portal__figures portal-view-scene">
+              <div key="figures" className="anime-universe-portal__figures portal-view-scene portal-view-scene--figures">
                 <div className="anime-universe-portal__panel-heading">
                   <span>02 / FIGURES WITHIN</span>
                   <b>{characters.length ? `${characters.length} PRESENCES DETECTED` : "NO FIGURES INDEXED"}</b>
@@ -328,7 +328,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
             ) : null}
 
             {view === "archive" ? (
-              <div className="anime-universe-portal__archive portal-view-scene">
+              <div key="archive" className="anime-universe-portal__archive portal-view-scene portal-view-scene--archive">
                 <div className="anime-universe-portal__panel-heading">
                   <span>03 / ARCHIVE SIGNAL</span>
                   <b>CATALOGUE MEMORY</b>
