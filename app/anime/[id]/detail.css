@@ -463,3 +463,303 @@ body:has(.detail-cover-material.artwork-role--promotional) {
   [data-watchlist-destination].is-watchlist-landed,
   .watchlist-travel-beacon{animation:none}
 }
+
+
+/* ================================================================
+   ANIME UNIVERSE — DETAIL WORLD COMPOSITION
+   This is the actual /anime/[id] experience.
+   The hero is a scene, not a database card.
+   ================================================================ */
+.cinema-detail-page{
+  position:relative;
+  overflow:clip;
+  background:#060606;
+}
+.cinema-detail-page .detail-banner{
+  position:absolute;
+  z-index:0;
+  inset:0 0 auto;
+  height:min(92vh,920px);
+  margin:0;
+  background-size:cover;
+  background-position:center 22%;
+  opacity:.72;
+  mask-image:linear-gradient(to bottom,#000 0%,#000 56%,transparent 100%);
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 56%,transparent 100%);
+}
+.cinema-detail-page .detail-banner:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(90deg,rgba(4,4,4,.96) 0%,rgba(4,4,4,.68) 28%,rgba(4,4,4,.16) 58%,rgba(4,4,4,.42) 100%),
+    linear-gradient(180deg,rgba(4,4,4,.12) 0%,rgba(4,4,4,.04) 48%,rgba(4,4,4,.94) 88%);
+}
+.cinema-detail-page .detail-wrap{
+  z-index:1;
+  margin-top:0;
+  padding-top:clamp(28px,5vw,58px);
+}
+.cinema-detail-page .detail-wrap:before{
+  z-index:-1;
+  top:0;
+  height:92vh;
+  opacity:.14;
+  filter:blur(70px) saturate(.7);
+}
+.cinema-detail-page .detail-back{
+  position:relative;
+  z-index:12;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  margin:0 0 clamp(20px,5vh,54px);
+  padding:0;
+  color:rgba(255,255,255,.58);
+  text-transform:uppercase;
+  letter-spacing:.14em;
+  font-size:.6rem;
+  transition:color .3s ease,transform .4s ease;
+}
+.cinema-detail-page .detail-back:hover{
+  color:#fff;
+  transform:translateX(-4px);
+}
+.cinema-detail-page .detail-hero{
+  position:relative;
+  min-height:min(74vh,760px);
+  margin:0;
+  display:grid;
+  grid-template-columns:minmax(330px,.72fr) minmax(430px,1.28fr);
+  gap:clamp(34px,6vw,100px);
+  align-items:center;
+  isolation:isolate;
+}
+.cinema-detail-page .detail-hero:before{
+  content:"01 / UNIVERSE";
+  position:absolute;
+  z-index:8;
+  left:0;
+  top:clamp(6px,2vh,28px);
+  font:600 .56rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.22em;
+  color:rgba(255,255,255,.42);
+}
+.cinema-detail-page .detail-hero:after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  inset:8% -10vw -12%;
+  background:
+    radial-gradient(ellipse at 74% 42%,rgba(255,255,255,.065),transparent 28%),
+    linear-gradient(90deg,transparent 0 58%,rgba(0,0,0,.18) 100%);
+  pointer-events:none;
+}
+.cinema-detail-page .detail-cover-material{
+  position:relative;
+  z-index:5;
+  justify-self:center;
+  width:min(31vw,440px);
+  min-width:290px;
+  margin-top:4vh;
+  transform:translate3d(calc(var(--detail-mx,0) * 10px),calc(var(--detail-my,0) * 8px),0) rotate(-1.2deg);
+  transition:transform .8s cubic-bezier(.2,.72,.18,1),filter .8s ease;
+}
+.cinema-detail-page .detail-cover-material:before{
+  inset:-70px;
+  opacity:.38;
+  filter:blur(54px) saturate(1.08);
+}
+.cinema-detail-page .detail-cover{
+  width:100%;
+  height:auto;
+  aspect-ratio:7/10;
+  object-fit:cover;
+  border:0;
+  border-radius:2px;
+  box-shadow:
+    0 45px 100px rgba(0,0,0,.7),
+    0 12px 28px rgba(0,0,0,.4);
+}
+.cinema-detail-page .detail-cover-material:after{
+  display:none;
+}
+.cinema-detail-page .detail-info{
+  position:relative;
+  z-index:9;
+  align-self:center;
+  max-width:720px;
+  padding:clamp(42px,7vw,100px) 0 40px;
+}
+.cinema-detail-page .detail-kicker{
+  margin:0 0 16px;
+  font:600 .58rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.24em;
+  color:rgba(255,255,255,.48);
+}
+.cinema-detail-page .detail-info h1,
+.cinema-detail-page .detail-title{
+  max-width:9ch;
+  margin:0;
+  font-family:var(--font-display);
+  font-size:clamp(4rem,8vw,9rem);
+  font-weight:700;
+  line-height:.78;
+  letter-spacing:-.075em;
+  text-wrap:balance;
+  text-shadow:0 30px 80px rgba(0,0,0,.72);
+}
+.cinema-detail-page .detail-alt-titles{
+  margin:20px 0 0;
+  color:rgba(255,255,255,.58);
+  font-size:clamp(.75rem,1.2vw,1rem);
+  letter-spacing:.08em;
+}
+.cinema-detail-page .detail-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:0;
+  margin:28px 0 0;
+  padding:14px 0;
+  border-top:1px solid rgba(255,255,255,.16);
+  border-bottom:1px solid rgba(255,255,255,.1);
+  background:transparent;
+}
+.cinema-detail-page .detail-meta span{
+  padding:0 13px;
+  border-left:1px solid rgba(255,255,255,.12);
+  border-radius:0;
+  background:none;
+  color:rgba(255,255,255,.56);
+  font-size:.62rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.cinema-detail-page .detail-meta span:first-child{padding-left:0;border-left:0}
+.cinema-detail-page .detail-meta .detail-score{color:var(--color-accent);font-weight:700}
+.cinema-detail-page .detail-tags{
+  margin:18px 0 0;
+  gap:6px;
+}
+.cinema-detail-page .detail-tag{
+  padding:3px 8px;
+  border:0;
+  border-radius:0;
+  background:rgba(255,255,255,.055);
+  color:rgba(255,255,255,.54);
+  font-size:.55rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.cinema-detail-page .detail-studios{
+  margin-top:18px;
+  color:rgba(255,255,255,.48);
+  font-size:.72rem;
+}
+.cinema-detail-page .detail-actions{
+  margin-top:22px!important;
+  gap:8px;
+}
+.cinema-detail-page .detail-actions .btn{
+  border-radius:0;
+  font-size:.6rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.cinema-detail-page .tools-hint{
+  color:rgba(255,255,255,.42);
+}
+.cinema-detail-page .anime-universe-nav{
+  position:sticky;
+  z-index:30;
+  margin-top:-4px;
+  background:linear-gradient(180deg,#060606 20%,rgba(6,6,6,.72) 70%,transparent);
+}
+.cinema-detail-page .anime-universe-nav__inner{
+  border-radius:2px;
+  background:rgba(5,5,5,.52);
+  border-color:rgba(255,255,255,.12);
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+}
+.cinema-detail-page .anime-universe-nav__orbit{border-radius:0;transform:rotate(45deg);animation:none}
+.cinema-detail-page .anime-universe-nav__orbit:before{border-radius:0}
+.cinema-detail-page .anime-universe-nav__orbit-dot{border-radius:0}
+.cinema-detail-page .detail-section,
+.cinema-detail-page .universe-space--cluster:before{
+  border-color:rgba(255,255,255,.1);
+}
+.cinema-detail-page .universe-space{
+  padding-top:clamp(42px,7vw,96px);
+  padding-bottom:clamp(42px,7vw,96px);
+}
+.cinema-detail-page .universe-space__eyebrow{
+  font:600 .55rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  letter-spacing:.24em;
+}
+.cinema-detail-page .universe-space h2{
+  font-size:clamp(2rem,4vw,4rem);
+  line-height:.9;
+  letter-spacing:-.045em;
+}
+.cinema-detail-page .detail-synopsis{
+  max-width:62ch;
+  font-size:clamp(.95rem,1.35vw,1.15rem);
+  line-height:1.85;
+  color:rgba(255,255,255,.62);
+}
+@media(max-width:800px){
+  .cinema-detail-page .detail-banner{
+    height:78vh;
+    background-position:62% 16%;
+    opacity:.62;
+  }
+  .cinema-detail-page .detail-wrap{
+    padding-top:22px;
+  }
+  .cinema-detail-page .detail-hero{
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    gap:0;
+    padding-top:44px;
+  }
+  .cinema-detail-page .detail-hero:before{
+    top:8px;
+    left:0;
+  }
+  .cinema-detail-page .detail-cover-material{
+    width:min(72vw,330px);
+    min-width:0;
+    align-self:flex-end;
+    margin:0 4vw -8vh 0;
+    transform:rotate(-1deg);
+  }
+  .cinema-detail-page .detail-info{
+    padding:0 4vw 48px 0;
+    margin-top:0;
+  }
+  .cinema-detail-page .detail-info h1,
+  .cinema-detail-page .detail-title{
+    max-width:7ch;
+    font-size:clamp(3.5rem,15vw,6rem);
+  }
+  .cinema-detail-page .detail-meta{
+    gap:9px 0;
+  }
+  .cinema-detail-page .detail-meta span{
+    padding:0 9px;
+    font-size:.52rem;
+  }
+  .cinema-detail-page .anime-universe-nav{
+    margin-top:0;
+  }
+  .cinema-detail-page .universe-space{
+    padding-top:48px;
+    padding-bottom:48px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .cinema-detail-page .detail-back,
+  .cinema-detail-page .detail-cover-material{transition:none}
+}
