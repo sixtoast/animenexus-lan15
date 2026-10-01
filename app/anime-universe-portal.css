@@ -770,3 +770,232 @@
     border-radius:50%;
   }
 }
+
+
+/* PORTAL PASS 3 — make the destination feel like an anime world, not a dialog.
+   The modal becomes a layered scene: atmosphere, world geometry, hero artwork,
+   oversized typography and an asymmetric dossier plane. */
+.anime-universe-portal__world:after{
+  content:"";
+  position:absolute;
+  inset:-22%;
+  z-index:1;
+  pointer-events:none;
+  opacity:.42;
+  background:
+    radial-gradient(ellipse at 72% 48%,transparent 0 18%,rgba(255,255,255,.08) 18.1%,transparent 18.4% 27%,rgba(255,255,255,.045) 27.1%,transparent 27.4% 37%,rgba(255,255,255,.025) 37.1%,transparent 37.4%),
+    linear-gradient(115deg,transparent 0 47%,color-mix(in srgb,var(--portal-accent) 18%,transparent) 47.2%,transparent 47.5%),
+    linear-gradient(0deg,transparent 0 68%,rgba(255,255,255,.035) 68.1%,transparent 68.3%);
+  transform:translate3d(calc(var(--portal-mx) * -10px),calc(var(--portal-my) * -7px),0) rotate(-7deg);
+  mix-blend-mode:screen;
+}
+.anime-universe-portal__scene:before{
+  content:"";
+  position:absolute;
+  left:15%;
+  right:-10%;
+  bottom:5%;
+  height:42%;
+  z-index:1;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse at center, color-mix(in srgb,var(--portal-accent) 22%,transparent), transparent 58%),
+    linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
+  filter:blur(26px);
+  opacity:.72;
+  transform:translate3d(calc(var(--portal-mx) * 28px),calc(var(--portal-my) * 18px),0);
+}
+.anime-universe-portal__scene:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:5;
+  pointer-events:none;
+  opacity:.2;
+  background-image:
+    radial-gradient(circle at 17% 24%,rgba(255,255,255,.75) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 61% 17%,rgba(255,255,255,.45) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 84% 66%,rgba(255,255,255,.55) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 43% 78%,rgba(255,255,255,.35) 0 1px,transparent 1.5px);
+  background-size:29% 31%,37% 43%,41% 37%,53% 47%;
+  animation:portal-dust 8s ease-in-out infinite alternate;
+}
+.anime-universe-portal__art{
+  width:min(76vw,1180px);
+  right:-10vw;
+  transform:translate3d(calc(var(--portal-mx) * 34px),calc(var(--portal-my) * 22px),0) scale(1.045);
+  filter:drop-shadow(-36px 30px 70px rgba(0,0,0,.64));
+}
+.anime-universe-portal__art:after{
+  content:"";
+  position:absolute;
+  inset:8% 8% 2% 18%;
+  z-index:2;
+  pointer-events:none;
+  background:linear-gradient(110deg,transparent 18%,rgba(255,255,255,.12) 48%,transparent 55%);
+  transform:translateX(-130%);
+  animation:portal-sheen 5.5s cubic-bezier(.2,.7,.2,1) 1.4s infinite;
+  mix-blend-mode:screen;
+}
+.anime-universe-portal__main{
+  padding-left:clamp(98px,12vw,210px);
+  padding-right:clamp(42px,7vw,125px);
+}
+.anime-universe-portal__identity{
+  position:relative;
+  max-width:min(820px,65vw);
+  transform:translate3d(calc(var(--portal-mx) * -5px),calc(var(--portal-my) * -3px),0);
+}
+.anime-universe-portal__identity:before{
+  content:"01";
+  position:absolute;
+  z-index:-1;
+  left:-.08em;
+  top:-.62em;
+  font-family:var(--font-display);
+  font-size:clamp(7rem,18vw,18rem);
+  line-height:1;
+  letter-spacing:-.1em;
+  color:transparent;
+  -webkit-text-stroke:1px rgba(255,255,255,.075);
+  opacity:.9;
+  pointer-events:none;
+}
+.anime-universe-portal h1{
+  max-width:760px;
+  font-size:clamp(4.5rem,9.6vw,10.8rem);
+  text-shadow:
+    0 2px 0 rgba(255,255,255,.08),
+    0 22px 65px rgba(0,0,0,.72);
+}
+.anime-universe-portal__panel{
+  position:relative;
+  width:min(700px,57vw);
+  margin-top:clamp(30px,4.5vh,52px);
+  padding:18px 20px 20px;
+  border-left:1px solid color-mix(in srgb,var(--portal-accent) 70%,rgba(255,255,255,.2));
+  background:
+    linear-gradient(90deg,rgba(3,3,4,.68),rgba(3,3,4,.28) 68%,transparent),
+    linear-gradient(180deg,rgba(255,255,255,.045),transparent);
+  box-shadow:20px 20px 80px rgba(0,0,0,.28);
+  backdrop-filter:blur(10px) saturate(.85);
+  -webkit-backdrop-filter:blur(10px) saturate(.85);
+}
+.anime-universe-portal__panel:before{
+  content:"";
+  position:absolute;
+  left:-1px;
+  top:0;
+  width:1px;
+  height:34%;
+  background:var(--portal-accent);
+  box-shadow:0 0 18px var(--portal-accent);
+}
+.anime-universe-portal__facts{
+  gap:8px 26px;
+}
+.anime-universe-portal__description{
+  max-width:620px;
+  font-size:clamp(.86rem,1.03vw,1rem);
+}
+.anime-universe-portal__tags span{
+  background:rgba(0,0,0,.34);
+  border-color:rgba(255,255,255,.16);
+  transition:transform .25s ease,border-color .25s ease,color .25s ease;
+}
+.anime-universe-portal__tags span:hover{
+  transform:translateY(-2px);
+  border-color:color-mix(in srgb,var(--portal-accent) 60%,rgba(255,255,255,.2));
+  color:#fff;
+}
+.anime-universe-portal__footer{
+  opacity:.75;
+}
+.anime-universe-portal.is-exiting{
+  animation:portal-exit .44s cubic-bezier(.7,0,.84,.2) both;
+}
+.anime-universe-portal.is-exiting .anime-universe-portal__world{
+  animation:portal-world-exit .42s cubic-bezier(.7,0,.84,.2) both;
+}
+.anime-universe-portal.is-exiting .anime-universe-portal__gate{
+  z-index:40;
+  opacity:1;
+  visibility:visible;
+  animation:portal-gate-return .42s ease-out both;
+}
+.anime-universe-portal.is-exiting .anime-universe-portal__gate-core{
+  animation:portal-card-return .42s cubic-bezier(.7,0,.84,.2) both;
+}
+.anime-universe-portal.is-exiting .anime-universe-portal__gate-image,
+.anime-universe-portal.is-exiting .anime-universe-portal__gate-core:after{
+  animation:portal-return-image .42s ease-out both;
+}
+@keyframes portal-dust{
+  from{transform:translate3d(-6px,4px,0);opacity:.12}
+  to{transform:translate3d(8px,-5px,0);opacity:.28}
+}
+@keyframes portal-sheen{
+  0%,48%{transform:translateX(-130%)}
+  64%,100%{transform:translateX(130%)}
+}
+@keyframes portal-exit{
+  to{opacity:0}
+}
+@keyframes portal-world-exit{
+  to{opacity:.08;transform:scale(.965);filter:blur(4px)}
+}
+@keyframes portal-gate-return{
+  from{opacity:0}
+  to{opacity:1}
+}
+@keyframes portal-card-return{
+  0%{
+    opacity:0;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%) scale(8.5);
+    border-radius:50%;
+  }
+  48%{
+    opacity:1;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%) scale(2.1) rotateZ(-3deg);
+    border-radius:42%;
+  }
+  100%{
+    opacity:1;
+    left:calc(var(--portal-source-x) + var(--portal-source-w) / 2);
+    top:calc(var(--portal-source-y) + var(--portal-source-h) / 2);
+    transform:translate(-50%,-50%) scale(1);
+    border-radius:10px;
+  }
+}
+@keyframes portal-return-image{
+  from{filter:blur(8px);opacity:0}
+  55%{filter:blur(1px);opacity:1}
+  to{filter:none;opacity:1}
+}
+@media(max-width:700px){
+  .anime-universe-portal__art{
+    width:108vw;
+    right:-14vw;
+    transform:translate3d(calc(var(--portal-mx) * 10px),calc(var(--portal-my) * 8px),0) scale(1.04);
+  }
+  .anime-universe-portal__main{padding-left:22px;padding-right:22px}
+  .anime-universe-portal__identity:before{font-size:8rem;top:-.38em}
+  .anime-universe-portal__panel{
+    padding:16px;
+    background:linear-gradient(180deg,rgba(3,3,4,.72),rgba(3,3,4,.38));
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .anime-universe-portal__scene:after,
+  .anime-universe-portal__art:after{animation:none}
+  .anime-universe-portal.is-exiting,
+  .anime-universe-portal.is-exiting .anime-universe-portal__world,
+  .anime-universe-portal.is-exiting .anime-universe-portal__gate,
+  .anime-universe-portal.is-exiting .anime-universe-portal__gate-core,
+  .anime-universe-portal.is-exiting .anime-universe-portal__gate-image,
+  .anime-universe-portal.is-exiting .anime-universe-portal__gate-core:after{animation:none!important}
+}
