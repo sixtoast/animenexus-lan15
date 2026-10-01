@@ -1804,3 +1804,56 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
     scroll-behavior:auto;
   }
 }
+
+
+/* FINAL PASS — interaction, performance and accessibility polish.
+   No new visual language is introduced here; this pass makes the existing
+   choreography feel deliberate across pointer, touch, keyboard and resize. */
+.nexus-world-map{
+  contain:layout paint;
+  touch-action:pan-y;
+  -webkit-tap-highlight-color:transparent;
+}
+.nexus-world-map.is-dragging{
+  touch-action:none;
+  user-select:none;
+}
+.nexus-world-node{
+  -webkit-user-drag:none;
+}
+.nexus-world-node:focus-visible{
+  outline:none;
+}
+.nexus-world-node:focus-visible .nexus-world-node-art{
+  border-color:rgba(242,179,95,.72);
+  box-shadow:0 0 0 3px rgba(242,179,95,.08),0 22px 52px rgba(0,0,0,.48);
+}
+.nexus-world-map[data-phase="orbit"] .nexus-world-node{
+  transition:opacity .6s ease,filter .6s ease;
+}
+.nexus-world-map.is-dragging .nexus-world-orbit-plane__ring{
+  animation-play-state:paused;
+}
+.nexus-world-map.is-dragging .nexus-world-trajectory,
+.nexus-world-map.is-dragging .nexus-world-arrival-flare{
+  opacity:0!important;
+}
+@media(max-width:700px){
+  .nexus-world-map{
+    contain:layout paint style;
+  }
+  .nexus-world-node-copy strong{
+    font-size:1rem;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .nexus-world-map,
+  .nexus-world-node,
+  .nexus-world-node-art,
+  .nexus-world-node-copy,
+  .nexus-world-node-motion,
+  .nexus-world-node-orbit-motion{
+    scroll-behavior:auto!important;
+    transition:none!important;
+  }
+}
