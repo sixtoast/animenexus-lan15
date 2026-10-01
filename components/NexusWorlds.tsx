@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { AnimeUniversePortal } from "@/components/AnimeUniversePortal";
 import type { CSSProperties } from "react";
 import type { Anime } from "@/lib/types";
 import { getAnimeObjectId, getAnimeViewTransitionName, withViewTransition } from "@/lib/view-transition";
@@ -54,6 +55,8 @@ export function NexusWorlds({ candidates }: Props) {
       : (surprise.length ? surprise : candidates)
   ).slice(0, 7);
   const [active, setActive] = useState<number | null>(null);
+  const [portalAnime, setPortalAnime] = useState<Anime | null>(null);
+  const [portalSourceRect, setPortalSourceRect] = useState<{ x:number; y:number; width:number; height:number } | null>(null);
   const [armed, setArmed] = useState<number | null>(null);
   const [secret, setSecret] = useState(false);
   const [entered, setEntered] = useState(false);
@@ -629,9 +632,9 @@ export function NexusWorlds({ candidates }: Props) {
         const isActive = active === index;
         const isArmed = armed === index;
         return (
-          <Link
+          <button
+            type="button"
             key={anime.id}
-            href={"/anime/" + anime.id}
             className={"nexus-world-node nexus-world-node--" + (index + 1) + (isActive ? " is-active" : "") + (isArmed ? " is-armed" : "") + (travelling === index ? " is-travelling-origin" : "") + (fieldMode !== "discovery" ? " is-ai-reweighted" : "")}
             style={{
               "--node-x": position.x,
@@ -644,29 +647,22 @@ export function NexusWorlds({ candidates }: Props) {
             onClick={(event) => {
               if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
               if (armed !== index) {
-                event.preventDefault();
                 setArmed(index);
                 setActive(index);
                 return;
               }
-              event.preventDefault();
+              const rect = event.currentTarget.getBoundingClientRect();
               setTravelling(index);
               fieldRef.current?.setAttribute("data-motion-lock", String(index));
               window.setTimeout(() => {
                 setTravelling(null);
                 fieldRef.current?.removeAttribute("data-motion-lock");
               }, 1100);
-              withViewTransition(
-                () => router.push("/anime/" + anime.id),
-                {
-                  route: "anime-detail",
-                  origin: "node",
-                  destination: "hero",
-                  objectId: getAnimeObjectId(anime.id),
-                },
-              );
+              setPortalSourceRect({ x: rect.left, y: rect.top, width: rect.width, height: rect.height });
+              setPortalAnime(anime);
+              playInteractionSound("discovery", { gain: 0.42 });
             }}
-            aria-label={"Explore " + anime.title}
+            aria-label={"Enter " + anime.title + " universe"}
           >
             <span className="nexus-world-node-motion">
               <span className="nexus-world-node-orbit-motion">
@@ -686,9 +682,21 @@ export function NexusWorlds({ candidates }: Props) {
               </span>
               </span>
             </span>
-          </Link>
+          </button>
         );
       })}
+
+      {portalAnime ? (
+        <AnimeUniversePortal
+          anime={portalAnime}
+          sourceRect={portalSourceRect}
+          onClose={() => {
+            setPortalAnime(null);
+            setPortalSourceRect(null);
+            setTravelling(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
