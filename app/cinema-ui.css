@@ -1768,3 +1768,39 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
     filter:none;
   }
 }
+
+
+/* DISCOVERY FIELD — FINAL POLISH
+   Interaction should feel intentional on touch devices, while motion remains
+   cheap and quiet when the field is outside the viewport. */
+.nexus-world-map{
+  touch-action:pan-y;
+  contain:layout paint;
+}
+.nexus-world-map.is-dragging{
+  touch-action:none;
+}
+.nexus-world-map .nexus-world-node{
+  -webkit-tap-highlight-color:transparent;
+}
+.nexus-world-map.is-dragging .nexus-world-node-art:after{
+  animation-play-state:paused;
+}
+.nexus-world-map.is-ai-pulsing .nexus-world-orbit-plane__ring--inner{
+  animation-duration:14s;
+}
+@media(max-width:700px){
+  .nexus-world-map{
+    min-height:540px;
+    height:min(680px,145vw);
+  }
+  .nexus-world-map .nexus-world-core{
+    width:min(220px,42vw);
+    padding:24px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .nexus-world-map{
+    scroll-behavior:auto;
+  }
+}
