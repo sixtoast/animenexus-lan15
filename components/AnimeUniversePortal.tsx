@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
+import type { CSSProperties } from "react";
 import type { Anime } from "@/lib/types";
 import { AnimeImage } from "@/components/AnimeImage";
 import { materialCssVars, materialFromAnimeEntity } from "@/lib/anime-material";
@@ -42,13 +43,14 @@ export function AnimeUniversePortal({ anime, onClose }: Props) {
     const previousOverflow = document.body.style.overflow;
     const previousPosition = document.body.style.position;
     const previousTop = document.body.style.top;
+    const previousWidth = document.body.style.width;
     const scrollY = window.scrollY;
 
     document.body.style.overflow = "hidden";
     document.body.style.position = "fixed";
     document.body.style.top = `-${scrollY}px`;
     document.body.style.width = "100%";
-    window.setTimeout(() => closeRef.current?.focus({ preventScroll: true }), 60);
+    const focusTimer = window.setTimeout(() => closeRef.current?.focus({ preventScroll: true }), 60);
 
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -60,11 +62,12 @@ export function AnimeUniversePortal({ anime, onClose }: Props) {
     playCue("modal_open");
 
     return () => {
+      window.clearTimeout(focusTimer);
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = previousOverflow;
       document.body.style.position = previousPosition;
       document.body.style.top = previousTop;
-      document.body.style.width = "";
+      document.body.style.width = previousWidth;
       window.scrollTo({ top: scrollY, behavior: "auto" });
     };
   }, [onClose]);
@@ -81,7 +84,7 @@ export function AnimeUniversePortal({ anime, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label={`${anime.title} universe`}
-      style={materialVars as React.CSSProperties}
+      style={materialVars as CSSProperties}
     >
       <button
         type="button"
@@ -91,7 +94,7 @@ export function AnimeUniversePortal({ anime, onClose }: Props) {
       />
       <div
         className="anime-universe-portal__world"
-        style={{ "--portal-image": `url("${backdrop}")` } as React.CSSProperties}
+        style={{ "--portal-image": `url("${backdrop}")` } as CSSProperties}
       >
         <div className="anime-universe-portal__image-wash" aria-hidden />
         <div className="anime-universe-portal__grain" aria-hidden />
