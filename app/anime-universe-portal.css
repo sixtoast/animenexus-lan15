@@ -1891,3 +1891,69 @@
   .anime-universe-portal__gate-core:after,
   .anime-universe-portal__coordinates i{animation:none}
 }
+
+
+/* PORTAL PASS 7 — the card itself is the threshold.
+   Keep the origin visible just long enough for the portal to inherit it. */
+.anime-card.is-portal-launching{
+  z-index:120;
+  pointer-events:none;
+  animation:anime-card-launch .62s cubic-bezier(.16,1,.3,1) both;
+}
+.anime-card.is-portal-launching .card-poster{
+  animation:anime-card-poster-launch .62s cubic-bezier(.16,1,.3,1) both;
+}
+.anime-card.is-portal-launching .card-body,
+.anime-card.is-portal-launching .card-tag,
+.anime-card.is-portal-launching .card-status-ring,
+.anime-card.is-portal-launching .card-ptr-light,
+.anime-card.is-portal-launching .card-progress{
+  animation:anime-card-detail-launch .34s ease-out both;
+}
+.anime-universe-portal__gate{
+  opacity:0;
+  animation:portal-gate-stage-in .2s ease-out .02s forwards;
+}
+.anime-universe-portal__gate-core{
+  transform-origin:center;
+}
+@keyframes anime-card-launch{
+  0%{
+    opacity:1;
+    transform:translate3d(0,0,0) scale(1);
+    filter:none;
+  }
+  28%{
+    opacity:1;
+    transform:translate3d(0,-7px,0) scale(1.035);
+    filter:brightness(1.12) saturate(1.08);
+  }
+  100%{
+    opacity:0;
+    transform:translate3d(0,-22px,0) scale(.94);
+    filter:blur(4px) brightness(1.3);
+  }
+}
+@keyframes anime-card-poster-launch{
+  0%{transform:scale(1);filter:none}
+  35%{transform:scale(1.045);filter:brightness(1.18) saturate(1.08)}
+  100%{transform:scale(1.12);filter:blur(3px) brightness(1.25)}
+}
+@keyframes anime-card-detail-launch{
+  from{opacity:1}
+  to{opacity:0;transform:translateY(4px)}
+}
+@keyframes portal-gate-stage-in{
+  from{opacity:0}
+  to{opacity:1}
+}
+@media(prefers-reduced-motion:reduce){
+  .anime-card.is-portal-launching,
+  .anime-card.is-portal-launching .card-poster,
+  .anime-card.is-portal-launching .card-body,
+  .anime-card.is-portal-launching .card-tag,
+  .anime-card.is-portal-launching .card-status-ring,
+  .anime-card.is-portal-launching .card-ptr-light,
+  .anime-card.is-portal-launching .card-progress,
+  .anime-universe-portal__gate{animation:none!important}
+}
