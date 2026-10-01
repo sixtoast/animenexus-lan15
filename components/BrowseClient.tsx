@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AnimeImage } from "@/components/AnimeImage";
+import { AnimeUniversePortal } from "@/components/AnimeUniversePortal";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimeGrid } from "@/components/AnimeGrid";
@@ -57,6 +58,7 @@ export function BrowseClient({
   const [flashField, setFlashField] = useState<string | null>(null);
   const [displayTotal, setDisplayTotal] = useState(initialTotal);
   const [leaving, setLeaving] = useState(false);
+  const [portalAnime, setPortalAnime] = useState<Anime | null>(null);
   const sessionKey = useSessionRevision();
   const prevTotal = useRef(initialTotal);
 
@@ -224,6 +226,7 @@ export function BrowseClient({
 
   const canBlend = ready && entries.length >= 2 && items.length > 1;
   const queryValid = q.trim().length >= 1;
+  const closePortal = useCallback(() => setPortalAnime(null), []);
 
   const displayItems = useMemo(() => {
     if (!shelfBlend || !canBlend) return items;
@@ -538,7 +541,7 @@ export function BrowseClient({
         </div>
       ) : (
         <>
-          <div className="cinema-browse-grid"><AnimeGrid items={displayItems.slice(1)} trackBehaviour /></div>
+          <div className="cinema-browse-grid"><AnimeGrid items={displayItems.slice(1)} trackBehaviour onPreview={setPortalAnime} /></div>
           {hasNext ? (
             <div style={{ textAlign: "center", marginTop: 28 }}>
               <button
@@ -553,6 +556,7 @@ export function BrowseClient({
           ) : null}
         </>
       )}
+      {portalAnime ? <AnimeUniversePortal anime={portalAnime} onClose={closePortal} /> : null}
     </div>
   );
 }
