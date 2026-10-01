@@ -1,4 +1,5 @@
 import "../cold-start.css";
+import "../anime-universe-portal.css";
 import { Suspense } from "react";
 import { BrowseClient } from "@/components/BrowseClient";
 import { BrowseSessionStrip } from "@/components/BrowseSessionStrip";
