@@ -10,6 +10,7 @@ import { playCue } from "@/lib/sound-engine";
 
 type Props = {
   anime: Anime;
+  sourceRect?: { x: number; y: number; width: number; height: number } | null;
   onClose: () => void;
 };
 
@@ -29,7 +30,7 @@ function cleanDescription(value: string) {
   return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
-export function AnimeUniversePortal({ anime, onClose }: Props) {
+export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
   const router = useRouter();
   const closeRef = useRef<HTMLButtonElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
@@ -46,6 +47,13 @@ export function AnimeUniversePortal({ anime, onClose }: Props) {
   const release = releaseLabel(anime);
   const description = cleanDescription(anime.description || "");
   const activeCharacter = characters.find((c) => c.id === selectedCharacter) || null;
+  const portalVars = {
+    ...materialVars,
+    "--portal-source-x": `${sourceRect?.x ?? window.innerWidth / 2 - 80}px`,
+    "--portal-source-y": `${sourceRect?.y ?? window.innerHeight / 2 - 120}px`,
+    "--portal-source-w": `${sourceRect?.width ?? 160}px`,
+    "--portal-source-h": `${sourceRect?.height ?? 240}px`,
+  } as CSSProperties;
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -129,7 +137,7 @@ export function AnimeUniversePortal({ anime, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label={`${anime.title} universe`}
-      style={materialVars as CSSProperties}
+      style={portalVars}
     >
       <button
         type="button"
