@@ -91,6 +91,22 @@ const WINDOW_LABEL: Record<TimeWindow, string> = {
 
 const BAND_LABEL = { raw: "RAW", sub: "SUB", dub: "DUB" } as const;
 
+const MONTHS = [
+  "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+  "JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
+];
+
+function formatReleaseDate(anime: Anime): string {
+  const date = anime.releaseDate;
+  if (!date?.year && !date?.month && !date?.day) return "DATE TBA";
+  if (date.day && date.month && date.year) {
+    return `${String(date.day).padStart(2, "0")} ${MONTHS[date.month - 1]} ${date.year}`;
+  }
+  if (date.month && date.year) return `${MONTHS[date.month - 1]} ${date.year}`;
+  if (date.year) return String(date.year);
+  return "DATE TBA";
+}
+
 export function RadarClient() {
   const sessionKey = useSessionRevision();
   const { entries, ready } = useWatchlist();
@@ -542,6 +558,10 @@ export function RadarClient() {
                     ]
                       .filter(Boolean)
                       .join(" · ")}
+                  </div>
+                  <div className="radar-release-date">
+                    <span>DROP</span>
+                    {formatReleaseDate(r.anime)}
                   </div>
                 </Link>
                 {shelfTuned ? (
