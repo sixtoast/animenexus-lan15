@@ -2009,3 +2009,79 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
   transform-style:preserve-3d;
   will-change:transform;
 }
+
+
+/* DISCOVERY FIELD — PASS 8 / SINGLE COMPOSITOR
+   One transform owner for desktop + mobile. Interaction offsets are expressed as
+   variables so hover/focus never fights the live orbital transform. */
+.nexus-world-node{
+  --node-lift-y:0px;
+  --node-interaction-scale:1;
+  transform:var(--node-base-transform,none)
+    translate3d(var(--node-motion-x),var(--node-motion-y),0)
+    translateY(var(--node-lift-y))
+    scale(var(--node-interaction-scale));
+  transform-origin:50% 50%;
+}
+.nexus-world-node--7{
+  --node-base-transform:translateX(-50%);
+}
+.nexus-world-node.is-active,
+.nexus-world-node.is-armed{
+  --node-lift-y:-7px;
+  --node-interaction-scale:1.035;
+}
+.nexus-world-node.is-active{
+  z-index:90!important;
+}
+.nexus-world-node:hover,
+.nexus-world-node:focus-visible{
+  --node-lift-y:-7px;
+  --node-interaction-scale:1.025;
+}
+.nexus-world-node--7.is-active,
+.nexus-world-node--7.is-armed,
+.nexus-world-node--7:hover,
+.nexus-world-node--7:focus-visible{
+  --node-base-transform:translateX(-50%);
+}
+.nexus-world-map[data-phase="orbit"]{
+  --field-breathe:1;
+}
+.nexus-world-map[data-phase="orbit"] .nexus-world-core{
+  animation:nx-field-core-breathe 5.5s ease-in-out infinite;
+}
+.nexus-world-map[data-phase="orbit"] .nexus-world-node-art{
+  transform-origin:50% 50%;
+}
+@keyframes nx-field-core-breathe{
+  0%,100%{box-shadow:0 0 0 1px rgba(242,179,95,.07),0 0 70px rgba(242,179,95,.045),inset 0 0 60px rgba(242,179,95,.025)}
+  50%{box-shadow:0 0 0 1px rgba(242,179,95,.13),0 0 105px rgba(242,179,95,.075),inset 0 0 75px rgba(242,179,95,.04)}
+}
+@media(max-width:700px){
+  .nexus-world-node{
+    transform:var(--node-base-transform,none)
+      translate3d(var(--node-motion-x),var(--node-motion-y),0)
+      translateY(var(--node-lift-y))
+      scale(var(--node-interaction-scale));
+  }
+  .nexus-world-node--7{
+    --node-base-transform:translateX(-50%);
+  }
+  .nexus-world-node.is-active,
+  .nexus-world-node.is-armed,
+  .nexus-world-node:hover,
+  .nexus-world-node:focus-visible{
+    --node-lift-y:-5px;
+    --node-interaction-scale:1.025;
+  }
+  .nexus-world-node--7.is-active,
+  .nexus-world-node--7.is-armed,
+  .nexus-world-node--7:hover,
+  .nexus-world-node--7:focus-visible{
+    --node-base-transform:translateX(-50%);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .nexus-world-map[data-phase="orbit"] .nexus-world-core{animation:none}
+}
