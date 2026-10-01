@@ -2267,3 +2267,108 @@
   .anime-universe-portal__gate-label,
   .anime-universe-portal__gate-core strong{animation:none!important}
 }
+
+
+/* PORTAL PASS 10 — continuous handoff.
+   The gate begins at the exact source card centre/scale, so the opening reads
+   as one object travelling from Browse into the universe. */
+.anime-universe-portal__gate{
+  animation:portal-continuous-cover .92s cubic-bezier(.16,1,.3,1) .02s both !important;
+}
+.anime-universe-portal__gate-core{
+  left:var(--portal-source-cx);
+  top:var(--portal-source-cy);
+  width:calc(var(--portal-source-w) * 1px);
+  height:calc(var(--portal-source-h) * 1px);
+  border-radius:10px;
+  transform:translate(-50%,-50%) scale(1);
+  overflow:hidden;
+  animation:portal-source-to-world 1.02s cubic-bezier(.16,1,.3,1) .02s both !important;
+}
+.anime-universe-portal__gate-image{
+  background-size:cover;
+  background-position:center;
+  animation:portal-source-image 1.02s cubic-bezier(.16,1,.3,1) .02s both !important;
+}
+.anime-universe-portal__gate-orbit--a,
+.anime-universe-portal__gate-orbit--b{
+  transform-origin:var(--portal-source-cx) var(--portal-source-cy);
+  animation:portal-orbit-bloom 1.08s cubic-bezier(.16,1,.3,1) .06s both !important;
+}
+.anime-universe-portal__gate-cross{
+  animation:portal-cross-bloom .55s ease .18s both !important;
+}
+.anime-universe-portal__gate-label{
+  animation:portal-label-bloom .65s cubic-bezier(.16,1,.3,1) .24s both !important;
+}
+@keyframes portal-continuous-cover{
+  from{opacity:1}
+  to{opacity:1}
+}
+@keyframes portal-source-to-world{
+  0%{
+    left:var(--portal-source-cx);
+    top:var(--portal-source-cy);
+    width:var(--portal-source-w);
+    height:var(--portal-source-h);
+    border-radius:10px;
+    transform:translate(-50%,-50%) scale(1);
+    box-shadow:0 0 0 1px rgba(255,255,255,.28),0 0 35px color-mix(in srgb,var(--portal-accent) 45%,transparent);
+  }
+  20%{
+    box-shadow:0 0 0 1px rgba(255,255,255,.45),0 0 80px color-mix(in srgb,var(--portal-accent) 68%,transparent);
+  }
+  100%{
+    left:50%;
+    top:50%;
+    width:min(72vw,920px);
+    height:min(72vw,920px);
+    border-radius:50%;
+    transform:translate(-50%,-50%) scale(1);
+    box-shadow:0 0 0 1px rgba(255,255,255,.12),0 0 110px color-mix(in srgb,var(--portal-accent) 34%,transparent);
+  }
+}
+@keyframes portal-source-image{
+  0%{transform:scale(1);filter:brightness(1) saturate(1)}
+  35%{transform:scale(1.08);filter:brightness(1.28) saturate(1.12)}
+  100%{transform:scale(1.32);filter:brightness(.78) saturate(1.05)}
+}
+@keyframes portal-orbit-bloom{
+  from{opacity:0;transform:scale(.12) rotate(-18deg)}
+  45%{opacity:1}
+  to{opacity:1;transform:scale(1) rotate(0)}
+}
+@keyframes portal-cross-bloom{
+  from{opacity:0;transform:scale(.5)}
+  to{opacity:.8;transform:scale(1)}
+}
+@keyframes portal-label-bloom{
+  from{opacity:0;letter-spacing:.4em;transform:translateY(6px)}
+  to{opacity:.8;letter-spacing:.16em;transform:none}
+}
+@media(max-width:700px){
+  .anime-universe-portal__gate-core{
+    width:var(--portal-source-w);
+    height:var(--portal-source-h);
+  }
+  @keyframes portal-source-to-world{
+    0%{
+      left:var(--portal-source-cx);top:var(--portal-source-cy);
+      width:var(--portal-source-w);height:var(--portal-source-h);
+      border-radius:9px;transform:translate(-50%,-50%);
+    }
+    100%{
+      left:50%;top:50%;width:92vw;height:92vw;
+      border-radius:50%;transform:translate(-50%,-50%);
+    }
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .anime-universe-portal__gate,
+  .anime-universe-portal__gate-core,
+  .anime-universe-portal__gate-image,
+  .anime-universe-portal__gate-orbit--a,
+  .anime-universe-portal__gate-orbit--b,
+  .anime-universe-portal__gate-cross,
+  .anime-universe-portal__gate-label{animation:none!important}
+}
