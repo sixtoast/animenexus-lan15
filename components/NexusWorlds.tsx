@@ -471,8 +471,9 @@ export function NexusWorlds({ candidates }: Props) {
 
         node.style.setProperty("--node-motion-x", `${x.toFixed(2)}px`);
         node.style.setProperty("--node-motion-y", `${y.toFixed(2)}px`);
+        const zDepth = ((scale - 0.66) / 0.52 - 0.5) * 42;
         orbit.style.transform =
-          `perspective(900px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)}) rotateZ(${rotation.toFixed(2)}deg)`;
+          `perspective(900px) translateZ(${zDepth.toFixed(2)}px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)}) rotateZ(${rotation.toFixed(2)}deg)`;
 
         if (local >= lineupDuration + travelDuration) {
           const a = phase + ((local - lineupDuration - travelDuration) / orbitDuration) * Math.PI * 2 + orbitPhase;
