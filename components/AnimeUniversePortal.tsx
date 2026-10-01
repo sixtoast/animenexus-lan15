@@ -183,7 +183,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
             <b>UNIVERSE ENTRY</b>
           </div>
           <div className="anime-universe-portal__coordinates">
-            <span>LAT ${String(anime.id).padStart(6, "0")}</span>
+            <span>LAT {String(anime.id).padStart(6, "0")}</span>
             <i aria-hidden />
             <span>LIVE SIGNAL</span>
           </div>
@@ -356,7 +356,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
 
         <footer className="anime-universe-portal__footer">
           <span>ARTWORK / SIGNAL / MEMORY</span>
-          <span>ANIME ${String(anime.id).padStart(6, "0")}</span>
+          <span>ANIME {String(anime.id).padStart(6, "0")}</span>
           <span>SCROLL / EXPLORE / ENTER</span>
         </footer>
       </div>
