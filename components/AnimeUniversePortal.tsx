@@ -191,7 +191,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
             ref={closeRef}
             type="button"
             className="anime-universe-portal__close"
-            onClick={onClose}
+            onClick={requestClose}
           >
             <span>EXIT</span>
             <b>×</b>
@@ -276,7 +276,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
                   <button type="button" className="btn btn-accent" onClick={enterDossier}>
                     Enter full dossier <span>→</span>
                   </button>
-                  <button type="button" className="btn btn-outline" onClick={onClose}>
+                  <button type="button" className="btn btn-outline" onClick={requestClose}>
                     Return to discovery
                   </button>
                 </div>
@@ -284,7 +284,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
             ) : null}
 
             {view === "figures" ? (
-              <div className="anime-universe-portal__figures">
+              <div className="anime-universe-portal__figures portal-view-scene">
                 <div className="anime-universe-portal__panel-heading">
                   <span>02 / FIGURES WITHIN</span>
                   <b>{characters.length ? `${characters.length} PRESENCES DETECTED` : "NO FIGURES INDEXED"}</b>
@@ -328,7 +328,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
             ) : null}
 
             {view === "archive" ? (
-              <div className="anime-universe-portal__archive">
+              <div className="anime-universe-portal__archive portal-view-scene">
                 <div className="anime-universe-portal__panel-heading">
                   <span>03 / ARCHIVE SIGNAL</span>
                   <b>CATALOGUE MEMORY</b>
