@@ -175,6 +175,21 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
           </div>
         </div>
         <div className="anime-universe-portal__atmosphere" aria-hidden />
+        <div className="anime-universe-portal__depth" aria-hidden>
+          <div className="portal-depth__banner" />
+          {characters[0]?.image ? (
+            <div className="portal-depth__figure portal-depth__figure--primary">
+              <AnimeImage src={characters[0].image} title={characters[0].name} decorative width={700} height={1000} sizes="(max-width: 700px) 75vw, 48vw" />
+            </div>
+          ) : null}
+          {characters[1]?.image ? (
+            <div className="portal-depth__figure portal-depth__figure--secondary">
+              <AnimeImage src={characters[1].image} title={characters[1].name} decorative width={520} height={760} sizes="(max-width: 700px) 55vw, 34vw" />
+            </div>
+          ) : null}
+          <div className="portal-depth__light" />
+          <div className="portal-depth__particles" />
+        </div>
         <div className="anime-universe-portal__image-wash" aria-hidden />
         <div className="anime-universe-portal__vignette" aria-hidden />
         <div className="anime-universe-portal__grain" aria-hidden />
@@ -246,6 +261,12 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
         </div>
 
         <main className="anime-universe-portal__main">
+          <div className="anime-universe-portal__world-marker" aria-hidden>
+            <span>01</span>
+            <i />
+            <b>UNIVERSE</b>
+          </div>
+
           <div className="anime-universe-portal__identity">
             <p className="anime-universe-portal__eyebrow">
               {anime.format || "TITLE"} · {anime.status === "RELEASING" ? "ON AIR" : anime.status === "NOT_YET_RELEASED" ? "INCOMING" : "ARCHIVED"}
@@ -259,6 +280,11 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
                   .join(" · ")}
               </p>
             )}
+            <div className="anime-universe-portal__identity-line">
+              <span>WORLD / {anime.titleNative || anime.titleRomaji || "SIGNAL"}</span>
+              <i aria-hidden />
+              <span>{anime.year || "—"} / {anime.format || "TITLE"}</span>
+            </div>
             <div className="anime-universe-portal__identity-line">
               <span>THE WORLD IS OPEN</span>
               <i aria-hidden />
