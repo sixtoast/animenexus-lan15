@@ -145,6 +145,16 @@ export function AnimeUniversePortal({ anime, onClose }: Props) {
         onPointerMove={onPointerMove}
         onPointerLeave={resetPointer}
       >
+        <div className="anime-universe-portal__gate" aria-hidden>
+          <div className="anime-universe-portal__gate-orbit anime-universe-portal__gate-orbit--a" />
+          <div className="anime-universe-portal__gate-orbit anime-universe-portal__gate-orbit--b" />
+          <div className="anime-universe-portal__gate-core">
+            <div className="anime-universe-portal__gate-image" />
+            <span className="anime-universe-portal__gate-cross" />
+            <span className="anime-universe-portal__gate-label">OPENING UNIVERSE</span>
+            <strong>{anime.title}</strong>
+          </div>
+        </div>
         <div className="anime-universe-portal__atmosphere" aria-hidden />
         <div className="anime-universe-portal__image-wash" aria-hidden />
         <div className="anime-universe-portal__vignette" aria-hidden />
