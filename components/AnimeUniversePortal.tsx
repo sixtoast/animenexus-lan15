@@ -37,6 +37,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
   const rafRef = useRef(0);
   const [view, setView] = useState<PortalView>("entry");
   const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
+  const [isExiting, setIsExiting] = useState(false);
 
   const materialVars = useMemo(
     () => materialCssVars(materialFromAnimeEntity(anime)),
@@ -55,6 +56,12 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
     "--portal-source-h": `${sourceRect?.height ?? 240}px`,
   } as CSSProperties;
 
+  const requestClose = () => {
+    if (isExiting) return;
+    setIsExiting(true);
+    window.setTimeout(onClose, 420);
+  };
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     const previousPosition = document.body.style.position;
@@ -71,7 +78,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        requestClose();
       }
     };
 
@@ -126,14 +133,15 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
   }
 
   function enterDossier() {
+    if (isExiting) return;
     playCue("filter_select");
-    onClose();
-    router.push(`/anime/${anime.id}`);
+    setIsExiting(true);
+    window.setTimeout(() => router.push(`/anime/${anime.id}`), 420);
   }
 
   return (
     <div
-      className="anime-universe-portal"
+      className={`anime-universe-portal${isExiting ? " is-exiting" : ""}`}
       role="dialog"
       aria-modal="true"
       aria-label={`${anime.title} universe`}
@@ -143,7 +151,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
         type="button"
         className="anime-universe-portal__backdrop"
         aria-label="Close universe"
-        onClick={onClose}
+        onClick={requestClose}
       />
 
       <div
