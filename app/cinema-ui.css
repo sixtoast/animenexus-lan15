@@ -1905,3 +1905,50 @@ body.cinema-cursor-focus a,body.cinema-cursor-focus button{cursor:none}
     filter:drop-shadow(0 16px 30px rgba(0,0,0,.45));
   }
 }
+
+
+/* DISCOVERY FIELD — PASS 6 / MOTION FIX
+   The RAF writes the orbital transform to .nexus-world-node-orbit-motion.
+   That element must remain a real layout box; display:contents silently drops
+   transform/perspective and made the previous orbital passes visually inert. */
+.nexus-world-node-motion{
+  display:block!important;
+  width:100%;
+  height:100%;
+  transform:none!important;
+}
+.nexus-world-node-orbit-motion{
+  display:flex!important;
+  flex-direction:row;
+  align-items:center;
+  gap:10px;
+  width:max-content;
+  min-width:0;
+  transform-origin:50% 50%;
+  transform-style:preserve-3d;
+  will-change:transform;
+  backface-visibility:hidden;
+  perspective:900px;
+}
+.nexus-world-map.is-entered .nexus-world-node-orbit-motion{
+  opacity:1;
+}
+.nexus-world-map[data-phase="lineup"] .nexus-world-node-orbit-motion{
+  transform:translate3d(0,0,0) scale(.96);
+}
+.nexus-world-map[data-phase="travel"] .nexus-world-node-orbit-motion{
+  transition:none!important;
+}
+.nexus-world-map[data-phase="orbit"] .nexus-world-node-orbit-motion{
+  transition:none!important;
+}
+@media(max-width:700px){
+  .nexus-world-node-orbit-motion{
+    gap:7px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .nexus-world-node-orbit-motion{
+    will-change:auto;
+  }
+}
