@@ -25,7 +25,7 @@ type Props = {
   index?: number;
   recommended?: boolean;
   /** Open the cinematic universe portal instead of navigating directly. */
-  onPreview?: () => void;
+  onPreview?: (sourceRect: { x: number; y: number; width: number; height: number }) => void;
 };
 
 function episodeCap(anime: Anime, entryEpisodes?: number | string): number {
@@ -145,7 +145,9 @@ export function AnimeCard({ anime, index = 0, recommended = false, onPreview }: 
     }
     e.preventDefault();
     if (onPreview) {
-      onPreview();
+      const rect = cardRef.current?.getBoundingClientRect();
+      if (rect) onPreview({ x: rect.left, y: rect.top, width: rect.width, height: rect.height });
+      else onPreview({ x: window.innerWidth / 2 - 80, y: window.innerHeight / 2 - 120, width: 160, height: 240 });
       return;
     }
     withViewTransition(
