@@ -469,8 +469,10 @@ export function NexusWorlds({ candidates }: Props) {
           }
         }
 
+        node.style.setProperty("--node-motion-x", `${x.toFixed(2)}px`);
+        node.style.setProperty("--node-motion-y", `${y.toFixed(2)}px`);
         orbit.style.transform =
-          `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0) perspective(900px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)}) rotateZ(${rotation.toFixed(2)}deg)`;
+          `perspective(900px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)}) rotateZ(${rotation.toFixed(2)}deg)`;
 
         if (local >= lineupDuration + travelDuration) {
           const a = phase + ((local - lineupDuration - travelDuration) / orbitDuration) * Math.PI * 2 + orbitPhase;
@@ -486,8 +488,9 @@ export function NexusWorlds({ candidates }: Props) {
     if (reduceMotion) {
       geometry.forEach(({ baseX, baseY, phase, orbit }) => {
         if (!orbit) return;
-        orbit.style.transform =
-          `translate3d(${(centreX + Math.cos(phase) * radiusX - baseX).toFixed(2)}px,${(centreY + Math.sin(phase) * radiusY - baseY).toFixed(2)}px,0) scale(1)`;
+        node.style.setProperty("--node-motion-x", `${(centreX + Math.cos(phase) * radiusX - baseX).toFixed(2)}px`);
+        node.style.setProperty("--node-motion-y", `${(centreY + Math.sin(phase) * radiusY - baseY).toFixed(2)}px`);
+        orbit.style.transform = "translate3d(0,0,0) scale(1)";
       });
     } else {
       raf = window.requestAnimationFrame(tick);
