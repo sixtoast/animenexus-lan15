@@ -66,7 +66,7 @@ const FIELDS = `
   genres
   status
   format
-  startDate { year }
+  startDate { year month day }
   season
   seasonYear
   averageScore
@@ -115,7 +115,17 @@ export async function fetchSeasonal(
     }>(query, { page, perPage, season, seasonYear });
 
     return {
-      data: (data.Page.media || []).map(mapAniListMedia),
+      data: (data.Page.media || []).map((item) => {
+        const anime = mapAniListMedia(item);
+        const start = item.startDate as
+          | { year?: number | null; month?: number | null; day?: number | null }
+          | null
+          | undefined;
+        anime.releaseDate = start
+          ? { year: start.year ?? null, month: start.month ?? null, day: start.day ?? null }
+          : null;
+        return anime;
+      }),
       pagination: {
         total: data.Page.pageInfo.total ?? 0,
         currentPage: data.Page.pageInfo.currentPage,
