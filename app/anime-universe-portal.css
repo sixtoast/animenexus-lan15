@@ -2728,3 +2728,37 @@
     transform:none;
   }
 }
+
+
+/* CINEMA COMPOSITION v2 — the modal is the scene, not a panel. */
+.anime-universe-portal__world{inset:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+.anime-universe-portal__backdrop{background:#020203!important}
+.anime-universe-portal__world:before{opacity:.62!important;filter:blur(40px) saturate(.7) brightness(.58)!important}
+.anime-universe-portal__image-wash{z-index:3!important;background:linear-gradient(90deg,rgba(2,2,3,.99) 0%,rgba(2,2,3,.82) 24%,rgba(2,2,3,.24) 52%,rgba(2,2,3,.02) 76%,rgba(2,2,3,.3) 100%),linear-gradient(0deg,rgba(2,2,3,.72),transparent 32%,transparent 72%,rgba(2,2,3,.3))!important}
+.anime-universe-portal__scene{z-index:4!important}
+.anime-universe-portal__art{right:-2vw!important;top:-9vh!important;width:min(76vw,1160px)!important;height:120vh!important;transform:translate3d(calc(var(--portal-mx) * 30px),calc(var(--portal-my) * 20px),0) scale(1.04)!important;filter:drop-shadow(-48px 36px 90px rgba(0,0,0,.75))!important}
+.anime-universe-portal__art:before{opacity:.2!important;filter:blur(70px) saturate(1.05)!important}
+.anime-universe-portal__main{z-index:10!important;padding:clamp(110px,14vh,150px) clamp(32px,7vw,108px) 90px clamp(78px,10vw,160px)!important;justify-content:flex-start!important}
+.anime-universe-portal__identity{max-width:min(720px,54vw)!important;margin-top:clamp(5vh,10vh,110px)!important}
+.anime-universe-portal h1{font-size:clamp(4.5rem,9.6vw,10.5rem)!important;line-height:.76!important;max-width:7.5ch!important;letter-spacing:-.075em!important;text-shadow:0 22px 80px rgba(0,0,0,.95)!important}
+.anime-universe-portal__panel{width:min(590px,48vw)!important;margin-top:32px!important;padding:0 0 0 22px!important;border-left:1px solid color-mix(in srgb,var(--portal-accent) 70%,rgba(255,255,255,.16))!important;background:linear-gradient(90deg,rgba(2,2,3,.46),transparent)!important;backdrop-filter:none!important}
+.anime-universe-portal__facts{padding-bottom:14px!important}
+.anime-universe-portal__description{max-width:55ch!important;line-height:1.62!important}
+.anime-universe-portal__actions .btn{border-radius:0!important}
+.anime-universe-portal__top,.anime-universe-portal__nav,.anime-universe-portal__footer{z-index:30!important}
+.anime-universe-portal__world-effects{z-index:5!important;opacity:.3!important}
+.world-effect--ring-a{opacity:.25!important}.world-effect--ring-b{opacity:.16!important}.world-effect--beam{opacity:.025!important}.world-effect--glow{opacity:.28!important}
+.anime-universe-portal__vignette{z-index:14!important}
+.anime-universe-portal__grain{z-index:16!important;opacity:.07!important}
+.anime-universe-portal__scan{z-index:17!important;opacity:.035!important}
+@media(max-width:700px){
+ .anime-universe-portal__main{padding:86px 18px 118px 24px!important}
+ .anime-universe-portal__art{right:-38vw!important;top:2vh!important;width:128vw!important;height:86vh!important;opacity:.76!important;transform:translate3d(calc(var(--portal-mx) * 8px),calc(var(--portal-my) * 6px),0) scale(1.02)!important}
+ .anime-universe-portal__identity{max-width:82vw!important;margin-top:27vh!important}
+ .anime-universe-portal h1{font-size:clamp(3.35rem,14.5vw,5.9rem)!important;max-width:6.5ch!important}
+ .anime-universe-portal__panel{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;width:min(90vw,560px)!important;margin-top:22px!important;padding-left:14px!important}
+ .anime-universe-portal__description{max-height:92px;overflow:hidden;font-size:.73rem!important}
+ .anime-universe-portal__image-wash{background:linear-gradient(90deg,rgba(2,2,3,.97) 0%,rgba(2,2,3,.72) 42%,rgba(2,2,3,.08) 82%),linear-gradient(0deg,rgba(2,2,3,.95) 0%,rgba(2,2,3,.34) 30%,transparent 70%)!important}
+ .anime-universe-portal__nav{left:24px!important;right:24px!important;bottom:58px!important;justify-content:space-between!important}
+ .world-effect--ring-a{opacity:.13!important}.world-effect--ring-b{opacity:.1!important}
+}
