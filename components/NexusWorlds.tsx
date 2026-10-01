@@ -386,6 +386,7 @@ export function NexusWorlds({ candidates }: Props) {
 
           if (travelT >= 1) {
             const orbitT = (local - lineupDuration - travelDuration) / orbitDuration;
+            const orbitBlend = Math.min(1, Math.max(0, (orbitT * 1000) / 900));
             const a = phase + orbitT * Math.PI * 2 + orbitPhase;
             const rankWeight = getRankWeight(index);
             const mode = fieldModeRef.current;
@@ -401,6 +402,16 @@ export function NexusWorlds({ candidates }: Props) {
             const orbitalY = fieldCentreY + Math.sin(a) * dynamicRadiusY;
             x = orbitalX - baseX;
             y = orbitalY - baseY;
+
+            // The first ~900ms of orbit is a physical settle, not an instant
+            // teleport. Blend from the travel endpoint into the true orbital
+            // coordinate so the final lock is visibly earned.
+            if (orbitBlend < 1) {
+              const settledX = x * orbitBlend;
+              const settledY = y * orbitBlend;
+              x = settledX;
+              y = settledY;
+            }
 
             // The pointer creates a soft magnetic field around each signal.
             const pointerNX = pointerX * 0.5 + 0.5;
