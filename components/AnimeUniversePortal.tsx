@@ -35,7 +35,7 @@ export function AnimeUniversePortal({ anime, onClose }: Props) {
   const worldRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef(0);
   const [view, setView] = useState<PortalView>("entry");
-  const [selectedCharacter, setSelectedCharacter] = useState<string | null>(null);
+  const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
 
   const materialVars = useMemo(
     () => materialCssVars(materialFromAnimeEntity(anime)),
