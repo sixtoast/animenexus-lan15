@@ -486,8 +486,8 @@ export function NexusWorlds({ candidates }: Props) {
     };
 
     if (reduceMotion) {
-      geometry.forEach(({ baseX, baseY, phase, orbit }) => {
-        if (!orbit) return;
+      geometry.forEach(({ node, baseX, baseY, phase, orbit }) => {
+        if (!node || !orbit) return;
         node.style.setProperty("--node-motion-x", `${(centreX + Math.cos(phase) * radiusX - baseX).toFixed(2)}px`);
         node.style.setProperty("--node-motion-y", `${(centreY + Math.sin(phase) * radiusY - baseY).toFixed(2)}px`);
         orbit.style.transform = "translate3d(0,0,0) scale(1)";
