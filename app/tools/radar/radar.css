@@ -126,3 +126,23 @@
     animation: none;
   }
 }
+
+
+.radar-release-date {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 8px 10px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-accent);
+}
+
+.radar-release-date span {
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  color: var(--color-text-muted);
+  opacity: 0.75;
+}
