@@ -5,6 +5,7 @@ import "../../franchise-path.css";
 import "../../desk-notes.css";
 import "./sprint-b-detail.css";
 import Link from "next/link";
+import { DetailBackButton } from "@/components/DetailBackButton";
 import { notFound } from "next/navigation";
 import { getAnimeExperience } from "@/lib/anime-experience";
 import { fetchAnimeById } from "@/lib/anilist";
