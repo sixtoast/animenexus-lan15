@@ -7,6 +7,7 @@ import type { Anime } from "@/lib/types";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { findWatchlistEntry } from "@/lib/watchlist-match";
 import { AnimeImage } from "@/components/AnimeImage";
+import { AnimeUniversePortal } from "@/components/AnimeUniversePortal";
 import {
   materialCssVars,
   materialFromAnimeEntity,
@@ -51,6 +52,8 @@ export function AnimeCard({ anime, index = 0, recommended = false, onPreview }: 
   const [recent, setRecent] = useState(false);
   const [pressed, setPressed] = useState(false);
   const [portalLaunching, setPortalLaunching] = useState(false);
+  const [portalOpen, setPortalOpen] = useState(false);
+  const [portalSourceRect, setPortalSourceRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const cardRef = useRef<HTMLAnchorElement>(null);
   const rafRef = useRef(0);
   const score = anime.score > 0 ? anime.score.toFixed(1) : "\u2014";
@@ -146,15 +149,20 @@ export function AnimeCard({ anime, index = 0, recommended = false, onPreview }: 
       return;
     }
     e.preventDefault();
-    if (onPreview) {
-      const rect = cardRef.current?.getBoundingClientRect();
-      const sourceRect = rect
-        ? { x: rect.left, y: rect.top, width: rect.width, height: rect.height }
-        : { x: window.innerWidth / 2 - 80, y: window.innerHeight / 2 - 120, width: 160, height: 240 };
-      setPortalLaunching(true);
-      window.setTimeout(() => onPreview(sourceRect), 90);
-      return;
-    }
+    const rect = cardRef.current?.getBoundingClientRect();
+    const sourceRect = rect
+      ? { x: rect.left, y: rect.top, width: rect.width, height: rect.height }
+      : { x: window.innerWidth / 2 - 80, y: window.innerHeight / 2 - 120, width: 160, height: 240 };
+    setPortalLaunching(true);
+    window.setTimeout(() => {
+      if (onPreview) onPreview(sourceRect);
+      else {
+        setPortalSourceRect(sourceRect);
+        setPortalOpen(true);
+      }
+      setPortalLaunching(false);
+    }, 90);
+    return;
     withViewTransition(
       () => {
         router.push(href);
