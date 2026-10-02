@@ -73,6 +73,7 @@ export function BrowseClient({
   const [year, setYear] = useState(searchParams.get("year") || "");
   const [sort, setSort] = useState(searchParams.get("sort") || "score");
   const experience = searchParams.get("experience") || "";
+  const { portal: portalEnabled } = usePerformance();
   const feed = parsed.feed;
 
   useEffect(() => {
