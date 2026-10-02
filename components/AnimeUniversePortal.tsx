@@ -6,7 +6,7 @@ import type { CSSProperties } from "react";
 import type { Anime } from "@/lib/types";
 import { AnimeImage } from "@/components/AnimeImage";
 import { materialCssVars, materialFromAnimeEntity } from "@/lib/anime-material";
-import { playCue } from "@/lib/sound-engine";
+import { playCue, playSpatialTravel } from "@/lib/sound-engine";
 
 type Props = {
   anime: Anime;
@@ -86,10 +86,15 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
     };
 
     window.addEventListener("keydown", onKey);
-    playCue("modal_open");
+    playCue("modal_open", { gain: 0.72 });
+    // The source card hands its position to the portal as a short spatial travel cue.
+    const sourceX = sourceRect ? (sourceRect.x + sourceRect.width / 2) / window.innerWidth : 0.5;
+    playSpatialTravel(sourceX * 2 - 1, 0.65);
+    const arrivalTimer = window.setTimeout(() => playCue("resonance", { gain: 0.48 }), 760);
 
     return () => {
       window.clearTimeout(focusTimer);
+      window.clearTimeout(arrivalTimer);
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = previousOverflow;
       document.body.style.position = previousPosition;
