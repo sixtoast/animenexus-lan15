@@ -513,11 +513,6 @@ function MobileAnimeUniversePortal({ anime, onClose, onEnterDossier }: Props) {
           }
         }}
       >
-        {performanceSettings.portalScene ? <div className="anime-universe-mobile-portal__portal-scene" aria-hidden="true">
-          <div className="anime-universe-mobile-portal__orbit anime-universe-mobile-portal__orbit--a" />
-          <div className="anime-universe-mobile-portal__orbit anime-universe-mobile-portal__orbit--b" />
-          <div className="anime-universe-mobile-portal__core" />
-        </div> : null}
         <div className="anime-universe-mobile-portal__art">
           <AnimeImage
             src={anime.image}
