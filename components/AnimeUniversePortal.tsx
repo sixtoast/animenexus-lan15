@@ -7,7 +7,7 @@ import type { Anime } from "@/lib/types";
 import { AnimeImage } from "@/components/AnimeImage";
 import { materialCssVars, materialFromAnimeEntity } from "@/lib/anime-material";
 import { playCue, playSpatialTravel } from "@/lib/sound-engine";
-import { withViewTransition } from "@/lib/view-transition";
+import { getAnimeObjectId, getAnimeViewTransitionName, withViewTransition } from "@/lib/view-transition";
 
 type Props = {
   anime: Anime;
@@ -161,7 +161,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
           route: "anime-detail",
           origin: "card",
           destination: "hero",
-          objectId: String(anime.id),
+          objectId: getAnimeObjectId(anime.id),
         },
       );
     }, 180);
@@ -277,6 +277,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
               height={1200}
               priority
               sizes="(max-width: 700px) 82vw, 68vw"
+              style={{ viewTransitionName: getAnimeViewTransitionName(anime.id) } as CSSProperties}
             />
           </div>
         </div>
