@@ -277,7 +277,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
               height={1200}
               priority
               sizes="(max-width: 700px) 82vw, 68vw"
-              style={{ viewTransitionName: getAnimeViewTransitionName(anime.id) } as CSSProperties}
+              viewTransitionName={getAnimeViewTransitionName(anime.id)}
             />
           </div>
         </div>
