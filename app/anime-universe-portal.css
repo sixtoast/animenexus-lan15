@@ -3528,3 +3528,131 @@
     display:none!important;
   }
 }
+
+
+/* MOBILE PORTAL v2 — intentionally isolated from the desktop scene.
+   One image, one shade layer, ordinary layout. No filters, masks, particles,
+   view-transition surface, backdrop blur or GPU-heavy effects. */
+.anime-universe-mobile-portal{
+  position:fixed;
+  inset:0;
+  z-index:2000;
+  background:#050506;
+  color:#f7f0e9;
+  isolation:isolate;
+}
+.anime-universe-mobile-portal__backdrop{
+  position:absolute;
+  inset:0;
+  border:0;
+  padding:0;
+  background:#050506;
+}
+.anime-universe-mobile-portal__surface{
+  position:relative;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#050506;
+}
+.anime-universe-mobile-portal__art{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  background:#050506;
+}
+.anime-universe-mobile-portal__art img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center top;
+}
+.anime-universe-mobile-portal__shade{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(3,3,4,.12) 0%,rgba(3,3,4,.08) 28%,rgba(3,3,4,.72) 64%,rgba(3,3,4,.98) 100%);
+}
+.anime-universe-mobile-portal__top{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  z-index:2;
+  height:58px;
+  padding:0 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  color:rgba(255,255,255,.72);
+  font-size:9px;
+  font-weight:650;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+.anime-universe-mobile-portal__top button{
+  width:34px;
+  height:34px;
+  border:1px solid rgba(255,255,255,.28);
+  border-radius:50%;
+  background:rgba(0,0,0,.2);
+  color:#fff;
+  font-size:22px;
+  line-height:1;
+}
+.anime-universe-mobile-portal__content{
+  position:absolute;
+  left:22px;
+  right:22px;
+  bottom:28px;
+  z-index:2;
+}
+.anime-universe-mobile-portal__content>p{
+  margin:0 0 10px;
+  color:var(--color-accent,#f0a090);
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+}
+.anime-universe-mobile-portal__content h1{
+  margin:0;
+  max-width:7ch;
+  font-family:var(--font-display);
+  font-size:clamp(3rem,15vw,5rem);
+  line-height:.84;
+  letter-spacing:-.065em;
+  font-weight:650;
+  text-wrap:balance;
+}
+.anime-universe-mobile-portal__content>span{
+  display:block;
+  margin-top:10px;
+  color:rgba(255,255,255,.52);
+  font-size:10px;
+  letter-spacing:.06em;
+}
+.anime-universe-mobile-portal__facts{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 16px;
+  margin-top:15px;
+  color:rgba(255,255,255,.55);
+  font-size:9px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.anime-universe-mobile-portal__facts b{color:#fff}
+.anime-universe-mobile-portal__actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:20px;
+}
+.anime-universe-mobile-portal__actions .btn{min-height:42px}
+.anime-universe-mobile-portal.is-closing .anime-universe-mobile-portal__surface{opacity:.15}
+@media(min-width:701px){.anime-universe-mobile-portal{display:none!important}}
+@media(prefers-reduced-motion:reduce){.anime-universe-mobile-portal__surface{transition:none}}
