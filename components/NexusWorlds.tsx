@@ -351,8 +351,19 @@ export function NexusWorlds({ candidates }: Props) {
           }
           const p = ease(travelT);
           const angle = phase + orbitPhase;
-          const targetX = centreX + Math.cos(angle) * radiusX - baseX;
-          const targetY = centreY + Math.sin(angle) * radiusY - baseY;
+          // The travel destination must be the exact first frame of the orbit,
+          // including rank/mode shaping and pointer-safe radius. Otherwise the
+          // final travel frame and orbit frame can differ by a few pixels and
+          // read as a mechanical snap.
+          const travelRankWeight = getRankWeight(index);
+          const travelMode = fieldModeRef.current;
+          const travelTarget = getModeTarget(index, travelMode);
+          const travelModeX = 1 + travelTarget.x * (aiPulsing ? pulseMorph : 1);
+          const travelModeY = 1 + travelTarget.y * (aiPulsing ? pulseMorph : 1);
+          const travelRadiusX = radiusX * travelRankWeight * travelModeX * (1 - Math.abs(pointerX) * 0.035);
+          const travelRadiusY = radiusY * travelRankWeight * travelModeY * (1 - Math.abs(pointerY) * 0.025);
+          const targetX = centreX + Math.cos(angle) * travelRadiusX - baseX;
+          const targetY = centreY + Math.sin(angle) * travelRadiusY - baseY;
           const startX = lineX - baseX;
           const startY = lineY - baseY;
           const side = index % 2 === 0 ? -1 : 1;
@@ -391,7 +402,6 @@ export function NexusWorlds({ candidates }: Props) {
 
           if (travelT >= 1) {
             const orbitT = (local - lineupDuration - travelDuration) / orbitDuration;
-            const orbitBlend = Math.min(1, Math.max(0, (orbitT * 1000) / 900));
             const a = phase + orbitT * Math.PI * 2 + orbitPhase;
             const rankWeight = getRankWeight(index);
             const mode = fieldModeRef.current;
