@@ -225,13 +225,6 @@ export function BrowseClient({
 
   const canBlend = ready && entries.length >= 2 && items.length > 1;
 
-  const performanceSettings = usePerformance();
-  const portalEnabled = performanceSettings.portal;
-  const [portalAnime, setPortalAnime] = useState<Anime | null>(null);
-  const [portalSourceRect, setPortalSourceRect] = useState<DOMRect | null>(null);
-
-  const closePortal = useCallback(() => setPortalAnime(null), []);
-
   const queryValid = q.trim().length >= 1;
 
   const displayItems = useMemo(() => {
