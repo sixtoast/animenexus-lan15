@@ -185,7 +185,10 @@ export default async function AnimeDetailPage({ params }: Props) {
       <div className="detail-world" aria-hidden="true">
         <div className="detail-world__backdrop" />
         <div className="detail-world__mist" />
+        <div className="detail-world__light" />
+        <div className="detail-world__particles" />
         <div className="detail-world__keyart" />
+        <div className="detail-world__veil" />
         <div className="detail-world__grain" />
       </div>
 
