@@ -353,3 +353,35 @@ html[data-reduce-motion="true"] .nav-mobile,
 html[data-reduce-motion="true"] .nav-scrim {
   animation: none !important;
 }
+
+.fab-performance{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  max-width:240px;
+  padding:10px;
+  margin:0 8px 8px;
+  border:1px solid var(--color-border);
+  border-radius:12px;
+  background:var(--color-surface,rgba(10,9,12,.94));
+}
+.fab-performance label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:11px;
+  line-height:1.2;
+  color:var(--color-text);
+}
+.fab-performance input{accent-color:var(--color-accent)}
+.fab-performance-reset,.fab-performance-safe{
+  width:100%;
+  border:1px solid var(--color-border);
+  background:transparent;
+  color:var(--color-text);
+  padding:7px 8px;
+  border-radius:8px;
+  font:inherit;
+  font-size:10px;
+}
+.fab-performance-safe{border-color:var(--color-accent);color:var(--color-accent)}
