@@ -204,9 +204,15 @@ export default async function AnimeDetailPage({ params }: Props) {
         </Link>
 
         <div className="detail-hero" data-artwork-transition-target="hero">
+          <div className="detail-scene-index" aria-hidden="true">
+            <span>01</span>
+            <i />
+            <span>ANIME<br />UNIVERSE</span>
+          </div>
           <DetailCoverMaterial anime={anime} viewTransitionName={vtCover} />
 
           <div className="detail-info" data-artwork-transition-target="metadata">
+            <div className="detail-arrival">ENTERING TITLE <span>·</span> {anime.format || "ANIME"}</div>
             <p className="detail-kicker">Lantern · detail</p>
             <h1>{anime.title}</h1>
             {(anime.titleRomaji || anime.titleNative) &&
