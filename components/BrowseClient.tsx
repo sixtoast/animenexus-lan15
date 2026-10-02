@@ -23,7 +23,6 @@ import { SignalError, signalErrorBody } from "@/components/SignalError";
 import { SignalEmpty } from "@/components/SignalEmpty";
 import { playCue } from "@/lib/sound-engine";
 import { BrowseIntentHint } from "@/components/BrowseIntentHint";
-import { AnimeUniversePortal } from "@/components/AnimeUniversePortal";
 import { getExperienceIntent } from "@/lib/viewing-intent";
 import { logBehaviour } from "@/lib/behaviour-events";
 import { useSessionRevision } from "@/lib/use-session-revision";
@@ -569,7 +568,6 @@ export function BrowseClient({
           ) : null}
         </>
       )}
-      {portalEnabled && portalAnime ? <AnimeUniversePortal anime={portalAnime} sourceRect={portalSourceRect} onClose={closePortal} /> : null}
     </div>
   );
 }
