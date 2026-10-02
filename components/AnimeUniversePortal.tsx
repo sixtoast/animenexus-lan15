@@ -548,7 +548,6 @@ function MobileAnimeUniversePortal({ anime, onClose, onEnterDossier }: Props) {
             {anime.year ? <span>{anime.year}</span> : null}
             {anime.episodes ? <span>{anime.episodes} EP</span> : null}
           </div>
-          <span className="anime-universe-mobile-portal__hint">TAP TO ENTER UNIVERSE</span>
         </main>
       </div>
     </div>
