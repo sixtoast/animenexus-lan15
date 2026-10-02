@@ -42,7 +42,7 @@ function isFinePointer(): boolean {
   }
 }
 
-export function AnimeCard({ anime, index = 0, recommended = false, onPreview }: Props) {
+export function AnimeCard({ anime, index = 0, recommended = false }: Props) {
   const router = useRouter();
   const { entries, ready } = useWatchlist();
   const entry = ready ? findWatchlistEntry(entries, anime) : undefined;
@@ -143,10 +143,6 @@ export function AnimeCard({ anime, index = 0, recommended = false, onPreview }: 
       return;
     }
     e.preventDefault();
-    const rect = cardRef.current?.getBoundingClientRect();
-    const sourceRect = rect
-      ? { x: rect.left, y: rect.top, width: rect.width, height: rect.height }
-      : { x: window.innerWidth / 2 - 80, y: window.innerHeight / 2 - 120, width: 160, height: 240 };
     withViewTransition(
       () => {
         router.push(href);
