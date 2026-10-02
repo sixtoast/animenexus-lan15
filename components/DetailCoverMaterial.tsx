@@ -98,18 +98,25 @@ export function DetailCoverMaterial({
         "--artwork-previous-image": previousCover ? `url("${previousCover}")` : "none",
       } as CSSProperties}
     >
+      <span className="detail-cover-material__aura" aria-hidden="true" />
+      <span className="detail-cover-material__shadow" aria-hidden="true" />
+      <span className="detail-cover-material__spine" aria-hidden="true" />
       {previousCover ? <span className="detail-cover-material__previous" aria-hidden="true" /> : null}
-      <AnimeImage
-        className="detail-cover"
-        src={cover}
-        title={anime.title}
-        decorative
-        width={280}
-        height={400}
-        sizes="(max-width: 640px) 40vw, 220px"
-        priority
-        viewTransitionName={vt}
-      />
+      <span className="detail-cover-material__surface">
+        <AnimeImage
+          className="detail-cover"
+          src={cover}
+          title={anime.title}
+          decorative
+          width={280}
+          height={400}
+          sizes="(max-width: 640px) 40vw, 220px"
+          priority
+          viewTransitionName={vt}
+        />
+        <span className="detail-cover-material__sheen" aria-hidden="true" />
+        <span className="detail-cover-material__edge" aria-hidden="true" />
+      </span>
     </div>
   );
 }
