@@ -93,7 +93,7 @@ export function FabMenu() {
           <button type="button" className="fab-item" role="menuitem" onClick={() => setPerformanceOpen(v => !v)} aria-expanded={performanceOpen}>
             <FabItem icon="frequency">Performance</FabItem>
           </button>
-          {performanceOpen ? (
+          {performanceOpen && (
             <div className="fab-performance" role="group" aria-label="Performance controls">
               <label><input type="checkbox" checked={performance.portal} onChange={e => performance.setPref("portal", e.target.checked)} /> Universe Portal</label>
               <label><input type="checkbox" checked={performance.portalScene} disabled={!performance.portal} onChange={e => performance.setPref("portalScene", e.target.checked)} /> Portal scene</label>
