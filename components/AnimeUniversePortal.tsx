@@ -449,7 +449,7 @@ function MobileAnimeUniversePortal({ anime, onClose, onEnterDossier }: Props) {
       };
       withViewTransition(navigate, {
         route: "anime-detail",
-        origin: "portal",
+        origin: "card",
         destination: "hero",
         objectId: getAnimeObjectId(anime.id),
       });
