@@ -577,9 +577,18 @@ export default async function AnimeDetailPage({ params }: Props) {
         </DetailDeferred>
 
         {anime.characters && anime.characters.length > 0 ? (
-          <section id="characters" className="detail-section universe-space">
-            <span className="universe-space__eyebrow">03 · CHARACTERS</span>
-            <h2>Characters</h2>
+          <section id="characters" className="detail-section universe-space universe-characters-space">
+            <div className="universe-space__header">
+              <span className="universe-space__eyebrow">04 · CHARACTERS</span>
+              <span className="universe-space__index">CAST / FIGURES</span>
+            </div>
+            <div className="universe-characters-space__intro">
+              <div>
+                <span className="universe-characters-space__kicker">THE PEOPLE WITHIN</span>
+                <h2>Characters</h2>
+              </div>
+              <p>Figures that give this world its shape, conflict and memory.</p>
+            </div>
             <div className="char-grid">
               {anime.characters.map((c) => (
                 <div key={c.id} className="char-card">
@@ -599,9 +608,18 @@ export default async function AnimeDetailPage({ params }: Props) {
             </div>
           </section>
         ) : showJikanChars ? (
-          <section id="characters" className="detail-section universe-space">
-            <span className="universe-space__eyebrow">03 · CHARACTERS</span>
-            <h2>Characters</h2>
+          <section id="characters" className="detail-section universe-space universe-characters-space">
+            <div className="universe-space__header">
+              <span className="universe-space__eyebrow">04 · CHARACTERS</span>
+              <span className="universe-space__index">CAST / FIGURES</span>
+            </div>
+            <div className="universe-characters-space__intro">
+              <div>
+                <span className="universe-characters-space__kicker">THE PEOPLE WITHIN</span>
+                <h2>Characters</h2>
+              </div>
+              <p>Figures that give this world its shape, conflict and memory.</p>
+            </div>
             <p className="tools-hint" style={{ marginBottom: 10 }}>
               Source: Jikan / MAL (AniList characters unavailable)
             </p>
