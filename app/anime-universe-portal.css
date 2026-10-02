@@ -3218,3 +3218,21 @@
     animation:none!important;
   }
 }
+
+/* PASS 10 — source card is the physical origin of the aperture. */
+.anime-universe-portal__gate-core{
+  left:50%;
+  top:50%;
+}
+.anime-universe-portal:not(.is-exiting) .anime-universe-portal__gate-core{
+  will-change:transform,left,top,border-radius,opacity;
+}
+.anime-universe-portal:not(.is-exiting) .anime-universe-portal__gate-image{
+  will-change:transform,filter,opacity;
+}
+@media(prefers-reduced-motion:reduce){
+  .anime-universe-portal:not(.is-exiting) .anime-universe-portal__gate-core,
+  .anime-universe-portal:not(.is-exiting) .anime-universe-portal__gate-image{
+    will-change:auto;
+  }
+}
