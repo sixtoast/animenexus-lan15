@@ -450,7 +450,7 @@ function MobileAnimeUniversePortal({ anime, onClose, onEnterDossier }: Props) {
         if (onEnterDossier) onEnterDossier();
         else window.history.pushState({}, "", `/anime/${anime.id}`);
       };
-      if (!performance.portalViewTransition) {
+      if (typeof document === "undefined" || !(document as Document & { startViewTransition?: unknown }).startViewTransition) {
         navigate();
         return;
       }
