@@ -2350,3 +2350,192 @@ body:has(.detail-cover-material.artwork-role--promotional) {
   .cinema-detail-page .anime-universe-nav button,
   .cinema-detail-page .anime-universe-nav button::after{transition:none}
 }
+
+
+/* ================================================================
+   UNIVERSE EXPERIENCE — PASS 6
+   Story + Identity: information becomes part of the world instead
+   of returning to the conventional stacked-panel treatment.
+   ================================================================ */
+.cinema-detail-page .universe-story{
+  position:relative;
+  min-height:62vh;
+  display:grid;
+  grid-template-columns:minmax(120px,.26fr) minmax(0,1.4fr);
+  column-gap:clamp(30px,7vw,110px);
+  align-content:center;
+  padding:clamp(90px,12vh,170px) 0;
+  border-top:0;
+}
+.cinema-detail-page .universe-story::before{
+  content:"01";
+  position:absolute;
+  left:0;
+  top:clamp(34px,6vh,74px);
+  color:rgba(255,255,255,.055);
+  font-size:clamp(5rem,12vw,12rem);
+  font-weight:800;
+  line-height:.7;
+  letter-spacing:-.08em;
+  pointer-events:none;
+}
+.cinema-detail-page .universe-story::after{
+  content:"STORY";
+  position:absolute;
+  left:0;
+  top:50%;
+  writing-mode:vertical-rl;
+  transform:translateY(-50%);
+  color:rgba(255,255,255,.3);
+  font-size:.52rem;
+  font-weight:700;
+  letter-spacing:.3em;
+}
+.cinema-detail-page .universe-story .universe-space__eyebrow{
+  position:relative;
+  z-index:1;
+  grid-column:1;
+  align-self:start;
+  margin-top:8px;
+  writing-mode:vertical-rl;
+  transform:rotate(180deg);
+}
+.cinema-detail-page .universe-story h2{
+  position:relative;
+  z-index:1;
+  grid-column:2;
+  margin:0 0 30px;
+  color:rgba(255,255,255,.92);
+  font-size:clamp(2.2rem,5vw,5.8rem);
+  line-height:.9;
+  letter-spacing:-.065em;
+}
+.cinema-detail-page .universe-story .detail-synopsis{
+  position:relative;
+  z-index:1;
+  grid-column:2;
+  max-width:760px;
+  margin:0;
+  color:rgba(255,255,255,.68);
+  font-size:clamp(1rem,1.35vw,1.25rem);
+  line-height:1.9;
+  text-wrap:pretty;
+}
+.cinema-detail-page .universe-story .detail-synopsis::first-letter{
+  color:rgba(255,255,255,.94);
+  font-size:2.4em;
+  font-weight:700;
+  line-height:.8;
+  float:left;
+  padding:.08em .12em 0 0;
+}
+.cinema-detail-page .universe-identity{
+  display:grid;
+  grid-template-columns:1.05fr .95fr .95fr;
+  gap:clamp(18px,3vw,48px);
+  padding:clamp(70px,9vh,120px) 0;
+}
+.cinema-detail-page .universe-identity::before{
+  content:"02 / IDENTITY";
+  grid-column:1 / -1;
+  display:block;
+  margin:0 0 8px;
+  color:rgba(255,255,255,.34);
+  font-size:.55rem;
+  font-weight:700;
+  letter-spacing:.28em;
+}
+.cinema-detail-page .universe-identity > .detail-section{
+  min-width:0;
+  margin:0;
+  padding:24px 0 0;
+  border-top:1px solid rgba(255,255,255,.14);
+}
+.cinema-detail-page .universe-identity > .detail-section h2{
+  margin:0 0 20px;
+  color:rgba(255,255,255,.9);
+  font-size:clamp(1.1rem,1.8vw,1.7rem);
+  letter-spacing:-.025em;
+}
+.cinema-detail-page .universe-identity > .detail-section p{
+  max-width:46ch;
+}
+.cinema-detail-page .universe-identity .your-match-meter{
+  height:2px;
+  border-radius:0;
+  margin:20px 0 14px;
+  background:rgba(255,255,255,.08);
+}
+.cinema-detail-page .universe-identity .your-match-meter-fill{
+  border-radius:0;
+}
+.cinema-detail-page .universe-identity .detail-tags{
+  gap:6px;
+}
+.cinema-detail-page .universe-identity .detail-tag{
+  border-radius:0;
+  background:transparent;
+  padding:.38rem .48rem;
+  font-size:.61rem;
+  letter-spacing:.06em;
+}
+.cinema-detail-page .universe-identity .your-match-badge{
+  border-radius:0;
+  padding:.3rem .5rem;
+}
+@media(max-width:900px){
+  .cinema-detail-page .universe-story{
+    grid-template-columns:70px minmax(0,1fr);
+    column-gap:28px;
+  }
+  .cinema-detail-page .universe-identity{
+    grid-template-columns:1fr 1fr;
+  }
+  .cinema-detail-page .universe-identity::before{
+    grid-column:1 / -1;
+  }
+}
+@media(max-width:700px){
+  .cinema-detail-page .universe-story{
+    min-height:0;
+    display:block;
+    padding:82px 0 92px;
+  }
+  .cinema-detail-page .universe-story::before{
+    top:28px;
+    font-size:5.5rem;
+  }
+  .cinema-detail-page .universe-story::after{
+    display:none;
+  }
+  .cinema-detail-page .universe-story .universe-space__eyebrow{
+    writing-mode:initial;
+    transform:none;
+    margin-bottom:34px;
+  }
+  .cinema-detail-page .universe-story h2{
+    font-size:clamp(2.5rem,13vw,4rem);
+    margin-bottom:22px;
+  }
+  .cinema-detail-page .universe-story .detail-synopsis{
+    font-size:.96rem;
+    line-height:1.85;
+  }
+  .cinema-detail-page .universe-identity{
+    display:block;
+    padding:66px 0 84px;
+  }
+  .cinema-detail-page .universe-identity::before{
+    margin-bottom:30px;
+  }
+  .cinema-detail-page .universe-identity > .detail-section{
+    padding:24px 0 30px;
+  }
+  .cinema-detail-page .universe-identity > .detail-section + .detail-section{
+    margin-top:18px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .cinema-detail-page .universe-story,
+  .cinema-detail-page .universe-identity > .detail-section{transition:none}
+}
