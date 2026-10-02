@@ -6,16 +6,6 @@ import { NexusIcon } from "@/components/ui/NexusIcon";
 
 type ToggleKey = keyof PerformancePrefs;
 
-const PORTAL: { key: ToggleKey; title: string; description: string }[] = [
-  { key: "portal", title: "Universe Portal", description: "Enable the cinematic Portal between discovery and an anime dossier." },
-  { key: "portalScene", title: "Portal scene", description: "Orbital scene layers and atmospheric depth inside the Portal." },
-  { key: "portalParallax", title: "Pointer parallax", description: "Subtle artwork and scene movement following pointer or touch input." },
-  { key: "portalViewTransition", title: "View transitions", description: "Animate the Portal into the dossier during navigation." },
-  { key: "portalMask", title: "Artwork mask", description: "Use the cinematic artwork fade/mask treatment." },
-  { key: "portalCharacters", title: "Character layers", description: "Render additional character depth layers in cinematic views." },
-  { key: "portalGrain", title: "Film grain", description: "Add grain and scanline texture to cinematic surfaces." },
-];
-
 const OTHER: { key: ToggleKey; title: string; description: string }[] = [
   { key: "cinematic", title: "Cinematic effects", description: "Enable broader atmospheric and motion effects outside the Portal." },
   { key: "sound", title: "UI sound", description: "Allow short interface sound cues." },
@@ -58,26 +48,14 @@ export default function PerformanceSettingsPage() {
         <div>
           <p className="performance-section-label">MASTER</p>
           <h2>Performance mode</h2>
-          <p>Safe Mode disables the Portal and cinematic effects while leaving the rest of AnimeNexus available.</p>
+          <p>Safe Mode disables cinematic effects while leaving the rest of AnimeNexus available.</p>
         </div>
         <button type="button" className={`performance-safe-button${p.safeMode ? " active" : ""}`} onClick={() => p.setSafeMode(!p.safeMode)}>
           {p.safeMode ? "Safe Mode: ON" : "Enable Safe Mode"}
         </button>
       </section>
 
-      <section className="performance-settings-card">
-        <div className="performance-section-heading">
-          <p className="performance-section-label">PORTAL</p>
-          <span>{PORTAL.filter(x => p[x.key]).length}/{PORTAL.length} active</span>
-        </div>
-        <div className="performance-settings-list">
-          {PORTAL.map(item => (
-            <Toggle key={item.key} item={item} enabled={Boolean(p[item.key])} disabled={item.key !== "portal" && !p.portal} onChange={v => set(item.key, v)} />
-          ))}
-        </div>
-      </section>
-
-      <section className="performance-settings-card">
+<section className="performance-settings-card">
         <div className="performance-section-heading"><p className="performance-section-label">SYSTEM EFFECTS</p></div>
         <div className="performance-settings-list">
           {OTHER.map(item => <Toggle key={item.key} item={item} enabled={Boolean(p[item.key])} onChange={v => set(item.key, v)} />)}
