@@ -41,12 +41,13 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier
   const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
   const [isExiting, setIsExiting] = useState(false);
   const [showSecondaryFigure, setShowSecondaryFigure] = useState(false);
+  const isMobileViewport = typeof window !== "undefined" && window.innerWidth <= 700;
 
   const materialVars = useMemo(
     () => materialCssVars(materialFromAnimeEntity(anime)),
     [anime],
   );
-  const backdrop = anime.bannerImage || anime.image;
+  const backdrop = isMobileViewport ? anime.image : (anime.bannerImage || anime.image);
   const characters = (anime.characters || []).filter((c) => c.image).slice(0, 8);
   const release = releaseLabel(anime);
   const description = cleanDescription(anime.description || "");
@@ -97,11 +98,11 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier
     // The source card hands its position to the portal as a short spatial travel cue.
     const sourceX = (source.x + source.width / 2) / window.innerWidth;
     playSpatialTravel(sourceX * 2 - 1, 0.65);
-    const arrivalTimer = window.setTimeout(() => playCue("resonance", { gain: 0.48 }), 760);
+    const arrivalTimer = isMobileViewport ? undefined : window.setTimeout(() => playCue("resonance", { gain: 0.48 }), 760);
 
     return () => {
       window.clearTimeout(focusTimer);
-      window.clearTimeout(arrivalTimer);
+      if (arrivalTimer !== undefined) window.clearTimeout(arrivalTimer);
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = previousOverflow;
@@ -210,13 +211,13 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier
         </div>
         <div className="anime-universe-portal__atmosphere" aria-hidden />
         <div className="anime-universe-portal__depth" aria-hidden>
-          <div className="portal-depth__banner" />
+          {!isMobileViewport ? <div className="portal-depth__banner" /> : null}
           {characters[0]?.image ? (
             <div className="portal-depth__figure portal-depth__figure--primary">
-              <AnimeImage src={characters[0].image} title={characters[0].name} decorative width={700} height={1000} sizes="(max-width: 700px) 75vw, 48vw" />
+              <AnimeImage src={characters[0].image} title={characters[0].name} decorative width={isMobileViewport ? 420 : 700} height={isMobileViewport ? 600 : 1000} sizes="(max-width: 700px) 52vw, 48vw" />
             </div>
           ) : null}
-          {showSecondaryFigure && characters[1]?.image ? (
+          {!isMobileViewport && showSecondaryFigure && characters[1]?.image ? (
             <div className="portal-depth__figure portal-depth__figure--secondary">
               <AnimeImage src={characters[1].image} title={characters[1].name} decorative width={520} height={760} sizes="(max-width: 700px) 55vw, 34vw" />
             </div>
@@ -284,7 +285,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier
               decorative
               width={900}
               height={1200}
-              priority
+              priority={!isMobileViewport}
               sizes="(max-width: 700px) 82vw, 68vw"
               viewTransitionName={getAnimeViewTransitionName(anime.id)}
             />
