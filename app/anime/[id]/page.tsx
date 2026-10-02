@@ -213,7 +213,7 @@ export default async function AnimeDetailPage({ params }: Props) {
 
           <div className="detail-info" data-artwork-transition-target="metadata">
             <div className="detail-arrival">ENTERING TITLE <span>·</span> {anime.format || "ANIME"}</div>
-            <p className="detail-kicker">Lantern · detail</p>
+            <p className="detail-kicker"><span>UNIVERSE</span><b>01</b><i aria-hidden="true" /></p>
             <h1>{anime.title}</h1>
             {(anime.titleRomaji || anime.titleNative) &&
             (anime.titleRomaji !== anime.title || anime.titleNative) ? (
