@@ -2718,3 +2718,131 @@ body:has(.detail-cover-material.artwork-role--promotional) {
   .cinema-detail-page .universe-characters-space .char-card::after,
   .cinema-detail-page .universe-characters-space .char-card img{transition:none}
 }
+
+/* PASS 7 — CHARACTERS + FIGURES
+   The cast becomes a spatial gallery, not a row of database avatars. */
+.cinema-detail-page .universe-characters-space{
+  position:relative;
+  min-height:78vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  overflow:visible;
+}
+.cinema-detail-page .universe-characters-space::before{
+  content:"";
+  position:absolute;
+  width:min(62vw,760px);
+  height:min(62vw,760px);
+  left:50%;
+  top:48%;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:radial-gradient(circle,var(--scene-accent-soft),transparent 66%);
+  filter:blur(30px);
+  opacity:.24;
+  pointer-events:none;
+}
+.cinema-detail-page .universe-characters-space__intro{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:40px;
+  margin-bottom:clamp(35px,6vw,72px);
+}
+.cinema-detail-page .universe-characters-space__kicker{
+  display:block;
+  margin-bottom:12px;
+  color:rgba(255,255,255,.3);
+  font-size:.52rem;
+  font-weight:700;
+  letter-spacing:.2em;
+}
+.cinema-detail-page .universe-characters-space__intro h2{
+  margin:0;
+  font-size:clamp(3rem,7vw,7rem);
+  line-height:.82;
+  letter-spacing:-.07em;
+}
+.cinema-detail-page .universe-characters-space__intro p{
+  max-width:330px;
+  margin:0 0 4px;
+  color:rgba(255,255,255,.4);
+  font-size:.7rem;
+  line-height:1.7;
+}
+.cinema-detail-page .universe-characters-space .char-grid{
+  position:relative;
+  z-index:3;
+  display:grid;
+  grid-template-columns:repeat(6,minmax(90px,1fr));
+  gap:clamp(12px,2vw,28px);
+  align-items:end;
+  max-width:1180px;
+  width:100%;
+  margin:0 auto;
+}
+.cinema-detail-page .universe-characters-space .char-card{
+  position:relative;
+  min-width:0;
+  padding:0 0 14px;
+  text-align:left;
+  transition:transform .6s cubic-bezier(.2,.8,.2,1);
+}
+.cinema-detail-page .universe-characters-space .char-card:nth-child(2n){
+  transform:translateY(28px);
+}
+.cinema-detail-page .universe-characters-space .char-card:hover{
+  transform:translateY(-7px);
+}
+.cinema-detail-page .universe-characters-space .char-card:nth-child(2n):hover{
+  transform:translateY(17px);
+}
+.cinema-detail-page .universe-characters-space .char-card img{
+  display:block;
+  width:100%;
+  aspect-ratio:4/5;
+  object-fit:cover;
+  object-position:center top;
+  margin:0 0 13px;
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:2px;
+  box-shadow:0 18px 45px rgba(0,0,0,.34);
+  filter:saturate(.9) contrast(1.03);
+  transition:transform .7s cubic-bezier(.2,.8,.2,1),filter .5s ease,border-color .4s ease;
+}
+.cinema-detail-page .universe-characters-space .char-card:hover img{
+  transform:scale(1.035);
+  filter:saturate(1) contrast(1.05);
+  border-color:rgba(255,255,255,.3);
+}
+.cinema-detail-page .universe-characters-space .char-name{
+  color:rgba(255,255,255,.86);
+  font-size:.7rem;
+  letter-spacing:.01em;
+}
+.cinema-detail-page .universe-characters-space .char-role{
+  margin-top:5px;
+  color:rgba(255,255,255,.3);
+  font-size:.55rem;
+  letter-spacing:.08em;
+}
+@media(max-width:900px){
+  .cinema-detail-page .universe-characters-space{min-height:0;padding-top:12vh;padding-bottom:12vh}
+  .cinema-detail-page .universe-characters-space .char-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+  .cinema-detail-page .universe-characters-space .char-card:nth-child(2n){transform:translateY(18px)}
+}
+@media(max-width:600px){
+  .cinema-detail-page .universe-characters-space__intro{display:block;margin-bottom:36px}
+  .cinema-detail-page .universe-characters-space__intro h2{font-size:clamp(3.3rem,19vw,5rem)}
+  .cinema-detail-page .universe-characters-space__intro p{margin-top:18px;max-width:280px}
+  .cinema-detail-page .universe-characters-space .char-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .cinema-detail-page .universe-characters-space .char-card:nth-child(2n){transform:translateY(12px)}
+  .cinema-detail-page .universe-characters-space .char-card img{margin-bottom:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .cinema-detail-page .universe-characters-space .char-card,
+  .cinema-detail-page .universe-characters-space .char-card img{transition:none}
+}
