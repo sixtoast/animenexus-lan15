@@ -3768,3 +3768,32 @@
   75%{transform:translate3d(2%,2%,0)}
   100%{transform:translate3d(-1%,-1%,0)}
 }
+
+/* User-selectable performance gates. The DOM remains stable; expensive layers
+   simply become inert when their feature is disabled. */
+html[data-portal-parallax="off"] .anime-universe-portal__world,
+html[data-portal-parallax="off"] .anime-universe-mobile-portal__surface{
+  --portal-mx:0!important;
+  --portal-my:0!important;
+}
+html[data-portal-mask="off"] .anime-universe-portal__art img,
+html[data-portal-mask="off"] .anime-universe-mobile-portal__art img{
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
+}
+html[data-portal-grain="off"] .anime-universe-portal__grain,
+html[data-portal-grain="off"] .anime-universe-mobile-portal__grain{
+  display:none!important;
+}
+html[data-portal-scene="off"] .anime-universe-portal__scene,
+html[data-portal-scene="off"] .anime-universe-mobile-portal__portal-scene{
+  display:none!important;
+}
+html[data-portal-characters="off"] .portal-depth__figure{
+  display:none!important;
+}
+html[data-cinematic="off"] .anime-universe-portal__atmosphere,
+html[data-cinematic="off"] .anime-universe-portal__scan,
+html[data-cinematic="off"] .anime-universe-portal__grain{
+  display:none!important;
+}
