@@ -1584,3 +1584,166 @@ body:has(.detail-cover-material.artwork-role--promotional) {
     animation:none!important;
   }
 }
+
+
+/* ================================================================
+   UNIVERSE EXPERIENCE — PASS 3
+   Typography + hierarchy: editorial type is part of the scene,
+   not a conventional modal information stack.
+   ================================================================ */
+.cinema-detail-page .detail-info{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+}
+.cinema-detail-page .detail-info .detail-kicker{
+  order:-1;
+  display:flex;
+  align-items:center;
+  gap:13px;
+  width:min(100%,720px);
+  margin:0 0 18px;
+  color:rgba(255,255,255,.48);
+  font-size:.58rem;
+  font-weight:700;
+  letter-spacing:.26em;
+  line-height:1;
+  text-transform:uppercase;
+}
+.cinema-detail-page .detail-info .detail-kicker b{
+  color:rgba(255,255,255,.9);
+  font-size:.66rem;
+  font-weight:700;
+}
+.cinema-detail-page .detail-info .detail-kicker i{
+  display:block;
+  flex:1;
+  max-width:170px;
+  height:1px;
+  background:linear-gradient(90deg,rgba(255,255,255,.3),transparent);
+}
+.cinema-detail-page .detail-info h1{
+  position:relative;
+  margin:0;
+  font-family:var(--font-display,inherit);
+  font-weight:800;
+  font-size:clamp(4.7rem,9.4vw,10.8rem);
+  line-height:.77;
+  letter-spacing:-.095em;
+  text-indent:-.055em;
+  max-width:min(10ch,8vw + 7ch);
+  overflow-wrap:normal;
+  text-wrap:balance;
+  isolation:isolate;
+}
+.cinema-detail-page .detail-info h1::after{
+  content:"";
+  position:absolute;
+  left:2%;
+  bottom:-.16em;
+  width:42%;
+  height:1px;
+  background:linear-gradient(90deg,rgba(255,255,255,.7),transparent);
+  opacity:.55;
+}
+.cinema-detail-page .detail-alt-titles{
+  order:initial;
+  margin:30px 0 0;
+  padding-left:2px;
+  font-size:clamp(.72rem,1vw,.9rem);
+  line-height:1.5;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.5);
+}
+.cinema-detail-page .detail-meta{
+  margin-top:22px;
+  padding-top:13px;
+  border-top:1px solid rgba(255,255,255,.12);
+  width:min(100%,680px);
+  font-size:.66rem;
+  font-weight:650;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+.cinema-detail-page .detail-meta .detail-score{
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.08em;
+}
+.cinema-detail-page .detail-tags{
+  max-width:680px;
+  margin-top:18px;
+  opacity:.72;
+}
+.cinema-detail-page .detail-tags .detail-tag{
+  border-color:rgba(255,255,255,.1);
+  background:rgba(0,0,0,.1);
+  backdrop-filter:blur(6px);
+}
+.cinema-detail-page .detail-info > .tools-hint{
+  margin-top:12px!important;
+  color:rgba(255,255,255,.4);
+  font-size:.59rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.cinema-detail-page .detail-info > .detail-arrival{
+  position:absolute;
+  top:-46px;
+  left:0;
+  margin:0;
+  opacity:.8;
+}
+.cinema-detail-page .detail-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:20px!important;
+  opacity:.72;
+}
+.cinema-detail-page .detail-actions .btn{
+  border-color:rgba(255,255,255,.13);
+  border-radius:2px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.cinema-detail-page .detail-info > :is(.detail-arrival,.detail-kicker,.detail-alt-titles,.detail-meta,.detail-tags,.tools-hint,.studio-links,.detail-actions){
+  animation:detail-type-rise .72s cubic-bezier(.16,1,.3,1) both;
+}
+.cinema-detail-page .detail-info > .detail-kicker{animation-delay:.46s}
+.cinema-detail-page .detail-info > h1{animation:detail-title-arrive 1.05s cubic-bezier(.16,1,.3,1) .52s both}
+.cinema-detail-page .detail-info > .detail-alt-titles{animation-delay:.68s}
+.cinema-detail-page .detail-info > .detail-meta{animation-delay:.75s}
+.cinema-detail-page .detail-info > .detail-tags{animation-delay:.82s}
+.cinema-detail-page .detail-info > .detail-actions{animation-delay:.9s}
+@keyframes detail-title-arrive{
+  from{opacity:0;transform:translate3d(-24px,22px,0);letter-spacing:-.055em;filter:blur(8px)}
+  to{opacity:1;transform:none;letter-spacing:-.095em;filter:none}
+}
+@keyframes detail-type-rise{
+  from{opacity:0;transform:translate3d(-12px,10px,0)}
+  to{opacity:1;transform:none}
+}
+@media(max-width:700px){
+  .cinema-detail-page .detail-info .detail-arrival{position:static;margin:0 0 12px}
+  .cinema-detail-page .detail-info .detail-kicker{margin-bottom:14px;font-size:.5rem}
+  .cinema-detail-page .detail-info .detail-kicker i{max-width:90px}
+  .cinema-detail-page .detail-info h1{
+    font-size:clamp(3.8rem,16.5vw,7rem);
+    line-height:.79;
+    max-width:8ch;
+  }
+  .cinema-detail-page .detail-info h1::after{bottom:-.13em}
+  .cinema-detail-page .detail-alt-titles{margin-top:22px;font-size:.62rem}
+  .cinema-detail-page .detail-meta{
+    margin-top:18px;
+    padding-top:11px;
+    font-size:.56rem;
+    letter-spacing:.1em;
+  }
+  .cinema-detail-page .detail-actions{margin-top:16px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .cinema-detail-page .detail-info > *,
+  .cinema-detail-page .detail-info > h1{animation:none!important}
+}
