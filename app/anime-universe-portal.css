@@ -20,11 +20,9 @@
   --portal-mx:0;
   --portal-my:0;
   position:absolute;
-  inset:12px;
+  inset:0;
   overflow:hidden;
-  border:1px solid rgba(255,255,255,.15);
   background:#060607;
-  box-shadow:0 34px 140px rgba(0,0,0,.78);
   isolation:isolate;
 }
 .anime-universe-portal__world:before{
@@ -148,10 +146,10 @@
 .anime-universe-portal__nav button:hover,
 .anime-universe-portal__nav button.is-active{color:#fff;transform:translateX(4px)}
 .anime-universe-portal__nav button.is-active:before{width:18px}
-.anime-universe-portal__scene{
+ .anime-universe-portal__scene{
   position:absolute;
   inset:0;
-  z-index:2;
+  z-index:3;
   pointer-events:none;
   overflow:hidden;
 }
@@ -400,7 +398,7 @@
 @keyframes portal-pulse{0%,100%{opacity:.45;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
 
 @media(max-width:900px){
-  .anime-universe-portal__world{inset:8px}
+  .anime-universe-portal__world{inset:0}
   .anime-universe-portal__nav{left:22px;top:auto;bottom:60px;transform:none;flex-direction:row;gap:18px}
   .anime-universe-portal__nav button{gap:6px}
   .anime-universe-portal__nav button:before{display:none}
@@ -2768,7 +2766,7 @@
 .anime-universe-portal__depth{
   position:absolute;
   inset:0;
-  z-index:2;
+  z-index:4;
   overflow:hidden;
   pointer-events:none;
   perspective:1100px;
@@ -2808,7 +2806,7 @@
   mask-image:linear-gradient(180deg,transparent 0%,#000 14%,#000 82%,transparent 100%);
 }
 .portal-depth__figure--primary{
-  z-index:3;
+  z-index:6;
   right:2vw;
   width:min(47vw,680px);
   opacity:.92;
