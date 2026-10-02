@@ -1932,3 +1932,92 @@ body:has(.detail-cover-material.artwork-role--promotional) {
   .cinema-detail-page .char-card,
   .cinema-detail-page .char-card img{transition:none}
 }
+
+
+/* ================================================================
+   UNIVERSE EXPERIENCE — PASS 4
+   Atmosphere / material: restrained environmental light, depth haze,
+   grain and particulate motion. No decorative HUD noise.
+   ================================================================ */
+.cinema-detail-page .detail-world{
+  isolation:isolate;
+}
+.cinema-detail-page .detail-world__light{
+  position:absolute;
+  z-index:3;
+  inset:-20%;
+  background:
+    radial-gradient(ellipse at 74% 36%,var(--detail-artwork-accent,rgba(255,255,255,.08)),transparent 20%),
+    radial-gradient(ellipse at 34% 48%,rgba(255,255,255,.045),transparent 26%);
+  opacity:.7;
+  filter:blur(70px);
+  mix-blend-mode:screen;
+  transform:translate3d(0,0,0) scale(1);
+  animation:detail-world-light 14s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+.cinema-detail-page .detail-world__particles{
+  position:absolute;
+  z-index:5;
+  inset:0;
+  pointer-events:none;
+  opacity:.38;
+  background-image:
+    radial-gradient(circle at 18% 32%,rgba(255,255,255,.42) 0 1px,transparent 1.6px),
+    radial-gradient(circle at 62% 21%,rgba(255,255,255,.26) 0 1px,transparent 1.8px),
+    radial-gradient(circle at 84% 62%,rgba(255,255,255,.32) 0 1px,transparent 1.7px),
+    radial-gradient(circle at 43% 74%,rgba(255,255,255,.18) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 72% 83%,rgba(255,255,255,.2) 0 1px,transparent 1.5px);
+  background-size:17% 23%,23% 31%,29% 37%,19% 27%,31% 41%;
+  animation:detail-particles-drift 22s linear infinite;
+  mask-image:linear-gradient(90deg,transparent,black 15%,black 85%,transparent);
+}
+.cinema-detail-page .detail-world__veil{
+  position:absolute;
+  z-index:6;
+  inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse at 67% 42%,transparent 0 26%,rgba(0,0,0,.08) 56%,rgba(0,0,0,.52) 100%),
+    linear-gradient(90deg,rgba(0,0,0,.18),transparent 35%,rgba(0,0,0,.12)),
+    linear-gradient(180deg,transparent 65%,rgba(0,0,0,.7));
+}
+.cinema-detail-page .detail-world__grain{
+  z-index:7;
+  opacity:.032;
+}
+.cinema-detail-page .detail-world__backdrop{
+  will-change:transform,filter;
+}
+.cinema-detail-page .detail-world__mist{
+  will-change:transform,opacity;
+}
+@keyframes detail-world-light{
+  from{transform:translate3d(-1%,1%,0) scale(1);opacity:.5}
+  to{transform:translate3d(2%,-1%,0) scale(1.08);opacity:.82}
+}
+@keyframes detail-particles-drift{
+  0%{transform:translate3d(0,1%,0) scale(1)}
+  50%{transform:translate3d(-1.5%,-1%,0) scale(1.015)}
+  100%{transform:translate3d(1%,1.5%,0) scale(1)}
+}
+@media(max-width:700px){
+  .cinema-detail-page .detail-world__light{
+    inset:-32%;
+    opacity:.58;
+    filter:blur(52px);
+  }
+  .cinema-detail-page .detail-world__particles{
+    opacity:.22;
+    background-size:29% 35%,37% 43%,43% 49%,31% 39%,47% 53%;
+  }
+  .cinema-detail-page .detail-world__veil{
+    background:
+      radial-gradient(ellipse at 68% 35%,transparent 0 20%,rgba(0,0,0,.1) 48%,rgba(0,0,0,.56) 100%),
+      linear-gradient(180deg,transparent 52%,rgba(0,0,0,.78));
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .cinema-detail-page .detail-world__light,
+  .cinema-detail-page .detail-world__particles{animation:none}
+}
