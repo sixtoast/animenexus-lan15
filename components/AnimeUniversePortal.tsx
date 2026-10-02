@@ -312,11 +312,6 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier
               <i aria-hidden />
               <span>{anime.year || "—"} / {anime.format || "TITLE"}</span>
             </div>
-            <div className="anime-universe-portal__identity-line">
-              <span>THE WORLD IS OPEN</span>
-              <i aria-hidden />
-              <span>LOOK CLOSER</span>
-            </div>
           </div>
 
           <section className="anime-universe-portal__panel">
