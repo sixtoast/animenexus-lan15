@@ -1476,19 +1476,6 @@ body:has(.detail-cover-material.artwork-role--promotional) {
   transform:translateZ(-45px) rotate(-3deg);
   pointer-events:none;
 }
-.cinema-detail-page .detail-cover-material__spine{
-  position:absolute;
-  z-index:-1;
-  top:2%;
-  bottom:1%;
-  left:-2.2%;
-  width:4.5%;
-  border-radius:3px 0 0 3px;
-  background:linear-gradient(90deg,rgba(0,0,0,.72),rgba(255,255,255,.12),rgba(0,0,0,.4));
-  box-shadow:-7px 0 18px rgba(0,0,0,.45);
-  transform:translateZ(-5px) rotateY(-8deg);
-  pointer-events:none;
-}
 .cinema-detail-page .detail-cover-material__surface{
   position:relative;
   display:block;
@@ -1575,8 +1562,7 @@ body:has(.detail-cover-material.artwork-role--promotional) {
 @media(max-width:700px){
   .cinema-detail-page .detail-cover-material__aura{inset:-18%;opacity:.08;filter:blur(25px)}
   .cinema-detail-page .detail-cover-material__surface{transform:translateZ(12px)}
-  .cinema-detail-page .detail-cover-material__spine{width:4%;left:-1.8%}
-}
+  }
 @media(prefers-reduced-motion:reduce){
   .cinema-detail-page .detail-cover-material__aura,
   .cinema-detail-page .detail-cover-material__sheen,
