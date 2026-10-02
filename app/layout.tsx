@@ -85,6 +85,7 @@ import "./motion-polish.css";
 import "./micro-density.css";
 import "./reduced-motion-eq.css";
 import "./sound-settings.css";
+import "./performance-settings.css";
 import "./browse-micro.css";
 import "./load-choreography.css";
 import "./loading-quality.css";
