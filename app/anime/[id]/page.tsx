@@ -295,23 +295,46 @@ export default async function AnimeDetailPage({ params }: Props) {
 
         <AnimeUniverseNav />
 
-        <section className="detail-section universe-space universe-story" id="story">
-          <span className="universe-space__eyebrow">01 · STORY</span>
-          <h2>Synopsis</h2>
-          <p className="detail-synopsis">
-            {anime.description || "No description available."}
-          </p>
+        <section className="detail-section universe-space universe-story-space" id="story">
+          <div className="universe-space__header">
+            <span className="universe-space__eyebrow">02 · STORY</span>
+            <span className="universe-space__index">NARRATIVE / 01</span>
+          </div>
+          <div className="universe-story-space__layout">
+            <div className="universe-story-space__title">
+              <span>THE WORLD</span>
+              <h2>Synopsis</h2>
+            </div>
+            <div className="universe-story-space__copy">
+              <p className="detail-synopsis">
+                {anime.description || "No description available."}
+              </p>
+              <span className="universe-story-space__signature" aria-hidden="true">
+                {anime.titleNative || anime.titleRomaji || anime.title}
+              </span>
+            </div>
+          </div>
         </section>
 
-        <div id="identity" className="universe-space universe-space--cluster universe-identity">
-          <YourMatchPanel anime={anime} />
-          <ViewingContextPanel context={viewingContext} />
-          <DeepSignalsPanel
-            genres={anime.tags || []}
-            deepTags={deep?.tags || []}
-            sourceNote={deep?.tags?.length ? "AniDB" : undefined}
-          />
-        </div>
+        <section id="identity" className="universe-space universe-identity-space universe-space--cluster">
+          <div className="universe-space__header">
+            <span className="universe-space__eyebrow">03 · IDENTITY</span>
+            <span className="universe-space__index">TITLE / SIGNALS</span>
+          </div>
+          <div className="universe-identity-space__intro">
+            <h2>Inside the title</h2>
+            <p>Signals, context and resonance gathered around this world.</p>
+          </div>
+          <div className="universe-identity-space__grid">
+            <YourMatchPanel anime={anime} />
+            <ViewingContextPanel context={viewingContext} />
+            <DeepSignalsPanel
+              genres={anime.tags || []}
+              deepTags={deep?.tags || []}
+              sourceNote={deep?.tags?.length ? "AniDB" : undefined}
+            />
+          </div>
+        </section>
 
         <MangaSourcePanel links={mangaSources} />
 
