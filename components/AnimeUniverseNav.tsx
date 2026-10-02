@@ -122,11 +122,14 @@ export function AnimeUniverseNav() {
   return (
     <nav className="anime-universe-nav" aria-label="Anime universe">
       <div className="anime-universe-nav__progress" style={{ transform: `scaleX(${progress})` }} aria-hidden="true" />
-      <div className="anime-universe-nav__orbit" aria-hidden="true">
-        <span className="anime-universe-nav__orbit-dot" />
-      </div>
       <div className="anime-universe-nav__inner">
-        <span className="anime-universe-nav__brand">UNIVERSE</span>
+        <div className="anime-universe-nav__chapter" aria-hidden="true">
+          <span className="anime-universe-nav__chapter-index">
+            {String(UNIVERSE_SPACES.indexOf(active) + 1).padStart(2, "0")}
+          </span>
+          <span className="anime-universe-nav__chapter-rule" />
+          <span className="anime-universe-nav__chapter-label">UNIVERSE</span>
+        </div>
         <div className="anime-universe-nav__track" ref={trackRef}>
           {UNIVERSE_SPACES.map((id, i) => (
             <button
@@ -138,7 +141,7 @@ export function AnimeUniverseNav() {
               onClick={() => jump(id)}
             >
               <span>{String(i + 1).padStart(2, "0")}</span>
-              {labels[id]}
+              <b>{labels[id]}</b>
             </button>
           ))}
         </div>
