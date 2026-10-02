@@ -7,23 +7,22 @@ import { NexusIcon } from "@/components/ui/NexusIcon";
 type ToggleKey = keyof PerformancePrefs;
 
 const OTHER: { key: ToggleKey; title: string; description: string }[] = [
-  { key: "cinematic", title: "Cinematic effects", description: "Enable broader atmospheric and motion effects outside the Portal." },
+  { key: "cinematic", title: "Cinematic effects", description: "Enable broader atmospheric and motion effects across the interface." },
   { key: "sound", title: "UI sound", description: "Allow short interface sound cues." },
 ];
 
-function Toggle({ item, enabled, disabled, onChange }: {
+function Toggle({ item, enabled, onChange }: {
   item: { title: string; description: string };
   enabled: boolean;
-  disabled?: boolean;
-  onChange: (value: boolean) => void;
+    onChange: (value: boolean) => void;
 }) {
   return (
-    <label className={`perf-setting-row${disabled ? " is-disabled" : ""}`}>
+    <label className="perf-setting-row">
       <span className="perf-setting-copy">
         <span className="perf-setting-title">{item.title}</span>
         <span className="perf-setting-description">{item.description}</span>
       </span>
-      <input className="perf-toggle-input" type="checkbox" checked={enabled} disabled={disabled} onChange={e => onChange(e.target.checked)} />
+      <input className="perf-toggle-input" type="checkbox" checked={enabled} onChange={e => onChange(e.target.checked)} />
       <span className="perf-toggle" aria-hidden><span /></span>
     </label>
   );
