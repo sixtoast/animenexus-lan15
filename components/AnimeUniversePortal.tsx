@@ -430,34 +430,107 @@ function AnimeUniversePortalScene({ anime, sourceRect, onClose, onEnterDossier }
 
 function MobileAnimeUniversePortal({ anime, onClose, onEnterDossier }: Props) {
   const [closing, setClosing] = useState(false);
+  const worldRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef(0);
+
+  const materialVars = useMemo(
+    () => materialCssVars(materialFromAnimeEntity(anime)),
+    [anime],
+  );
+
+  const goToDossier = () => {
+    if (closing) return;
+    setClosing(true);
+    playCue("filter_select", { gain: 0.58 });
+    window.setTimeout(() => {
+      const navigate = () => {
+        if (onEnterDossier) onEnterDossier();
+        else window.history.pushState({}, "", `/anime/${anime.id}`);
+      };
+      withViewTransition(navigate, {
+        route: "anime-detail",
+        origin: "portal",
+        destination: "hero",
+        objectId: getAnimeObjectId(anime.id),
+      });
+    }, 220);
+  };
 
   const close = () => {
     if (closing) return;
     setClosing(true);
-    window.setTimeout(onClose, 160);
+    window.setTimeout(onClose, 260);
   };
 
-  const enter = () => {
-    if (closing) return;
-    setClosing(true);
-    window.setTimeout(() => {
-      if (onEnterDossier) onEnterDossier();
-      else window.location.assign(`/anime/${anime.id}`);
-    }, 120);
+  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!worldRef.current) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const rect = worldRef.current.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width - 0.5;
+    const y = (event.clientY - rect.top) / rect.height - 0.5;
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      worldRef.current?.style.setProperty("--portal-mx", x.toFixed(4));
+      worldRef.current?.style.setProperty("--portal-my", y.toFixed(4));
+    });
+  };
+
+  const resetPointer = () => {
+    cancelAnimationFrame(rafRef.current);
+    worldRef.current?.style.setProperty("--portal-mx", "0");
+    worldRef.current?.style.setProperty("--portal-my", "0");
   };
 
   return (
-    <div className={`anime-universe-mobile-portal${closing ? " is-closing" : ""}`} role="dialog" aria-modal="true" aria-label={`${anime.title} universe`}>
+    <div
+      className={`anime-universe-mobile-portal${closing ? " is-closing" : ""}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${anime.title} universe`}
+      style={materialVars}
+    >
       <button type="button" className="anime-universe-mobile-portal__backdrop" aria-label="Close universe" onClick={close} />
-      <div className="anime-universe-mobile-portal__surface">
+      <div
+        ref={worldRef}
+        className="anime-universe-mobile-portal__surface"
+        onPointerMove={onPointerMove}
+        onPointerLeave={resetPointer}
+        onClick={goToDossier}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            goToDossier();
+          }
+        }}
+      >
+        <div className="anime-universe-mobile-portal__portal-scene" aria-hidden="true">
+          <div className="anime-universe-mobile-portal__orbit anime-universe-mobile-portal__orbit--a" />
+          <div className="anime-universe-mobile-portal__orbit anime-universe-mobile-portal__orbit--b" />
+          <div className="anime-universe-mobile-portal__core" />
+        </div>
         <div className="anime-universe-mobile-portal__art">
-          <AnimeImage src={anime.image} title={anime.title} decorative priority width={900} height={1200} sizes="100vw" />
+          <AnimeImage
+            src={anime.image}
+            title={anime.title}
+            decorative
+            priority
+            width={900}
+            height={1200}
+            sizes="100vw"
+            viewTransitionName={getAnimeViewTransitionName(anime.id)}
+          />
         </div>
         <div className="anime-universe-mobile-portal__shade" aria-hidden="true" />
+        <div className="anime-universe-mobile-portal__vignette" aria-hidden="true" />
+        <div className="anime-universe-mobile-portal__grain" aria-hidden="true" />
+
         <header className="anime-universe-mobile-portal__top">
           <span>ANIMENEXUS / UNIVERSE</span>
-          <button type="button" onClick={close} aria-label="Exit universe">×</button>
+          <button type="button" onClick={(event) => { event.stopPropagation(); close(); }} aria-label="Exit universe">×</button>
         </header>
+
         <main className="anime-universe-mobile-portal__content">
           <p>{anime.format || "TITLE"} · {anime.status === "RELEASING" ? "ON AIR" : anime.status === "NOT_YET_RELEASED" ? "INCOMING" : "ARCHIVED"}</p>
           <h1>{anime.title}</h1>
@@ -467,10 +540,7 @@ function MobileAnimeUniversePortal({ anime, onClose, onEnterDossier }: Props) {
             {anime.year ? <span>{anime.year}</span> : null}
             {anime.episodes ? <span>{anime.episodes} EP</span> : null}
           </div>
-          <div className="anime-universe-mobile-portal__actions">
-            <button type="button" className="btn btn-accent" onClick={enter}>Enter full dossier <span>→</span></button>
-            <button type="button" className="btn btn-outline" onClick={close}>Return to discovery</button>
-          </div>
+          <span className="anime-universe-mobile-portal__hint">TAP TO ENTER UNIVERSE</span>
         </main>
       </div>
     </div>
