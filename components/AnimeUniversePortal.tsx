@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
 import type { Anime } from "@/lib/types";
 import { AnimeImage } from "@/components/AnimeImage";
+import { usePerformance } from "@/components/PerformanceProvider";
 import { materialCssVars, materialFromAnimeEntity } from "@/lib/anime-material";
 import { playCue, playSpatialTravel } from "@/lib/sound-engine";
 import { getAnimeObjectId, getAnimeViewTransitionName, withViewTransition } from "@/lib/view-transition";
@@ -42,6 +43,7 @@ function AnimeUniversePortalScene({ anime, sourceRect, onClose, onEnterDossier }
   const [isExiting, setIsExiting] = useState(false);
   const [showSecondaryFigure, setShowSecondaryFigure] = useState(false);
   const isMobileViewport = typeof window !== "undefined" && window.innerWidth <= 700;
+  const performance = usePerformance();
 
   const materialVars = useMemo(
     () => materialCssVars(materialFromAnimeEntity(anime)),
@@ -124,6 +126,7 @@ function AnimeUniversePortalScene({ anime, sourceRect, onClose, onEnterDossier }
   }, [anime.id]);
 
   function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (!performance.portalParallax || !performance.cinematic) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
 
@@ -214,7 +217,7 @@ function AnimeUniversePortalScene({ anime, sourceRect, onClose, onEnterDossier }
         <div className="anime-universe-portal__atmosphere" aria-hidden />
         <div className="anime-universe-portal__depth" aria-hidden>
           {!isMobileViewport ? <div className="portal-depth__banner" /> : null}
-          {!isMobileViewport && characters[0]?.image ? (
+          {performance.portalCharacters && !isMobileViewport && characters[0]?.image ? (
             <div className="portal-depth__figure portal-depth__figure--primary">
               <AnimeImage src={characters[0].image} title={characters[0].name} decorative width={700} height={1000} sizes="48vw" />
             </div>
@@ -447,6 +450,10 @@ function MobileAnimeUniversePortal({ anime, onClose, onEnterDossier }: Props) {
         if (onEnterDossier) onEnterDossier();
         else window.history.pushState({}, "", `/anime/${anime.id}`);
       };
+      if (!performance.portalViewTransition) {
+        navigate();
+        return;
+      }
       withViewTransition(navigate, {
         route: "anime-detail",
         origin: "card",
@@ -505,11 +512,11 @@ function MobileAnimeUniversePortal({ anime, onClose, onEnterDossier }: Props) {
           }
         }}
       >
-        <div className="anime-universe-mobile-portal__portal-scene" aria-hidden="true">
+        {performance.portalScene ? <div className="anime-universe-mobile-portal__portal-scene" aria-hidden="true">
           <div className="anime-universe-mobile-portal__orbit anime-universe-mobile-portal__orbit--a" />
           <div className="anime-universe-mobile-portal__orbit anime-universe-mobile-portal__orbit--b" />
           <div className="anime-universe-mobile-portal__core" />
-        </div>
+        </div> : null}
         <div className="anime-universe-mobile-portal__art">
           <AnimeImage
             src={anime.image}
@@ -524,7 +531,7 @@ function MobileAnimeUniversePortal({ anime, onClose, onEnterDossier }: Props) {
         </div>
         <div className="anime-universe-mobile-portal__shade" aria-hidden="true" />
         <div className="anime-universe-mobile-portal__vignette" aria-hidden="true" />
-        <div className="anime-universe-mobile-portal__grain" aria-hidden="true" />
+        {performance.portalGrain ? <div className="anime-universe-mobile-portal__grain" aria-hidden="true" /> : null}
 
         <header className="anime-universe-mobile-portal__top">
           <span>ANIMENEXUS / UNIVERSE</span>
