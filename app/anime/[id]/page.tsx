@@ -295,7 +295,7 @@ export default async function AnimeDetailPage({ params }: Props) {
 
         <AnimeUniverseNav />
 
-        <section className="detail-section universe-space" id="story">
+        <section className="detail-section universe-space universe-story" id="story">
           <span className="universe-space__eyebrow">01 · STORY</span>
           <h2>Synopsis</h2>
           <p className="detail-synopsis">
@@ -303,7 +303,7 @@ export default async function AnimeDetailPage({ params }: Props) {
           </p>
         </section>
 
-        <div id="identity" className="universe-space universe-space--cluster">
+        <div id="identity" className="universe-space universe-space--cluster universe-identity">
           <YourMatchPanel anime={anime} />
           <ViewingContextPanel context={viewingContext} />
           <DeepSignalsPanel
