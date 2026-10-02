@@ -12,7 +12,6 @@ export function HomeFeaturedSignal({ candidates }: { candidates: Anime[] }) {
   return (
     <Link href={"/anime/" + anime.id} className="nexus-opening-subject" aria-label={"Open featured title " + anime.title}>
       <div className="nexus-opening-subject-image">
-        <div className="nexus-opening-subject-backplate" aria-hidden />
         <img className="nexus-opening-subject-echo" src={anime.image} alt="" aria-hidden />
         <img src={anime.image} alt="" />
       </div>
