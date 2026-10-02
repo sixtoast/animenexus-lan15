@@ -73,7 +73,6 @@ export function BrowseClient({
   const [year, setYear] = useState(searchParams.get("year") || "");
   const [sort, setSort] = useState(searchParams.get("sort") || "score");
   const experience = searchParams.get("experience") || "";
-  const { portal: portalEnabled } = usePerformance();
   const feed = parsed.feed;
 
   useEffect(() => {
@@ -227,7 +226,7 @@ export function BrowseClient({
   const canBlend = ready && entries.length >= 2 && items.length > 1;
 
   const performanceSettings = usePerformance();
-  const portalEnabled = performanceSettings.portalEnabled;
+  const portalEnabled = performanceSettings.portal;
   const [portalAnime, setPortalAnime] = useState<Anime | null>(null);
   const [portalSourceRect, setPortalSourceRect] = useState<DOMRect | null>(null);
 
