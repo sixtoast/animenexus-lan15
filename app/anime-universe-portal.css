@@ -3503,3 +3503,28 @@
     background:linear-gradient(90deg,rgba(5,5,6,.48),transparent 48%,rgba(5,5,6,.22) 100%);
   }
 }
+
+/* MOBILE CRASH GUARD
+   Safari/WebKit is given exactly one large artwork surface during Portal entry.
+   Avoid image masks, filters and animated compositing on that surface. */
+@media (max-width:700px){
+  .anime-universe-portal__art,
+  .anime-universe-portal__art img{
+    animation:none!important;
+    filter:none!important;
+    mask-image:none!important;
+    -webkit-mask-image:none!important;
+    will-change:auto!important;
+    transform:none!important;
+  }
+  .anime-universe-portal__scene-haze{
+    background:linear-gradient(90deg,rgba(5,5,6,.58),transparent 52%,rgba(5,5,6,.28));
+  }
+  .anime-universe-portal__image-wash{
+    opacity:.34!important;
+  }
+  .anime-universe-portal__grain,
+  .anime-universe-portal__scan{
+    display:none!important;
+  }
+}
