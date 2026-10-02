@@ -2935,3 +2935,149 @@ body:has(.detail-cover-material.artwork-role--promotional) {
 @media(prefers-reduced-motion:reduce){
  .cinema-detail-page .detail-world__backdrop,.cinema-detail-page .detail-world__keyart,.cinema-detail-page .universe-space{transition:none;transform:none}
 }
+
+/* PASS 9 — MOBILE COMPOSITION
+   Mobile is a composition in its own right. Preserve the portal feeling by
+   making the artwork the first visual plane and moving information around it. */
+@media(max-width:700px){
+  .cinema-detail-page{
+    overflow-x:clip;
+  }
+  .cinema-detail-page .detail-wrap{
+    width:100%;
+    padding-inline:18px;
+  }
+  .cinema-detail-page .detail-banner{
+    height:clamp(300px,58vh,520px);
+    opacity:.62;
+    background-position:center top;
+    mask-image:linear-gradient(to bottom,black 45%,transparent 100%);
+    -webkit-mask-image:linear-gradient(to bottom,black 45%,transparent 100%);
+  }
+  .cinema-detail-page .detail-hero{
+    min-height:min(88vh,760px);
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+    padding-top:clamp(150px,28vh,250px);
+    padding-bottom:34px;
+    gap:22px;
+  }
+  .cinema-detail-page .detail-scene-index{
+    position:absolute;
+    top:22px;
+    left:0;
+    right:0;
+    padding-inline:2px;
+  }
+  .cinema-detail-page .detail-scene-index span:last-child{
+    font-size:.46rem;
+    letter-spacing:.15em;
+  }
+  .cinema-detail-page .detail-hero .detail-cover-material{
+    position:absolute;
+    z-index:0;
+    top:clamp(80px,13vh,130px);
+    left:50%;
+    width:min(76vw,330px);
+    height:min(76vw,440px);
+    transform:translateX(-50%);
+    opacity:.9;
+    filter:drop-shadow(0 28px 55px rgba(0,0,0,.5));
+  }
+  .cinema-detail-page .detail-info{
+    position:relative;
+    z-index:3;
+    padding:0;
+    max-width:none;
+  }
+  .cinema-detail-page .detail-arrival{
+    font-size:.5rem;
+    letter-spacing:.14em;
+    margin-bottom:10px;
+  }
+  .cinema-detail-page .detail-kicker{
+    margin-bottom:9px;
+  }
+  .cinema-detail-page .detail-info h1{
+    max-width:100%;
+    font-size:clamp(2.55rem,13vw,4.6rem);
+    line-height:.88;
+    letter-spacing:-.065em;
+    text-wrap:balance;
+  }
+  .cinema-detail-page .detail-alt-titles{
+    margin-top:9px;
+    font-size:.65rem;
+    opacity:.55;
+  }
+  .cinema-detail-page .detail-meta{
+    gap:6px 9px;
+    margin-top:15px;
+    font-size:.6rem;
+  }
+  .cinema-detail-page .detail-tags{
+    max-height:54px;
+    overflow:hidden;
+    margin-top:12px;
+  }
+  .cinema-detail-page .detail-actions{
+    gap:6px!important;
+  }
+  .cinema-detail-page .detail-actions .btn{
+    min-height:38px;
+    padding-inline:10px;
+    font-size:.62rem;
+  }
+  .cinema-detail-page .anime-universe-nav{
+    margin-top:4px;
+    margin-bottom:0;
+  }
+  .cinema-detail-page .anime-universe-nav__inner{
+    box-shadow:0 12px 32px rgba(0,0,0,.28);
+  }
+  .cinema-detail-page .universe-story-space{
+    padding-top:12vh;
+    padding-bottom:8vh;
+  }
+  .cinema-detail-page .universe-story-space__layout{
+    gap:30px;
+  }
+  .cinema-detail-page .universe-story-space__copy{
+    max-width:none;
+  }
+  .cinema-detail-page .universe-story-space__signature{
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+  }
+  .cinema-detail-page .universe-identity-space{
+    padding-top:7vh;
+    padding-bottom:9vh;
+  }
+  .cinema-detail-page .universe-identity-space__grid>*{
+    min-height:0;
+  }
+  .cinema-detail-page .universe-characters-space{
+    padding-top:10vh;
+    padding-bottom:12vh;
+  }
+}
+/* Very small phones: keep the primary artwork and title legible without
+   turning the portal into a compressed desktop page. */
+@media(max-width:390px){
+  .cinema-detail-page .detail-wrap{padding-inline:14px}
+  .cinema-detail-page .detail-hero{
+    min-height:700px;
+    padding-top:170px;
+  }
+  .cinema-detail-page .detail-hero .detail-cover-material{
+    width:72vw;
+    height:350px;
+  }
+  .cinema-detail-page .detail-info h1{font-size:clamp(2.35rem,13.5vw,3.5rem)}
+  .cinema-detail-page .detail-actions .btn:nth-child(n+4){display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .cinema-detail-page .detail-hero .detail-cover-material{filter:none}
+}
