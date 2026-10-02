@@ -171,6 +171,7 @@ export function NexusWorlds({ candidates }: Props) {
 
     let motionAbort = false;
 
+    const connectionLines = Array.from(field.querySelectorAll<SVGLineElement>('.nexus-world-connections line'));
     const geometry = nodes.map((node, index) => {
       const w = node.offsetWidth;
       const h = node.offsetHeight;
@@ -407,36 +408,9 @@ export function NexusWorlds({ candidates }: Props) {
             x = orbitalX - baseX;
             y = orbitalY - baseY;
 
-            // The first ~900ms of orbit is a physical settle, not an instant
-            // teleport. Blend from the travel endpoint into the true orbital
-            // coordinate so the final lock is visibly earned.
-            if (orbitBlend < 1) {
-              const settledX = x * orbitBlend;
-              const settledY = y * orbitBlend;
-              x = settledX;
-              y = settledY;
-            }
-
-            // The pointer creates a soft magnetic field around each signal.
-            const pointerNX = pointerX * 0.5 + 0.5;
-            const pointerNY = pointerY * 0.5 + 0.5;
-            const dx = pointerNX - orbitalX / rect.width;
-            const dy = pointerNY - orbitalY / rect.height;
-            const distance = Math.hypot(dx, dy);
-
-            if (pointer.active && distance < 0.30) {
-              attraction = (1 - distance / 0.30) * (mobile ? 16 : 24);
-              x += dx * attraction;
-              y += dy * attraction;
-            }
-            if (pointer.active && distance < 0.12) {
-              repulsion = (1 - distance / 0.12) * (mobile ? 12 : 18);
-              const nx = distance > 0.001 ? dx / distance : Math.cos(a);
-              const ny = distance > 0.001 ? dy / distance : Math.sin(a);
-              x -= nx * repulsion;
-              y -= ny * repulsion;
-            }
-
+            // Travel resolves to the same mathematical target used by orbit.
+            // Avoid blending through the field origin, which caused a visible
+            // snap-to-centre between the travel and orbit phases.
             // The magnetic field is allowed to move freely, but the final card
             // centre is clamped against the actual viewport-safe bounds. This
             // keeps the orbital envelope stable on narrow screens too.
@@ -481,6 +455,20 @@ export function NexusWorlds({ candidates }: Props) {
         } else {
           node.style.zIndex = String(30 + index);
         }
+      });
+
+      // Keep the connective graph physically attached to the cards.
+      connectionLines.forEach((line, index) => {
+        const g = geometry[index];
+        if (!g) return;
+        const dx = Number.parseFloat(g.node.style.getPropertyValue('--node-motion-x') || '0');
+        const dy = Number.parseFloat(g.node.style.getPropertyValue('--node-motion-y') || '0');
+        const x = ((g.baseX + dx) / rect.width) * 100;
+        const y = ((g.baseY + dy) / rect.height) * 100;
+        line.setAttribute('x2', x.toFixed(2));
+        line.setAttribute('y2', y.toFixed(2));
+        line.setAttribute('x1', '50');
+        line.setAttribute('y1', '50');
       });
 
       raf = window.requestAnimationFrame(tick);
