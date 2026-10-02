@@ -7,6 +7,7 @@ import { SessionProvider } from "@/components/SessionProvider";
 import { DeskCloudAutoSync } from "@/components/DeskCloudAutoSync";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { MotionProvider } from "@/components/MotionProvider";
+import { PerformanceProvider } from "@/components/PerformanceProvider";
 import { CreativeRuntimeProvider } from "@/components/CreativeRuntimeProvider";
 import { ToastProvider } from "@/components/ToastProvider";
 import { SoundProvider } from "@/components/SoundProvider";
@@ -180,7 +181,8 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <MotionProvider>
-            <CreativeRuntimeProvider>
+            <PerformanceProvider>
+              <CreativeRuntimeProvider>
               <ToastProvider>
                 <SoundProvider>
                   <WatchlistProvider>
@@ -237,7 +239,8 @@ export default function RootLayout({
                   </WatchlistProvider>
                 </SoundProvider>
               </ToastProvider>
-            </CreativeRuntimeProvider>
+              </CreativeRuntimeProvider>
+            </PerformanceProvider>
           </MotionProvider>
         </ThemeProvider>
       </body>
