@@ -3412,3 +3412,7 @@
   -webkit-backdrop-filter:none!important;
   mix-blend-mode:normal!important;
 }
+
+/* Remove the archival glass/file treatment from the key-art plane. */
+.anime-universe-portal__scene-caption{display:none!important}
+.anime-universe-portal__art:after{display:none!important}
