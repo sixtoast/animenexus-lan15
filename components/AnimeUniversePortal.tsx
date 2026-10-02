@@ -7,6 +7,7 @@ import type { Anime } from "@/lib/types";
 import { AnimeImage } from "@/components/AnimeImage";
 import { materialCssVars, materialFromAnimeEntity } from "@/lib/anime-material";
 import { playCue, playSpatialTravel } from "@/lib/sound-engine";
+import { withViewTransition } from "@/lib/view-transition";
 
 type Props = {
   anime: Anime;
@@ -149,7 +150,21 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
     if (isExiting) return;
     playCue("filter_select");
     setIsExiting(true);
-    window.setTimeout(() => router.push(`/anime/${anime.id}`), 420);
+
+    // The portal is the departure scene. Hand the same anime object identity
+    // to the real detail route so the browser can morph the artwork instead
+    // of replacing the portal with a conventional page jump.
+    window.setTimeout(() => {
+      withViewTransition(
+        () => router.push(`/anime/${anime.id}`),
+        {
+          route: "anime-detail",
+          origin: "card",
+          destination: "hero",
+          objectId: String(anime.id),
+        },
+      );
+    }, 180);
   }
 
   return (
