@@ -108,7 +108,10 @@ export function FabMenu() {
               <button type="button" className="fab-performance-safe" onClick={() => performance.setSafeMode(true)}>Emergency safe mode</button>
             </div>
           )}
-          <Link href="/browse" className="fab-item" role="menuitem" onClick={() => setOpen(false)}>
+                    <Link href="/performance" className="fab-item" role="menuitem" onClick={() => setOpen(false)}>
+            <FabItem icon="settings">Performance &amp; Effects</FabItem>
+          </Link>
+<Link href="/browse" className="fab-item" role="menuitem" onClick={() => setOpen(false)}>
             <FabItem icon="browse">Browse</FabItem>
           </Link>
         </div>
