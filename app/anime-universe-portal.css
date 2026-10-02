@@ -3236,3 +3236,32 @@
     will-change:auto;
   }
 }
+
+/* PASS 11 — VISUAL QA / RESTRAINT
+   Remove competing decoration so artwork, typography and spatial depth carry the scene. */
+.anime-universe-portal__world-effects{opacity:.42}
+.anime-universe-portal__world-effects .world-effect--ring-a,
+.anime-universe-portal__world-effects .world-effect--ring-b{opacity:.34}
+.anime-universe-portal__scan{opacity:.035}
+.anime-universe-portal__grain{opacity:.09}
+.anime-universe-portal__coordinates i{box-shadow:0 0 10px var(--portal-accent)}
+.anime-universe-portal__panel{
+  box-shadow:18px 22px 70px rgba(0,0,0,.22);
+}
+.anime-universe-portal button:focus-visible{
+  outline:1px solid var(--portal-accent);
+  outline-offset:4px;
+}
+@media(max-width:700px){
+  .anime-universe-portal__world-effects{opacity:.25}
+  .anime-universe-portal__world-effects .world-effect--ring-a,
+  .anime-universe-portal__world-effects .world-effect--ring-b{opacity:.2}
+  .anime-universe-portal__scan{display:none}
+  .anime-universe-portal__grain{opacity:.065}
+  .anime-universe-portal__panel{box-shadow:10px 16px 45px rgba(0,0,0,.2)}
+}
+@media(prefers-reduced-motion:reduce){
+  .anime-universe-portal__world-effects,
+  .anime-universe-portal__scan,
+  .anime-universe-portal__grain{opacity:.06}
+}
