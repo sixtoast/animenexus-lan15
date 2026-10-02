@@ -3338,3 +3338,64 @@
 @media(prefers-reduced-motion:reduce){
   .anime-universe-portal__panel{background:transparent}
 }
+
+/* FINAL IMPLEMENTATION PASS — art direction lock.
+   The interface must read as a scene first and information architecture second. */
+.anime-universe-portal__world{
+  overflow:hidden;
+}
+.anime-universe-portal__scene{
+  isolation:isolate;
+}
+.anime-universe-portal__scene:before{
+  z-index:2;
+}
+.anime-universe-portal__art{
+  z-index:3;
+  transform:
+    translate3d(calc(var(--portal-mx) * 34px),calc(var(--portal-my) * 22px),0)
+    scale(1.045);
+}
+.anime-universe-portal__main{
+  z-index:20;
+}
+.anime-universe-portal__identity{
+  position:relative;
+  z-index:22;
+  transform:translate3d(calc(var(--portal-mx) * -4px),calc(var(--portal-my) * -2px),0);
+  transition:transform .25s ease-out;
+}
+.anime-universe-portal__identity-line{
+  position:relative;
+}
+.anime-universe-portal__identity-line:before{
+  content:"";
+  position:absolute;
+  left:-34px;
+  top:50%;
+  width:10px;
+  height:1px;
+  background:var(--portal-accent);
+  opacity:.65;
+}
+.anime-universe-portal__nav{
+  z-index:30;
+}
+.anime-universe-portal__top{
+  z-index:35;
+}
+@media(max-width:700px){
+  .anime-universe-portal__identity{
+    transform:none;
+  }
+  .anime-universe-portal__identity-line:before{
+    left:-22px;
+    width:7px;
+  }
+  .anime-universe-portal__art{
+    transform:translate3d(calc(var(--portal-mx) * 8px),0,0) scale(1.02);
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .anime-universe-portal__identity{transform:none;transition:none}
+}
