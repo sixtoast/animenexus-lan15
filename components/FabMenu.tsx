@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useToast } from "@/components/ToastProvider";
 import { useMotion } from "@/components/MotionProvider";
+import { usePerformance } from "@/components/PerformanceProvider";
 import { NexusIcon } from "@/components/ui/NexusIcon";
 import type { NexusIconName } from "@/lib/icons/registry";
 
@@ -29,6 +30,8 @@ export function FabMenu() {
   const { toggleTheme, theme } = useTheme();
   const { showToast } = useToast();
   const { reducedMotion, toggleMotion } = useMotion();
+  const performance = usePerformance();
+  const [performanceOpen, setPerformanceOpen] = useState(false);
 
   useEffect(() => {
     const onPulse = () => {
@@ -87,6 +90,24 @@ export function FabMenu() {
               {reducedMotion ? "Full motion" : "Reduce motion"}
             </FabItem>
           </button>
+          <button type="button" className="fab-item" role="menuitem" onClick={() => setPerformanceOpen(v => !v)} aria-expanded={performanceOpen}>
+            <FabItem icon="frequency">Performance</FabItem>
+          </button>
+          {performanceOpen ? (
+            <div className="fab-performance" role="group" aria-label="Performance controls">
+              <label><input type="checkbox" checked={performance.portal} onChange={e => performance.setPref("portal", e.target.checked)} /> Universe Portal</label>
+              <label><input type="checkbox" checked={performance.portalScene} disabled={!performance.portal} onChange={e => performance.setPref("portalScene", e.target.checked)} /> Portal scene</label>
+              <label><input type="checkbox" checked={performance.portalParallax} disabled={!performance.portal} onChange={e => performance.setPref("portalParallax", e.target.checked)} /> Pointer parallax</label>
+              <label><input type="checkbox" checked={performance.portalViewTransition} disabled={!performance.portal} onChange={e => performance.setPref("portalViewTransition", e.target.checked)} /> View transitions</label>
+              <label><input type="checkbox" checked={performance.portalMask} disabled={!performance.portal} onChange={e => performance.setPref("portalMask", e.target.checked)} /> Artwork mask</label>
+              <label><input type="checkbox" checked={performance.portalCharacters} disabled={!performance.portal} onChange={e => performance.setPref("portalCharacters", e.target.checked)} /> Character layers</label>
+              <label><input type="checkbox" checked={performance.portalGrain} disabled={!performance.portal} onChange={e => performance.setPref("portalGrain", e.target.checked)} /> Film grain</label>
+              <label><input type="checkbox" checked={performance.cinematic} onChange={e => performance.setPref("cinematic", e.target.checked)} /> Cinematic effects</label>
+              <label><input type="checkbox" checked={performance.sound} onChange={e => performance.setPref("sound", e.target.checked)} /> UI sound</label>
+              <button type="button" className="fab-performance-reset" onClick={performance.reset}>Reset performance settings</button>
+              <button type="button" className="fab-performance-safe" onClick={() => performance.setSafeMode(true)}>Emergency safe mode</button>
+            </div>
+          ) : null
           <Link href="/browse" className="fab-item" role="menuitem" onClick={() => setOpen(false)}>
             <FabItem icon="browse">Browse</FabItem>
           </Link>
