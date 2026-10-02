@@ -224,6 +224,14 @@ export function BrowseClient({
         : FEED_TABS.find((t) => t.value === feed)?.label || "Browse";
 
   const canBlend = ready && entries.length >= 2 && items.length > 1;
+
+  const performanceSettings = usePerformance();
+  const portalEnabled = performanceSettings.portalEnabled;
+  const [portalAnime, setPortalAnime] = useState<Anime | null>(null);
+  const [portalSourceRect, setPortalSourceRect] = useState<DOMRect | null>(null);
+
+  const closePortal = useCallback(() => setPortalAnime(null), []);
+
   const queryValid = q.trim().length >= 1;
 
   const displayItems = useMemo(() => {
