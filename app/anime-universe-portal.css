@@ -3399,3 +3399,16 @@
 @media(prefers-reduced-motion:reduce){
   .anime-universe-portal__identity{transform:none;transition:none}
 }
+
+/* FINAL CLEANUP — remove the glass/sheen plate over the key art.
+   The artwork itself is the physical object; no translucent card should sit on top of it. */
+.anime-universe-portal__art:after{
+  content:none!important;
+  display:none!important;
+  animation:none!important;
+  background:none!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  mix-blend-mode:normal!important;
+}
