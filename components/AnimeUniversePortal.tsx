@@ -69,7 +69,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier
   const requestClose = () => {
     if (isExiting) return;
     setIsExiting(true);
-    playCue("modal_close", { gain: 0.62 });
+    if (!isMobileViewport) playCue("modal_close", { gain: 0.62 });
     window.setTimeout(onClose, 420);
   };
 
@@ -94,10 +94,12 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier
     };
 
     window.addEventListener("keydown", onKey);
-    playCue("modal_open", { gain: 0.72 });
-    // The source card hands its position to the portal as a short spatial travel cue.
-    const sourceX = (source.x + source.width / 2) / window.innerWidth;
-    playSpatialTravel(sourceX * 2 - 1, 0.65);
+    if (!isMobileViewport) {
+      playCue("modal_open", { gain: 0.72 });
+      // The source card hands its position to the portal as a short spatial travel cue.
+      const sourceX = (source.x + source.width / 2) / window.innerWidth;
+      playSpatialTravel(sourceX * 2 - 1, 0.65);
+    }
     const arrivalTimer = isMobileViewport ? undefined : window.setTimeout(() => playCue("resonance", { gain: 0.48 }), 760);
 
     return () => {
@@ -149,12 +151,12 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier
   function changeView(next: PortalView) {
     setView(next);
     setSelectedCharacter(null);
-    playCue("filter_select");
+    if (!isMobileViewport) playCue("filter_select");
   }
 
   function enterDossier() {
     if (isExiting) return;
-    playCue("filter_select");
+    if (!isMobileViewport) playCue("filter_select");
     setIsExiting(true);
 
     // The portal is the departure scene. Hand the same anime object identity
