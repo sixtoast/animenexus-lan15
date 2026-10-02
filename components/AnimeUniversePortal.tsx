@@ -40,6 +40,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier
   const [view, setView] = useState<PortalView>("entry");
   const [selectedCharacter, setSelectedCharacter] = useState<number | null>(null);
   const [isExiting, setIsExiting] = useState(false);
+  const [showSecondaryFigure, setShowSecondaryFigure] = useState(false);
 
   const materialVars = useMemo(
     () => materialCssVars(materialFromAnimeEntity(anime)),
@@ -114,6 +115,9 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier
   useEffect(() => {
     setView("entry");
     setSelectedCharacter(null);
+    setShowSecondaryFigure(false);
+    const timer = window.setTimeout(() => setShowSecondaryFigure(true), 900);
+    return () => window.clearTimeout(timer);
   }, [anime.id]);
 
   function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
@@ -212,7 +216,7 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier
               <AnimeImage src={characters[0].image} title={characters[0].name} decorative width={700} height={1000} sizes="(max-width: 700px) 75vw, 48vw" />
             </div>
           ) : null}
-          {characters[1]?.image ? (
+          {showSecondaryFigure && characters[1]?.image ? (
             <div className="portal-depth__figure portal-depth__figure--secondary">
               <AnimeImage src={characters[1].image} title={characters[1].name} decorative width={520} height={760} sizes="(max-width: 700px) 55vw, 34vw" />
             </div>
