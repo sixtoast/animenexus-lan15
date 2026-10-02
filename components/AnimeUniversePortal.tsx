@@ -433,6 +433,7 @@ function AnimeUniversePortalScene({ anime, sourceRect, onClose, onEnterDossier }
 
 function MobileAnimeUniversePortal({ anime, onClose, onEnterDossier }: Props) {
   const [closing, setClosing] = useState(false);
+  const performanceSettings = usePerformance();
   const worldRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef(0);
 
@@ -512,7 +513,7 @@ function MobileAnimeUniversePortal({ anime, onClose, onEnterDossier }: Props) {
           }
         }}
       >
-        {performance.portalScene ? <div className="anime-universe-mobile-portal__portal-scene" aria-hidden="true">
+        {performanceSettings.portalScene ? <div className="anime-universe-mobile-portal__portal-scene" aria-hidden="true">
           <div className="anime-universe-mobile-portal__orbit anime-universe-mobile-portal__orbit--a" />
           <div className="anime-universe-mobile-portal__orbit anime-universe-mobile-portal__orbit--b" />
           <div className="anime-universe-mobile-portal__core" />
@@ -531,7 +532,7 @@ function MobileAnimeUniversePortal({ anime, onClose, onEnterDossier }: Props) {
         </div>
         <div className="anime-universe-mobile-portal__shade" aria-hidden="true" />
         <div className="anime-universe-mobile-portal__vignette" aria-hidden="true" />
-        {performance.portalGrain ? <div className="anime-universe-mobile-portal__grain" aria-hidden="true" /> : null}
+        {performanceSettings.portalGrain ? <div className="anime-universe-mobile-portal__grain" aria-hidden="true" /> : null}
 
         <header className="anime-universe-mobile-portal__top">
           <span>ANIMENEXUS / UNIVERSE</span>
