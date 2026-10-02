@@ -2189,3 +2189,164 @@ body:has(.detail-cover-material.artwork-role--promotional) {
   .anime-universe-nav button,
   .anime-universe-nav button::after{transition:none}
 }
+
+
+/* ================================================================
+   UNIVERSE EXPERIENCE — PASS 5
+   Navigation: a scene rail rather than a floating pill toolbar.
+   It should feel like chapter markers embedded in the world.
+   ================================================================ */
+.cinema-detail-page .anime-universe-nav{
+  position:sticky;
+  top:0;
+  z-index:30;
+  margin:0 calc(50% - 50vw);
+  padding:14px max(24px,5vw) 10px;
+  background:linear-gradient(180deg,rgba(7,7,7,.84),rgba(7,7,7,.38) 70%,transparent);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.cinema-detail-page .anime-universe-nav__inner{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:28px;
+  max-width:1440px;
+  margin:auto;
+  padding:5px 0 8px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.cinema-detail-page .anime-universe-nav__chapter{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex:none;
+  min-width:124px;
+  color:rgba(255,255,255,.42);
+}
+.cinema-detail-page .anime-universe-nav__chapter-index{
+  color:var(--color-accent);
+  font-size:.72rem;
+  font-weight:700;
+  letter-spacing:.1em;
+  font-variant-numeric:tabular-nums;
+}
+.cinema-detail-page .anime-universe-nav__chapter-rule{
+  width:24px;
+  height:1px;
+  background:rgba(255,255,255,.24);
+}
+.cinema-detail-page .anime-universe-nav__chapter-label{
+  font-size:.52rem;
+  font-weight:700;
+  letter-spacing:.2em;
+}
+.cinema-detail-page .anime-universe-nav__track{
+  gap:18px;
+  padding:5px 2px 8px;
+  mask-image:linear-gradient(90deg,transparent 0,black 3%,black 97%,transparent);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,black 3%,black 97%,transparent);
+}
+.cinema-detail-page .anime-universe-nav button{
+  position:relative;
+  gap:8px;
+  padding:4px 1px 9px;
+  border-radius:0;
+  background:transparent;
+  color:rgba(255,255,255,.42);
+  font-weight:500;
+  letter-spacing:.045em;
+  text-transform:uppercase;
+  transition:color .35s ease,transform .35s cubic-bezier(.2,.8,.2,1);
+}
+.cinema-detail-page .anime-universe-nav button::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:1px;
+  background:var(--color-accent);
+  transform:scaleX(0);
+  transform-origin:left;
+  transition:transform .45s cubic-bezier(.2,.8,.2,1);
+}
+.cinema-detail-page .anime-universe-nav button span{
+  color:rgba(255,255,255,.28);
+  font-size:.48rem;
+}
+.cinema-detail-page .anime-universe-nav button b{
+  font:inherit;
+}
+.cinema-detail-page .anime-universe-nav button:hover{
+  color:rgba(255,255,255,.82);
+  background:transparent;
+  transform:translateY(-1px);
+}
+.cinema-detail-page .anime-universe-nav button.is-active{
+  color:var(--color-text);
+  background:transparent;
+  box-shadow:none;
+}
+.cinema-detail-page .anime-universe-nav button.is-active::after{
+  transform:scaleX(1);
+}
+.cinema-detail-page .anime-universe-nav button.is-active span{
+  color:var(--color-accent);
+  opacity:1;
+}
+.cinema-detail-page .anime-universe-nav__state{
+  flex:none;
+  color:rgba(255,255,255,.28);
+  font-size:.52rem;
+  letter-spacing:.12em;
+  font-variant-numeric:tabular-nums;
+}
+.cinema-detail-page .anime-universe-nav__progress{
+  left:max(24px,5vw);
+  right:max(24px,5vw);
+  bottom:0;
+  height:1px;
+  opacity:.38;
+}
+@media(max-width:700px){
+  .cinema-detail-page .anime-universe-nav{
+    margin:0 -12px;
+    padding:10px 14px 7px;
+  }
+  .cinema-detail-page .anime-universe-nav__inner{
+    gap:12px;
+  }
+  .cinema-detail-page .anime-universe-nav__chapter{
+    min-width:32px;
+  }
+  .cinema-detail-page .anime-universe-nav__chapter-label,
+  .cinema-detail-page .anime-universe-nav__chapter-rule{
+    display:none;
+  }
+  .cinema-detail-page .anime-universe-nav__track{
+    gap:16px;
+    padding-bottom:7px;
+  }
+  .cinema-detail-page .anime-universe-nav button{
+    padding-bottom:8px;
+    font-size:.58rem;
+  }
+  .cinema-detail-page .anime-universe-nav button span{
+    display:inline;
+  }
+  .cinema-detail-page .anime-universe-nav__state{
+    font-size:.48rem;
+  }
+  .cinema-detail-page .anime-universe-nav__progress{
+    left:14px;
+    right:14px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .cinema-detail-page .anime-universe-nav button,
+  .cinema-detail-page .anime-universe-nav button::after{transition:none}
+}
