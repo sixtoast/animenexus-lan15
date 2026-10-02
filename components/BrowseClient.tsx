@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AnimeImage } from "@/components/AnimeImage";
 import { AnimeUniversePortal } from "@/components/AnimeUniversePortal";
+import { usePerformance } from "@/components/PerformanceProvider";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimeGrid } from "@/components/AnimeGrid";
@@ -59,6 +60,7 @@ export function BrowseClient({
   const [displayTotal, setDisplayTotal] = useState(initialTotal);
   const [leaving, setLeaving] = useState(false);
   const [portalAnime, setPortalAnime] = useState<Anime | null>(null);
+  const { portal: portalEnabled } = usePerformance();
   const [portalSourceRect, setPortalSourceRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const sessionKey = useSessionRevision();
   const prevTotal = useRef(initialTotal);
@@ -475,7 +477,7 @@ export function BrowseClient({
 
       {displayItems.length > 0 ? (
         <article className="cinema-browse-feature">
-          <Link href={`/anime/${displayItems[0].id}`} className="cinema-browse-feature-art" aria-label={`Open ${displayItems[0].title}`} onClick={(e) => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return; e.preventDefault(); const rect = e.currentTarget.getBoundingClientRect(); setPortalSourceRect({ x: rect.left, y: rect.top, width: rect.width, height: rect.height }); setPortalAnime(displayItems[0]); }}>
+          <Link href={`/anime/${displayItems[0].id}`} className="cinema-browse-feature-art" aria-label={`Open ${displayItems[0].title}`} onClick={(e) => { if (!portalEnabled || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return; e.preventDefault(); const rect = e.currentTarget.getBoundingClientRect(); setPortalSourceRect({ x: rect.left, y: rect.top, width: rect.width, height: rect.height }); setPortalAnime(displayItems[0]); }}>
             <AnimeImage
               src={displayItems[0].image}
               title={displayItems[0].title}
@@ -558,7 +560,7 @@ export function BrowseClient({
         </div>
       ) : (
         <>
-          <div className="cinema-browse-grid"><AnimeGrid items={displayItems.slice(1)} trackBehaviour onPreview={(anime, sourceRect) => { setPortalSourceRect(sourceRect); setPortalAnime(anime); }} /></div>
+          <div className="cinema-browse-grid"><AnimeGrid items={displayItems.slice(1)} trackBehaviour onPreview={(anime, sourceRect) => { if (!portalEnabled) return; setPortalSourceRect(sourceRect); setPortalAnime(anime); }} /></div>
           {hasNext ? (
             <div style={{ textAlign: "center", marginTop: 28 }}>
               <button
@@ -573,7 +575,7 @@ export function BrowseClient({
           ) : null}
         </>
       )}
-      {portalAnime ? <AnimeUniversePortal anime={portalAnime} sourceRect={portalSourceRect} onClose={closePortal} /> : null}
+      {portalEnabled && portalAnime ? <AnimeUniversePortal anime={portalAnime} sourceRect={portalSourceRect} onClose={closePortal} /> : null}
     </div>
   );
 }
