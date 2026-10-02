@@ -214,9 +214,9 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier
         <div className="anime-universe-portal__atmosphere" aria-hidden />
         <div className="anime-universe-portal__depth" aria-hidden>
           {!isMobileViewport ? <div className="portal-depth__banner" /> : null}
-          {characters[0]?.image ? (
+          {!isMobileViewport && characters[0]?.image ? (
             <div className="portal-depth__figure portal-depth__figure--primary">
-              <AnimeImage src={characters[0].image} title={characters[0].name} decorative width={isMobileViewport ? 420 : 700} height={isMobileViewport ? 600 : 1000} sizes="(max-width: 700px) 52vw, 48vw" />
+              <AnimeImage src={characters[0].image} title={characters[0].name} decorative width={700} height={1000} sizes="48vw" />
             </div>
           ) : null}
           {!isMobileViewport && showSecondaryFigure && characters[1]?.image ? (
