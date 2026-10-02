@@ -93,33 +93,15 @@ export function FabMenu() {
           <button type="button" className="fab-item" role="menuitem" onClick={() => setPerformanceOpen(v => !v)} aria-expanded={performanceOpen}>
             <FabItem icon="frequency">Performance</FabItem>
           </button>
-          {performanceOpen ? (
+          {performanceOpen && (
             <div className="fab-performance" role="group" aria-label="Performance controls">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={performance.cinematic}
-                  onChange={e => performance.setPref("cinematic", e.target.checked)}
-                />
-                Cinematic effects
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={performance.sound}
-                  onChange={e => performance.setPref("sound", e.target.checked)}
-                />
-                UI sound
-              </label>
-              <button type="button" className="fab-performance-reset" onClick={performance.reset}>
-                Reset performance settings
-              </button>
-              <button type="button" className="fab-performance-safe" onClick={() => performance.setSafeMode(true)}>
-                Emergency safe mode
-              </button>
+              <label><input type="checkbox" checked={performance.cinematic} onChange={e => performance.setPref("cinematic", e.target.checked)} /> Cinematic effects</label>
+              <label><input type="checkbox" checked={performance.sound} onChange={e => performance.setPref("sound", e.target.checked)} /> UI sound</label>
+              <button type="button" className="fab-performance-reset" onClick={performance.reset}>Reset performance settings</button>
+              <button type="button" className="fab-performance-safe" onClick={() => performance.setSafeMode(true)}>Emergency safe mode</button>
             </div>
-          ) : null}
-          <Link href="/performance" className="fab-item" role="menuitem" onClick={() => setOpen(false)}>
+          )}
+          <Link href="/settings/performance" className="fab-item" role="menuitem" onClick={() => setOpen(false)}>
             <FabItem icon="settings">Settings</FabItem>
           </Link>
 <Link href="/browse" className="fab-item" role="menuitem" onClick={() => setOpen(false)}>
