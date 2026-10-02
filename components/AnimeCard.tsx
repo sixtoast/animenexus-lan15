@@ -24,7 +24,6 @@ type Props = {
   anime: Anime;
   index?: number;
   recommended?: boolean;
-  onPreview?: (sourceRect: { x: number; y: number; width: number; height: number }) => void;
 };
 
 function episodeCap(anime: Anime, entryEpisodes?: number | string): number {
