@@ -57,23 +57,32 @@ function ensureGraph(): boolean {
       (window as unknown as { webkitAudioContext?: typeof AudioContext })
         .webkitAudioContext;
     if (!AC) return false;
-    ctx = new AC();
-    masterGain = ctx.createGain();
-    masterGain.connect(ctx.destination);
-    for (const cat of [
-      "ui",
-      "navigation",
-      "object",
-      "lantern",
-      "tool",
-      "celebration",
-      "warning",
-    ] as SoundCategory[]) {
-      const g = ctx.createGain();
-      g.connect(masterGain);
-      categoryGain.set(cat, g);
+    try {
+      ctx = new AC();
+      masterGain = ctx.createGain();
+      masterGain.connect(ctx.destination);
+      for (const cat of [
+        "ui",
+        "navigation",
+        "object",
+        "lantern",
+        "tool",
+        "celebration",
+        "warning",
+      ] as SoundCategory[]) {
+        const g = ctx.createGain();
+        g.connect(masterGain);
+        categoryGain.set(cat, g);
+      }
+      applyGains();
+    } catch {
+      // Audio is optional. Some browsers/PWAs reject AudioContext creation
+      // outside an unlocked gesture or after the document has been suspended.
+      ctx = null;
+      masterGain = null;
+      categoryGain.clear();
+      return false;
     }
-    applyGains();
   }
   return true;
 }
