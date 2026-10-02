@@ -3265,3 +3265,76 @@
   .anime-universe-portal__scan,
   .anime-universe-portal__grain{opacity:.06}
 }
+
+/* FINAL IMPLEMENTATION — dissolve the last "dialog" cues.
+   The universe itself is the surface; information floats inside the scene. */
+.anime-universe-portal__world{
+  inset:0;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+}
+.anime-universe-portal__panel{
+  padding:18px 0 20px 22px;
+  border-left:1px solid color-mix(in srgb,var(--portal-accent) 72%,rgba(255,255,255,.16));
+  background:linear-gradient(90deg,rgba(3,3,4,.52),rgba(3,3,4,.16) 55%,transparent 100%);
+  box-shadow:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+.anime-universe-portal__panel:after{
+  content:"";
+  position:absolute;
+  left:22px;
+  right:0;
+  bottom:0;
+  height:1px;
+  background:linear-gradient(90deg,rgba(255,255,255,.14),transparent 75%);
+}
+.anime-universe-portal__art{
+  right:-6vw;
+  width:min(82vw,1260px);
+}
+.anime-universe-portal__scene-haze{
+  background:linear-gradient(90deg,rgba(4,4,5,.58) 0%,rgba(4,4,5,.12) 34%,transparent 62%,rgba(4,4,5,.28) 100%);
+}
+.anime-universe-portal__world-marker{
+  position:absolute;
+  left:clamp(22px,3vw,44px);
+  top:clamp(92px,12vh,130px);
+  z-index:17;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:rgba(255,255,255,.34);
+  font-size:.48rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  pointer-events:none;
+}
+.anime-universe-portal__world-marker span{
+  color:var(--portal-accent);
+  font-size:.65rem;
+  font-weight:700;
+}
+.anime-universe-portal__world-marker i{
+  width:26px;
+  height:1px;
+  background:rgba(255,255,255,.22);
+}
+.anime-universe-portal__world-marker b{font-weight:600}
+@media(max-width:700px){
+  .anime-universe-portal__world-marker{
+    left:22px;
+    top:72px;
+  }
+  .anime-universe-portal__panel{
+    padding:15px 0 18px 16px!important;
+    background:linear-gradient(90deg,rgba(3,3,4,.48),transparent 100%)!important;
+  }
+  .anime-universe-portal__panel:after{left:16px}
+  .anime-universe-portal__art{right:-10vw;width:104vw}
+}
+@media(prefers-reduced-motion:reduce){
+  .anime-universe-portal__panel{background:transparent}
+}
