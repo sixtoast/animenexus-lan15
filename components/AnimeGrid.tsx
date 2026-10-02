@@ -9,7 +9,6 @@ type Props = {
   shelf?: string;
   recommendationId?: string;
   source?: string;
-  onPreview?: (anime: Anime, sourceRect: { x: number; y: number; width: number; height: number }) => void;
 };
 
 export function AnimeGrid({
@@ -18,7 +17,6 @@ export function AnimeGrid({
   shelf,
   recommendationId,
   source,
-  onPreview,
 }: Props) {
   if (!items.length) {
     return (
@@ -31,7 +29,7 @@ export function AnimeGrid({
   return (
     <div className="anime-grid">
       {items.map((a, i) => {
-        const card = <AnimeCard key={a.id} anime={a} index={i} onPreview={onPreview ? (sourceRect) => onPreview(a, sourceRect) : undefined} />;
+        const card = <AnimeCard key={a.id} anime={a} index={i} />;
         if (!trackBehaviour) return card;
         return (
           <BehaviourTracker
@@ -42,7 +40,7 @@ export function AnimeGrid({
             recommendationId={recommendationId}
             source={source}
           >
-            <AnimeCard anime={a} index={i} onPreview={onPreview ? (sourceRect) => onPreview(a, sourceRect) : undefined} />
+            <AnimeCard anime={a} index={i} />
           </BehaviourTracker>
         );
       })}
