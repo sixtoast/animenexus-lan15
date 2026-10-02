@@ -32,7 +32,7 @@ function cleanDescription(value: string) {
   return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
-export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier }: Props) {
+function AnimeUniversePortalScene({ anime, sourceRect, onClose, onEnterDossier }: Props) {
   const router = useRouter();
   const closeRef = useRef<HTMLButtonElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
@@ -427,3 +427,59 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier
     </div>
   );
 }
+
+function MobileAnimeUniversePortal({ anime, onClose, onEnterDossier }: Props) {
+  const [closing, setClosing] = useState(false);
+
+  const close = () => {
+    if (closing) return;
+    setClosing(true);
+    window.setTimeout(onClose, 160);
+  };
+
+  const enter = () => {
+    if (closing) return;
+    setClosing(true);
+    window.setTimeout(() => {
+      if (onEnterDossier) onEnterDossier();
+      else window.location.assign(`/anime/${anime.id}`);
+    }, 120);
+  };
+
+  return (
+    <div className={`anime-universe-mobile-portal${closing ? " is-closing" : ""}`} role="dialog" aria-modal="true" aria-label={`${anime.title} universe`}>
+      <button type="button" className="anime-universe-mobile-portal__backdrop" aria-label="Close universe" onClick={close} />
+      <div className="anime-universe-mobile-portal__surface">
+        <div className="anime-universe-mobile-portal__art">
+          <AnimeImage src={anime.image} title={anime.title} decorative priority width={900} height={1200} sizes="100vw" />
+        </div>
+        <div className="anime-universe-mobile-portal__shade" aria-hidden="true" />
+        <header className="anime-universe-mobile-portal__top">
+          <span>ANIMENEXUS / UNIVERSE</span>
+          <button type="button" onClick={close} aria-label="Exit universe">×</button>
+        </header>
+        <main className="anime-universe-mobile-portal__content">
+          <p>{anime.format || "TITLE"} · {anime.status === "RELEASING" ? "ON AIR" : anime.status === "NOT_YET_RELEASED" ? "INCOMING" : "ARCHIVED"}</p>
+          <h1>{anime.title}</h1>
+          {anime.titleNative && anime.titleNative !== anime.title ? <span>{anime.titleNative}</span> : null}
+          <div className="anime-universe-mobile-portal__facts">
+            {anime.score > 0 ? <b>★ {anime.score.toFixed(1)}</b> : null}
+            {anime.year ? <span>{anime.year}</span> : null}
+            {anime.episodes ? <span>{anime.episodes} EP</span> : null}
+          </div>
+          <div className="anime-universe-mobile-portal__actions">
+            <button type="button" className="btn btn-accent" onClick={enter}>Enter full dossier <span>→</span></button>
+            <button type="button" className="btn btn-outline" onClick={close}>Return to discovery</button>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+export function AnimeUniversePortal(props: Props) {
+  const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 700px)").matches;
+  if (isMobile) return <MobileAnimeUniversePortal {...props} />;
+  return <AnimeUniversePortalScene {...props} />;
+}
+
