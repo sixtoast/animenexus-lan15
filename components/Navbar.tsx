@@ -36,6 +36,7 @@ const MORE = [
   { href: "/mood", label: "Moods", poetic: "Intent" },
   { href: "/journey", label: "Journey", poetic: "Archive" },
   { href: "/account", label: "Account", poetic: "Identity" },
+  { href: "/performance", label: "Performance & Effects", poetic: "System" },
 ];
 
 const DOCK = [
