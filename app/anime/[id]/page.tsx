@@ -21,6 +21,7 @@ import { DetailWatchlistChoreography } from "@/components/DetailWatchlistChoreog
 import { AnimeImage } from "@/components/AnimeImage";
 import { DetailCoverMaterial } from "@/components/DetailCoverMaterial";
 import { AnimeUniverseNav } from "@/components/AnimeUniverseNav";
+import { UniverseScrollChoreography } from "@/components/UniverseScrollChoreography";
 import { BingeCalculator } from "@/components/BingeCalculator";
 import { AnimeNotes } from "@/components/AnimeNotes";
 import { DetailAI } from "@/components/DetailAI";
@@ -175,6 +176,7 @@ export default async function AnimeDetailPage({ params }: Props) {
       } as CSSProperties}
     >
       <DetailWatchlistChoreography />
+      <UniverseScrollChoreography />
       <MemoryVisit
         id={anime.id}
         title={anime.title}
