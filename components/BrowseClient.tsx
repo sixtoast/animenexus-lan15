@@ -487,7 +487,20 @@ export function BrowseClient({
           </Link>
           <div className="cinema-browse-feature-copy">
             <p className="cinema-eyebrow">Featured from the archive</p>
-            <h2><Link href={`/anime/${displayItems[0].id}`}>{displayItems[0].title}</Link></h2>
+            <h2>
+              <Link
+                href={`/anime/${displayItems[0].id}`}
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                  e.preventDefault();
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setPortalSourceRect({ x: rect.left, y: rect.top, width: rect.width, height: rect.height });
+                  setPortalAnime(displayItems[0]);
+                }}
+              >
+                {displayItems[0].title}
+              </Link>
+            </h2>
             <p className="cinema-browse-feature-meta">
               {displayItems[0].format} · {displayItems[0].status}
               {displayItems[0].year ? ` · ${displayItems[0].year}` : ""}
