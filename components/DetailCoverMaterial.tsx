@@ -100,7 +100,6 @@ export function DetailCoverMaterial({
     >
       <span className="detail-cover-material__aura" aria-hidden="true" />
       <span className="detail-cover-material__shadow" aria-hidden="true" />
-      <span className="detail-cover-material__spine" aria-hidden="true" />
       {previousCover ? <span className="detail-cover-material__previous" aria-hidden="true" /> : null}
       <span className="detail-cover-material__surface">
         <AnimeImage
