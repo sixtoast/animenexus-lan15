@@ -13,6 +13,7 @@ type Props = {
   anime: Anime;
   sourceRect?: { x: number; y: number; width: number; height: number } | null;
   onClose: () => void;
+  onEnterDossier?: () => void;
 };
 
 type PortalView = "entry" | "figures" | "archive";
@@ -31,7 +32,7 @@ function cleanDescription(value: string) {
   return value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
-export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
+export function AnimeUniversePortal({ anime, sourceRect, onClose, onEnterDossier }: Props) {
   const router = useRouter();
   const closeRef = useRef<HTMLButtonElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
@@ -155,6 +156,10 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
     // to the real detail route so the browser can morph the artwork instead
     // of replacing the portal with a conventional page jump.
     window.setTimeout(() => {
+      if (onEnterDossier) {
+        onEnterDossier();
+        return;
+      }
       withViewTransition(
         () => router.push(`/anime/${anime.id}`),
         {
