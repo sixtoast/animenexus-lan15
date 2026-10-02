@@ -595,3 +595,12 @@ img {
     margin-bottom: 0;
   }
 }
+
+
+/* AnimeNexus Passage: lightweight shared-element dossier transition. */
+@keyframes nx-passage-old{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.985);filter:blur(2px)}}
+@keyframes nx-passage-new{from{opacity:0;transform:scale(1.018);filter:blur(2px)}to{opacity:1;transform:scale(1);filter:blur(0)}}
+html.room-enter-vt::view-transition-old(root){animation:nx-passage-old 520ms cubic-bezier(.22,1,.36,1) both}
+html.room-enter-vt::view-transition-new(root){animation:nx-passage-new 620ms cubic-bezier(.22,1,.36,1) both}
+::view-transition-group(*){animation-duration:620ms;animation-timing-function:cubic-bezier(.22,1,.36,1)}
+@media(prefers-reduced-motion:reduce){html.room-enter-vt::view-transition-old(root),html.room-enter-vt::view-transition-new(root),::view-transition-group(*){animation-duration:1ms}}
