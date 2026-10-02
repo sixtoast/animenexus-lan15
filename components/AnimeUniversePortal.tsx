@@ -264,10 +264,6 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
               sizes="(max-width: 700px) 82vw, 68vw"
             />
           </div>
-          <div className="anime-universe-portal__scene-caption">
-            <span>KEY ART / MEMORY OBJECT</span>
-            <span>{anime.titleNative || anime.titleRomaji || "ARCHIVE IMAGE"}</span>
-          </div>
         </div>
 
         <main className="anime-universe-portal__main">
