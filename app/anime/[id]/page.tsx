@@ -20,6 +20,7 @@ import { AddToWatchlist } from "@/components/AddToWatchlist";
 import { DetailWatchlistChoreography } from "@/components/DetailWatchlistChoreography";
 import { AnimeImage } from "@/components/AnimeImage";
 import { DetailCoverMaterial } from "@/components/DetailCoverMaterial";
+import { AnimeUniverseDirectEntry } from "@/components/AnimeUniverseDirectEntry";
 import { AnimeUniverseNav } from "@/components/AnimeUniverseNav";
 import { UniverseScrollChoreography } from "@/components/UniverseScrollChoreography";
 import { BingeCalculator } from "@/components/BingeCalculator";
@@ -175,6 +176,7 @@ export default async function AnimeDetailPage({ params }: Props) {
         "--detail-banner-art": anime.bannerImage ? `url("${anime.bannerImage}")` : `url("${anime.image}")`,
       } as CSSProperties}
     >
+      <AnimeUniverseDirectEntry anime={anime} />
       <DetailWatchlistChoreography />
       <UniverseScrollChoreography />
       <MemoryVisit
