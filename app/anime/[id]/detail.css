@@ -2846,3 +2846,75 @@ body:has(.detail-cover-material.artwork-role--promotional) {
   .cinema-detail-page .universe-characters-space .char-card,
   .cinema-detail-page .universe-characters-space .char-card img{transition:none}
 }
+
+/* PASS 8 — SCROLL CHOREOGRAPHY
+   Sections now share one continuous camera language instead of appearing as
+   independent blocks. Scroll-driven motion is progressive and intentionally subtle. */
+.cinema-detail-page .detail-wrap{
+  --universe-ease:cubic-bezier(.16,1,.3,1);
+}
+.cinema-detail-page .universe-space{
+  position:relative;
+  isolation:isolate;
+}
+.cinema-detail-page .universe-space::before{
+  transition:opacity .9s ease,transform 1.2s var(--universe-ease);
+}
+.cinema-detail-page .universe-space + .universe-space{
+  margin-top:clamp(8vh,12vw,18vh);
+}
+@supports(animation-timeline:view()){
+  .cinema-detail-page .universe-space{
+    animation:universe-space-enter linear both;
+    animation-timeline:view();
+    animation-range:entry 0% cover 38%;
+  }
+  .cinema-detail-page .universe-space > .universe-space__header,
+  .cinema-detail-page .universe-space > .universe-story-space__layout,
+  .cinema-detail-page .universe-space > .universe-identity-space__intro,
+  .cinema-detail-page .universe-space > .universe-identity-space__grid,
+  .cinema-detail-page .universe-space > .universe-characters-space__intro,
+  .cinema-detail-page .universe-space > .char-grid{
+    animation:universe-content-enter linear both;
+    animation-timeline:view();
+    animation-range:entry 2% cover 42%;
+  }
+  .cinema-detail-page .universe-space::after{
+    animation:universe-light-drift linear both;
+    animation-timeline:view();
+    animation-range:cover 0% exit 100%;
+  }
+}
+@keyframes universe-space-enter{
+  from{opacity:.56;transform:translate3d(0,42px,0) scale(.985)}
+  to{opacity:1;transform:translate3d(0,0,0) scale(1)}
+}
+@keyframes universe-content-enter{
+  from{opacity:0;transform:translate3d(0,30px,0)}
+  to{opacity:1;transform:translate3d(0,0,0)}
+}
+@keyframes universe-light-drift{
+  from{transform:translate3d(-4%,0,0) scale(.96);opacity:.15}
+  to{transform:translate3d(4%,0,0) scale(1.04);opacity:.55}
+}
+/* Create visual breathing room between scenes without adding ornamental UI. */
+.cinema-detail-page .universe-story-space{
+  scroll-margin-top:92px;
+}
+.cinema-detail-page .universe-identity-space,
+.cinema-detail-page .universe-characters-space{
+  scroll-margin-top:92px;
+}
+@media(max-width:700px){
+  .cinema-detail-page .universe-space + .universe-space{margin-top:10vh}
+  .cinema-detail-page .universe-story-space,
+  .cinema-detail-page .universe-identity-space,
+  .cinema-detail-page .universe-characters-space{scroll-margin-top:72px}
+}
+@media(prefers-reduced-motion:reduce){
+  .cinema-detail-page .universe-space,
+  .cinema-detail-page .universe-space > *,
+  .cinema-detail-page .universe-space::after{
+    animation:none!important;
+  }
+}
