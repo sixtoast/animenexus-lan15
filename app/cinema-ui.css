@@ -349,7 +349,6 @@ html[data-theme="light"] body{background:#eee7dd;color:#1b1713}html[data-theme="
   .nexus-index-cut-link{min-width:170px;padding-left:18px}
 }
 @media(max-width:700px){
-  .nexus-opening-subject-backplate{inset:5% -5% -3% 7%}
   .nexus-opening-subject-echo{display:none}
   .nexus-index-cut{display:grid;grid-template-columns:1fr;align-content:center;gap:25px}
   .nexus-index-cut-link{margin-left:0;padding:16px 0 0;border-left:0;border-top:1px solid rgba(244,239,231,.2);min-width:0}
