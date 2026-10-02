@@ -35,6 +35,57 @@ function focusables(root: HTMLElement) {
   ).filter((el) => !el.hasAttribute("disabled") && el.offsetParent !== null);
 }
 
+let modalLockCount = 0;
+let modalLockScrollY = 0;
+let modalLockSnapshot: {
+  overflow: string;
+  position: string;
+  top: string;
+  left: string;
+  right: string;
+  width: string;
+} | null = null;
+
+function acquireModalScrollLock() {
+  if (typeof document === "undefined") return;
+  const body = document.body;
+  if (modalLockCount === 0) {
+    modalLockScrollY = window.scrollY;
+    modalLockSnapshot = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${modalLockScrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+  }
+  modalLockCount += 1;
+}
+
+function releaseModalScrollLock() {
+  if (typeof document === "undefined" || modalLockCount <= 0) return;
+  modalLockCount -= 1;
+  if (modalLockCount !== 0) return;
+
+  const body = document.body;
+  const snapshot = modalLockSnapshot;
+  modalLockSnapshot = null;
+  body.style.overflow = snapshot?.overflow ?? "";
+  body.style.position = snapshot?.position ?? "";
+  body.style.top = snapshot?.top ?? "";
+  body.style.left = snapshot?.left ?? "";
+  body.style.right = snapshot?.right ?? "";
+  body.style.width = snapshot?.width ?? "";
+  window.scrollTo({ top: modalLockScrollY, left: window.scrollX, behavior: "auto" });
+}
+
 export function Modal({
   open,
   onClose,
@@ -64,39 +115,8 @@ export function Modal({
 
   useEffect(() => {
     if (!open) return;
-
-    // Lock the document at its exact current position while the modal owns
-    // interaction. Merely setting body overflow:hidden is not sufficient on
-    // mobile Safari and some Chromium layouts: pointer/focus interaction
-    // inside a fixed dialog can cause the page scroll container to be
-    // re-anchored to the element that originally opened the dialog.
-    const scrollY = window.scrollY;
-    const body = document.body;
-    const previous = {
-      overflow: body.style.overflow,
-      position: body.style.position,
-      top: body.style.top,
-      left: body.style.left,
-      right: body.style.right,
-      width: body.style.width,
-    };
-
-    body.style.position = "fixed";
-    body.style.top = `-${scrollY}px`;
-    body.style.left = "0";
-    body.style.right = "0";
-    body.style.width = "100%";
-    body.style.overflow = "hidden";
-
-    return () => {
-      body.style.overflow = previous.overflow;
-      body.style.position = previous.position;
-      body.style.top = previous.top;
-      body.style.left = previous.left;
-      body.style.right = previous.right;
-      body.style.width = previous.width;
-      window.scrollTo({ top: scrollY, left: window.scrollX, behavior: "auto" });
-    };
+    acquireModalScrollLock();
+    return () => releaseModalScrollLock();
   }, [open]);
 
   // Open / close cues once per transition
