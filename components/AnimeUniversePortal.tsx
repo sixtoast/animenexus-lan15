@@ -48,20 +48,24 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
   const release = releaseLabel(anime);
   const description = cleanDescription(anime.description || "");
   const activeCharacter = characters.find((c) => c.id === selectedCharacter) || null;
+  const viewportWidth = typeof window !== "undefined" ? window.innerWidth : 1440;
+  const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 900;
+  const source = sourceRect ?? { x: viewportWidth / 2 - 80, y: viewportHeight / 2 - 120, width: 160, height: 240 };
   const portalVars = {
     ...materialVars,
-    "--portal-source-x": `${sourceRect?.x ?? 0}px`,
-    "--portal-source-y": `${sourceRect?.y ?? 0}px`,
-    "--portal-source-w": `${sourceRect?.width ?? 160}px`,
-    "--portal-source-h": `${sourceRect?.height ?? 240}px`,
-    "--portal-source-cx": `${((sourceRect?.x ?? window.innerWidth / 2 - 80) + (sourceRect?.width ?? 160) / 2) - 12}px`,
-    "--portal-source-cy": `${((sourceRect?.y ?? window.innerHeight / 2 - 120) + (sourceRect?.height ?? 240) / 2) - 12}px`,
-    "--portal-source-scale": `${Math.max(.12, Math.min(.42, (sourceRect?.width ?? 160) / 520))}`,
+    "--portal-source-x": `${source.x}px`,
+    "--portal-source-y": `${source.y}px`,
+    "--portal-source-w": `${source.width}px`,
+    "--portal-source-h": `${source.height}px`,
+    "--portal-source-cx": `${source.x + source.width / 2 - 12}px`,
+    "--portal-source-cy": `${source.y + source.height / 2 - 12}px`,
+    "--portal-source-scale": `${Math.max(.12, Math.min(.42, source.width / 520))}`,
   } as CSSProperties;
 
   const requestClose = () => {
     if (isExiting) return;
     setIsExiting(true);
+    playCue("modal_close", { gain: 0.62 });
     window.setTimeout(onClose, 420);
   };
 
@@ -88,13 +92,14 @@ export function AnimeUniversePortal({ anime, sourceRect, onClose }: Props) {
     window.addEventListener("keydown", onKey);
     playCue("modal_open", { gain: 0.72 });
     // The source card hands its position to the portal as a short spatial travel cue.
-    const sourceX = sourceRect ? (sourceRect.x + sourceRect.width / 2) / window.innerWidth : 0.5;
+    const sourceX = (source.x + source.width / 2) / window.innerWidth;
     playSpatialTravel(sourceX * 2 - 1, 0.65);
     const arrivalTimer = window.setTimeout(() => playCue("resonance", { gain: 0.48 }), 760);
 
     return () => {
       window.clearTimeout(focusTimer);
       window.clearTimeout(arrivalTimer);
+      cancelAnimationFrame(rafRef.current);
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = previousOverflow;
       document.body.style.position = previousPosition;
