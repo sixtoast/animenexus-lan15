@@ -2918,3 +2918,20 @@ body:has(.detail-cover-material.artwork-role--promotional) {
     animation:none!important;
   }
 }
+
+/* PASS 8 — SCROLL CHOREOGRAPHY */
+.cinema-detail-page{--hero-scroll:0}
+.cinema-detail-page .detail-world__backdrop{transform:scale(calc(1.08 + var(--hero-scroll) * .025)) translate3d(0,calc(var(--hero-scroll) * -1.5vh),0)}
+.cinema-detail-page .detail-world__keyart{transform:translate3d(calc(var(--hero-scroll) * -1.2vw),calc(var(--hero-scroll) * -1vh),0) scale(calc(1.02 + var(--hero-scroll) * .025))}
+.cinema-detail-page .universe-space{--universe-reveal:0;will-change:opacity,transform;transition:opacity .8s ease,transform .9s cubic-bezier(.2,.7,.2,1)}
+.cinema-detail-page .universe-space:not(.is-universe-visible){opacity:.46;transform:translate3d(0,18px,0)}
+.cinema-detail-page .universe-space.is-universe-visible{opacity:1;transform:translate3d(0,0,0)}
+.cinema-detail-page .universe-space.is-universe-visible::after{opacity:calc(.35 + var(--universe-reveal) * .65)}
+.cinema-detail-page .universe-story-space,.cinema-detail-page .universe-identity-space,.cinema-detail-page .universe-characters-space{perspective:1000px}
+@media(max-width:700px){
+ .cinema-detail-page .universe-space:not(.is-universe-visible){opacity:.62;transform:translate3d(0,10px,0)}
+ .cinema-detail-page .detail-world__keyart{transform:translate3d(calc(var(--hero-scroll) * -.6vw),calc(var(--hero-scroll) * -.5vh),0) scale(calc(1.02 + var(--hero-scroll) * .015))}
+}
+@media(prefers-reduced-motion:reduce){
+ .cinema-detail-page .detail-world__backdrop,.cinema-detail-page .detail-world__keyart,.cinema-detail-page .universe-space{transition:none;transform:none}
+}
