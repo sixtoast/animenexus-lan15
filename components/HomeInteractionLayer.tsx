@@ -68,8 +68,7 @@ export function HomeInteractionLayer() {
     // Touch/coarse-pointer devices intentionally do not use tactile tilt. Avoid
     // allocating per-card pointer listeners on those devices at all.
     if (finePointer) {
-      tactileSelectors.forEach((selector) => {
-        home.querySelectorAll<HTMLElement>(selector).forEach((card) => {
+      home.querySelectorAll<HTMLElement>(tactileSelectors.join(", ")).forEach((card) => {
           const move = (event: PointerEvent) => {
             if (!finePointer || reduceQuery.matches) return;
             const rect = card.getBoundingClientRect();
@@ -92,7 +91,6 @@ export function HomeInteractionLayer() {
             card.removeEventListener("pointermove", move);
             card.removeEventListener("pointerleave", leave);
           });
-        });
       });
     }
 
