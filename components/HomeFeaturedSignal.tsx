@@ -9,11 +9,19 @@ export function HomeFeaturedSignal({ candidates }: { candidates: Anime[] }) {
   const anime = pool[0];
   if (!anime) return null;
   const personalised = ready && entries.length >= 2;
+  const frameArt = { backgroundImage: `url("${anime.image}")` };
+
   return (
     <Link href={"/anime/" + anime.id} className="nexus-opening-subject" aria-label={"Open featured title " + anime.title}>
       <div className="nexus-opening-subject-image">
         <img className="nexus-opening-subject-echo" src={anime.image} alt="" aria-hidden />
         <img src={anime.image} alt="" />
+        <span className="nexus-frame-break" aria-hidden="true">
+          <span className="nexus-frame-break-panel nexus-frame-break-panel--tl" style={frameArt} />
+          <span className="nexus-frame-break-panel nexus-frame-break-panel--tr" style={frameArt} />
+          <span className="nexus-frame-break-panel nexus-frame-break-panel--bl" style={frameArt} />
+          <span className="nexus-frame-break-panel nexus-frame-break-panel--br" style={frameArt} />
+        </span>
       </div>
       <div className="nexus-opening-subject-info">
         <span>{personalised ? "FEATURED SIGNAL · FOR YOU" : "FEATURED SIGNAL"}</span>
