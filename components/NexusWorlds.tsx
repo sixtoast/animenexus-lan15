@@ -191,6 +191,7 @@ export function NexusWorlds({ candidates }: Props) {
 
     const radiusX = Math.min(...geometry.map(g => g.maxX), rect.width * (mobile ? 0.44 : 0.46));
     const radiusY = Math.min(...geometry.map(g => g.maxY), rect.height * (mobile ? 0.36 : 0.40));
+    const motionPositions = new Array<{ x: number; y: number }>(geometry.length);
     const rankDenominator = Math.max(1, nodes.length - 1);
     const modeTargets = new Map<NexusFieldMode, Array<{ x: number; y: number }>>();
     const modes: NexusFieldMode[] = ["discovery", "recommendations", "mood", "watchlist", "franchise", "artwork", "watch-order"];
@@ -463,6 +464,7 @@ export function NexusWorlds({ candidates }: Props) {
           }
         }
 
+        motionPositions[index] = { x, y };
         node.style.setProperty("--node-motion-x", `${x.toFixed(2)}px`);
         node.style.setProperty("--node-motion-y", `${y.toFixed(2)}px`);
         const zDepth = ((scale - 0.66) / 0.52 - 0.5) * 42;
@@ -481,10 +483,10 @@ export function NexusWorlds({ candidates }: Props) {
       connectionLines.forEach((line, index) => {
         const g = geometry[index];
         if (!g) return;
-        const dx = Number.parseFloat(g.node.style.getPropertyValue('--node-motion-x') || '0');
-        const dy = Number.parseFloat(g.node.style.getPropertyValue('--node-motion-y') || '0');
-        const x = ((g.baseX + dx) / rect.width) * 100;
-        const y = ((g.baseY + dy) / rect.height) * 100;
+        const position = motionPositions[index];
+        if (!position) return;
+        const x = ((g.baseX + position.x) / rect.width) * 100;
+        const y = ((g.baseY + position.y) / rect.height) * 100;
         line.setAttribute('x2', x.toFixed(2));
         line.setAttribute('y2', y.toFixed(2));
         line.setAttribute('x1', '50');
