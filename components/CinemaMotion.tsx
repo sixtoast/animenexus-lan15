@@ -74,51 +74,53 @@ export function CinemaMotion() {
     const updateMotion = () => {
       raf = 0;
       const y = window.scrollY;
+      const viewportHeight = window.innerHeight;
       scrollVelocity += (y - lastScroll - scrollVelocity) * 0.16;
       lastScroll = y;
 
-      if (!reduced()) {
-        if (opening && openingBg) {
-          const progress = Math.min(y / Math.max(opening.offsetHeight, 1), 1);
-          openingBg.style.setProperty("--cinema-scroll-y", `${progress * 90}px`);
-          openingBg.style.setProperty("--cinema-scroll-scale", `${1.045 + progress * 0.075}`);
-          opening.style.setProperty("--cinema-opening-progress", String(progress));
-          opening.style.setProperty("--cinema-scroll-velocity", String(Math.max(-18, Math.min(18, scrollVelocity))));
-        }
+      if (reduced()) return;
 
-        if (openingSubject) {
-          const rect = openingSubject.getBoundingClientRect();
-          if (rect.bottom > 0 && rect.top < window.innerHeight) {
-            const centre = rect.top + rect.height / 2;
-            const drift = (centre - window.innerHeight / 2) / window.innerHeight;
-            openingSubject.style.setProperty("--cinema-subject-y", `${drift * -15}px`);
-          }
-        }
+      // Read layout first, then write styles. Mixing reads and writes per scene can
+      // force the browser to recalculate layout repeatedly during a scroll frame.
+      const openingHeight = opening && openingBg ? Math.max(opening.offsetHeight, 1) : 1;
+      const subjectRect = openingSubject?.getBoundingClientRect();
+      const sceneRects = scenes.map((scene) => ({ scene, rect: scene.getBoundingClientRect() }));
+      const cutRect = indexCut?.getBoundingClientRect();
 
-        scenes.forEach((scene) => {
-          const rect = scene.getBoundingClientRect();
-          const centre = rect.top + rect.height / 2;
-          const distance = (centre - window.innerHeight / 2) / Math.max(window.innerHeight, rect.height);
-          const progress = Math.max(-1, Math.min(1, distance));
-          scene.style.setProperty("--scene-progress", progress.toFixed(3));
-          scene.style.setProperty("--scene-energy", Math.min(1, Math.abs(progress)).toFixed(3));
-        });
+      if (opening && openingBg) {
+        const progress = Math.min(y / openingHeight, 1);
+        openingBg.style.setProperty("--cinema-scroll-y", `${progress * 90}px`);
+        openingBg.style.setProperty("--cinema-scroll-scale", `${1.045 + progress * 0.075}`);
+        opening.style.setProperty("--cinema-opening-progress", String(progress));
+        opening.style.setProperty("--cinema-scroll-velocity", String(Math.max(-18, Math.min(18, scrollVelocity))));
+      }
 
-        if (indexCut) {
-          const rect = indexCut.getBoundingClientRect();
-          const focus = Math.min(
-            1,
-            Math.max(
-              0,
-              1 - Math.abs(rect.top + rect.height / 2 - window.innerHeight / 2) /
-                (window.innerHeight + rect.height)
-            )
-          );
-          indexCut.style.setProperty("--cinema-cut-focus", String(focus));
-        }
+      if (openingSubject && subjectRect && subjectRect.bottom > 0 && subjectRect.top < viewportHeight) {
+        const centre = subjectRect.top + subjectRect.height / 2;
+        const drift = (centre - viewportHeight / 2) / viewportHeight;
+        openingSubject.style.setProperty("--cinema-subject-y", `${drift * -15}px`);
+      }
+
+      sceneRects.forEach(({ scene, rect }) => {
+        const centre = rect.top + rect.height / 2;
+        const distance = (centre - viewportHeight / 2) / Math.max(viewportHeight, rect.height);
+        const progress = Math.max(-1, Math.min(1, distance));
+        scene.style.setProperty("--scene-progress", progress.toFixed(3));
+        scene.style.setProperty("--scene-energy", Math.min(1, Math.abs(progress)).toFixed(3));
+      });
+
+      if (indexCut && cutRect) {
+        const focus = Math.min(
+          1,
+          Math.max(
+            0,
+            1 - Math.abs(cutRect.top + cutRect.height / 2 - viewportHeight / 2) /
+              (viewportHeight + cutRect.height)
+          )
+        );
+        indexCut.style.setProperty("--cinema-cut-focus", String(focus));
       }
     };
-
     const onScroll = () => {
       if (!raf) raf = window.requestAnimationFrame(updateMotion);
     };
