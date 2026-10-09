@@ -108,7 +108,7 @@ import "./rive.css";
 import "./tool-identity.css";
 import "./restraint.css";
 import "./cinema-ui.css";
-import "./anime-universe-portal.css";
+
 import "./nexus-navigation-field.css";
 import "./nexus-intelligence-field.css";
 
