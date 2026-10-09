@@ -373,8 +373,23 @@ export function NexusWorlds({ candidates }: Props) {
           const travelModeY = 1 + travelTarget.y * (aiPulsing ? pulseMorph : 1);
           const travelRadiusX = radiusX * travelRankWeight * travelModeX * (1 - Math.abs(pointerX) * 0.035);
           const travelRadiusY = radiusY * travelRankWeight * travelModeY * (1 - Math.abs(pointerY) * 0.025);
-          const targetX = centreX + Math.cos(angle) * travelRadiusX - baseX;
-          const targetY = centreY + Math.sin(angle) * travelRadiusY - baseY;
+          // Match the orbit phase's centre offset and viewport-safe clamp here,
+          // not only its ellipse. Without this, the final travel frame can land
+          // outside the safe bounds and jump when the orbit phase clamps it.
+          const travelCentreX = centreX + pointerX * 18;
+          const travelCentreY = centreY + pointerY * 12;
+          const safeTargetX = clamp(
+            travelCentreX + Math.cos(angle) * travelRadiusX,
+            node.offsetWidth / 2 + 6,
+            rect.width - node.offsetWidth / 2 - 6,
+          );
+          const safeTargetY = clamp(
+            travelCentreY + Math.sin(angle) * travelRadiusY,
+            node.offsetHeight / 2 + 12,
+            rect.height - node.offsetHeight / 2 - 18,
+          );
+          const targetX = safeTargetX - baseX;
+          const targetY = safeTargetY - baseY;
           const startX = lineX - baseX;
           const startY = lineY - baseY;
           const side = index % 2 === 0 ? -1 : 1;
