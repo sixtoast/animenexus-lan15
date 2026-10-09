@@ -161,6 +161,9 @@ export function NexusWorlds({ candidates }: Props) {
     const delayStep = mobile ? 70 : 90;
 
     let raf = 0;
+    let pointerStyleRaf = 0;
+    let pendingPointerX = 0;
+    let pendingPointerY = 0;
     let previousNow = performance.now();
     let orbitPhase = 0;
     let angularVelocity = 0;
@@ -231,10 +234,17 @@ export function NexusWorlds({ candidates }: Props) {
       const pointerX = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
       const pointerY = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
       pointerRef.current = { x: pointerX, y: pointerY, active: true };
-      field.style.setProperty("--world-pointer-x", pointerX.toFixed(3));
-      field.style.setProperty("--world-pointer-y", pointerY.toFixed(3));
-      field.style.setProperty("--world-x", (pointerX * 3.5).toFixed(2) + "px");
-      field.style.setProperty("--world-y", (pointerY * 3.5).toFixed(2) + "px");
+      pendingPointerX = pointerX;
+      pendingPointerY = pointerY;
+      if (!pointerStyleRaf) {
+        pointerStyleRaf = window.requestAnimationFrame(() => {
+          pointerStyleRaf = 0;
+          field.style.setProperty("--world-pointer-x", pendingPointerX.toFixed(3));
+          field.style.setProperty("--world-pointer-y", pendingPointerY.toFixed(3));
+          field.style.setProperty("--world-x", (pendingPointerX * 3.5).toFixed(2) + "px");
+          field.style.setProperty("--world-y", (pendingPointerY * 3.5).toFixed(2) + "px");
+        });
+      }
       if (!dragRef.current.active) return;
       const now = performance.now();
       const current = Number(field.dataset.orbitDrag || "0");
@@ -498,6 +508,7 @@ export function NexusWorlds({ candidates }: Props) {
     return () => {
       motionAbort = true;
       window.cancelAnimationFrame(raf);
+      if (pointerStyleRaf) window.cancelAnimationFrame(pointerStyleRaf);
       field.removeEventListener("pointermove", onDragMove);
       field.removeEventListener("pointerleave", onPointerLeave);
       field.removeEventListener("pointerdown", onDragStart);
