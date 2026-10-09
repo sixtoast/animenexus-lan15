@@ -23,7 +23,6 @@ import "./cinema-motion-v4.css";
 import "./home-masterpiece.css";
 import "./desk-notes.css";
 import "./tonight-intent.css";
-import "./frame-break.css";
 
 export const dynamic = "force-dynamic";
 
