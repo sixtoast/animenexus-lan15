@@ -1,0 +1,76 @@
+/* FRAME BREAK — a scroll-linked editorial rupture inside the existing featured artwork.
+   It reuses CinemaMotion's existing progress variable; no second scroll controller. */
+.nexus-opening-subject-image {
+  position: relative;
+  isolation: isolate;
+}
+
+.nexus-frame-break {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: block;
+  pointer-events: none;
+  overflow: visible;
+  opacity: clamp(0, calc(var(--cinema-opening-progress, 0) * 2.1), 1);
+}
+
+.nexus-frame-break-panel {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-repeat: no-repeat;
+  background-size: 200% 200%;
+  backface-visibility: hidden;
+  will-change: transform, clip-path;
+  transition: filter .35s ease;
+}
+
+.nexus-frame-break-panel--tl {
+  background-position: left top;
+  clip-path: inset(0 50% 50% 0);
+  transform: translate3d(calc(var(--cinema-opening-progress, 0) * -32px), calc(var(--cinema-opening-progress, 0) * -24px), 0) rotate(calc(var(--cinema-opening-progress, 0) * -2deg));
+}
+.nexus-frame-break-panel--tr {
+  background-position: right top;
+  clip-path: inset(0 0 50% 50%);
+  transform: translate3d(calc(var(--cinema-opening-progress, 0) * 34px), calc(var(--cinema-opening-progress, 0) * -18px), 0) rotate(calc(var(--cinema-opening-progress, 0) * 1.5deg));
+}
+.nexus-frame-break-panel--bl {
+  background-position: left bottom;
+  clip-path: inset(50% 50% 0 0);
+  transform: translate3d(calc(var(--cinema-opening-progress, 0) * -25px), calc(var(--cinema-opening-progress, 0) * 28px), 0) rotate(calc(var(--cinema-opening-progress, 0) * 1.2deg));
+}
+.nexus-frame-break-panel--br {
+  background-position: right bottom;
+  clip-path: inset(50% 0 0 50%);
+  transform: translate3d(calc(var(--cinema-opening-progress, 0) * 30px), calc(var(--cinema-opening-progress, 0) * 26px), 0) rotate(calc(var(--cinema-opening-progress, 0) * -1.7deg));
+}
+
+.nexus-opening-subject-image > img:not(.nexus-opening-subject-echo) {
+  opacity: calc(1 - var(--cinema-opening-progress, 0));
+  transition: opacity .12s linear;
+}
+
+@media (max-width: 700px) {
+  .nexus-frame-break-panel--tl {
+    transform: translate3d(calc(var(--cinema-opening-progress, 0) * -12px), calc(var(--cinema-opening-progress, 0) * -10px), 0) rotate(calc(var(--cinema-opening-progress, 0) * -1deg));
+  }
+  .nexus-frame-break-panel--tr {
+    transform: translate3d(calc(var(--cinema-opening-progress, 0) * 13px), calc(var(--cinema-opening-progress, 0) * -8px), 0) rotate(calc(var(--cinema-opening-progress, 0) * 1deg));
+  }
+  .nexus-frame-break-panel--bl {
+    transform: translate3d(calc(var(--cinema-opening-progress, 0) * -10px), calc(var(--cinema-opening-progress, 0) * 12px), 0) rotate(calc(var(--cinema-opening-progress, 0) * .8deg));
+  }
+  .nexus-frame-break-panel--br {
+    transform: translate3d(calc(var(--cinema-opening-progress, 0) * 12px), calc(var(--cinema-opening-progress, 0) * 11px), 0) rotate(calc(var(--cinema-opening-progress, 0) * -1deg));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nexus-frame-break { display: none; }
+  .nexus-opening-subject-image > img:not(.nexus-opening-subject-echo) {
+    opacity: 1;
+    transition: none;
+  }
+}
