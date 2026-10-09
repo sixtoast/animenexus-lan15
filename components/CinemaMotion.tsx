@@ -129,16 +129,19 @@ export function CinemaMotion() {
     const cleanups: Array<() => void> = [];
 
     if (finePointer && !reduced()) {
+      let pointerTarget: EventTarget | null = null;
       const movePointer = (event: PointerEvent) => {
         pointerX = event.clientX;
         pointerY = event.clientY;
-        root.style.setProperty("--cursor-x", `${pointerX}px`);
-        root.style.setProperty("--cursor-y", `${pointerY}px`);
+        pointerTarget = event.target;
 
+        // Coalesce high-frequency pointer events into one visual update per frame.
         if (!cursorRaf) {
           cursorRaf = window.requestAnimationFrame(() => {
             cursorRaf = 0;
-            const target = (event.target as Element | null)?.closest<HTMLElement>(
+            root.style.setProperty("--cursor-x", `${pointerX}px`);
+            root.style.setProperty("--cursor-y", `${pointerY}px`);
+            const target = (pointerTarget as Element | null)?.closest<HTMLElement>(
               ".nexus-index-card, .nexus-archive-item, .nexus-world-node, .nexus-opening-subject, .nexus-button, .nexus-index-cut-link"
             );
             body.classList.toggle("cinema-cursor-focus", Boolean(target));
