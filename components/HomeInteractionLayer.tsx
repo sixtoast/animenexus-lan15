@@ -65,32 +65,36 @@ export function HomeInteractionLayer() {
       ".nexus-catalog-card",
       ".nexus-world-node-art",
     ];
-    tactileSelectors.forEach((selector) => {
-      home.querySelectorAll<HTMLElement>(selector).forEach((card) => {
-        const move = (event: PointerEvent) => {
-          if (!finePointer || reduceQuery.matches) return;
-          const rect = card.getBoundingClientRect();
-          const x = ((event.clientX - rect.left) / Math.max(rect.width, 1) - 0.5) * 2;
-          const y = ((event.clientY - rect.top) / Math.max(rect.height, 1) - 0.5) * 2;
-          card.style.setProperty("--tilt-x", (-y * 3.8).toFixed(2) + "deg");
-          card.style.setProperty("--tilt-y", (x * 5.2).toFixed(2) + "deg");
-          card.style.setProperty("--mag-x", (x * 12).toFixed(1) + "px");
-          card.style.setProperty("--mag-y", (y * 9).toFixed(1) + "px");
-        };
-        const leave = () => {
-          card.style.setProperty("--tilt-x", "0deg");
-          card.style.setProperty("--tilt-y", "0deg");
-          card.style.setProperty("--mag-x", "0px");
-          card.style.setProperty("--mag-y", "0px");
-        };
-        card.addEventListener("pointermove", move, { passive: true });
-        card.addEventListener("pointerleave", leave);
-        cleanups.push(() => {
-          card.removeEventListener("pointermove", move);
-          card.removeEventListener("pointerleave", leave);
+    // Touch/coarse-pointer devices intentionally do not use tactile tilt. Avoid
+    // allocating per-card pointer listeners on those devices at all.
+    if (finePointer) {
+      tactileSelectors.forEach((selector) => {
+        home.querySelectorAll<HTMLElement>(selector).forEach((card) => {
+          const move = (event: PointerEvent) => {
+            if (!finePointer || reduceQuery.matches) return;
+            const rect = card.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / Math.max(rect.width, 1) - 0.5) * 2;
+            const y = ((event.clientY - rect.top) / Math.max(rect.height, 1) - 0.5) * 2;
+            card.style.setProperty("--tilt-x", (-y * 3.8).toFixed(2) + "deg");
+            card.style.setProperty("--tilt-y", (x * 5.2).toFixed(2) + "deg");
+            card.style.setProperty("--mag-x", (x * 12).toFixed(1) + "px");
+            card.style.setProperty("--mag-y", (y * 9).toFixed(1) + "px");
+          };
+          const leave = () => {
+            card.style.setProperty("--tilt-x", "0deg");
+            card.style.setProperty("--tilt-y", "0deg");
+            card.style.setProperty("--mag-x", "0px");
+            card.style.setProperty("--mag-y", "0px");
+          };
+          card.addEventListener("pointermove", move, { passive: true });
+          card.addEventListener("pointerleave", leave);
+          cleanups.push(() => {
+            card.removeEventListener("pointermove", move);
+            card.removeEventListener("pointerleave", leave);
+          });
         });
       });
-    });
+    }
 
     home.querySelectorAll<HTMLElement>(".home-rail").forEach((rail) => {
       if (!finePointer) return;
