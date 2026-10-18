@@ -11,7 +11,7 @@ export const metadata = {
 
 export default function WatchlistPage() {
   return (
-    <main className="cinema-watchlist-page">
+    <main className="cinema-watchlist-page watchlist-page">
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
           <div className="hero-badge">Watchlist · living queue</div>
