@@ -232,3 +232,93 @@ a { text-underline-offset: .22em; }
 [data-theme="light"] .nexus-opening {
   background: #090a0c;
 }
+
+
+/* Shared application surfaces: browse, search, watchlist and detail utilities.
+   Use the existing theme tokens rather than hard-coding the homepage palette. */
+:where(.hero, .page-header, .browse-header, .watchlist-header) {
+  padding-block: clamp(32px, 5vw, 72px) 28px;
+}
+:where(.hero h1, .page-header h1, .browse-header h1, .watchlist-header h1) {
+  line-height: .98;
+  letter-spacing: -.055em;
+  text-wrap: balance;
+}
+:where(.section-head, .section-heading, .page-section-heading) {
+  border-bottom: 1px solid var(--color-border, var(--nx-rule));
+  padding-bottom: 12px;
+  margin-bottom: 22px;
+}
+:where(.section-head h2, .section-heading h2, .page-section-heading h2) {
+  letter-spacing: -.035em;
+  line-height: 1.12;
+}
+.navbar {
+  background: var(--color-primary, #090a0c);
+  border-bottom-color: var(--color-border, var(--nx-rule));
+  padding-block: 10px;
+}
+.navbar-inner { min-height: 42px; }
+.logo { letter-spacing: -.045em; }
+:where(.nav-links a, .navbar a) { transition: color .18s ease, opacity .18s ease; }
+:where(.btn, .btn-accent, .btn-outline, .feed-tab, .filter-input, .filter-panel, .state-box) {
+  box-shadow: none;
+}
+:where(.btn, .btn-accent, .btn-outline) {
+  border-radius: 3px;
+  min-height: 42px;
+  transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+}
+.btn-accent {
+  background: var(--color-accent);
+  color: var(--color-primary);
+  border-color: var(--color-accent);
+}
+.btn-accent:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  color: var(--color-primary);
+  transform: none;
+  box-shadow: none;
+}
+.btn-outline:hover { transform: none; }
+:where(.feed-tabs, .filter-actions) { gap: 6px; }
+.feed-tab {
+  border-radius: 3px;
+  background: transparent;
+  padding: 8px 12px;
+  font-weight: 550;
+}
+.feed-tab.active {
+  background: var(--color-accent);
+  color: var(--color-primary);
+  border-color: var(--color-accent);
+}
+.filter-panel {
+  border-radius: 3px;
+  padding: clamp(14px, 2vw, 22px);
+}
+.filter-input {
+  border-radius: 3px;
+  min-height: 42px;
+}
+.filter-input:focus {
+  box-shadow: 0 0 0 2px var(--color-accent-glow);
+}
+.state-box {
+  border-radius: 3px;
+  text-align: left;
+}
+:where(.anime-card, .anime-tile) { border-color: var(--color-border, var(--nx-rule)); }
+.anime-card:hover { transform: translateY(-3px); }
+.anime-card .card-tag {
+  border-radius: 2px;
+  backdrop-filter: none;
+  background: rgba(9,10,12,.9);
+}
+@media (max-width: 640px) {
+  .navbar { padding-block: 8px; }
+  :where(.hero, .page-header, .browse-header, .watchlist-header) {
+    padding-block: 26px 20px;
+  }
+}
