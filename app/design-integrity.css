@@ -322,3 +322,159 @@ a { text-underline-offset: .22em; }
     padding-block: 26px 20px;
   }
 }
+
+
+/* Route-specific composition: browse is a catalogue, watchlist is a personal queue.
+   Do not force either page into the homepage's cinematic hero template. */
+.browse-page .hero,
+.watchlist-page .hero {
+  padding: clamp(36px, 6vw, 76px) 0 24px;
+}
+.browse-page .hero .container,
+.watchlist-page .hero .container {
+  max-width: 1120px;
+}
+.browse-page .hero-badge,
+.watchlist-page .hero-badge {
+  display: block;
+  width: fit-content;
+  padding: 0;
+  margin: 0 0 18px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-accent);
+  font-size: .68rem;
+  font-weight: 650;
+  letter-spacing: .16em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+.browse-page .hero h1,
+.watchlist-page .hero h1 {
+  max-width: 14ch;
+  font-size: clamp(2.8rem, 6.4vw, 5.8rem);
+  font-weight: 500;
+  line-height: .94;
+  letter-spacing: -.055em;
+}
+.browse-page .hero h1 span,
+.watchlist-page .hero h1 span {
+  color: var(--color-text);
+  font-style: italic;
+  font-weight: 500;
+}
+.browse-page .hero p,
+.watchlist-page .hero p {
+  max-width: 54ch;
+  margin-top: 18px;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+.browse-page .browse-desk {
+  max-width: 1120px;
+  margin-inline: auto;
+}
+.browse-page .feed-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 22px;
+  margin: 0 0 18px;
+  border-bottom: 1px solid var(--color-border, var(--nx-rule));
+}
+.browse-page .feed-tab {
+  position: relative;
+  min-height: 44px;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: .84rem;
+  box-shadow: none;
+}
+.browse-page .feed-tab.active {
+  border-bottom-color: var(--color-accent);
+  background: transparent;
+  color: var(--color-text);
+}
+.browse-page .feed-tab span {
+  margin-right: 5px;
+  opacity: .7;
+}
+.browse-page .filter-panel {
+  border: 1px solid var(--color-border, var(--nx-rule));
+  border-radius: 2px;
+  background: transparent;
+  padding: clamp(14px, 2.4vw, 24px);
+}
+.browse-page .filter-search {
+  min-height: 50px;
+  padding-inline: 14px;
+  border: 1px solid var(--color-border, var(--nx-rule));
+  border-radius: 2px;
+  background: var(--color-secondary, transparent);
+  font-size: 1rem;
+}
+.browse-page .filter-search::placeholder {
+  color: var(--color-text-muted);
+  opacity: .82;
+}
+.browse-page .discover-refine {
+  margin-top: 18px;
+  border-top: 1px solid var(--color-border, var(--nx-rule));
+  padding-top: 14px;
+}
+.browse-page .discover-refine > summary {
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: .8rem;
+  letter-spacing: .025em;
+}
+.browse-page .discover-refine[open] > summary {
+  margin-bottom: 18px;
+  color: var(--color-text);
+}
+.browse-page .filter-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-text-muted);
+  font-size: .68rem;
+  font-weight: 650;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+.browse-page .filter-actions {
+  padding-top: 16px;
+}
+.watchlist-page .wl-row {
+  border-radius: 2px;
+  border-color: var(--color-border, var(--nx-rule));
+  background: transparent;
+  padding: 14px;
+}
+.watchlist-page .wl-thumb img {
+  border-radius: 1px;
+}
+@media (max-width: 640px) {
+  .browse-page .hero,
+  .watchlist-page .hero {
+    padding-top: 28px;
+    padding-bottom: 18px;
+  }
+  .browse-page .hero h1,
+  .watchlist-page .hero h1 {
+    font-size: clamp(2.6rem, 12vw, 4rem);
+  }
+  .browse-page .feed-tabs {
+    gap: 0 16px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .browse-page .feed-tabs::-webkit-scrollbar { display: none; }
+  .browse-page .feed-tab { flex: 0 0 auto; }
+  .browse-page .filter-panel { padding: 12px; }
+}
