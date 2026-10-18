@@ -51,17 +51,17 @@ export default async function HomePage() {
         <div className="nexus-opening-wash" aria-hidden />
         <div className="container nexus-opening-inner">
           <div className="nexus-opening-top">
-            <span>ANIMENEXUS</span>
-            <span>ANIME DISCOVERY</span>
-            <span>01 / HOME</span>
+            <span>01 / DISCOVERY DESK</span>
+            <span>ANIMENEXUS · LANTERN</span>
+            <span>EST. 2026</span>
           </div>
           <div className="nexus-opening-copy">
-            <p className="nexus-kicker">A more considered way to discover anime</p>
-            <h1>Find your<br /><em>next anime.</em></h1>
-            <p className="nexus-opening-lead">Explore recommendations, seasonal releases and a catalogue shaped around what you enjoy.</p>
+            <p className="nexus-kicker">Tonight, something worth watching</p>
+            <h1>Stories<br /><em>without</em><br />the noise.</h1>
+            <p className="nexus-opening-lead">A living anime archive shaped by your taste, your watchlist and the feeling you are looking for next.</p>
             <div className="nexus-opening-actions">
-              <Link href="/browse" className="nexus-button nexus-button--solid">Explore anime <span>↗</span></Link>
-              <Link href="#mood" className="nexus-button">Choose by mood</Link>
+              <Link href="/browse" className="nexus-button nexus-button--solid">Explore your field <span>↗</span></Link>
+              <Link href="/browse" className="nexus-button">Browse the archive</Link>
             </div>
           </div>
           <HomeFeaturedSignal candidates={items} />
@@ -71,9 +71,9 @@ export default async function HomePage() {
             <span className="nexus-opening-rail-count">01 — 06</span>
           </div>
           <div className="nexus-opening-signal" aria-label="Discovery status">
-            <span>CATALOGUE</span>
-            <span>{items.length || 0} TITLES LOADED</span>
-            <span>EXPLORE BY MOOD OR RECOMMENDATION</span>
+            <span><b>LIVE</b> / CATALOGUE</span>
+            <span>{items.length || 0} SIGNALS IN FIELD</span>
+            <span>PERSONAL MODE · ON</span>
           </div>
           <div className="nexus-opening-scroll" aria-hidden><span>Scroll to explore</span><i /></div>
         </div>
@@ -81,12 +81,12 @@ export default async function HomePage() {
 
       <div className="nexus-scene-divider nexus-scene-divider--signal" aria-hidden><span>02</span><i /></div>
 
-      <section id="mood" className="container nexus-intent-band">
-        <div className="nexus-band-label">02 / FIND BY MOOD</div>
+      <section className="container nexus-intent-band">
+        <div className="nexus-band-label">02 / YOUR FREQUENCY</div>
         <div className="nexus-intent-layout">
           <div>
-            <h2>What are you<br /><em>in the mood for?</em></h2>
-            <p>Start with a feeling, a pace or the kind of story you want. Narrow the choices without losing the joy of discovery.</p>
+            <h2>Tell Lantern<br /><em>what tonight feels like.</em></h2>
+            <p>Skip the endless scrolling. Describe the mood, the pace or the kind of story you want.</p>
           </div>
           <TonightIntentPanel compact />
         </div>
@@ -95,7 +95,7 @@ export default async function HomePage() {
       <div className="nexus-scene-divider nexus-scene-divider--desk" aria-hidden><span>03</span><i /></div>
 
       <section className="container nexus-primary-band" data-field-count={items.length}>
-        <div className="nexus-band-label">03 / RECOMMENDED FOR YOU</div>
+        <div className="nexus-band-label">03 / PERSONAL SIGNAL</div>
         <HomePrimaryMoment candidates={items} />
       </section>
 
@@ -104,10 +104,10 @@ export default async function HomePage() {
       <section className="container nexus-worlds-section">
         <div className="nexus-worlds-heading">
           <div>
-            <span>04 / EXPAND YOUR TASTE</span>
-            <h2>One step<br /><em>off the usual path.</em></h2>
+            <span>04 / WORLDS NEARBY</span>
+            <h2>You are closer<br /><em>than you think.</em></h2>
           </div>
-          <p>Discover nearby genres and new favourites, with recommendations connected to the anime you already enjoy.</p>
+          <p>Surprise-me discoveries pulled into the field, then arranged around the stories closest to your taste.</p>
         </div>
         <NexusWorlds candidates={items} />
       </section>
@@ -117,7 +117,7 @@ export default async function HomePage() {
       <section className="nexus-index">
         <div className="container">
           <div className="nexus-section-heading">
-            <div><span>05 / SELECTED ANIME</span><h2>Worth your time.</h2></div>
+            <div><span>05 / THE INDEX</span><h2>Worth a closer look.</h2></div>
             <Link href="/browse">View full archive ↗</Link>
           </div>
           <HomePersonalizedIndex candidates={items} />
@@ -135,7 +135,7 @@ export default async function HomePage() {
 
       <section className="container nexus-catalog">
         <div className="nexus-section-heading">
-          <div><span>06 / THE CATALOGUE</span><h2>Explore the catalogue.</h2></div>
+          <div><span>06 / THE CATALOGUE</span><h2>Keep looking.</h2></div>
           <ViewModeToggle />
         </div>
         {error ? (
