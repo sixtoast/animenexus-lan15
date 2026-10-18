@@ -624,3 +624,95 @@
  .nexus-archive-season-head span,.nexus-archive-season-head small{display:block}
  .nexus-archive-season-head small{margin-top:7px;line-height:1.45}
 }
+
+/* ANIMENEXUS RESEARCH PASS — make the Discovery Field feel art-directed, not over-instrumented. */
+/* The artwork and the choreographed movement are the feature. Remove the
+   extra dashboard-like overlays that compete with both. */
+.nexus-world-map {
+  isolation: isolate;
+  overflow: clip;
+  background: #090a0d !important;
+  border-block-color: rgba(245,240,232,.1) !important;
+}
+.nexus-world-grid,
+.nexus-world-trajectory,
+.nexus-world-scanline,
+.nexus-world-crosshair {
+  display: none !important;
+}
+.nexus-world-orbit-plane__ring {
+  border-color: rgba(245,240,232,.14) !important;
+  box-shadow: none !important;
+}
+.nexus-world-orbit-plane__ring--inner {
+  border-color: rgba(242,179,95,.2) !important;
+}
+.nexus-world-orbit-plane__axis {
+  opacity: .28 !important;
+}
+.nexus-world-arrival-flare {
+  opacity: .18 !important;
+  filter: none !important;
+}
+.nexus-world-connections line {
+  stroke: rgba(245,240,232,.16) !important;
+  stroke-width: .12 !important;
+  filter: none !important;
+}
+.nexus-world-node-art {
+  border-radius: 2px !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.24) !important;
+  outline: 1px solid rgba(245,240,232,.12) !important;
+  outline-offset: 2px;
+}
+.nexus-world-node-art img {
+  filter: saturate(.9) contrast(1.02) !important;
+}
+.nexus-world-node:hover .nexus-world-node-art,
+.nexus-world-node:focus-visible .nexus-world-node-art,
+.nexus-world-node.is-active .nexus-world-node-art {
+  outline-color: rgba(242,179,95,.7) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.32) !important;
+}
+.nexus-world-node-copy strong {
+  text-wrap: pretty;
+}
+.nexus-world-field-note {
+  color: rgba(245,240,232,.42) !important;
+  font-size: 9px !important;
+  letter-spacing: .12em !important;
+}
+.nexus-world-secret-trigger {
+  border: 0 !important;
+  border-bottom: 1px solid rgba(245,240,232,.22) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 0 6px !important;
+}
+.nexus-world-secret-trigger:hover {
+  color: var(--nx-paper, #f5f0e8) !important;
+  border-bottom-color: var(--nx-gold, #f2b35f) !important;
+}
+@media (max-width: 700px) {
+  .nexus-world-map {
+    min-height: 510px !important;
+  }
+  .nexus-world-field-note {
+    max-width: 42%;
+    line-height: 1.5;
+    font-size: 8px !important;
+    letter-spacing: .08em !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nexus-world-arrival-flare,
+  .nexus-world-orbit-plane,
+  .nexus-world-trajectory {
+    display: none !important;
+  }
+  .nexus-world-node-art,
+  .nexus-world-node-art img {
+    transition: none !important;
+  }
+}
