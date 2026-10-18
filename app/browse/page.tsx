@@ -106,7 +106,7 @@ export default async function BrowsePage({
   const { items, total, hasNext, error } = await loadInitial(sp);
 
   return (
-    <main>
+    <main className="browse-page">
       <section className="hero" style={{ paddingBottom: 12 }}>
         <div className="container">
           <div className="hero-badge">Discover</div>
