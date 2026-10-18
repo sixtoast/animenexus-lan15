@@ -1,7 +1,8 @@
 /*
  * AnimeNexus design integrity pass
- * Intent: authored anime journal / discovery instrument, not a generic AI dashboard.
- * Keep Lantern-ko and all mascot assets/behaviour untouched.
+ * Direction: authored anime journal / discovery instrument, not a generic AI dashboard.
+ * Scope global rules carefully so existing page-specific states and theme settings survive.
+ * Lantern-ko assets and behaviour remain untouched.
  */
 :root {
   --nx-paper: #f3eee5;
@@ -10,54 +11,46 @@
   --nx-muted: rgba(243,238,229,.58);
   --nx-accent: #e7ad65;
   --nx-radius-control: 3px;
-  --nx-radius-panel: 6px;
 }
-html { background: #090a0c; }
+
+/* Keep the app's own theme tokens in charge outside the cinematic homepage. */
+html { background: var(--color-primary, #090a0c); }
 body {
-  background: #090a0c;
+  background-color: var(--color-primary, #090a0c);
   background-image: none;
-  color: var(--nx-paper);
+  color: var(--color-text, var(--nx-paper));
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-::selection { background: #e7ad65; color: #090a0c; }
+::selection { background: var(--color-accent, var(--nx-accent)); color: var(--color-primary, var(--nx-ink)); }
 a { text-underline-offset: .22em; }
 :where(button, input, select, textarea) { font: inherit; }
 :where(button, a, input, select, textarea):focus-visible {
-  outline: 2px solid var(--nx-accent);
-  outline-offset: 4px;
+  outline: 2px solid var(--color-accent, var(--nx-accent));
+  outline-offset: 3px;
 }
-:where(.container) { width: min(100% - 56px, 1440px); }
-:where(.card, .panel, [class*="-card"], [class*="-panel"]) {
-  box-shadow: none;
-}
-:where(button, .button, [class*="-button"], [class*="-btn"]) {
-  border-radius: var(--nx-radius-control);
-}
-:where(input, select, textarea) { border-radius: var(--nx-radius-control); }
 
-/* Global product chrome: calm, precise, readable. */
-.site-footer {
-  background: #090a0c;
-  border-top: 1px solid var(--nx-rule);
-}
-.site-footer-inner {
-  min-height: 76px;
-  color: var(--nx-muted);
-  letter-spacing: .025em;
-}
-.site-footer a { color: var(--nx-paper); }
-:where(.navbar, .site-nav, .nav-dock, .app-nav) {
+/* Remove the strongest generic glass treatment without globally flattening cards. */
+.navbar {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
+.site-footer {
+  background: var(--color-primary, #090a0c);
+  border-top: 1px solid var(--color-border, var(--nx-rule));
+}
+.site-footer-inner {
+  min-height: 76px;
+  color: var(--color-text-muted, var(--nx-muted));
+  letter-spacing: .025em;
+}
 
-/* Homepage: a deliberate editorial grid with asymmetry and real breathing room. */
-.nexus-home { background: #090a0c; }
+/* Homepage: a deliberate editorial grid with asymmetry and image-led composition. */
+.nexus-home { background: var(--nx-ink); color: var(--nx-paper); }
 .nexus-opening {
   min-height: min(900px, calc(100svh - 56px));
   isolation: isolate;
-  background: #090a0c;
+  background: var(--nx-ink);
 }
 .nexus-opening-bg {
   opacity: .31;
@@ -107,7 +100,7 @@ a { text-underline-offset: .22em; }
 }
 .nexus-button--solid {
   background: var(--nx-paper);
-  color: #090a0c;
+  color: var(--nx-ink);
   border: 1px solid var(--nx-paper);
 }
 .nexus-button--solid:hover { background: var(--nx-accent); border-color: var(--nx-accent); }
@@ -161,9 +154,7 @@ a { text-underline-offset: .22em; }
   box-shadow: none !important;
 }
 .nexus-index,
-.nexus-catalog {
-  background: transparent;
-}
+.nexus-catalog { background: transparent; }
 .nexus-index { padding-block: clamp(78px, 10vw, 144px); }
 .nexus-section-heading {
   align-items: end;
@@ -189,7 +180,7 @@ a { text-underline-offset: .22em; }
   letter-spacing: .025em;
 }
 
-/* Avoid the repeated pill / glass / glow vocabulary. Images and typography do the work. */
+/* Only the named discovery card families receive the flatter editorial treatment. */
 :where(.nexus-index-card, .nexus-archive-card, .anime-card, .anime-tile) {
   border-radius: 2px;
   box-shadow: none;
@@ -198,24 +189,16 @@ a { text-underline-offset: .22em; }
   border-radius: 2px;
 }
 :where(.nexus-index-meta, .nexus-archive-group-heading) { text-align: left; }
-:where(.mood-chip, .genre-chip, .filter-chip, .tag-chip) {
-  border-radius: 2px;
-}
+:where(.mood-chip, .genre-chip, .filter-chip, .tag-chip) { border-radius: 2px; }
 :where(.nexus-index-card:hover, .nexus-archive-card:hover, .anime-card:hover, .anime-tile:hover) {
   box-shadow: none;
 }
 
-/* Real interface states stay legible and useful rather than merely decorative. */
+/* Keep state panels legible without imposing one style on every modal or card. */
 :where(.state-box, .empty-state, .error-state) {
-  border: 1px solid var(--nx-rule);
-  background: rgba(243,238,229,.025);
-  border-radius: 3px;
-}
-:where(.toast, .modal, .dialog, .command-palette) {
-  border-radius: 5px;
+  border-color: var(--color-border, var(--nx-rule));
 }
 @media (max-width: 760px) {
-  :where(.container) { width: min(100% - 36px, 1440px); }
   .nexus-opening { min-height: min(780px, calc(100svh - 56px)); }
   .nexus-opening-copy { width: 100%; padding-block: clamp(78px, 12vh, 112px) 72px; }
   .nexus-opening-copy h1 { font-size: clamp(4rem, 17vw, 7rem); }
@@ -239,4 +222,13 @@ a { text-underline-offset: .22em; }
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
   }
+}
+
+/* The homepage is intentionally dark; the rest of the app continues to honour light mode. */
+[data-theme="light"] .nexus-home {
+  background: #f3eee5;
+  color: #090a0c;
+}
+[data-theme="light"] .nexus-opening {
+  background: #090a0c;
 }
