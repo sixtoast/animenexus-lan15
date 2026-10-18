@@ -418,13 +418,13 @@ export function NexusWorlds({ candidates }: Props) {
             ? entryY - Math.sin(Math.PI * entryP) * travelLift
             : spiralY + (targetY - spiralY) * outwardEase + arc * side;
 
-          // A full, visible 3D spin makes the journey readable even on a
-          // relatively small mobile viewport.
-          const spinTurns = 1.35 + index * 0.08;
-          rotation = side * (125 * (1 - p)) + Math.sin(p * Math.PI * 2 * spinTurns) * 22 * (1 - p);
-          rotateY = side * (170 * (1 - p)) + Math.sin(p * Math.PI) * side * 18;
-          rotateX = Math.sin(p * Math.PI) * -14 * side;
-          scale = 0.66 + 0.24 * p;
+          // One consistent turn gives the travel phase a clear identity.
+          // Avoid index-dependent spin counts: cards should feel choreographed
+          // as one system, not like separate effects running at once.
+          rotation = side * 360 * (1 - p) + Math.sin(p * Math.PI * 2) * 5 * (1 - p);
+          rotateY = side * (28 * (1 - p)) + Math.sin(p * Math.PI) * side * 5;
+          rotateX = Math.sin(p * Math.PI) * -5 * side;
+          scale = 0.76 + 0.14 * p;
 
           if (travelT >= 1) {
             const orbitT = (local - lineupDuration - travelDuration) / orbitDuration;
