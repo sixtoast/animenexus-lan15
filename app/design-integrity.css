@@ -1,0 +1,242 @@
+/*
+ * AnimeNexus design integrity pass
+ * Intent: authored anime journal / discovery instrument, not a generic AI dashboard.
+ * Keep Lantern-ko and all mascot assets/behaviour untouched.
+ */
+:root {
+  --nx-paper: #f3eee5;
+  --nx-ink: #090a0c;
+  --nx-rule: rgba(243,238,229,.17);
+  --nx-muted: rgba(243,238,229,.58);
+  --nx-accent: #e7ad65;
+  --nx-radius-control: 3px;
+  --nx-radius-panel: 6px;
+}
+html { background: #090a0c; }
+body {
+  background: #090a0c;
+  background-image: none;
+  color: var(--nx-paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+::selection { background: #e7ad65; color: #090a0c; }
+a { text-underline-offset: .22em; }
+:where(button, input, select, textarea) { font: inherit; }
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--nx-accent);
+  outline-offset: 4px;
+}
+:where(.container) { width: min(100% - 56px, 1440px); }
+:where(.card, .panel, [class*="-card"], [class*="-panel"]) {
+  box-shadow: none;
+}
+:where(button, .button, [class*="-button"], [class*="-btn"]) {
+  border-radius: var(--nx-radius-control);
+}
+:where(input, select, textarea) { border-radius: var(--nx-radius-control); }
+
+/* Global product chrome: calm, precise, readable. */
+.site-footer {
+  background: #090a0c;
+  border-top: 1px solid var(--nx-rule);
+}
+.site-footer-inner {
+  min-height: 76px;
+  color: var(--nx-muted);
+  letter-spacing: .025em;
+}
+.site-footer a { color: var(--nx-paper); }
+:where(.navbar, .site-nav, .nav-dock, .app-nav) {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Homepage: a deliberate editorial grid with asymmetry and real breathing room. */
+.nexus-home { background: #090a0c; }
+.nexus-opening {
+  min-height: min(900px, calc(100svh - 56px));
+  isolation: isolate;
+  background: #090a0c;
+}
+.nexus-opening-bg {
+  opacity: .31;
+  filter: saturate(.58) contrast(1.08);
+  transform: scale(1.015);
+}
+.nexus-opening-wash {
+  background: linear-gradient(90deg, #090a0c 0%, rgba(9,10,12,.92) 36%, rgba(9,10,12,.44) 76%, rgba(9,10,12,.18) 100%),
+    linear-gradient(0deg, #090a0c 0%, transparent 38%, rgba(9,10,12,.12) 100%);
+}
+.nexus-opening-inner { max-width: 1440px; }
+.nexus-opening-top,
+.nexus-opening-signal,
+.nexus-band-label,
+.nexus-opening-rail-label,
+.nexus-opening-rail-count {
+  letter-spacing: .12em;
+  font-size: .63rem;
+}
+.nexus-opening-copy {
+  width: min(720px, 72%);
+  padding-block: clamp(76px, 12vh, 144px) clamp(54px, 9vh, 112px);
+}
+.nexus-opening-copy h1 {
+  font-size: clamp(4.5rem, 10.3vw, 10rem);
+  line-height: .79;
+  letter-spacing: -.085em;
+  font-weight: 500;
+  max-width: 8ch;
+}
+.nexus-opening-copy h1 em,
+.nexus-intent-layout h2 em,
+.nexus-worlds-heading h2 em {
+  color: var(--nx-accent);
+  font-weight: 500;
+}
+.nexus-opening-lead {
+  max-width: 36rem;
+  line-height: 1.7;
+  color: rgba(243,238,229,.72);
+}
+.nexus-button {
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 2px;
+  transition: background-color .22s ease, color .22s ease, border-color .22s ease;
+}
+.nexus-button--solid {
+  background: var(--nx-paper);
+  color: #090a0c;
+  border: 1px solid var(--nx-paper);
+}
+.nexus-button--solid:hover { background: var(--nx-accent); border-color: var(--nx-accent); }
+.nexus-button:not(.nexus-button--solid) { border: 1px solid var(--nx-rule); }
+.nexus-button:not(.nexus-button--solid):hover { border-color: var(--nx-paper); }
+.nexus-scene-divider {
+  opacity: .72;
+  margin-inline: auto;
+  width: min(100% - 56px, 1440px);
+}
+.nexus-intent-band,
+.nexus-primary-band,
+.nexus-worlds-section,
+.nexus-catalog {
+  padding-block: clamp(76px, 10vw, 148px);
+}
+.nexus-intent-layout {
+  display: grid;
+  grid-template-columns: minmax(0, .92fr) minmax(320px, 1fr);
+  gap: clamp(36px, 9vw, 144px);
+  align-items: start;
+}
+.nexus-intent-layout h2,
+.nexus-worlds-heading h2 {
+  font-size: clamp(3.2rem, 7vw, 7rem);
+  line-height: .87;
+  letter-spacing: -.075em;
+  font-weight: 500;
+}
+.nexus-intent-layout p,
+.nexus-worlds-heading p {
+  max-width: 34rem;
+  line-height: 1.7;
+  color: var(--nx-muted);
+}
+.nexus-worlds-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, .55fr);
+  align-items: end;
+  gap: 40px;
+  margin-bottom: 44px;
+}
+.nexus-world-map {
+  border-top: 1px solid var(--nx-rule);
+  border-bottom: 1px solid var(--nx-rule);
+  background: #0b0c0e;
+  border-radius: 0;
+}
+.nexus-world-core {
+  border-radius: 50%;
+  box-shadow: none !important;
+}
+.nexus-index,
+.nexus-catalog {
+  background: transparent;
+}
+.nexus-index { padding-block: clamp(78px, 10vw, 144px); }
+.nexus-section-heading {
+  align-items: end;
+  border-bottom: 1px solid var(--nx-rule);
+  padding-bottom: 18px;
+  margin-bottom: 34px;
+}
+.nexus-section-heading h2 {
+  font-size: clamp(2.8rem, 6vw, 6rem);
+  line-height: .9;
+  letter-spacing: -.07em;
+  font-weight: 500;
+}
+.nexus-section-heading > a {
+  font-size: .78rem;
+  letter-spacing: .025em;
+}
+.nexus-catalog-foot {
+  border-top: 1px solid var(--nx-rule);
+  padding-top: 16px;
+  color: var(--nx-muted);
+  font-size: .72rem;
+  letter-spacing: .025em;
+}
+
+/* Avoid the repeated pill / glass / glow vocabulary. Images and typography do the work. */
+:where(.nexus-index-card, .nexus-archive-card, .anime-card, .anime-tile) {
+  border-radius: 2px;
+  box-shadow: none;
+}
+:where(.nexus-index-card img, .nexus-archive-card img, .anime-card img, .anime-tile img) {
+  border-radius: 2px;
+}
+:where(.nexus-index-meta, .nexus-archive-group-heading) { text-align: left; }
+:where(.mood-chip, .genre-chip, .filter-chip, .tag-chip) {
+  border-radius: 2px;
+}
+:where(.nexus-index-card:hover, .nexus-archive-card:hover, .anime-card:hover, .anime-tile:hover) {
+  box-shadow: none;
+}
+
+/* Real interface states stay legible and useful rather than merely decorative. */
+:where(.state-box, .empty-state, .error-state) {
+  border: 1px solid var(--nx-rule);
+  background: rgba(243,238,229,.025);
+  border-radius: 3px;
+}
+:where(.toast, .modal, .dialog, .command-palette) {
+  border-radius: 5px;
+}
+@media (max-width: 760px) {
+  :where(.container) { width: min(100% - 36px, 1440px); }
+  .nexus-opening { min-height: min(780px, calc(100svh - 56px)); }
+  .nexus-opening-copy { width: 100%; padding-block: clamp(78px, 12vh, 112px) 72px; }
+  .nexus-opening-copy h1 { font-size: clamp(4rem, 17vw, 7rem); }
+  .nexus-opening-wash {
+    background: linear-gradient(90deg, rgba(9,10,12,.94), rgba(9,10,12,.66)),
+      linear-gradient(0deg, #090a0c 0%, transparent 55%);
+  }
+  .nexus-intent-layout,
+  .nexus-worlds-heading { grid-template-columns: 1fr; gap: 26px; }
+  .nexus-intent-band,
+  .nexus-primary-band,
+  .nexus-worlds-section,
+  .nexus-catalog { padding-block: 72px; }
+  .nexus-section-heading { align-items: start; gap: 18px; }
+  .nexus-section-heading h2 { font-size: clamp(2.8rem, 12vw, 4.5rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
