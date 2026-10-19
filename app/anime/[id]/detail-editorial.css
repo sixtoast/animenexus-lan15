@@ -19,13 +19,20 @@
 .cinema-detail-page .detail-hero {
   display: grid;
   grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+  min-height: 0;
   align-items: end;
   gap: clamp(24px, 5vw, 64px);
+  padding: 0;
   margin-bottom: clamp(34px, 6vw, 76px);
 }
 .cinema-detail-page .detail-cover-material {
   width: 100%;
+  min-width: 0;
   max-width: 260px;
+  margin: 0;
+  justify-self: stretch;
+  align-self: end;
+  animation: none;
 }
 .cinema-detail-page .detail-cover {
   display: block;
@@ -35,12 +42,17 @@
   box-shadow: 0 24px 60px rgba(0,0,0,.28);
 }
 .cinema-detail-page .detail-scene-index {
+  position: relative;
+  inset: auto;
   grid-column: 1 / -1;
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 12px;
   min-height: 20px;
   margin-bottom: -8px;
+  transform: none;
+  animation: none;
   opacity: .65;
 }
 .cinema-detail-page .detail-arrival {
@@ -240,12 +252,18 @@
   }
   .cinema-detail-page .detail-hero {
     grid-template-columns: minmax(104px, 34%) minmax(0, 1fr);
+    min-height: 0;
     align-items: start;
     gap: 18px;
+    padding: 0;
   }
   .cinema-detail-page .detail-cover-material {
     width: 100%;
     min-width: 0;
+    max-width: none;
+    margin: 0;
+    justify-self: stretch;
+    align-self: start;
   }
   .cinema-detail-page .detail-info h1 {
     font-size: clamp(2rem, 8.4vw, 3.8rem);
