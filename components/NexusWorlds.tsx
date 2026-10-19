@@ -181,8 +181,13 @@ export function NexusWorlds({ candidates }: Props) {
     let orbitPhase = 0;
     let angularVelocity = 0;
     let lastDragTime = 0;
-    const started = performance.now();
-    motionStartedAtRef.current = started;
+    // The cinematic clock advances only while the field is on-screen and the
+    // browser tab is visible. Hidden tabs can throttle requestAnimationFrame,
+    // so wall-clock elapsed time would otherwise skip directly to the orbit.
+    let visibleStartedAt = document.visibilityState === "visible" && inView
+      ? performance.now()
+      : 0;
+    motionStartedAtRef.current = visibleStartedAt || null;
     let arrivalCuePlayed = false;
     let phase: "lineup" | "travel" | "orbit" | "" = "";
 
@@ -307,8 +312,20 @@ export function NexusWorlds({ candidates }: Props) {
     field.addEventListener("pointercancel", onDragEnd);
 
     const onVisibilityChange = () => {
-      if (document.visibilityState === "visible" && !motionAbort && !raf) {
-        previousNow = performance.now();
+      const now = performance.now();
+      if (document.visibilityState === "hidden") {
+        if (visibleStartedAt) {
+          motionElapsedRef.current += Math.max(0, now - visibleStartedAt);
+          visibleStartedAt = 0;
+          motionStartedAtRef.current = null;
+        }
+        raf = 0;
+        return;
+      }
+      if (!motionAbort && !raf && inView) {
+        visibleStartedAt = now;
+        motionStartedAtRef.current = now;
+        previousNow = now;
         raf = window.requestAnimationFrame(tick);
       }
     };
@@ -330,7 +347,7 @@ export function NexusWorlds({ candidates }: Props) {
         raf = 0;
         return;
       }
-      const elapsed = motionElapsedRef.current + (now - started);
+      const elapsed = motionElapsedRef.current + (visibleStartedAt ? now - visibleStartedAt : 0);
       const dt = Math.min(48, Math.max(8, now - previousNow));
       const nextPhase: typeof phase = elapsed < lineupDuration ? "lineup" : elapsed < lineupDuration + travelDuration ? "travel" : "orbit";
       if (nextPhase !== phase) {
