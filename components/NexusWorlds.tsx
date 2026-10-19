@@ -62,6 +62,8 @@ export function NexusWorlds({ candidates }: Props) {
   const [aiPulse, setAiPulse] = useState(0);
   const [aiPulsing, setAiPulsing] = useState(false);
   const [fieldRevision, setFieldRevision] = useState(0);
+  // Keep the cinematic timeline stable when resize/visibility changes rebuild geometry.
+  const motionStartedAtRef = useRef<number | null>(null);
   const aiPulseStartedRef = useRef(0);
   const fieldRef = useRef<HTMLDivElement>(null);
   const fieldModeRef = useRef(fieldMode);
@@ -176,7 +178,8 @@ export function NexusWorlds({ candidates }: Props) {
     let orbitPhase = 0;
     let angularVelocity = 0;
     let lastDragTime = 0;
-    const started = performance.now();
+    if (motionStartedAtRef.current === null) motionStartedAtRef.current = performance.now();
+    const started = motionStartedAtRef.current;
     let arrivalCuePlayed = false;
     let phase: "lineup" | "travel" | "orbit" | "" = "";
 
