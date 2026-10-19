@@ -152,6 +152,14 @@ export function NexusWorlds({ candidates }: Props) {
     const centreX = rect.width / 2;
     const centreY = rect.height / 2;
     const spacing = mobile ? 52 : 108;
+    // Fit the full lineup inside the field on narrow viewports. A fixed 52px
+    // centre-to-centre step can push the first and last cards beyond the
+    // viewport when several cards are present, before the orbit even begins.
+    const maxNodeWidth = Math.max(0, ...nodes.map((node) => node.offsetWidth));
+    const lineupSpacing = Math.min(
+      spacing,
+      Math.max(16, (rect.width - maxNodeWidth - 24) / Math.max(1, nodes.length - 1)),
+    );
     const lineupY = rect.height * (mobile ? 0.44 : 0.48);
     const lineupDuration = mobile ? 1050 : 1200;
     const travelDuration = mobile ? 1500 : 1750;
@@ -180,7 +188,7 @@ export function NexusWorlds({ candidates }: Props) {
       const h = node.offsetHeight;
       const baseX = node.offsetLeft + w / 2;
       const baseY = node.offsetTop + h / 2;
-      const lineX = centreX + (index - (nodes.length - 1) / 2) * spacing;
+      const lineX = centreX + (index - (nodes.length - 1) / 2) * lineupSpacing;
       const lineY = lineupY;
       const maxX = Math.max(28, rect.width / 2 - w / 2 - (mobile ? 5 : 12));
       const maxY = Math.max(42, rect.height / 2 - h / 2 - (mobile ? 14 : 22));
