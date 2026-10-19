@@ -1,0 +1,480 @@
+/*
+ * AnimeNexus design integrity pass
+ * Direction: authored anime journal / discovery instrument, not a generic AI dashboard.
+ * Scope global rules carefully so existing page-specific states and theme settings survive.
+ * Lantern-ko assets and behaviour remain untouched.
+ */
+:root {
+  --nx-paper: #f3eee5;
+  --nx-ink: #090a0c;
+  --nx-rule: rgba(243,238,229,.17);
+  --nx-muted: rgba(243,238,229,.58);
+  --nx-accent: #e7ad65;
+  --nx-radius-control: 3px;
+}
+
+/* Keep the app's own theme tokens in charge outside the cinematic homepage. */
+html { background: var(--color-primary, #090a0c); }
+body {
+  background-color: var(--color-primary, #090a0c);
+  background-image: none;
+  color: var(--color-text, var(--nx-paper));
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+::selection { background: var(--color-accent, var(--nx-accent)); color: var(--color-primary, var(--nx-ink)); }
+a { text-underline-offset: .22em; }
+:where(button, input, select, textarea) { font: inherit; }
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--color-accent, var(--nx-accent));
+  outline-offset: 3px;
+}
+
+/* Remove the strongest generic glass treatment without globally flattening cards. */
+.navbar {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.site-footer {
+  background: var(--color-primary, #090a0c);
+  border-top: 1px solid var(--color-border, var(--nx-rule));
+}
+.site-footer-inner {
+  min-height: 76px;
+  color: var(--color-text-muted, var(--nx-muted));
+  letter-spacing: .025em;
+}
+
+/* Homepage: a deliberate editorial grid with asymmetry and image-led composition. */
+.nexus-home { background: var(--nx-ink); color: var(--nx-paper); }
+.nexus-opening {
+  min-height: min(900px, calc(100svh - 56px));
+  isolation: isolate;
+  background: var(--nx-ink);
+}
+.nexus-opening-bg {
+  opacity: .31;
+  filter: saturate(.58) contrast(1.08);
+  transform: scale(1.015);
+}
+.nexus-opening-wash {
+  background: linear-gradient(90deg, #090a0c 0%, rgba(9,10,12,.92) 36%, rgba(9,10,12,.44) 76%, rgba(9,10,12,.18) 100%),
+    linear-gradient(0deg, #090a0c 0%, transparent 38%, rgba(9,10,12,.12) 100%);
+}
+.nexus-opening-inner { max-width: 1440px; }
+.nexus-opening-top,
+.nexus-opening-signal,
+.nexus-band-label,
+.nexus-opening-rail-label,
+.nexus-opening-rail-count {
+  letter-spacing: .12em;
+  font-size: .63rem;
+}
+.nexus-opening-copy {
+  width: min(720px, 72%);
+  padding-block: clamp(76px, 12vh, 144px) clamp(54px, 9vh, 112px);
+}
+.nexus-opening-copy h1 {
+  font-size: clamp(4.5rem, 10.3vw, 10rem);
+  line-height: .79;
+  letter-spacing: -.085em;
+  font-weight: 500;
+  max-width: 8ch;
+}
+.nexus-opening-copy h1 em,
+.nexus-intent-layout h2 em,
+.nexus-worlds-heading h2 em {
+  color: var(--nx-accent);
+  font-weight: 500;
+}
+.nexus-opening-lead {
+  max-width: 36rem;
+  line-height: 1.7;
+  color: rgba(243,238,229,.72);
+}
+.nexus-button {
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 2px;
+  transition: background-color .22s ease, color .22s ease, border-color .22s ease;
+}
+.nexus-button--solid {
+  background: var(--nx-paper);
+  color: var(--nx-ink);
+  border: 1px solid var(--nx-paper);
+}
+.nexus-button--solid:hover { background: var(--nx-accent); border-color: var(--nx-accent); }
+.nexus-button:not(.nexus-button--solid) { border: 1px solid var(--nx-rule); }
+.nexus-button:not(.nexus-button--solid):hover { border-color: var(--nx-paper); }
+.nexus-scene-divider {
+  opacity: .72;
+  margin-inline: auto;
+  width: min(100% - 56px, 1440px);
+}
+.nexus-intent-band,
+.nexus-primary-band,
+.nexus-worlds-section,
+.nexus-catalog {
+  padding-block: clamp(76px, 10vw, 148px);
+}
+.nexus-intent-layout {
+  display: grid;
+  grid-template-columns: minmax(0, .92fr) minmax(320px, 1fr);
+  gap: clamp(36px, 9vw, 144px);
+  align-items: start;
+}
+.nexus-intent-layout h2,
+.nexus-worlds-heading h2 {
+  font-size: clamp(3.2rem, 7vw, 7rem);
+  line-height: .87;
+  letter-spacing: -.075em;
+  font-weight: 500;
+}
+.nexus-intent-layout p,
+.nexus-worlds-heading p {
+  max-width: 34rem;
+  line-height: 1.7;
+  color: var(--nx-muted);
+}
+.nexus-worlds-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, .55fr);
+  align-items: end;
+  gap: 40px;
+  margin-bottom: 44px;
+}
+.nexus-world-map {
+  border-top: 1px solid var(--nx-rule);
+  border-bottom: 1px solid var(--nx-rule);
+  background: #0b0c0e;
+  border-radius: 0;
+}
+.nexus-world-core {
+  border-radius: 50%;
+  box-shadow: none !important;
+}
+.nexus-index,
+.nexus-catalog { background: transparent; }
+.nexus-index { padding-block: clamp(78px, 10vw, 144px); }
+.nexus-section-heading {
+  align-items: end;
+  border-bottom: 1px solid var(--nx-rule);
+  padding-bottom: 18px;
+  margin-bottom: 34px;
+}
+.nexus-section-heading h2 {
+  font-size: clamp(2.8rem, 6vw, 6rem);
+  line-height: .9;
+  letter-spacing: -.07em;
+  font-weight: 500;
+}
+.nexus-section-heading > a {
+  font-size: .78rem;
+  letter-spacing: .025em;
+}
+.nexus-catalog-foot {
+  border-top: 1px solid var(--nx-rule);
+  padding-top: 16px;
+  color: var(--nx-muted);
+  font-size: .72rem;
+  letter-spacing: .025em;
+}
+
+/* Only the named discovery card families receive the flatter editorial treatment. */
+:where(.nexus-index-card, .nexus-archive-card, .anime-card, .anime-tile) {
+  border-radius: 2px;
+  box-shadow: none;
+}
+:where(.nexus-index-card img, .nexus-archive-card img, .anime-card img, .anime-tile img) {
+  border-radius: 2px;
+}
+:where(.nexus-index-meta, .nexus-archive-group-heading) { text-align: left; }
+:where(.mood-chip, .genre-chip, .filter-chip, .tag-chip) { border-radius: 2px; }
+:where(.nexus-index-card:hover, .nexus-archive-card:hover, .anime-card:hover, .anime-tile:hover) {
+  box-shadow: none;
+}
+
+/* Keep state panels legible without imposing one style on every modal or card. */
+:where(.state-box, .empty-state, .error-state) {
+  border-color: var(--color-border, var(--nx-rule));
+}
+@media (max-width: 760px) {
+  .nexus-opening { min-height: min(780px, calc(100svh - 56px)); }
+  .nexus-opening-copy { width: 100%; padding-block: clamp(78px, 12vh, 112px) 72px; }
+  .nexus-opening-copy h1 { font-size: clamp(4rem, 17vw, 7rem); }
+  .nexus-opening-wash {
+    background: linear-gradient(90deg, rgba(9,10,12,.94), rgba(9,10,12,.66)),
+      linear-gradient(0deg, #090a0c 0%, transparent 55%);
+  }
+  .nexus-intent-layout,
+  .nexus-worlds-heading { grid-template-columns: 1fr; gap: 26px; }
+  .nexus-intent-band,
+  .nexus-primary-band,
+  .nexus-worlds-section,
+  .nexus-catalog { padding-block: 72px; }
+  .nexus-section-heading { align-items: start; gap: 18px; }
+  .nexus-section-heading h2 { font-size: clamp(2.8rem, 12vw, 4.5rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* The homepage is intentionally dark; the rest of the app continues to honour light mode. */
+[data-theme="light"] .nexus-home {
+  background: #f3eee5;
+  color: #090a0c;
+}
+[data-theme="light"] .nexus-opening {
+  background: #090a0c;
+}
+
+
+/* Shared application surfaces: browse, search, watchlist and detail utilities.
+   Use the existing theme tokens rather than hard-coding the homepage palette. */
+:where(.hero, .page-header, .browse-header, .watchlist-header) {
+  padding-block: clamp(32px, 5vw, 72px) 28px;
+}
+:where(.hero h1, .page-header h1, .browse-header h1, .watchlist-header h1) {
+  line-height: .98;
+  letter-spacing: -.055em;
+  text-wrap: balance;
+}
+:where(.section-head, .section-heading, .page-section-heading) {
+  border-bottom: 1px solid var(--color-border, var(--nx-rule));
+  padding-bottom: 12px;
+  margin-bottom: 22px;
+}
+:where(.section-head h2, .section-heading h2, .page-section-heading h2) {
+  letter-spacing: -.035em;
+  line-height: 1.12;
+}
+.navbar {
+  background: var(--color-primary, #090a0c);
+  border-bottom-color: var(--color-border, var(--nx-rule));
+  padding-block: 10px;
+}
+.navbar-inner { min-height: 42px; }
+.logo { letter-spacing: -.045em; }
+:where(.nav-links a, .navbar a) { transition: color .18s ease, opacity .18s ease; }
+:where(.btn, .btn-accent, .btn-outline, .feed-tab, .filter-input, .filter-panel, .state-box) {
+  box-shadow: none;
+}
+:where(.btn, .btn-accent, .btn-outline) {
+  border-radius: 3px;
+  min-height: 42px;
+  transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+}
+.btn-accent {
+  background: var(--color-accent);
+  color: var(--color-primary);
+  border-color: var(--color-accent);
+}
+.btn-accent:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  color: var(--color-primary);
+  transform: none;
+  box-shadow: none;
+}
+.btn-outline:hover { transform: none; }
+:where(.feed-tabs, .filter-actions) { gap: 6px; }
+.feed-tab {
+  border-radius: 3px;
+  background: transparent;
+  padding: 8px 12px;
+  font-weight: 550;
+}
+.feed-tab.active {
+  background: var(--color-accent);
+  color: var(--color-primary);
+  border-color: var(--color-accent);
+}
+.filter-panel {
+  border-radius: 3px;
+  padding: clamp(14px, 2vw, 22px);
+}
+.filter-input {
+  border-radius: 3px;
+  min-height: 42px;
+}
+.filter-input:focus {
+  box-shadow: 0 0 0 2px var(--color-accent-glow);
+}
+.state-box {
+  border-radius: 3px;
+  text-align: left;
+}
+:where(.anime-card, .anime-tile) { border-color: var(--color-border, var(--nx-rule)); }
+.anime-card:hover { transform: translateY(-3px); }
+.anime-card .card-tag {
+  border-radius: 2px;
+  backdrop-filter: none;
+  background: rgba(9,10,12,.9);
+}
+@media (max-width: 640px) {
+  .navbar { padding-block: 8px; }
+  :where(.hero, .page-header, .browse-header, .watchlist-header) {
+    padding-block: 26px 20px;
+  }
+}
+
+
+/* Route-specific composition: browse is a catalogue, watchlist is a personal queue.
+   Do not force either page into the homepage's cinematic hero template. */
+.browse-page .hero,
+.watchlist-page .hero {
+  padding: clamp(36px, 6vw, 76px) 0 24px;
+}
+.browse-page .hero .container,
+.watchlist-page .hero .container {
+  max-width: 1120px;
+}
+.browse-page .hero-badge,
+.watchlist-page .hero-badge {
+  display: block;
+  width: fit-content;
+  padding: 0;
+  margin: 0 0 18px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-accent);
+  font-size: .68rem;
+  font-weight: 650;
+  letter-spacing: .16em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+.browse-page .hero h1,
+.watchlist-page .hero h1 {
+  max-width: 14ch;
+  font-size: clamp(2.8rem, 6.4vw, 5.8rem);
+  font-weight: 500;
+  line-height: .94;
+  letter-spacing: -.055em;
+}
+.browse-page .hero h1 span,
+.watchlist-page .hero h1 span {
+  color: var(--color-text);
+  font-style: italic;
+  font-weight: 500;
+}
+.browse-page .hero p,
+.watchlist-page .hero p {
+  max-width: 54ch;
+  margin-top: 18px;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+.browse-page .browse-desk {
+  max-width: 1120px;
+  margin-inline: auto;
+}
+.browse-page .feed-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 22px;
+  margin: 0 0 18px;
+  border-bottom: 1px solid var(--color-border, var(--nx-rule));
+}
+.browse-page .feed-tab {
+  position: relative;
+  min-height: 44px;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: .84rem;
+  box-shadow: none;
+}
+.browse-page .feed-tab.active {
+  border-bottom-color: var(--color-accent);
+  background: transparent;
+  color: var(--color-text);
+}
+.browse-page .feed-tab span {
+  margin-right: 5px;
+  opacity: .7;
+}
+.browse-page .filter-panel {
+  border: 1px solid var(--color-border, var(--nx-rule));
+  border-radius: 2px;
+  background: transparent;
+  padding: clamp(14px, 2.4vw, 24px);
+}
+.browse-page .filter-search {
+  min-height: 50px;
+  padding-inline: 14px;
+  border: 1px solid var(--color-border, var(--nx-rule));
+  border-radius: 2px;
+  background: var(--color-secondary, transparent);
+  font-size: 1rem;
+}
+.browse-page .filter-search::placeholder {
+  color: var(--color-text-muted);
+  opacity: .82;
+}
+.browse-page .discover-refine {
+  margin-top: 18px;
+  border-top: 1px solid var(--color-border, var(--nx-rule));
+  padding-top: 14px;
+}
+.browse-page .discover-refine > summary {
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-size: .8rem;
+  letter-spacing: .025em;
+}
+.browse-page .discover-refine[open] > summary {
+  margin-bottom: 18px;
+  color: var(--color-text);
+}
+.browse-page .filter-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-text-muted);
+  font-size: .68rem;
+  font-weight: 650;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+.browse-page .filter-actions {
+  padding-top: 16px;
+}
+.watchlist-page .wl-row {
+  border-radius: 2px;
+  border-color: var(--color-border, var(--nx-rule));
+  background: transparent;
+  padding: 14px;
+}
+.watchlist-page .wl-thumb img {
+  border-radius: 1px;
+}
+@media (max-width: 640px) {
+  .browse-page .hero,
+  .watchlist-page .hero {
+    padding-top: 28px;
+    padding-bottom: 18px;
+  }
+  .browse-page .hero h1,
+  .watchlist-page .hero h1 {
+    font-size: clamp(2.6rem, 12vw, 4rem);
+  }
+  .browse-page .feed-tabs {
+    gap: 0 16px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .browse-page .feed-tabs::-webkit-scrollbar { display: none; }
+  .browse-page .feed-tab { flex: 0 0 auto; }
+  .browse-page .filter-panel { padding: 12px; }
+}

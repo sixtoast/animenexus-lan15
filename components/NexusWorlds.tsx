@@ -62,6 +62,11 @@ export function NexusWorlds({ candidates }: Props) {
   const [aiPulse, setAiPulse] = useState(0);
   const [aiPulsing, setAiPulsing] = useState(false);
   const [fieldRevision, setFieldRevision] = useState(0);
+  // Keep the cinematic timeline stable when resize/visibility changes rebuild geometry.
+  const motionStartedAtRef = useRef<number | null>(null);
+  // Count only time spent visible. Scrolling away must pause the entrance rather than
+  // silently consuming the lineup/travel sequence while the field is off-screen.
+  const motionElapsedRef = useRef(0);
   const aiPulseStartedRef = useRef(0);
   const fieldRef = useRef<HTMLDivElement>(null);
   const fieldModeRef = useRef(fieldMode);
@@ -152,6 +157,14 @@ export function NexusWorlds({ candidates }: Props) {
     const centreX = rect.width / 2;
     const centreY = rect.height / 2;
     const spacing = mobile ? 52 : 108;
+    // Fit the full lineup inside the field on narrow viewports. A fixed 52px
+    // centre-to-centre step can push the first and last cards beyond the
+    // viewport when several cards are present, before the orbit even begins.
+    const maxNodeWidth = Math.max(0, ...nodes.map((node) => node.offsetWidth));
+    const lineupSpacing = Math.min(
+      spacing,
+      Math.max(16, (rect.width - maxNodeWidth - 24) / Math.max(1, nodes.length - 1)),
+    );
     const lineupY = rect.height * (mobile ? 0.44 : 0.48);
     const lineupDuration = mobile ? 1050 : 1200;
     const travelDuration = mobile ? 1500 : 1750;
@@ -168,7 +181,13 @@ export function NexusWorlds({ candidates }: Props) {
     let orbitPhase = 0;
     let angularVelocity = 0;
     let lastDragTime = 0;
-    const started = performance.now();
+    // The cinematic clock advances only while the field is on-screen and the
+    // browser tab is visible. Hidden tabs can throttle requestAnimationFrame,
+    // so wall-clock elapsed time would otherwise skip directly to the orbit.
+    let visibleStartedAt = document.visibilityState === "visible" && inView
+      ? performance.now()
+      : 0;
+    motionStartedAtRef.current = visibleStartedAt || null;
     let arrivalCuePlayed = false;
     let phase: "lineup" | "travel" | "orbit" | "" = "";
 
@@ -180,7 +199,7 @@ export function NexusWorlds({ candidates }: Props) {
       const h = node.offsetHeight;
       const baseX = node.offsetLeft + w / 2;
       const baseY = node.offsetTop + h / 2;
-      const lineX = centreX + (index - (nodes.length - 1) / 2) * spacing;
+      const lineX = centreX + (index - (nodes.length - 1) / 2) * lineupSpacing;
       const lineY = lineupY;
       const maxX = Math.max(28, rect.width / 2 - w / 2 - (mobile ? 5 : 12));
       const maxY = Math.max(42, rect.height / 2 - h / 2 - (mobile ? 14 : 22));
@@ -293,8 +312,20 @@ export function NexusWorlds({ candidates }: Props) {
     field.addEventListener("pointercancel", onDragEnd);
 
     const onVisibilityChange = () => {
-      if (document.visibilityState === "visible" && !motionAbort && !raf) {
-        previousNow = performance.now();
+      const now = performance.now();
+      if (document.visibilityState === "hidden") {
+        if (visibleStartedAt) {
+          motionElapsedRef.current += Math.max(0, now - visibleStartedAt);
+          visibleStartedAt = 0;
+          motionStartedAtRef.current = null;
+        }
+        raf = 0;
+        return;
+      }
+      if (!motionAbort && !raf && inView) {
+        visibleStartedAt = now;
+        motionStartedAtRef.current = now;
+        previousNow = now;
         raf = window.requestAnimationFrame(tick);
       }
     };
@@ -316,7 +347,7 @@ export function NexusWorlds({ candidates }: Props) {
         raf = 0;
         return;
       }
-      const elapsed = now - started;
+      const elapsed = motionElapsedRef.current + (visibleStartedAt ? now - visibleStartedAt : 0);
       const dt = Math.min(48, Math.max(8, now - previousNow));
       const nextPhase: typeof phase = elapsed < lineupDuration ? "lineup" : elapsed < lineupDuration + travelDuration ? "travel" : "orbit";
       if (nextPhase !== phase) {
@@ -524,6 +555,10 @@ export function NexusWorlds({ candidates }: Props) {
 
     return () => {
       motionAbort = true;
+      if (motionStartedAtRef.current !== null) {
+        motionElapsedRef.current += Math.max(0, performance.now() - motionStartedAtRef.current);
+        motionStartedAtRef.current = null;
+      }
       window.cancelAnimationFrame(raf);
       if (pointerStyleRaf) window.cancelAnimationFrame(pointerStyleRaf);
       field.removeEventListener("pointermove", onDragMove);

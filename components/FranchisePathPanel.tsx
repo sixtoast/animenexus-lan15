@@ -317,7 +317,7 @@ export function FranchisePathPanel({
         </span>
       </div>
 
-      <div className="franchise-path__legend" aria-label="Constellation legend">
+      <div className="franchise-path__legend" role="group" aria-label="Constellation legend">
         <span className="is-main">MAIN STORY</span>
         <span className="is-film">FILMS</span>
         <span className="is-satellite">OVAs / SPECIALS</span>
@@ -361,7 +361,7 @@ export function FranchisePathPanel({
         </div>
       ) : null}
 
-      <div className="franchise-path__route" aria-label={active.label + " route"}>
+      <div className="franchise-path__route" role="group" aria-label={active.label + " route"}>
         <div className="franchise-path__route-head">
           <span>HOW TO FOLLOW IT</span>
           <small>{active.id === "easter_eggs" ? "Connections stay as leaves - they never create new branches." : "Follow the numbered path. Optional branches never become new roots."}</small>
