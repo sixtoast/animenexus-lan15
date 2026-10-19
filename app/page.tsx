@@ -6,6 +6,7 @@ import { HomePrimaryMoment } from "@/components/HomePrimaryMoment";
 import { QuoteBanner } from "@/components/QuoteBanner";
 import { NexusWorlds } from "@/components/NexusWorlds";
 import { NexusArchive } from "@/components/NexusArchive";
+import { StoryCrossing } from "@/components/StoryCrossing";
 import { ViewModeToggle } from "@/components/ViewModeToggle";
 import { SessionQuietNote } from "@/components/SessionQuietNote";
 import { CinemaMotion } from "@/components/CinemaMotion";
@@ -23,6 +24,7 @@ import "./cinema-motion-v4.css";
 import "./home-masterpiece.css";
 import "./desk-notes.css";
 import "./tonight-intent.css";
+import "./story-crossing.css";
 
 export const dynamic = "force-dynamic";
 
@@ -126,16 +128,19 @@ export default async function HomePage() {
 
       <HomeBeyondObvious candidates={items} />
 
+      <div className="nexus-scene-divider nexus-scene-divider--crossing" aria-hidden><span>06</span><i /></div>
+      <StoryCrossing candidates={items} />
+
       <section className="container nexus-rails">
         <DiscoveryShelves candidates={items} />
         <AvailableNowStrip candidates={items} />
       </section>
 
-      <div className="nexus-scene-divider nexus-scene-divider--archive" aria-hidden><span>06</span><i /></div>
+      <div className="nexus-scene-divider nexus-scene-divider--archive" aria-hidden><span>07</span><i /></div>
 
       <section className="container nexus-catalog">
         <div className="nexus-section-heading">
-          <div><span>06 / THE CATALOGUE</span><h2>Keep looking.</h2></div>
+          <div><span>07 / THE CATALOGUE</span><h2>Keep looking.</h2></div>
           <ViewModeToggle />
         </div>
         {error ? (
