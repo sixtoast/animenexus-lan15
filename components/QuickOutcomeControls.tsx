@@ -56,7 +56,7 @@ export function QuickOutcomeControls({
   }
 
   return (
-    <div className="quick-outcome" aria-label="How did this go">
+    <div className="quick-outcome" role="group" aria-label="How did this go">
       <p className="tools-hint" style={{ marginBottom: 8 }}>
         Signal the desk — improves ranking on this device
       </p>
