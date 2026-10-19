@@ -35,6 +35,12 @@
   box-shadow: 0 24px 60px rgba(0,0,0,.28);
 }
 .cinema-detail-page .detail-scene-index {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 20px;
+  margin-bottom: -8px;
   opacity: .65;
 }
 .cinema-detail-page .detail-arrival {
