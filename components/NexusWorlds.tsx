@@ -64,6 +64,9 @@ export function NexusWorlds({ candidates }: Props) {
   const [fieldRevision, setFieldRevision] = useState(0);
   // Keep the cinematic timeline stable when resize/visibility changes rebuild geometry.
   const motionStartedAtRef = useRef<number | null>(null);
+  // Count only time spent visible. Scrolling away must pause the entrance rather than
+  // silently consuming the lineup/travel sequence while the field is off-screen.
+  const motionElapsedRef = useRef(0);
   const aiPulseStartedRef = useRef(0);
   const fieldRef = useRef<HTMLDivElement>(null);
   const fieldModeRef = useRef(fieldMode);
@@ -178,8 +181,8 @@ export function NexusWorlds({ candidates }: Props) {
     let orbitPhase = 0;
     let angularVelocity = 0;
     let lastDragTime = 0;
-    if (motionStartedAtRef.current === null) motionStartedAtRef.current = performance.now();
-    const started = motionStartedAtRef.current;
+    const started = performance.now();
+    motionStartedAtRef.current = started;
     let arrivalCuePlayed = false;
     let phase: "lineup" | "travel" | "orbit" | "" = "";
 
@@ -327,7 +330,7 @@ export function NexusWorlds({ candidates }: Props) {
         raf = 0;
         return;
       }
-      const elapsed = now - started;
+      const elapsed = motionElapsedRef.current + (now - started);
       const dt = Math.min(48, Math.max(8, now - previousNow));
       const nextPhase: typeof phase = elapsed < lineupDuration ? "lineup" : elapsed < lineupDuration + travelDuration ? "travel" : "orbit";
       if (nextPhase !== phase) {
@@ -535,6 +538,10 @@ export function NexusWorlds({ candidates }: Props) {
 
     return () => {
       motionAbort = true;
+      if (motionStartedAtRef.current !== null) {
+        motionElapsedRef.current += Math.max(0, performance.now() - motionStartedAtRef.current);
+        motionStartedAtRef.current = null;
+      }
       window.cancelAnimationFrame(raf);
       if (pointerStyleRaf) window.cancelAnimationFrame(pointerStyleRaf);
       field.removeEventListener("pointermove", onDragMove);
