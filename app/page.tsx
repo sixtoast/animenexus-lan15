@@ -70,7 +70,7 @@ export default async function HomePage() {
             <i />
             <span className="nexus-opening-rail-count">01 — 06</span>
           </div>
-          <div className="nexus-opening-signal" aria-label="Discovery status">
+          <div className="nexus-opening-signal" role="group" aria-label="Discovery status">
             <span><b>LIVE</b> / CATALOGUE</span>
             <span>{items.length || 0} SIGNALS IN FIELD</span>
             <span>PERSONAL MODE · ON</span>
