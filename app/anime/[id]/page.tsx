@@ -4,6 +4,7 @@ import "../../watchlist-queue.css";
 import "../../franchise-path.css";
 import "../../desk-notes.css";
 import "./sprint-b-detail.css";
+import "./detail-editorial.css";
 import Link from "next/link";
 import { DetailBackButton } from "@/components/DetailBackButton";
 import { notFound } from "next/navigation";
