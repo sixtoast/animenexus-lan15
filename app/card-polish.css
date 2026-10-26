@@ -29,10 +29,10 @@
       calc(0.1 + var(--anime-warmth) * 0.08)
     );
   transition:
-    transform var(--ix-trans-standard, 200ms ease),
-    border-color var(--ix-trans-fast, 90ms ease),
-    box-shadow var(--ix-trans-standard, 200ms ease),
-    opacity var(--ix-trans-standard, 200ms ease);
+    transform cubic-bezier(0.16, 1, 0.3, 1) 220ms,
+    border-color cubic-bezier(0.16, 1, 0.3, 1) 180ms,
+    box-shadow cubic-bezier(0.16, 1, 0.3, 1) 220ms,
+    opacity cubic-bezier(0.16, 1, 0.3, 1) 200ms;
   cursor: pointer;
   position: relative;
   box-shadow:
@@ -79,18 +79,18 @@
 
 /* Hover: small lift (≤4px energy-scaled) + 1–2px image parallax */
 .anime-card:hover {
-  transform: translateY(calc(-3px - var(--anime-energy) * 2px));
+  transform: translateY(calc(-4px - var(--anime-energy) * 2px)) scale(1.012);
   border-color: rgba(
     232,
     165,
     152,
-    calc(0.35 + var(--anime-warmth) * 0.2)
+    calc(0.45 + var(--anime-warmth) * 0.2)
   );
   box-shadow:
-    0 calc(14px + var(--anime-weight) * 10px)
-      calc(36px + var(--anime-weight) * 12px) rgba(0, 0, 0, 0.4),
-    0 0 calc(20px + var(--anime-reflect) * 28px)
-      rgba(232, 165, 152, calc(0.08 + var(--anime-reflect) * 0.12));
+    0 calc(16px + var(--anime-weight) * 12px)
+      calc(40px + var(--anime-weight) * 14px) rgba(0, 0, 0, 0.48),
+    0 0 calc(24px + var(--anime-reflect) * 28px)
+      rgba(232, 165, 152, calc(0.12 + var(--anime-reflect) * 0.14));
   color: inherit;
 }
 

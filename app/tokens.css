@@ -97,6 +97,11 @@
   --body-wash-2: rgba(var(--color-amber-rgb), 0.09);
   --body-wash-3: rgba(var(--color-ink-cool-rgb), 0.08);
 
+  /* Cinematic ambient depth layers */
+  --aura-glow-primary: radial-gradient(circle 800px at 50% -20%, rgba(var(--color-accent-rgb), 0.15), transparent 70%);
+  --aura-glow-secondary: radial-gradient(circle 600px at 85% 20%, rgba(var(--color-amber-rgb), 0.10), transparent 60%);
+  --aura-depth-vignette: radial-gradient(circle at 50% 50%, transparent 40%, rgba(7, 5, 10, 0.55) 100%);
+
   --dock-h: 64px;
 }
 
@@ -132,5 +137,10 @@ html[data-theme="light"] {
   --body-wash-1: rgba(var(--color-accent-rgb), 0.07);
   --body-wash-2: rgba(var(--color-amber-rgb), 0.06);
   --body-wash-3: rgba(100, 80, 140, 0.05);
+
+  --aura-glow-primary: radial-gradient(circle 800px at 50% -20%, rgba(var(--color-accent-rgb), 0.08), transparent 70%);
+  --aura-glow-secondary: radial-gradient(circle 600px at 85% 20%, rgba(var(--color-amber-rgb), 0.06), transparent 60%);
+  --aura-depth-vignette: radial-gradient(circle at 50% 50%, transparent 50%, rgba(220, 210, 200, 0.35) 100%);
+
   --focus-ring: 0 0 0 2px var(--color-primary), 0 0 0 4px var(--color-accent);
 }
