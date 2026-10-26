@@ -7,18 +7,18 @@ import { readSessionTouch } from "@/components/FirstVisitHost";
 
 function baseGreeting(h: number): { icon: string; text: string } {
   if (h >= 5 && h < 12)
-    return { icon: "🌅", text: "Good morning — the signal is warm." };
+    return { icon: "mark", text: "Good morning — the signal is warm." };
   if (h >= 12 && h < 17)
-    return { icon: "☀️", text: "Afternoon frequency locked in." };
+    return { icon: "mark", text: "Afternoon frequency locked in." };
   if (h >= 17 && h < 21)
-    return { icon: "🌇", text: "Evening desk is lit." };
-  return { icon: "🌙", text: "Late-night broadcast is live." };
+    return { icon: "mark", text: "Evening desk is lit." };
+  return { icon: "mark", text: "Late-night broadcast is live." };
 }
 
 export function HeroGreeting() {
   const { entries, ready } = useWatchlist();
   const [g, setG] = useState({
-    icon: "🌙",
+    icon: "mark",
     text: "Late-night broadcast is live.",
   });
 
@@ -99,9 +99,7 @@ export function HeroGreeting() {
 
   return (
     <div className="hero-greeting">
-      <span className="greeting-icon" aria-hidden>
-        {g.icon}
-      </span>
+      <span className="greeting-icon greeting-icon--mark" aria-hidden />
       <span className="greeting-text">
         <span className="time-emote">{g.text}</span>
       </span>

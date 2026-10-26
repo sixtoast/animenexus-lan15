@@ -29,11 +29,11 @@ export function MoodFreeText({ redirect = true }: Props) {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!text.trim()) {
-      showToast("Describe the night you want", "✨");
+      showToast("Describe the night you want");
       return;
     }
     if (!isAIConfigured()) {
-      showToast("Add an API key in the AI panel first", "🤖");
+      showToast("Add an API key in the AI panel first");
       return;
     }
     setBusy(true);
@@ -64,7 +64,7 @@ export function MoodFreeText({ redirect = true }: Props) {
         router.push(`/mood/${exp.slug}`);
       }
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Intent parse failed", "😅");
+      showToast(err instanceof Error ? err.message : "Intent parse failed");
     } finally {
       setBusy(false);
     }

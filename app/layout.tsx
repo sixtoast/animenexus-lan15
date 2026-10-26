@@ -53,6 +53,7 @@ import "./layout-shell.css";
 import "./mascot.css";
 import "./sprint-a.css";
 import "./ai-panel.css";
+import "./layer-dock-clear.css";
 import "./ai-intelligence.css";
 import "./cmdk.css";
 import "./cmdk-intent.css";

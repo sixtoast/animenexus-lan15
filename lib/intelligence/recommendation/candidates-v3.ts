@@ -209,29 +209,16 @@ function intentPullVector(
   base: FingerprintVector,
   exp: ExperienceIntent,
 ): FingerprintVector {
-  const out = { ...base };
-  const tip = buildAnimePreferenceFingerprint({
-    id: -2,
-    title: exp.label,
-    description: exp.blurb || "",
-    genre: exp.genreHints?.[0] || "",
-    tags: exp.genreHints || [],
-    status: "FINISHED",
-    format: "TV",
-    year: "",
-    score: 0,
-    popularity: 0,
-    image: "",
-    anilist_id: -2,
-    episodes: 12,
-    duration: 24,
-  });
-  const tipVec = fingerprintToVector(tip);
-  for (const [k, v] of Object.entries(tipVec)) {
-    out[k] = (out[k] ?? 0.5) * 0.45 + v * 0.55;
+  const out: FingerprintVector = { ...base };
+  const target = exp.fingerprintTarget || {};
+  for (const [k, v] of Object.entries(target)) {
+    if (typeof v === "number") {
+      out[k] = (out[k] ?? 0.5) * 0.25 + v * 0.75;
+    }
   }
   return out;
 }
+
 
 function shelfAnime(e: WatchlistEntry): Anime {
   return {

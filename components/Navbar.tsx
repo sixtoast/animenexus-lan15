@@ -39,12 +39,12 @@ const MORE = [
   { href: "/settings/performance", label: "Settings", poetic: "Performance & Effects" },
 ];
 
-const DOCK = [
-  { href: "/", label: "Home", icon: "\u2302" },
-  { href: "/watchlist", label: "Shelf", icon: "\u25a3" },
-  { href: "__search__", label: "Search", icon: "\u2315" },
-  { href: "/taste", label: "Taste", icon: "\u25ce" },
-  { href: "__more__", label: "More", icon: "\u2630" },
+const DOCK: { href: string; label: string; icon: "home" | "shelf" | "search" | "taste" | "tools" }[] = [
+  { href: "/", label: "Home", icon: "home" },
+  { href: "/watchlist", label: "Shelf", icon: "shelf" },
+  { href: "__search__", label: "Search", icon: "search" },
+  { href: "/taste", label: "Taste", icon: "taste" },
+  { href: "__more__", label: "More", icon: "tools" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -113,6 +113,15 @@ export function Navbar() {
     setClosing(false);
   }, [pathname]);
 
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   function closeMenu() {
     if (!open) return;
     setClosing(true);
@@ -148,7 +157,7 @@ export function Navbar() {
               onClick={onSearch}
             >
               <span className="nav-dock-icon" aria-hidden>
-                {item.icon}
+                <NexusIcon name={item.icon} size="md" />
               </span>
               <span className="nav-dock-label">{item.label}</span>
             </button>
@@ -166,7 +175,7 @@ export function Navbar() {
               onClick={toggleMenu}
             >
               <span className="nav-dock-icon" aria-hidden>
-                {item.icon}
+                <NexusIcon name={item.icon} size="md" />
               </span>
               <span className="nav-dock-label">{item.label}</span>
             </button>
@@ -184,8 +193,8 @@ export function Navbar() {
             onClick={() => playCue("filter_select")}
           >
             <span className="nav-dock-icon" aria-hidden>
-              {item.icon}
-            </span>
+                <NexusIcon name={item.icon} size="md" />
+              </span>
             <span className="nav-dock-label">{item.label}</span>
           </Link>
         );
@@ -310,87 +319,90 @@ export function Navbar() {
           </div>
         </div>
 
-        {open || closing ? (
-          <>
-            <button
-              type="button"
-              className={
-                "nav-scrim" + (closing ? " nav-scrim--out" : "")
-              }
-              aria-label="Close menu"
-              onClick={closeMenu}
-            />
-            <nav
-              id="mobile-nav"
-              className={
-                "nav-mobile nav-mobile--frequency" +
-                (closing ? " nav-mobile--out" : "")
-              }
-              aria-label="More destinations"
-            >
-              <div className="nav-mobile-head">
-                <p className="nav-mobile-kicker">More</p>
-                <p className="nav-mobile-sub">
-                  Catalog, moods, account \u2014 primary tabs stay on the dock
-                </p>
-              </div>
-              <ul>
-                {[...PRIMARY, ...MORE].map((l) => {
-                  const active = isActive(pathname, l.href);
-                  return (
-                    <li key={l.href + l.label}>
-                      <Link
-                        href={l.href}
-                        className={
-                          "nav-mobile-link" + (active ? " active" : "")
-                        }
-                        aria-current={active ? "page" : undefined}
-                        onClick={() => closeMenu()}
-                      >
-                        <span className="nav-mobile-main">
-                          <span className="nav-mobile-label">{l.label}</span>
-                          {l.poetic ? (
-                            <span className="nav-mobile-poetic">{l.poetic}</span>
+
+      </header>
+
+      {dockReady && (open || closing)
+        ? createPortal(
+            <>
+              <button
+                type="button"
+                className={"nav-scrim" + (closing ? " nav-scrim--out" : "")}
+                aria-label="Close menu"
+                onClick={closeMenu}
+              />
+              <nav
+                id="mobile-nav"
+                className={
+                  "nav-mobile nav-mobile--frequency" +
+                  (closing ? " nav-mobile--out" : "")
+                }
+                aria-label="More destinations"
+              >
+                <div className="nav-mobile-head">
+                  <p className="nav-mobile-kicker">More</p>
+                  <p className="nav-mobile-sub">
+                    Catalog, moods, account — primary tabs stay on the dock
+                  </p>
+                </div>
+                <ul>
+                  {[...PRIMARY, ...MORE].map((l) => {
+                    const active = isActive(pathname, l.href);
+                    return (
+                      <li key={l.href + l.label}>
+                        <Link
+                          href={l.href}
+                          className={
+                            "nav-mobile-link" + (active ? " active" : "")
+                          }
+                          aria-current={active ? "page" : undefined}
+                          onClick={() => closeMenu()}
+                        >
+                          <span className="nav-mobile-main">
+                            <span className="nav-mobile-label">{l.label}</span>
+                            {l.poetic ? (
+                              <span className="nav-mobile-poetic">{l.poetic}</span>
+                            ) : null}
+                          </span>
+                          {active ? (
+                            <span className="nav-mobile-here">Here</span>
                           ) : null}
-                        </span>
-                        {active ? (
-                          <span className="nav-mobile-here">Here</span>
-                        ) : null}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-              <div className="nav-mobile-foot">
-                <Button
-                  variant="accent"
-                  size="sm"
-                  onClick={() => {
-                    closeMenu();
-                    onSearch();
-                  }}
-                >
-                  Open search
-                </Button>
-                {ready && session ? (
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="nav-mobile-foot">
                   <Button
-                    variant="outline"
+                    variant="accent"
                     size="sm"
                     onClick={() => {
-                      disconnect();
-                      playCue("filter_select");
                       closeMenu();
+                      onSearch();
                     }}
                   >
-                    Log out \u00b7 {session.username}
+                    Open search
                   </Button>
-                ) : null}
-                <NavSoundToggle />
-              </div>
-            </nav>
-          </>
-        ) : null}
-      </header>
+                  {ready && session ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        disconnect();
+                        playCue("filter_select");
+                        closeMenu();
+                      }}
+                    >
+                      Log out · {session.username}
+                    </Button>
+                  ) : null}
+                  <NavSoundToggle />
+                </div>
+              </nav>
+            </>,
+            document.body,
+          )
+        : null}
 
       {dockReady ? createPortal(dock, document.body) : null}
     </>

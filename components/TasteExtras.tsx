@@ -82,7 +82,7 @@ export function TasteExtras() {
               const code = buildTasteDNA(entries);
               try {
                 await navigator.clipboard.writeText(code);
-                showToast("Taste DNA copied", "🧬");
+                showToast("Taste DNA copied");
               } catch {
                 prompt("Copy your Taste DNA:", code);
               }
@@ -120,7 +120,7 @@ export function TasteExtras() {
               `${r.pct}% match — ${label}` +
                 (r.shared.length ? ` · Shared: ${r.shared.join(", ")}` : ""),
             );
-            showToast(`${r.pct}% soulmate match`, "💞");
+            showToast(`${r.pct}% soulmate match`);
           }}
         >
           Compare

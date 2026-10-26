@@ -9,6 +9,7 @@ import { DetailBackButton } from "@/components/DetailBackButton";
 import { notFound } from "next/navigation";
 import { getAnimeExperience } from "@/lib/anime-experience";
 import { fetchAnimeById } from "@/lib/anilist";
+import { fetchAnimeByLooseId } from "@/lib/fetch-by-identity";
 import { buildExternalLinks } from "@/lib/external-links";
 import { enrichDeepFromAniDb } from "@/lib/providers/anidb";
 import { enrichArtworkFromFanart } from "@/lib/providers/fanart";
@@ -60,7 +61,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const num = parseInt(id, 10);
   if (isNaN(num)) return { title: "Anime · AnimeNexus" };
   try {
-    const anime = await fetchAnimeById(num);
+    const anime = await fetchAnimeByLooseId(num);
     if (!anime) return { title: "Not found · AnimeNexus" };
     return {
       title: `${anime.title} · AnimeNexus`,

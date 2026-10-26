@@ -36,7 +36,7 @@ export function ExperiencePackStrip() {
             }}
           >
             <span className="exp-pack-emoji" aria-hidden>
-              {p.emoji}
+
             </span>
             <span className="exp-pack-label">{p.label}</span>
           </Link>

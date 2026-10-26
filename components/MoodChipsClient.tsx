@@ -24,7 +24,7 @@ export function MoodChips({ active, className }: Props) {
             onClick={() => writeIntentSession({ slug: m.slug })}
           >
             <span className="mood-emoji" aria-hidden>
-              {m.emoji}
+
             </span>
             <span>{m.label}</span>
           </Link>

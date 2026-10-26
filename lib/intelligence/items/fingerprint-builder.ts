@@ -137,6 +137,13 @@ export function buildAnimePreferenceFingerprint(
   const tagSet = new Set(
     (anime.tags || []).map((x) => String(x).toLowerCase().trim()),
   );
+  const rankByName = new Map();
+  for (const td of anime.tagDetails || []) {
+    if (!td?.name) continue;
+    if (typeof td.rank === "number") {
+      rankByName.set(String(td.name).toLowerCase().trim(), td.rank / 100);
+    }
+  }
   const labels = [
     ...(anime.tags || []),
     anime.genre,
@@ -159,6 +166,11 @@ export function buildAnimePreferenceFingerprint(
       source = "genre-fallback";
       weight = weight * 0.7;
     } else if (p.source === "genre-fallback" && tagSet.has(key)) {
+      source = "anilist-tags";
+    }
+    const relevance = rankByName.get(key);
+    if (typeof relevance === "number") {
+      weight = weight * (0.55 + relevance * 0.45);
       source = "anilist-tags";
     }
     patches.push({ ...p, source, weight });
