@@ -22,7 +22,7 @@ export function WatchlistToolbar() {
         className="btn btn-outline btn-sm"
         onClick={() => {
           downloadWatchlist(entries);
-          showToast("Watchlist exported");
+          showToast("Watchlist exported", "📤");
         }}
         disabled={entries.length === 0}
       >
@@ -50,9 +50,9 @@ export function WatchlistToolbar() {
             if (!incoming.length) throw new Error("No valid entries");
             const { added, updated, total } = mergeWatchlistImport(incoming);
             replaceAll(readWatchlist());
-            showToast(`Import: +${added} · ~${updated} · ${total} total`);
+            showToast(`Import: +${added} · ~${updated} · ${total} total`, "📥");
           } catch (e) {
-            showToast(e instanceof Error ? e.message : "Import failed");
+            showToast(e instanceof Error ? e.message : "Import failed", "😅");
           }
         }}
       />

@@ -68,7 +68,7 @@ export function FanzoneClient() {
       setConfessSource(res.source);
       setText("");
       if (res.error) {
-        showToast(res.error);
+        showToast(res.error, "😅");
       } else {
         showToast(
           res.source === "supabase"
@@ -108,14 +108,14 @@ export function FanzoneClient() {
     const b = newBingo();
     setBingo(b);
     prevWins.current = countBingoWins(b.marked);
-    showToast("Fresh board");
+    showToast("Fresh board", "🎲");
   }
 
   async function exportDNA() {
     const code = buildTasteDNA(entries);
     try {
       await navigator.clipboard.writeText(code);
-      showToast("Taste DNA copied");
+      showToast("Taste DNA copied", "🧬");
     } catch {
       prompt("Copy your Taste DNA:", code);
     }
@@ -143,7 +143,7 @@ export function FanzoneClient() {
   async function frequencyRead() {
     if (lastPct == null || !compareResult) return;
     if (!isAIConfigured()) {
-      showToast("Configure AI in the panel first");
+      showToast("Configure AI in the panel first", "🤖");
       return;
     }
     try {
@@ -165,7 +165,7 @@ export function FanzoneClient() {
       );
       setFreq(reply.trim());
     } catch (e) {
-      showToast(e instanceof Error ? e.message : "AI failed");
+      showToast(e instanceof Error ? e.message : "AI failed", "😅");
     }
   }
 

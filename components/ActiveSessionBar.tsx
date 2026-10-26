@@ -57,19 +57,19 @@ export function ActiveSessionBar() {
           url,
         });
         playCue("success");
-        showToast("Session shared", { milestone: true });
+        showToast("Session shared", "✦", true);
       } else if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(url);
         playCue("success");
-        showToast("Session link copied", { milestone: true });
+        showToast("Session link copied", "✦", true);
       }
     } catch {
       try {
         await navigator.clipboard.writeText(url);
         playCue("success");
-        showToast("Session link copied", { milestone: true });
+        showToast("Session link copied", "✦", true);
       } catch {
-        showToast("Could not share session", { milestone: true });
+        showToast("Could not share session", "⚠", true);
       }
     }
   }
@@ -101,7 +101,7 @@ export function ActiveSessionBar() {
         </span>
         {hasPack ? (
           <strong>
-
+            {exp?.emoji ? `${exp.emoji} ` : ""}
             {label}
           </strong>
         ) : (

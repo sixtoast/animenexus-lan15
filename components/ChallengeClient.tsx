@@ -119,10 +119,10 @@ export function ChallengeClient() {
     setStreak((s) => (ok ? s + 1 : 0));
     if (ok) {
       onCorrect();
-      showToast("Correct frequency!");
+      showToast("Correct frequency!", "✦");
     } else {
       playCue("challenge_bad");
-      showToast(`It was ${anime.title}`);
+      showToast(`It was ${anime.title}`, "😅");
     }
   }
 
@@ -141,7 +141,7 @@ export function ChallengeClient() {
     setStreak((s) => (ok ? s + 1 : 0));
     if (ok) {
       onCorrect();
-      showToast("Correct frequency!");
+      showToast("Correct frequency!", "✦");
     } else {
       playCue("challenge_bad");
     }

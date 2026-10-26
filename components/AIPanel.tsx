@@ -19,7 +19,6 @@ import { useWatchlist } from "@/components/WatchlistProvider";
 import { useToast } from "@/components/ToastProvider";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { NexusIcon } from "@/components/ui/NexusIcon";
 import { emitNexusSignal as sendNexusSignal, type NexusTarget } from "@/lib/nexus-intelligence";
 import { interpretViewingIntent } from "@/lib/intelligence/ai/interpret-intent";
 import { readIntentSession, writeAiIntentOverlay, writeIntentSession } from "@/lib/intent-session";
@@ -70,12 +69,6 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
   const speechTimer = useRef<number | null>(null);
   const { showToast } = useToast();
   const { add, remove } = useWatchlist();
-
-  useEffect(() => {
-    const openAi = () => setOpen(true);
-    window.addEventListener("lantern:open-ai", openAi);
-    return () => window.removeEventListener("lantern:open-ai", openAi);
-  }, []);
 
   useEffect(() => {
     const s = readAISettings();
@@ -174,7 +167,7 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
     writeWebSearchSettings(webSearch);
     setConfigured(isAIConfigured(settings));
     setWebConfigured(hasWebSearchKey(webSearch));
-    showToast("AI + web search settings saved");
+    showToast("AI + web search settings saved", "🤖");
     setSettingsOpen(false);
   }
 
@@ -200,9 +193,9 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
       const reply = await testAIConnection();
       setMessages((m) => [...m, { role: "assistant", content: reply }]);
       setConfigured(true);
-      showToast("AI connected");
+      showToast("AI connected", "✅");
     } catch (e) {
-      showToast(e instanceof Error ? e.message : "Test failed");
+      showToast(e instanceof Error ? e.message : "Test failed", "😅");
     } finally {
       setBusy(false);
       setMascotConversationState({ thinking: false });
@@ -213,7 +206,7 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
     const v = text.trim();
     if (!v || busy) return;
     if (!isAIConfigured(settings) && !isAIConfigured()) {
-      showToast("Add an API key in settings");
+      showToast("Add an API key in settings", "🤖");
       setSettingsOpen(true);
       return;
     }
@@ -299,7 +292,7 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
         Math.min(5200, 700 + reply.length * 18),
       );
     } catch (e) {
-      showToast(e instanceof Error ? e.message : "Chat failed");
+      showToast(e instanceof Error ? e.message : "Chat failed", "😅");
       setMessages((m) =>
         m.filter(
           (x, i) =>
@@ -325,7 +318,7 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
           confirmed: true,
         });
         if (!confirmed.ok) {
-          showToast(confirmed.error);
+          showToast(confirmed.error, "😅");
           continue;
         }
         if (p.tool === "addToWatchlist") {
@@ -333,7 +326,7 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
           const { fetchAnimeById } = await import("@/lib/anilist");
           const anime = await fetchAnimeById(id);
           if (!anime) {
-            showToast("Could not load anime to add");
+            showToast("Could not load anime to add", "😅");
             continue;
           }
           const status =
@@ -346,7 +339,7 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
               payload: { label: `Watchlist updated · ${anime.title}` },
             });
           }
-          showToast(`Added “${anime.title}”`);
+          showToast(`Added “${anime.title}”`, "✦");
         } else if (p.tool === "removeFromWatchlist") {
           if (remove(Number(p.args.animeId))) {
             sendNexusSignal({
@@ -356,7 +349,7 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
               payload: { label: "Watchlist updated · title removed" },
             });
           }
-          showToast("Removed from watchlist");
+          showToast("Removed from watchlist", "✦");
         }
       }
       setPending([]);
@@ -377,12 +370,10 @@ export function AIPanel({ initialOpen = false }: { initialOpen?: boolean }) {
         title="AI panel (A)"
         onClick={() => setOpen(true)}
       >
-        <span className="ai-fab-icon" aria-hidden>
-          <NexusIcon name="lantern" size="lg" />
-        </span>
+        🤖
         <span
           className={"ai-status-dot" + (configured ? " on" : "")}
-          title={configured ? "API key ready" : "Add API key"}
+          aria-hidden
         />
       </button>
 

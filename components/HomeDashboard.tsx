@@ -44,7 +44,7 @@ export function HomeDashboard({ trending = [] }: Props) {
     const { state, milestone } = touchStreak();
     setStreak(state.count);
     if (milestone) {
-      showToast(`${state.count}-day listening streak`, { milestone: true });
+      showToast(`${state.count}-day listening streak`, "🎧", true);
     } else {
       setStreak(readStreak().count);
     }

@@ -141,9 +141,9 @@ export function DailyRitual({ pool, seed, dateLabel }: Props) {
     if (ready && !isInList(anime.id)) {
       add(anime, "planning");
       fireSeal(anime.title, "seal");
-      showToast("Daily signal sealed", { milestone: true });
+      showToast("Daily signal sealed", "🕯️", true);
     } else {
-      showToast("Signal noted");
+      showToast("Signal noted", "📡");
     }
     setAccepted(true);
   }
@@ -153,7 +153,7 @@ export function DailyRitual({ pool, seed, dateLabel }: Props) {
     logOutcome(anime.id, "dropped", { surface: "daily" });
     setDismissed(true);
     setShowReject(false);
-    showToast("Passed for today");
+    showToast("Passed for today", "📡");
   }
 
   return (

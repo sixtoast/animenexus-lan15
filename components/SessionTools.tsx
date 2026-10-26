@@ -52,7 +52,7 @@ export function SessionTools() {
         (e) => e.watchStatus === "completed" || e.watchStatus === "watching",
       );
       if (!pool.length) {
-        showToast("No completed/watching titles yet");
+        showToast("No completed/watching titles yet", "📼");
         return;
       }
       const pick = pool[Math.floor(Math.random() * pool.length)];
@@ -99,7 +99,7 @@ export function SessionTools() {
         if (s <= 1) {
           setBreakRunning(false);
           setSessionEnv("idle");
-          showToast("Break over — back to the signal");
+          showToast("Break over — back to the signal", "⏰");
           try {
             navigator.vibrate?.(200);
           } catch {
@@ -118,7 +118,7 @@ export function SessionTools() {
     setBreakRunning(true);
     setPanel(null);
     setSessionEnv("break");
-    showToast(`${mins} min break started`);
+    showToast(`${mins} min break started`, "☕");
   }
 
   function rebuildQueue() {

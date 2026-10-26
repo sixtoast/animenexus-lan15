@@ -30,7 +30,7 @@ export function DetailAI({
 
   async function run(kind: "cold" | "order" | "fit") {
     if (!isAIConfigured()) {
-      showToast("Add an API key in the AI panel first");
+      showToast("Add an API key in the AI panel first", "🤖");
       return;
     }
     setBusy(true);
@@ -61,7 +61,7 @@ export function DetailAI({
         text,
       });
     } catch (e) {
-      showToast(e instanceof Error ? e.message : "AI failed");
+      showToast(e instanceof Error ? e.message : "AI failed", "😅");
     } finally {
       setBusy(false);
     }

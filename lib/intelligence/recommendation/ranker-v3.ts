@@ -4,11 +4,9 @@
  */
 
 import type { Anime, WatchlistEntry } from "@/lib/types";
-import { identityFromAnime, ensureNexusId } from "@/lib/anime-identity";
 import {
   buildAnimePreferenceFingerprint,
   buildEnrichedFingerprint,
-  getBestAvailableFingerprint,
   fingerprintToVector,
   type AnimePreferenceFingerprint,
 } from "@/lib/intelligence/items";
@@ -44,7 +42,6 @@ import {
   getExperienceIntent,
   fingerprintIntentFit,
 } from "@/lib/viewing-intent";
-import { buildSessionAdjustedIntent } from "@/lib/session-intent-adjust";
 import { readIntentSession, type IntentSession } from "@/lib/intent-session";
 import { weatherScoreAdjustment, type EnvironmentalSessionContext } from "@/lib/provider-evidence";
 
@@ -144,10 +141,7 @@ export function rankRecommendationsV3(
   opts?: {
     excludeIds?: Set<number> | number[];
     experienceSlug?: string | null;
-    /** @deprecated Prefer resolvedFingerprints keyed by nexusId */
     fingerprints?: Map<number, AnimePreferenceFingerprint>;
-    /** Preferred: nexusId → fingerprint (same object as pre-rank) */
-    resolvedFingerprints?: Map<string, AnimePreferenceFingerprint>;
     sourceAgreement?: Map<number, number>;
     session?: IntentSession | null;
     weatherContext?: EnvironmentalSessionContext | null;
@@ -206,17 +200,8 @@ export function rankRecommendationsV3(
   for (const anime of candidates) {
     if (exclude.has(anime.id)) continue;
 
-    const identity = ensureNexusId(identityFromAnime(anime));
-    const nexusId = identity.nexusId || `anilist:${anime.id}`;
-    let fp =
-      opts?.resolvedFingerprints?.get(nexusId) ||
-      opts?.fingerprints?.get(anime.id);
-    if (!fp) {
-      const resolved = getBestAvailableFingerprint(anime, {
-        cache: opts?.resolvedFingerprints,
-      });
-      fp = resolved.fingerprint;
-    }
+    let fp = opts?.fingerprints?.get(anime.id);
+    if (!fp) fp = buildEnrichedFingerprint(anime);
 
     const stableSim = vectorSimilarity(user.stable, fp, WEIGHTS_LONG_TERM);
     const clusterSim = active
@@ -226,17 +211,10 @@ export function rankRecommendationsV3(
 
     let intentSim = stableSim * 0.85;
     if (exp) {
-      if (exp.slug === "surprise") {
-        // Novelty target from session intensity — not a flat 0.5 mood fit.
-        const { noveltyTarget } = buildSessionAdjustedIntent(exp, session);
-        const target = noveltyTarget ?? 0.72;
-        const animeNovelty = clamp01(1 - stableSim);
-        intentSim = clamp01(
-          0.35 + 0.65 * (1 - Math.abs(animeNovelty - target)),
-        );
-      } else {
-        intentSim = fingerprintIntentFit(fp, exp, session);
-      }
+      intentSim =
+        exp.slug === "surprise"
+          ? 0.5
+          : fingerprintIntentFit(fp, exp, session);
     }
 
     const fpSim = vectorSimilarity(userVec, fp, WEIGHTS_LONG_TERM);

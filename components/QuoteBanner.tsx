@@ -155,7 +155,7 @@ export function QuoteBanner() {
         ? `“${q.quote}” — ${q.character || "Unknown"}${q.anime ? ` (${q.anime})` : ""}`
         : `“${q.quote}”`;
     void navigator.clipboard.writeText(line).then(() => {
-      showToast("Quote copied");
+      showToast("Quote copied", "📖");
     });
   }
 

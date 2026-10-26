@@ -133,7 +133,7 @@ export function OracleClient() {
 
   async function runCloud() {
     if (!isAIConfigured()) {
-      showToast("Add an API key in the AI panel (🤖)");
+      showToast("Add an API key in the AI panel (🤖)", "🤖");
       return;
     }
     setBusy(true);
@@ -168,7 +168,7 @@ export function OracleClient() {
         setCloudText(text);
       }
     } catch (e) {
-      showToast(e instanceof Error ? e.message : "Oracle failed");
+      showToast(e instanceof Error ? e.message : "Oracle failed", "😅");
       setUseCloud(false);
       setFailed(true);
       playCue("error");

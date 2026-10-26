@@ -78,9 +78,8 @@ export function fingerprintIntentFit(
     const actual = vector[key] ?? 0.5;
     const confidence = fp.confidence.dimensions[key] ?? fp.confidence.overall ?? 0.5;
     const importance = weights[key] ?? 1;
-    const rawFit = 1 - Math.abs(actual - desired);
-    const effectiveFit = 0.5 + (rawFit - 0.5) * confidence;
-    score += clamp01(effectiveFit) * importance;
+    const fit = 1 - Math.abs(actual - desired);
+    score += clamp01(0.5 + (fit - 0.5) * (0.45 + confidence * 0.55)) * importance;
     weightTotal += importance;
   }
   return weightTotal < 1e-9 ? 0.5 : clamp01(score / weightTotal);

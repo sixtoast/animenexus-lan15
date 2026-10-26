@@ -10,14 +10,14 @@ import {
   fingerprintIntentFit,
   type ExperienceIntent,
 } from "./viewing-intent";
-import { getBestAvailableFingerprint } from "./intelligence/items";
+import { buildEnrichedFingerprint } from "./intelligence/items";
 import type { IntentSession } from "./intent-session";
 import { identityFromAnime, ensureNexusId } from "./anime-identity";
 import { JIKAN_BASE } from "./api";
 import {
   MOOD_TAG_HINTS,
   MOOD_JIKAN_GENRES,
-  retrievalEvidenceScore,
+  moodMatchScore,
 } from "./mood-match";
 import {
   poolShikiMood,
@@ -52,9 +52,7 @@ export type MoodCandidatesResult = {
   offlineSeedEnabled: boolean;
 };
 
-export { retrievalEvidenceScore, MOOD_TAG_HINTS };
-/** @deprecated */
-export { retrievalEvidenceScore as moodMatchScore } from "./mood-match";
+export { moodMatchScore, MOOD_TAG_HINTS };
 
 function mapJikanRow(a: {
   mal_id: number;
@@ -187,7 +185,7 @@ function absorb(
 
 export async function getMoodCandidates(
   intent: ExperienceIntent,
-  session?: IntentSession | null,
+  _session?: IntentSession | null,
   opts?: { perPool?: number; allowOfflineSeed?: boolean },
 ): Promise<MoodCandidatesResult> {
   const perPool = opts?.perPool ?? 30;
@@ -264,7 +262,7 @@ export async function getMoodCandidates(
       const g = genres[i];
       if (r.status === "fulfilled") {
         const kept = r.value.data.filter(
-          (a) => retrievalEvidenceScore(a, intent) >= 0.15,
+          (a) => moodMatchScore(a, intent) >= 0.2,
         );
         retrieval.push({
           source: `anilist-genre:${g}`,
@@ -333,27 +331,15 @@ export async function getMoodCandidates(
 
   const { unique, dropped } = dedupeAnime(pools);
 
-  // Canonical pre-rank: fingerprintIntentFit + session (same as Ranker V3).
-  // retrievalEvidenceScore is at most 10% — never competing semantic authority.
+  // Rank by intent fingerprint fit when possible
   const scored = unique.map((anime) => {
     try {
-      const resolved = getBestAvailableFingerprint(anime);
-      const fit = fingerprintIntentFit(
-        resolved.fingerprint,
-        intent,
-        session,
-      );
-      const retrieval = retrievalEvidenceScore(anime, intent);
-      const score = fit * 0.9 + retrieval * 0.1;
-      return { anime, score, fingerprintSource: resolved.source };
+      const fp = buildEnrichedFingerprint(anime);
+      const fit = fingerprintIntentFit(fp, intent);
+      const match = moodMatchScore(anime, intent);
+      return { anime, score: fit * 0.7 + match * 0.3 };
     } catch {
-      const resolved = getBestAvailableFingerprint(anime);
-      const fit = fingerprintIntentFit(
-        resolved.fingerprint,
-        intent,
-        session,
-      );
-      return { anime, score: fit, fingerprintSource: resolved.source };
+      return { anime, score: moodMatchScore(anime, intent) };
     }
   });
   scored.sort((a, b) => b.score - a.score);
