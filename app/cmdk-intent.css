@@ -1,9 +1,14 @@
 .cmdk-intent-hint {
   margin: 0;
-  padding: 0.35rem 1rem 0.5rem;
-  font-size: 0.78rem;
-  opacity: 0.75;
-  border-bottom: 1px solid rgba(255, 220, 200, 0.08);
+  padding: 0.5rem 1rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-accent);
+  background: rgba(var(--color-accent-rgb), 0.08);
+  border-bottom: 1px solid rgba(255, 220, 200, 0.12);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .share-title-wrap {

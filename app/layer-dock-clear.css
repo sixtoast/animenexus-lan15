@@ -28,8 +28,8 @@
 .ai-fab {
   z-index: var(--z-ai-fab, 2600) !important;
   bottom: max(
-    96px,
-    calc(var(--dock-h, 64px) + 28px + env(safe-area-inset-bottom))
+    104px,
+    calc(var(--dock-h, 64px) + 36px + env(safe-area-inset-bottom, 0px))
   ) !important;
   display: inline-flex !important;
   align-items: center;
